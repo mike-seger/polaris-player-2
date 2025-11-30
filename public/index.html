@@ -4,6 +4,48 @@
   <meta charset="utf-8" />
   <title>YouTube Playlist Audio Player</title>
   <style>
+    /* ---- Material Icons Round (from your CSS) ---- */
+    :root {
+      --player-controls-height: 24px;
+      --player-min-slider-width: 160px;
+      --player-scale: 1;
+    }
+
+    @font-face {
+      font-family: 'Material Icons Round-Regular';
+      font-style: normal;
+      font-weight: normal;
+      font-display: swap;
+      src: url('data:font/otf;base64,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') format('opentype');
+    }
+
+    .icon {
+      font-family: 'Material Icons Round-Regular';
+      font-weight: normal;
+      font-style: normal;
+      display: inline-block;
+      text-transform: none;
+      letter-spacing: normal;
+      word-wrap: normal;
+      white-space: nowrap;
+      direction: ltr;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+      -moz-osx-font-smoothing: grayscale;
+      font-feature-settings: 'liga';
+      height: var(--player-controls-height);
+      line-height: var(--player-controls-height);
+      font-size: var(--player-controls-height);
+    }
+    .icon.inactive { display: none; }
+    .icon.play:before { content: "\e037"; }         /* play_arrow */
+    .icon.pause:before { content: "\e034"; }        /* pause */
+    .icon.prev:before { content: "\e044"; }         /* skip_previous */
+    .icon.next:before { content: "\e045"; }         /* skip_next */
+    .icon.search:before { content: "\e8b6"; }       /* search */
+    /* you can add volume icons later if desired */
+
+    /* ---- Layout ---- */
     body {
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       margin: 0;
@@ -11,43 +53,41 @@
       height: 100vh;
     }
 
-    /* Sidebar / main layout */
     #sidebar {
       width: 340px;
       border-right: 1px solid #ccc;
-      padding: 0.5rem;
+      padding: 0.4rem;
       box-sizing: border-box;
-      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
     }
+
     #main {
       flex: 1;
       display: flex;
       flex-direction: column;
     }
 
-    /* Playlist controls (sticky, compact, collapsible) */
+    /* Playlist controls at top */
     #playlistControls {
-      position: sticky;
-      top: 0;
-      z-index: 10;
-      background: #fff;
-      padding-bottom: 0.3rem;
+      flex-shrink: 0;
       border-bottom: 1px solid #ddd;
+      padding-bottom: 0.25rem;
+      margin-bottom: 0.25rem;
     }
 
     .pc-header {
       display: flex;
-      align-items: center;
       justify-content: flex-end;
-      gap: 0.25rem;
-      margin-bottom: 0.3rem;
+      align-items: center;
+      margin-bottom: 0.15rem;
     }
 
     #pcToggle {
       border: none;
       background: transparent;
       cursor: pointer;
-      font-size: 0.85rem;
+      font-size: 0.8rem;
       padding: 0.1rem 0.3rem;
       line-height: 1;
       transform-origin: center;
@@ -61,7 +101,7 @@
     .pc-body {
       display: flex;
       flex-direction: column;
-      gap: 0.25rem;
+      gap: 0.2rem;
     }
 
     #playlistControls.collapsed .pc-body {
@@ -82,7 +122,7 @@
       font-size: 0.75rem;
       opacity: 0.7;
       flex-shrink: 0;
-      width: 1.6rem; /* align vertically and keep short */
+      width: 1.6rem;
       text-align: right;
     }
 
@@ -113,7 +153,7 @@
     }
 
     #filterInput {
-      padding-right: 1.2rem; /* space for clear button */
+      padding-right: 1.2rem;
     }
 
     #clearFilterBtn {
@@ -142,12 +182,18 @@
       margin-top: 0.1rem;
     }
 
-    /* Track list */
+    /* Scrollable track list between top and bottom bars */
+    #trackListContainer {
+      flex: 1;
+      overflow-y: auto;
+    }
+
     #trackList {
       list-style: none;
       padding: 0;
-      margin: 0.4rem 0 0;
+      margin: 0;         /* no gap above first track */
     }
+
     #trackList li {
       padding: 0.25rem 0.35rem;
       cursor: pointer;
@@ -167,7 +213,6 @@
       flex-shrink: 0;
     }
 
-    /* Compact mode when thumbnails are hidden */
     body.no-thumbs #trackList img {
       display: none;
     }
@@ -194,45 +239,55 @@
       font-size: 0.9rem;
       line-height: 1.2;
       flex: 1;
-      text-transform: lowercase; /* display as lowercase */
-      white-space: normal;       /* allow wrapping when thumbs shown */
+      text-transform: lowercase;
+      white-space: normal;
     }
 
-    /* Main player controls */
-    #controls {
-      padding: 0.75rem 1rem 0.75rem 1rem;
-      border-bottom: 1px solid #ccc;
+    /* Track controls at bottom of sidebar */
+    #trackControls {
+      flex-shrink: 0;
+      border-top: 1px solid #ccc;
+      padding: 0.35rem 0.35rem 0.4rem;
     }
-    #controls strong {
-      font-size: 0.9rem;
-    }
-    #controls > div:first-of-type + div {
-      margin-top: 0.3rem;
-    }
-    #controls button {
+
+    #nowPlaying {
       font-size: 0.8rem;
-      padding: 0.25rem 0.6rem;
+      display: block;
+      margin-bottom: 0.2rem;
     }
 
-    #player-container {
-      padding: 0.75rem 1rem;
+    #trackControls-top {
       display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      margin-bottom: 0.25rem;
+    }
+
+    #trackControls-buttons {
+      display: flex;
+      align-items: center;
+      gap: 0.2rem;
+    }
+
+    #trackControls-buttons button {
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      padding: 0;
+      display: flex;
+      align-items: center;
       justify-content: center;
-      align-items: center;
-      flex: 1;
-    }
-    #player {
-      width: 320px;
-      height: 200px; /* min size per YouTube docs */
+      width: var(--player-controls-height);
+      height: var(--player-controls-height);
     }
 
-    /* Custom progress slider */
+    /* progress slider */
     #progressWrapper {
-      margin-top: 0.4rem;
       display: flex;
       align-items: center;
-      gap: 0.4rem;
+      gap: 0.35rem;
     }
+
     #progressRange {
       flex: 1;
       appearance: none;
@@ -250,7 +305,7 @@
       border-radius: 50%;
       background: #cc0000;
       cursor: pointer;
-      margin-top: -3px; /* centers thumb vertically */
+      margin-top: -3px;
     }
     #progressRange::-moz-range-thumb {
       width: 12px;
@@ -279,10 +334,24 @@
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
         "Liberation Mono", "Courier New", monospace;
     }
+
+    /* Main player on the right */
+    #player-container {
+      padding: 0.75rem 1rem;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex: 1;
+    }
+    #player {
+      width: 320px;
+      height: 200px;
+    }
   </style>
 </head>
 <body>
   <div id="sidebar">
+    <!-- Top playlist controls -->
     <div id="playlistControls">
       <div class="pc-header">
         <button type="button" id="pcToggle" aria-label="Toggle playlist controls">▾</button>
@@ -304,7 +373,9 @@
 
           <!-- Filter row -->
           <div class="pc-row">
-            <span class="pc-label" title="Filter">⏵</span>
+            <span class="pc-label" title="Filter">
+              <span class="icon search" aria-hidden="true"></span>
+            </span>
             <div class="pc-input-wrapper">
               <div class="filter-wrapper" id="filterWrapper">
                 <input
@@ -326,19 +397,27 @@
       </div>
     </div>
 
-    <ul id="trackList"></ul>
-  </div>
+    <!-- Scrollable list -->
+    <div id="trackListContainer">
+      <ul id="trackList"></ul>
+    </div>
 
-  <div id="main">
-    <div id="controls">
-      <strong id="nowPlaying">Now playing: –</strong>
-      <div>
-        <button id="prevBtn">Prev</button>
-        <button id="playPauseBtn">Play</button>
-        <button id="nextBtn">Next</button>
+    <!-- Bottom track controls -->
+    <div id="trackControls">
+      <span id="nowPlaying">Now playing: –</span>
+      <div id="trackControls-top">
+        <div id="trackControls-buttons">
+          <button id="prevBtn" type="button" aria-label="Previous track">
+            <span class="icon prev" aria-hidden="true"></span>
+          </button>
+          <button id="playPauseBtn" type="button" aria-label="Play/Pause">
+            <span class="icon play" id="playPauseIcon" aria-hidden="true"></span>
+          </button>
+          <button id="nextBtn" type="button" aria-label="Next track">
+            <span class="icon next" aria-hidden="true"></span>
+          </button>
+        </div>
       </div>
-
-      <!-- Custom progress range + time label -->
       <div id="progressWrapper">
         <input
           id="progressRange"
@@ -350,7 +429,10 @@
         <div id="timeLabel">00:00 / 00:00</div>
       </div>
     </div>
+  </div>
 
+  <!-- Right side: video only -->
+  <div id="main">
     <div id="player-container">
       <div id="player"></div>
     </div>
@@ -372,7 +454,7 @@
     const STORAGE_KEY = 'ytAudioPlayer.settings';
     let settings = loadSettings();
 
-    // ----- Local storage helpers -----
+    // settings helpers
     function loadSettings() {
       try {
         const raw = localStorage.getItem(STORAGE_KEY);
@@ -382,7 +464,6 @@
         return {};
       }
     }
-
     function saveSettings(patch) {
       settings = Object.assign({}, settings, patch);
       try {
@@ -392,7 +473,7 @@
       }
     }
 
-    // ----- DOM elements -----
+    // DOM refs
     const playlistInput = document.getElementById('playlistInput');
     const filterInputEl = document.getElementById('filterInput');
     const filterWrapper = document.getElementById('filterWrapper');
@@ -402,8 +483,9 @@
     const timeLabel = document.getElementById('timeLabel');
     const playlistControls = document.getElementById('playlistControls');
     const pcToggle = document.getElementById('pcToggle');
+    const playPauseIcon = document.getElementById('playPauseIcon');
 
-    // Initialize inputs from settings *before* player is ready
+    // init from settings
     if (settings.playlistId) {
       playlistInput.value = settings.playlistId;
     }
@@ -413,21 +495,19 @@
     } else {
       showThumbnails = toggleThumbsEl.checked;
     }
-
     if (typeof settings.filterText === 'string') {
       filterText = settings.filterText;
       filterInputEl.value = filterText;
     }
-
     document.body.classList.toggle('no-thumbs', !showThumbnails);
     updateFilterWrapperClass();
 
-    // Collapsible controls (state not persisted)
+    // collapsible controls (not persisted)
     pcToggle.addEventListener('click', () => {
       playlistControls.classList.toggle('collapsed');
     });
 
-    // Called by YouTube IFrame API when ready
+    // IFrame API ready
     function onYouTubeIframeAPIReady() {
       player = new YT.Player('player', {
         height: '200',
@@ -435,7 +515,7 @@
         videoId: '',
         playerVars: {
           autoplay: 0,
-          controls: 0  // hide YouTube's own controls/progress bar
+          controls: 0
         },
         events: {
           onReady: onPlayerReady,
@@ -443,11 +523,11 @@
         }
       });
     }
+    window.onYouTubeIframeAPIReady = onYouTubeIframeAPIReady;
 
     function onPlayerReady() {
       startProgressTimer();
 
-      // Auto-load playlist if we have one saved
       const storedPlaylistId = settings.playlistId;
       if (storedPlaylistId) {
         loadPlaylistFromServer(false);
@@ -472,7 +552,12 @@
     }
 
     function updatePlayPauseButton() {
-      document.getElementById('playPauseBtn').textContent = isPlaying ? 'Pause' : 'Play';
+      if (!playPauseIcon) return;
+      if (isPlaying) {
+        playPauseIcon.className = 'icon pause';
+      } else {
+        playPauseIcon.className = 'icon play';
+      }
     }
 
     function computeFilteredIndices() {
@@ -520,7 +605,6 @@
         ul.appendChild(li);
       });
 
-      // After rendering, ensure active track is visible (for reloads)
       scrollActiveIntoView();
     }
 
@@ -570,7 +654,6 @@
       if (isPlaying) player.pauseVideo();
       else player.playVideo();
     });
-
     document.getElementById('nextBtn').addEventListener('click', playNext);
     document.getElementById('prevBtn').addEventListener('click', playPrev);
 
@@ -591,7 +674,6 @@
       const data = await resp.json();
       playlistItems = data.items || [];
 
-      // Try to restore currentIndex from stored videoId
       const storedVideoId = settings.currentVideoId;
       let idxFromStorage = -1;
       if (storedVideoId) {
@@ -603,17 +685,13 @@
         currentIndex = playlistItems.length ? 0 : -1;
       }
 
-      // Apply filter from UI/settings
       filterText = filterInputEl.value || '';
       computeFilteredIndices();
       renderTrackList();
       updateNowPlaying();
       updatePlayPauseButton();
 
-      // Remember playlist id
       saveSettings({ playlistId: input });
-
-      // Don't auto-play; user decides
     }
 
     document.getElementById('playlistForm').addEventListener('submit', (e) => {
@@ -621,7 +699,7 @@
       loadPlaylistFromServer(false);
     });
 
-    // Thumbnail toggle
+    // thumbnails toggle
     toggleThumbsEl.addEventListener('change', (e) => {
       showThumbnails = e.target.checked;
       document.body.classList.toggle('no-thumbs', !showThumbnails);
@@ -629,7 +707,7 @@
       saveSettings({ showThumbnails });
     });
 
-    // Filter input: substring search applied on each keystroke, and remembered
+    // filter
     filterInputEl.addEventListener('input', () => {
       filterText = filterInputEl.value || '';
       updateFilterWrapperClass();
@@ -646,7 +724,6 @@
       }
     }
 
-    // Clear filter button
     clearFilterBtn.addEventListener('click', () => {
       filterInputEl.value = '';
       filterText = '';
@@ -656,7 +733,7 @@
       saveSettings({ filterText: '' });
     });
 
-    // ---- Keyboard handling ----
+    // keyboard handling
     function isTextInputFocused() {
       const ae = document.activeElement;
       if (!ae) return false;
@@ -666,15 +743,13 @@
     }
 
     document.addEventListener('keydown', (e) => {
-      // Don't hijack arrows when typing in inputs
       if (isTextInputFocused()) return;
 
-      // Left / right: seek current track -/+ 5 seconds
       if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
         if (!player || typeof player.getCurrentTime !== 'function' || typeof player.seekTo !== 'function') {
           return;
         }
-        const delta = e.key === 'ArrowLeft' ? -5 : 5; // seconds
+        const delta = e.key === 'ArrowLeft' ? -5 : 5;
         const currentTime = player.getCurrentTime();
         const newTime = Math.max(0, currentTime + delta);
         player.seekTo(newTime, true);
@@ -682,7 +757,6 @@
         return;
       }
 
-      // Ctrl/Alt + Up/Down: prev / next track
       if ((e.key === 'ArrowUp' || e.key === 'ArrowDown') && (e.ctrlKey || e.altKey)) {
         if (e.key === 'ArrowUp') {
           playPrev();
@@ -694,7 +768,7 @@
       }
     });
 
-    // ---- Custom progress slider ----
+    // progress slider
     let progressInterval = null;
 
     function startProgressTimer() {
@@ -703,7 +777,7 @@
     }
 
     function formatTime(seconds) {
-      if (!isFinite(seconds) || seconds < 0) return "00:00";
+      if (!isFinite(seconds) || seconds < 0) return '00:00';
       const s = Math.floor(seconds);
       const m = Math.floor(s / 60);
       const r = s % 60;
