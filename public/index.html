@@ -63,6 +63,23 @@
     .title {
       font-size: 0.9rem;
       line-height: 1.2;
+      flex: 1;
+      /* default: allow wrapping when thumbnails are shown */
+      white-space: normal;
+    }
+
+    /* --- Compact mode when thumbnails are hidden --- */
+    body.no-thumbs #trackList img {
+      display: none;
+    }
+    body.no-thumbs #trackList li {
+      padding: 0.15rem 0.35rem;
+      gap: 0.25rem;
+    }
+    body.no-thumbs .title {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
   </style>
 </head>
@@ -80,6 +97,10 @@
         <button type="submit">Load</button>
         <button id="refreshBtn" type="button" style="margin-left: 0.5rem;">Refresh</button>
       </div>
+      <label style="display: block; margin-top: 0.5rem; font-size: 0.8rem;">
+        <input type="checkbox" id="toggleThumbs" checked />
+        Show thumbnails
+      </label>
     </form>
     <ul id="trackList"></ul>
   </div>
@@ -106,6 +127,7 @@
     let playlistItems = [];
     let currentIndex = -1;
     let isPlaying = false;
+    let showThumbnails = true;
 
     // Called by YouTube IFrame API when ready
     function onYouTubeIframeAPIReady() {
@@ -151,7 +173,7 @@
         const li = document.createElement('li');
         if (idx === currentIndex) li.classList.add('active');
 
-        if (item.thumbnail) {
+        if (showThumbnails && item.thumbnail) {
           const img = document.createElement('img');
           img.src = item.thumbnail;
           li.appendChild(img);
@@ -243,6 +265,17 @@
     document.getElementById('refreshBtn').addEventListener('click', () => {
       loadPlaylistFromServer(true);
     });
+
+    // Thumbnail toggle
+    const toggleThumbsEl = document.getElementById('toggleThumbs');
+    toggleThumbsEl.addEventListener('change', (e) => {
+      showThumbnails = e.target.checked;
+      document.body.classList.toggle('no-thumbs', !showThumbnails);
+      renderTrackList();
+    });
+
+    // Ensure initial body class matches initial checkbox state
+    document.body.classList.toggle('no-thumbs', !toggleThumbsEl.checked);
   </script>
 </body>
 </html>
