@@ -5,13 +5,13 @@
   <title>YouTube Playlist Audio Player</title>
   <style>
     body {
-      font-family: system-ui, sans-serif;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       margin: 0;
       display: flex;
       height: 100vh;
     }
     #sidebar {
-      width: 320px;
+      width: 340px;
       border-right: 1px solid #ccc;
       padding: 1rem;
       box-sizing: border-box;
@@ -60,12 +60,21 @@
       width: 320px;
       height: 200px; /* min size per YouTube docs */
     }
+    .track-number {
+      width: 3em;
+      text-align: right;
+      font-size: 0.8rem;
+      opacity: 0.7;
+      flex-shrink: 0;
+      font-family: "SF Mono", ui-monospace, Menlo, Monaco, Consolas,
+        "Liberation Mono", "Courier New", monospace;
+    }
     .title {
       font-size: 0.9rem;
       line-height: 1.2;
       flex: 1;
-      /* default: allow wrapping when thumbnails are shown */
-      white-space: normal;
+      text-transform: lowercase; /* display as lowercase */
+      white-space: normal;       /* allow wrapping when thumbs shown */
     }
 
     /* --- Compact mode when thumbnails are hidden --- */
@@ -81,21 +90,71 @@
       overflow: hidden;
       text-overflow: ellipsis;
     }
+
+    .field-label {
+      font-size: 0.8rem;
+      margin-top: 0.5rem;
+      display: block;
+    }
+
+    .filter-wrapper {
+      position: relative;
+      margin-top: 0.25rem;
+    }
+
+    #filterInput {
+      width: 100%;
+      padding-right: 1.5rem; /* space for clear button */
+      box-sizing: border-box;
+    }
+
+    #clearFilterBtn {
+      position: absolute;
+      right: 0.3rem;
+      top: 50%;
+      transform: translateY(-50%);
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      font-size: 0.9rem;
+      padding: 0;
+      line-height: 1;
+      opacity: 0.5;
+    }
+
+    .filter-wrapper:not(.has-value) #clearFilterBtn {
+      display: none;
+    }
   </style>
 </head>
 <body>
   <div id="sidebar">
     <h2>Playlist</h2>
     <form id="playlistForm">
-      <input
-        id="playlistInput"
-        type="text"
-        placeholder="Playlist URL or ID"
-        style="width: 100%;"
-      />
+      <label class="field-label">
+        Playlist URL or ID
+        <input
+          id="playlistInput"
+          type="text"
+          placeholder="Playlist URL or ID"
+          style="width: 100%;"
+        />
+      </label>
+
+      <label class="field-label">
+        Filter tracks
+        <div class="filter-wrapper" id="filterWrapper">
+          <input
+            id="filterInput"
+            type="text"
+            placeholder="Type to filter…"
+          />
+          <button type="button" id="clearFilterBtn" aria-label="Clear filter">×</button>
+        </div>
+      </label>
+
       <div style="margin-top: 0.5rem;">
         <button type="submit">Load</button>
-        <button id="refreshBtn" type="button" style="margin-left: 0.5rem;">Refresh</button>
       </div>
       <label style="display: block; margin-top: 0.5rem; font-size: 0.8rem;">
         <input type="checkbox" id="toggleThumbs" checked />
@@ -129,6 +188,58 @@
     let isPlaying = false;
     let showThumbnails = true;
 
+    let filterText = '';
+    let filteredIndices = [];
+
+    const STORAGE_KEY = 'ytAudioPlayer.settings';
+    let settings = loadSettings();
+
+    // ----- Local storage helpers -----
+    function loadSettings() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        return raw ? JSON.parse(raw) : {};
+      } catch (e) {
+        console.warn('Failed to load settings:', e);
+        return {};
+      }
+    }
+
+    function saveSettings(patch) {
+      settings = Object.assign({}, settings, patch);
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+      } catch (e) {
+        console.warn('Failed to save settings:', e);
+      }
+    }
+
+    // ----- DOM elements -----
+    const playlistInput = document.getElementById('playlistInput');
+    const filterInputEl = document.getElementById('filterInput');
+    const filterWrapper = document.getElementById('filterWrapper');
+    const clearFilterBtn = document.getElementById('clearFilterBtn');
+    const toggleThumbsEl = document.getElementById('toggleThumbs');
+
+    // Initialize inputs from settings *before* player is ready
+    if (settings.playlistId) {
+      playlistInput.value = settings.playlistId;
+    }
+    if (typeof settings.showThumbnails === 'boolean') {
+      showThumbnails = settings.showThumbnails;
+      toggleThumbsEl.checked = showThumbnails;
+    } else {
+      showThumbnails = toggleThumbsEl.checked;
+    }
+
+    if (typeof settings.filterText === 'string') {
+      filterText = settings.filterText;
+      filterInputEl.value = filterText;
+    }
+
+    document.body.classList.toggle('no-thumbs', !showThumbnails);
+    updateFilterWrapperClass();
+
     // Called by YouTube IFrame API when ready
     function onYouTubeIframeAPIReady() {
       player = new YT.Player('player', {
@@ -147,7 +258,16 @@
     }
 
     function onPlayerReady() {
-      // no-op initially
+      // Auto-load playlist if we have one saved
+      const storedPlaylistId = settings.playlistId;
+      if (storedPlaylistId) {
+        loadPlaylistFromServer(false);
+      } else {
+        computeFilteredIndices();
+        renderTrackList();
+        updateNowPlaying();
+        updatePlayPauseButton();
+      }
     }
 
     function onPlayerStateChange(event) {
@@ -166,12 +286,32 @@
       document.getElementById('playPauseBtn').textContent = isPlaying ? 'Pause' : 'Play';
     }
 
+    function computeFilteredIndices() {
+      filteredIndices = [];
+      const f = (filterText || '').trim().toLowerCase();
+      playlistItems.forEach((item, idx) => {
+        if (!f || item.title.toLowerCase().includes(f)) {
+          filteredIndices.push(idx);
+        }
+      });
+    }
+
     function renderTrackList() {
       const ul = document.getElementById('trackList');
       ul.innerHTML = '';
-      playlistItems.forEach((item, idx) => {
+
+      const hasFilter = (filterText || '').trim().length > 0;
+      const indices = hasFilter ? filteredIndices : playlistItems.map((_, i) => i);
+
+      indices.forEach((realIdx, displayIdx) => {
+        const item = playlistItems[realIdx];
         const li = document.createElement('li');
-        if (idx === currentIndex) li.classList.add('active');
+        if (realIdx === currentIndex) li.classList.add('active');
+
+        const numSpan = document.createElement('span');
+        numSpan.className = 'track-number';
+        numSpan.textContent = (displayIdx + 1) + '.';
+        li.appendChild(numSpan);
 
         if (showThumbnails && item.thumbnail) {
           const img = document.createElement('img');
@@ -185,11 +325,22 @@
         li.appendChild(span);
 
         li.addEventListener('click', () => {
-          playIndex(idx);
+          playIndex(realIdx);
         });
 
         ul.appendChild(li);
       });
+
+      // After rendering, ensure active track is visible (for reloads)
+      scrollActiveIntoView();
+    }
+
+    function scrollActiveIntoView() {
+      const ul = document.getElementById('trackList');
+      const active = ul.querySelector('li.active');
+      if (active) {
+        active.scrollIntoView({ block: 'center', behavior: 'auto' });
+      }
     }
 
     function updateNowPlaying() {
@@ -204,11 +355,13 @@
     function playIndex(idx) {
       if (!player || !playlistItems[idx]) return;
       currentIndex = idx;
-      player.loadVideoById(playlistItems[idx].videoId);
+      const videoId = playlistItems[currentIndex].videoId;
+      player.loadVideoById(videoId);
       isPlaying = true;
       updateNowPlaying();
       renderTrackList();
       updatePlayPauseButton();
+      saveSettings({ currentVideoId: videoId });
     }
 
     function playNext() {
@@ -233,7 +386,7 @@
     document.getElementById('prevBtn').addEventListener('click', playPrev);
 
     async function loadPlaylistFromServer(forceRefresh = false) {
-      const input = document.getElementById('playlistInput').value.trim();
+      const input = playlistInput.value.trim();
       if (!input) return;
 
       const url =
@@ -248,13 +401,30 @@
       }
       const data = await resp.json();
       playlistItems = data.items || [];
-      currentIndex = playlistItems.length ? 0 : -1;
+
+      // Try to restore currentIndex from stored videoId
+      const storedVideoId = settings.currentVideoId;
+      let idxFromStorage = -1;
+      if (storedVideoId) {
+        idxFromStorage = playlistItems.findIndex((it) => it.videoId === storedVideoId);
+      }
+      if (idxFromStorage >= 0) {
+        currentIndex = idxFromStorage;
+      } else {
+        currentIndex = playlistItems.length ? 0 : -1;
+      }
+
+      // Apply filter from UI/settings
+      filterText = filterInputEl.value || '';
+      computeFilteredIndices();
       renderTrackList();
       updateNowPlaying();
+      updatePlayPauseButton();
 
-      if (currentIndex >= 0 && player) {
-        playIndex(currentIndex);
-      }
+      // Remember playlist id
+      saveSettings({ playlistId: input });
+
+      // Don't auto-play; user decides
     }
 
     document.getElementById('playlistForm').addEventListener('submit', (e) => {
@@ -262,20 +432,40 @@
       loadPlaylistFromServer(false);
     });
 
-    document.getElementById('refreshBtn').addEventListener('click', () => {
-      loadPlaylistFromServer(true);
-    });
-
     // Thumbnail toggle
-    const toggleThumbsEl = document.getElementById('toggleThumbs');
     toggleThumbsEl.addEventListener('change', (e) => {
       showThumbnails = e.target.checked;
       document.body.classList.toggle('no-thumbs', !showThumbnails);
       renderTrackList();
+      saveSettings({ showThumbnails });
     });
 
-    // Ensure initial body class matches initial checkbox state
-    document.body.classList.toggle('no-thumbs', !toggleThumbsEl.checked);
+    // Filter input: substring search applied on each keystroke, and remembered
+    filterInputEl.addEventListener('input', () => {
+      filterText = filterInputEl.value || '';
+      updateFilterWrapperClass();
+      computeFilteredIndices();
+      renderTrackList();
+      saveSettings({ filterText });
+    });
+
+    function updateFilterWrapperClass() {
+      if ((filterInputEl.value || '').length > 0) {
+        filterWrapper.classList.add('has-value');
+      } else {
+        filterWrapper.classList.remove('has-value');
+      }
+    }
+
+    // Clear filter button
+    clearFilterBtn.addEventListener('click', () => {
+      filterInputEl.value = '';
+      filterText = '';
+      updateFilterWrapperClass();
+      computeFilteredIndices();
+      renderTrackList();
+      saveSettings({ filterText: '' });
+    });
   </script>
 </body>
 </html>
