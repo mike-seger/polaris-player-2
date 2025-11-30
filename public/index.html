@@ -1,2 +1,248 @@
 <!doctype html>
-<html><body>YouTube audio player placeholder</body></html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>YouTube Playlist Audio Player</title>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      margin: 0;
+      display: flex;
+      height: 100vh;
+    }
+    #sidebar {
+      width: 320px;
+      border-right: 1px solid #ccc;
+      padding: 1rem;
+      box-sizing: border-box;
+      overflow-y: auto;
+    }
+    #main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    #controls {
+      padding: 1rem;
+      border-bottom: 1px solid #ccc;
+    }
+    #trackList {
+      list-style: none;
+      padding: 0;
+      margin: 1rem 0 0;
+    }
+    #trackList li {
+      padding: 0.3rem 0.5rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    #trackList li:hover {
+      background: #f2f2f2;
+    }
+    #trackList li.active {
+      background: #e0e7ff;
+    }
+    #trackList img {
+      width: 60px;
+      height: auto;
+      flex-shrink: 0;
+    }
+    #player-container {
+      padding: 1rem;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex: 1;
+    }
+    #player {
+      width: 320px;
+      height: 200px; /* min size per YouTube docs */
+    }
+    .title {
+      font-size: 0.9rem;
+      line-height: 1.2;
+    }
+  </style>
+</head>
+<body>
+  <div id="sidebar">
+    <h2>Playlist</h2>
+    <form id="playlistForm">
+      <input
+        id="playlistInput"
+        type="text"
+        placeholder="Playlist URL or ID"
+        style="width: 100%;"
+      />
+      <div style="margin-top: 0.5rem;">
+        <button type="submit">Load</button>
+        <button id="refreshBtn" type="button" style="margin-left: 0.5rem;">Refresh</button>
+      </div>
+    </form>
+    <ul id="trackList"></ul>
+  </div>
+
+  <div id="main">
+    <div id="controls">
+      <strong id="nowPlaying">Now playing: –</strong>
+      <div style="margin-top: 0.5rem;">
+        <button id="prevBtn">Prev</button>
+        <button id="playPauseBtn">Play</button>
+        <button id="nextBtn">Next</button>
+      </div>
+    </div>
+    <div id="player-container">
+      <div id="player"></div>
+    </div>
+  </div>
+
+  <!-- IFrame Player API -->
+  <script src="https://www.youtube.com/iframe_api"></script>
+
+  <script>
+    let player;
+    let playlistItems = [];
+    let currentIndex = -1;
+    let isPlaying = false;
+
+    // Called by YouTube IFrame API when ready
+    function onYouTubeIframeAPIReady() {
+      player = new YT.Player('player', {
+        height: '200',
+        width: '320',
+        videoId: '',
+        playerVars: {
+          autoplay: 0,
+          controls: 1
+        },
+        events: {
+          onReady: onPlayerReady,
+          onStateChange: onPlayerStateChange
+        }
+      });
+    }
+
+    function onPlayerReady() {
+      // no-op initially
+    }
+
+    function onPlayerStateChange(event) {
+      if (event.data === YT.PlayerState.ENDED) {
+        playNext();
+      } else if (event.data === YT.PlayerState.PLAYING) {
+        isPlaying = true;
+        updatePlayPauseButton();
+      } else if (event.data === YT.PlayerState.PAUSED) {
+        isPlaying = false;
+        updatePlayPauseButton();
+      }
+    }
+
+    function updatePlayPauseButton() {
+      document.getElementById('playPauseBtn').textContent = isPlaying ? 'Pause' : 'Play';
+    }
+
+    function renderTrackList() {
+      const ul = document.getElementById('trackList');
+      ul.innerHTML = '';
+      playlistItems.forEach((item, idx) => {
+        const li = document.createElement('li');
+        if (idx === currentIndex) li.classList.add('active');
+
+        if (item.thumbnail) {
+          const img = document.createElement('img');
+          img.src = item.thumbnail;
+          li.appendChild(img);
+        }
+
+        const span = document.createElement('span');
+        span.className = 'title';
+        span.textContent = item.title;
+        li.appendChild(span);
+
+        li.addEventListener('click', () => {
+          playIndex(idx);
+        });
+
+        ul.appendChild(li);
+      });
+    }
+
+    function updateNowPlaying() {
+      const el = document.getElementById('nowPlaying');
+      if (currentIndex < 0 || !playlistItems[currentIndex]) {
+        el.textContent = 'Now playing: –';
+      } else {
+        el.textContent = 'Now playing: ' + playlistItems[currentIndex].title;
+      }
+    }
+
+    function playIndex(idx) {
+      if (!player || !playlistItems[idx]) return;
+      currentIndex = idx;
+      player.loadVideoById(playlistItems[idx].videoId);
+      isPlaying = true;
+      updateNowPlaying();
+      renderTrackList();
+      updatePlayPauseButton();
+    }
+
+    function playNext() {
+      if (currentIndex + 1 < playlistItems.length) {
+        playIndex(currentIndex + 1);
+      }
+    }
+
+    function playPrev() {
+      if (currentIndex > 0) {
+        playIndex(currentIndex - 1);
+      }
+    }
+
+    document.getElementById('playPauseBtn').addEventListener('click', () => {
+      if (!player) return;
+      if (isPlaying) player.pauseVideo();
+      else player.playVideo();
+    });
+
+    document.getElementById('nextBtn').addEventListener('click', playNext);
+    document.getElementById('prevBtn').addEventListener('click', playPrev);
+
+    async function loadPlaylistFromServer(forceRefresh = false) {
+      const input = document.getElementById('playlistInput').value.trim();
+      if (!input) return;
+
+      const url =
+        '/api/playlist?playlistId=' +
+        encodeURIComponent(input) +
+        (forceRefresh ? '&forceRefresh=1' : '');
+
+      const resp = await fetch(url);
+      if (!resp.ok) {
+        alert('Failed to load playlist');
+        return;
+      }
+      const data = await resp.json();
+      playlistItems = data.items || [];
+      currentIndex = playlistItems.length ? 0 : -1;
+      renderTrackList();
+      updateNowPlaying();
+
+      if (currentIndex >= 0 && player) {
+        playIndex(currentIndex);
+      }
+    }
+
+    document.getElementById('playlistForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      loadPlaylistFromServer(false);
+    });
+
+    document.getElementById('refreshBtn').addEventListener('click', () => {
+      loadPlaylistFromServer(true);
+    });
+  </script>
+</body>
+</html>
