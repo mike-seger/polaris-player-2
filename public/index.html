@@ -16,7 +16,11 @@
       font-style: normal;
       font-weight: normal;
       font-display: swap;
-      src: url('data:font/otf;base64,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') format('opentype');
+      src: 
+        url('./player.woff2') format('woff2')
+        ,url('./player.woff')  format('woff')
+        ,url('./player.otf')  format('opentype')
+        ;
     }
 
     .icon {
@@ -40,8 +44,8 @@
     .icon.inactive { display: none; }
     .icon.play:before { content: "\e037"; }         /* play_arrow */
     .icon.pause:before { content: "\e034"; }        /* pause */
-    .icon.prev:before { content: "\e044"; }         /* skip_previous */
-    .icon.next:before { content: "\e045"; }         /* skip_next */
+    .icon.next:before { content: "\e044"; }         /* skip_next */
+    .icon.prev:before { content: "\e045"; }         /* skip_previous */
     .icon.search:before { content: "\e8b6"; }       /* search */
     /* you can add volume icons later if desired */
 
@@ -348,6 +352,7 @@
       height: 200px;
     }
   </style>
+  <script src="https://unpkg.com/opentype.js@latest/dist/opentype.min.js"></script>
 </head>
 <body>
   <div id="sidebar">
@@ -404,7 +409,7 @@
 
     <!-- Bottom track controls -->
     <div id="trackControls">
-      <span id="nowPlaying">Now playing: –</span>
+      <span id="nowPlaying"></span>
       <div id="trackControls-top">
         <div id="trackControls-buttons">
           <button id="prevBtn" type="button" aria-label="Previous track">
@@ -416,6 +421,7 @@
           <button id="nextBtn" type="button" aria-label="Next track">
             <span class="icon next" aria-hidden="true"></span>
           </button>
+          <button id="debugBtn" type="button" aria-label="Debug font">D</button>
         </div>
       </div>
       <div id="progressWrapper">
@@ -619,9 +625,9 @@
     function updateNowPlaying() {
       const el = document.getElementById('nowPlaying');
       if (currentIndex < 0 || !playlistItems[currentIndex]) {
-        el.textContent = 'Now playing: –';
+        el.textContent = '–';
       } else {
-        el.textContent = 'Now playing: ' + playlistItems[currentIndex].title;
+        el.textContent = playlistItems[currentIndex].title;
       }
     }
 
@@ -818,5 +824,6 @@
       player.seekTo(newTime, true);
     });
   </script>
+  <script src="./debug.js"></script>
 </body>
 </html>
