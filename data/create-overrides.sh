@@ -1,12 +1,16 @@
+cd "$(dirname "$0")"
+
 jq --rawfile vids videoIds.txt '
-  # split raw text into array of IDs
+  # Convert videoIds.txt into array of IDs
   ($vids | split("\n") | map(select(length > 0))) as $ids
   |
   {
-    overrides: [
-      .[] .items[]
-      | select(.videoId as $v | $ids | index($v))
-      | { videoId, title }
-    ]
+    overrides:
+      (
+        reduce
+          ( .[] .items[] | select(.videoId as $v | $ids | index($v)) )
+        as $item
+        ({}; .[$item.videoId] = { title: $item.title })
+      )
   }
-' title-overrides.json > filtered-title-overrides.json
+' title-overrides.json > overrides-by-id.json
