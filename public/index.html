@@ -10,10 +10,12 @@
       display: flex;
       height: 100vh;
     }
+
+    /* Sidebar / main layout */
     #sidebar {
       width: 340px;
       border-right: 1px solid #ccc;
-      padding: 1rem;
+      padding: 0.5rem;
       box-sizing: border-box;
       overflow-y: auto;
     }
@@ -22,21 +24,136 @@
       display: flex;
       flex-direction: column;
     }
-    #controls {
-      padding: 1rem;
-      border-bottom: 1px solid #ccc;
+
+    /* Playlist controls (sticky, compact, collapsible) */
+    #playlistControls {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: #fff;
+      padding-bottom: 0.3rem;
+      border-bottom: 1px solid #ddd;
     }
+
+    .pc-header {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 0.25rem;
+      margin-bottom: 0.3rem;
+    }
+
+    #pcToggle {
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      font-size: 0.85rem;
+      padding: 0.1rem 0.3rem;
+      line-height: 1;
+      transform-origin: center;
+      transition: transform 0.15s;
+    }
+
+    #playlistControls.collapsed #pcToggle {
+      transform: rotate(-90deg);
+    }
+
+    .pc-body {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    #playlistControls.collapsed .pc-body {
+      display: none;
+    }
+
+    #playlistForm {
+      margin: 0;
+    }
+
+    .pc-row {
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+
+    .pc-label {
+      font-size: 0.75rem;
+      opacity: 0.7;
+      flex-shrink: 0;
+      width: 1.6rem; /* align vertically and keep short */
+      text-align: right;
+    }
+
+    .pc-input-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+      flex: 1;
+    }
+
+    #playlistInput,
+    #filterInput {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 0.25rem 0.4rem;
+      font-size: 0.8rem;
+    }
+
+    #loadBtn {
+      padding: 0.25rem 0.5rem;
+      font-size: 0.8rem;
+      white-space: nowrap;
+    }
+
+    .filter-wrapper {
+      position: relative;
+      flex: 1;
+    }
+
+    #filterInput {
+      padding-right: 1.2rem; /* space for clear button */
+    }
+
+    #clearFilterBtn {
+      position: absolute;
+      right: 0.2rem;
+      top: 50%;
+      transform: translateY(-50%);
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      font-size: 0.8rem;
+      padding: 0;
+      line-height: 1;
+      opacity: 0.5;
+    }
+
+    .filter-wrapper:not(.has-value) #clearFilterBtn {
+      display: none;
+    }
+
+    .pc-thumbs-row {
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+      font-size: 0.75rem;
+      margin-top: 0.1rem;
+    }
+
+    /* Track list */
     #trackList {
       list-style: none;
       padding: 0;
-      margin: 1rem 0 0;
+      margin: 0.4rem 0 0;
     }
     #trackList li {
-      padding: 0.3rem 0.5rem;
+      padding: 0.25rem 0.35rem;
       cursor: pointer;
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: 0.4rem;
     }
     #trackList li:hover {
       background: #f2f2f2;
@@ -49,17 +166,21 @@
       height: auto;
       flex-shrink: 0;
     }
-    #player-container {
-      padding: 1rem;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      flex: 1;
+
+    /* Compact mode when thumbnails are hidden */
+    body.no-thumbs #trackList img {
+      display: none;
     }
-    #player {
-      width: 320px;
-      height: 200px; /* min size per YouTube docs */
+    body.no-thumbs #trackList li {
+      padding: 0.15rem 0.25rem;
+      gap: 0.25rem;
     }
+    body.no-thumbs .title {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
     .track-number {
       width: 3em;
       text-align: right;
@@ -77,102 +198,159 @@
       white-space: normal;       /* allow wrapping when thumbs shown */
     }
 
-    /* --- Compact mode when thumbnails are hidden --- */
-    body.no-thumbs #trackList img {
-      display: none;
+    /* Main player controls */
+    #controls {
+      padding: 0.75rem 1rem 0.75rem 1rem;
+      border-bottom: 1px solid #ccc;
     }
-    body.no-thumbs #trackList li {
-      padding: 0.15rem 0.35rem;
-      gap: 0.25rem;
-    }
-    body.no-thumbs .title {
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .field-label {
-      font-size: 0.8rem;
-      margin-top: 0.5rem;
-      display: block;
-    }
-
-    .filter-wrapper {
-      position: relative;
-      margin-top: 0.25rem;
-    }
-
-    #filterInput {
-      width: 100%;
-      padding-right: 1.5rem; /* space for clear button */
-      box-sizing: border-box;
-    }
-
-    #clearFilterBtn {
-      position: absolute;
-      right: 0.3rem;
-      top: 50%;
-      transform: translateY(-50%);
-      border: none;
-      background: transparent;
-      cursor: pointer;
+    #controls strong {
       font-size: 0.9rem;
-      padding: 0;
-      line-height: 1;
-      opacity: 0.5;
+    }
+    #controls > div:first-of-type + div {
+      margin-top: 0.3rem;
+    }
+    #controls button {
+      font-size: 0.8rem;
+      padding: 0.25rem 0.6rem;
     }
 
-    .filter-wrapper:not(.has-value) #clearFilterBtn {
-      display: none;
+    #player-container {
+      padding: 0.75rem 1rem;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex: 1;
+    }
+    #player {
+      width: 320px;
+      height: 200px; /* min size per YouTube docs */
+    }
+
+    /* Custom progress slider */
+    #progressWrapper {
+      margin-top: 0.4rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    #progressRange {
+      flex: 1;
+      appearance: none;
+      height: 6px;
+      border-radius: 999px;
+      background: #e0e0e0;
+      outline: none;
+      padding: 0;
+      margin: 0;
+    }
+    #progressRange::-webkit-slider-thumb {
+      appearance: none;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #cc0000;
+      cursor: pointer;
+      margin-top: -3px; /* centers thumb vertically */
+    }
+    #progressRange::-moz-range-thumb {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #cc0000;
+      cursor: pointer;
+      border: none;
+    }
+    #progressRange::-webkit-slider-runnable-track {
+      height: 6px;
+      border-radius: 999px;
+      background: #e0e0e0;
+    }
+    #progressRange::-moz-range-track {
+      height: 6px;
+      border-radius: 999px;
+      background: #e0e0e0;
+    }
+
+    #timeLabel {
+      font-size: 0.75rem;
+      opacity: 0.8;
+      min-width: 80px;
+      text-align: right;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+        "Liberation Mono", "Courier New", monospace;
     }
   </style>
 </head>
 <body>
   <div id="sidebar">
-    <h2>Playlist</h2>
-    <form id="playlistForm">
-      <label class="field-label">
-        Playlist URL or ID
-        <input
-          id="playlistInput"
-          type="text"
-          placeholder="Playlist URL or ID"
-          style="width: 100%;"
-        />
-      </label>
-
-      <label class="field-label">
-        Filter tracks
-        <div class="filter-wrapper" id="filterWrapper">
-          <input
-            id="filterInput"
-            type="text"
-            placeholder="Type to filter…"
-          />
-          <button type="button" id="clearFilterBtn" aria-label="Clear filter">×</button>
-        </div>
-      </label>
-
-      <div style="margin-top: 0.5rem;">
-        <button type="submit">Load</button>
+    <div id="playlistControls">
+      <div class="pc-header">
+        <button type="button" id="pcToggle" aria-label="Toggle playlist controls">▾</button>
       </div>
-      <label style="display: block; margin-top: 0.5rem; font-size: 0.8rem;">
-        <input type="checkbox" id="toggleThumbs" checked />
-        Show thumbnails
-      </label>
-    </form>
+      <div class="pc-body">
+        <form id="playlistForm">
+          <!-- ID / URL row -->
+          <div class="pc-row">
+            <span class="pc-label">ID</span>
+            <div class="pc-input-wrapper">
+              <input
+                id="playlistInput"
+                type="text"
+                placeholder="Playlist URL or ID"
+              />
+              <button id="loadBtn" type="submit">Load</button>
+            </div>
+          </div>
+
+          <!-- Filter row -->
+          <div class="pc-row">
+            <span class="pc-label" title="Filter">⏵</span>
+            <div class="pc-input-wrapper">
+              <div class="filter-wrapper" id="filterWrapper">
+                <input
+                  id="filterInput"
+                  type="text"
+                  placeholder="Filter tracks…"
+                />
+                <button type="button" id="clearFilterBtn" aria-label="Clear filter">×</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Thumbnails toggle -->
+          <div class="pc-thumbs-row">
+            <input type="checkbox" id="toggleThumbs" checked />
+            <label for="toggleThumbs">Thumbnails</label>
+          </div>
+        </form>
+      </div>
+    </div>
+
     <ul id="trackList"></ul>
   </div>
 
   <div id="main">
     <div id="controls">
       <strong id="nowPlaying">Now playing: –</strong>
-      <div style="margin-top: 0.5rem;">
+      <div>
         <button id="prevBtn">Prev</button>
         <button id="playPauseBtn">Play</button>
         <button id="nextBtn">Next</button>
       </div>
+
+      <!-- Custom progress range + time label -->
+      <div id="progressWrapper">
+        <input
+          id="progressRange"
+          type="range"
+          min="0"
+          max="1000"
+          value="0"
+        />
+        <div id="timeLabel">00:00 / 00:00</div>
+      </div>
     </div>
+
     <div id="player-container">
       <div id="player"></div>
     </div>
@@ -220,6 +398,10 @@
     const filterWrapper = document.getElementById('filterWrapper');
     const clearFilterBtn = document.getElementById('clearFilterBtn');
     const toggleThumbsEl = document.getElementById('toggleThumbs');
+    const progressRange = document.getElementById('progressRange');
+    const timeLabel = document.getElementById('timeLabel');
+    const playlistControls = document.getElementById('playlistControls');
+    const pcToggle = document.getElementById('pcToggle');
 
     // Initialize inputs from settings *before* player is ready
     if (settings.playlistId) {
@@ -240,6 +422,11 @@
     document.body.classList.toggle('no-thumbs', !showThumbnails);
     updateFilterWrapperClass();
 
+    // Collapsible controls (state not persisted)
+    pcToggle.addEventListener('click', () => {
+      playlistControls.classList.toggle('collapsed');
+    });
+
     // Called by YouTube IFrame API when ready
     function onYouTubeIframeAPIReady() {
       player = new YT.Player('player', {
@@ -248,7 +435,7 @@
         videoId: '',
         playerVars: {
           autoplay: 0,
-          controls: 1
+          controls: 0  // hide YouTube's own controls/progress bar
         },
         events: {
           onReady: onPlayerReady,
@@ -258,6 +445,8 @@
     }
 
     function onPlayerReady() {
+      startProgressTimer();
+
       // Auto-load playlist if we have one saved
       const storedPlaylistId = settings.playlistId;
       if (storedPlaylistId) {
@@ -465,6 +654,94 @@
       computeFilteredIndices();
       renderTrackList();
       saveSettings({ filterText: '' });
+    });
+
+    // ---- Keyboard handling ----
+    function isTextInputFocused() {
+      const ae = document.activeElement;
+      if (!ae) return false;
+      if (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA') return true;
+      if (ae.isContentEditable) return true;
+      return false;
+    }
+
+    document.addEventListener('keydown', (e) => {
+      // Don't hijack arrows when typing in inputs
+      if (isTextInputFocused()) return;
+
+      // Left / right: seek current track -/+ 5 seconds
+      if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+        if (!player || typeof player.getCurrentTime !== 'function' || typeof player.seekTo !== 'function') {
+          return;
+        }
+        const delta = e.key === 'ArrowLeft' ? -5 : 5; // seconds
+        const currentTime = player.getCurrentTime();
+        const newTime = Math.max(0, currentTime + delta);
+        player.seekTo(newTime, true);
+        e.preventDefault();
+        return;
+      }
+
+      // Ctrl/Alt + Up/Down: prev / next track
+      if ((e.key === 'ArrowUp' || e.key === 'ArrowDown') && (e.ctrlKey || e.altKey)) {
+        if (e.key === 'ArrowUp') {
+          playPrev();
+        } else {
+          playNext();
+        }
+        e.preventDefault();
+        return;
+      }
+    });
+
+    // ---- Custom progress slider ----
+    let progressInterval = null;
+
+    function startProgressTimer() {
+      if (progressInterval) return;
+      progressInterval = setInterval(updateProgressBar, 500);
+    }
+
+    function formatTime(seconds) {
+      if (!isFinite(seconds) || seconds < 0) return "00:00";
+      const s = Math.floor(seconds);
+      const m = Math.floor(s / 60);
+      const r = s % 60;
+      const mm = m.toString().padStart(2, '0');
+      const ss = r.toString().padStart(2, '0');
+      return `${mm}:${ss}`;
+    }
+
+    function updateProgressBar() {
+      if (!player || typeof player.getDuration !== 'function' || typeof player.getCurrentTime !== 'function') {
+        progressRange.value = 0;
+        timeLabel.textContent = '00:00 / 00:00';
+        return;
+      }
+
+      const duration = player.getDuration();
+      const current = player.getCurrentTime();
+
+      if (!duration || !isFinite(duration) || duration <= 0) {
+        progressRange.value = 0;
+        timeLabel.textContent = '00:00 / 00:00';
+        return;
+      }
+
+      const frac = Math.max(0, Math.min(1, current / duration));
+      progressRange.value = Math.round(frac * 1000);
+      timeLabel.textContent = `${formatTime(current)} / ${formatTime(duration)}`;
+    }
+
+    progressRange.addEventListener('input', () => {
+      if (!player || typeof player.getDuration !== 'function' || typeof player.seekTo !== 'function') {
+        return;
+      }
+      const duration = player.getDuration();
+      if (!duration || !isFinite(duration) || duration <= 0) return;
+      const frac = Number(progressRange.value) / 1000;
+      const newTime = frac * duration;
+      player.seekTo(newTime, true);
     });
   </script>
 </body>
