@@ -1,4 +1,3 @@
-// server.mjs
 import express from 'express';
 import fetch from 'node-fetch';
 import dotenv from 'dotenv';
@@ -25,6 +24,32 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 const CACHE_DIR = path.join(__dirname, 'cache');
 const CACHE_FILE = path.join(CACHE_DIR, 'playlists.json');
+
+// --- NEW: overrides file + in-memory map ---
+const DATA_DIR = path.join(__dirname, 'data');
+const OVERRIDES_FILE = path.join(DATA_DIR, 'overrides-by-id.json');
+let titleOverrides = {};   // { [videoId]: { title: "...", ... } }
+
+// Load overrides once at startup
+function loadOverrides() {
+  try {
+    if (!fs.existsSync(DATA_DIR)) {
+      titleOverrides = {};
+      return;
+    }
+    if (!fs.existsSync(OVERRIDES_FILE)) {
+      titleOverrides = {};
+      return;
+    }
+    const raw = JSON.parse(fs.readFileSync(OVERRIDES_FILE, 'utf8'));
+    // Expecting { "overrides": { "<videoId>": { "title": "...", ... }, ... } }
+    titleOverrides = raw.overrides || {};
+    console.log(`Loaded ${Object.keys(titleOverrides).length} title overrides`);
+  } catch (e) {
+    console.warn('Failed to load overrides-by-id.json:', e.message);
+    titleOverrides = {};
+  }
+}
 
 let playlistCache = {};
 
@@ -62,6 +87,19 @@ function getCachedPlaylist(id) {
   return e;
 }
 
+// --- NEW: helper to attach userTitle from overrides ---
+function applyTitleOverrides(items) {
+  if (!items || !Array.isArray(items)) return items;
+  return items.map((item) => {
+    const ov = titleOverrides[item.videoId];
+    if (ov && typeof ov.title === 'string' && ov.title.length > 0) {
+      // keep original title, add a userTitle
+      return { ...item, userTitle: ov.title };
+    }
+    return item;
+  });
+}
+
 async function fetchPlaylistFromYouTube(id) {
   const results = [];
   let pageToken = '';
@@ -76,7 +114,7 @@ async function fetchPlaylistFromYouTube(id) {
     const resp = await fetch(`https://www.googleapis.com/youtube/v3/playlistItems?${params}`);
     if (!resp.ok) throw new Error(await resp.text());
     const data = await resp.json();
-    for (const item of data.items || []) {
+    for (const item of (data.items || [])) {
       const vid = item.contentDetails?.videoId;
       const sn = item.snippet || {};
       if (!vid || sn.title === 'Private video' || sn.title === 'Deleted video') continue;
@@ -103,16 +141,32 @@ app.get('/api/playlist', async (req, res) => {
   try {
     if (!force) {
       const c = getCachedPlaylist(id);
-      if (c) return res.json({ playlistId: id, fromCache: true, ...c });
+      if (c) {
+        // ensure any new overrides are visible even on cached entries
+        const withOverrides = {
+          ...c,
+          items: applyTitleOverrides(c.items)
+        };
+        return res.json({ playlistId: id, fromCache: true, ...withOverrides });
+      }
     }
-    const items = await fetchPlaylistFromYouTube(id);
+
+    let items = await fetchPlaylistFromYouTube(id);
+    items = applyTitleOverrides(items);
+
     const entry = { playlistId: id, fetchedAt: new Date().toISOString(), items };
     playlistCache[id] = entry;
     saveCache();
     res.json({ playlistId: id, fromCache: false, ...entry });
   } catch (e) {
     const stale = playlistCache[id];
-    if (stale) return res.json({ playlistId: id, fromCache: true, stale: true, ...stale });
+    if (stale) {
+      const withOverrides = {
+        ...stale,
+        items: applyTitleOverrides(stale.items)
+      };
+      return res.json({ playlistId: id, fromCache: true, stale: true, ...withOverrides });
+    }
     res.status(500).json({ error: e.message });
   }
 });
@@ -121,5 +175,8 @@ app.get('/api/cache-info', (req, res) => {
   res.json(playlistCache);
 });
 
+// load overrides first so cache entries get userTitle baked in on initial fetch
+loadOverrides();
 loadCache();
+
 app.listen(PORT, () => console.log(`Server at http://localhost:${PORT}`));

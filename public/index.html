@@ -601,7 +601,7 @@
 
         const span = document.createElement('span');
         span.className = 'title';
-        span.textContent = item.title;
+        span.textContent = item.userTitle?item.userTitle:item.title;
         li.appendChild(span);
 
         li.addEventListener('click', () => {
