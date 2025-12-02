@@ -14,6 +14,7 @@ U+E05A	replay_30
 U+E057	forward_30
 U+E259	cast
 U+E307	cast_connected
+U+E872	delete
 U+E508	catching_pokemon
 U+E5C9	cancel
 U+E5D0	more_vert
