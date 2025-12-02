@@ -62,25 +62,39 @@ function parseUsedSymbols(raw) {
 function renderGlyphOverlay(glyphs, errorMessage) {
   let overlay = document.getElementById('debugOverlay');
   if (!overlay) {
+    const host = document.getElementById('sidebar') || document.body;
     overlay = document.createElement('div');
     overlay.id = 'debugOverlay';
-    overlay.style.position = 'fixed';
+    overlay.style.position = host === document.body ? 'fixed' : 'absolute';
     overlay.style.inset = '0';
-    overlay.style.background = 'rgba(0, 0, 0, 0.7)';
+    overlay.style.background = 'rgba(0, 0, 0, 0.65)';
     overlay.style.display = 'flex';
     overlay.style.flexDirection = 'column';
     overlay.style.alignItems = 'center';
     overlay.style.justifyContent = 'center';
     overlay.style.zIndex = '9999';
+    overlay.style.padding = host === document.body ? '0' : '0.5rem';
 
     const panel = document.createElement('div');
+    panel.classList.add('debug-overlay-panel');
     panel.style.background = '#161921';
     panel.style.color = '#f5f7fa';
     panel.style.padding = '1rem';
     panel.style.borderRadius = '8px';
-    panel.style.width = 'min(420px, 90vw)';
-    panel.style.maxHeight = '80vh';
-    panel.style.overflow = 'auto';
+    panel.style.display = 'flex';
+    panel.style.flexDirection = 'column';
+    panel.style.gap = '0.75rem';
+    if (host === document.body) {
+      panel.style.width = 'min(420px, 90vw)';
+      panel.style.maxWidth = 'min(420px, 90vw)';
+      panel.style.maxHeight = '80vh';
+    } else {
+      panel.style.width = 'calc(100% - 1.75rem)';
+      panel.style.maxWidth = 'calc(100% - 1.75rem)';
+      panel.style.maxHeight = 'calc(100% - 1.75rem)';
+    }
+    panel.style.overflow = 'hidden';
+    panel.style.boxSizing = 'border-box';
     panel.style.boxShadow = '0 6px 18px rgba(0,0,0,0.35)';
     panel.style.border = '1px solid #2b2f3a';
 
@@ -88,7 +102,7 @@ function renderGlyphOverlay(glyphs, errorMessage) {
     closeBtn.type = 'button';
     closeBtn.textContent = 'Close';
     closeBtn.style.alignSelf = 'flex-end';
-    closeBtn.style.marginBottom = '0.5rem';
+    closeBtn.style.marginBottom = '0.25rem';
     closeBtn.style.background = '#28344d';
     closeBtn.style.color = '#f5f7fa';
     closeBtn.style.border = '1px solid #394150';
@@ -105,11 +119,15 @@ function renderGlyphOverlay(glyphs, errorMessage) {
     list.style.flexDirection = 'column';
     list.style.gap = '0.75rem';
     list.style.color = '#f5f7fa';
+    list.style.flex = '1';
+    list.style.overflowY = 'auto';
+    list.style.paddingRight = '0.25rem';
+    list.classList.add('debug-overlay-scroll');
 
     panel.appendChild(closeBtn);
     panel.appendChild(list);
     overlay.appendChild(panel);
-    document.body.appendChild(overlay);
+    host.appendChild(overlay);
   }
 
   const list = document.getElementById('debugOverlayContent');
