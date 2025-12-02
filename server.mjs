@@ -183,6 +183,7 @@ app.get('/api/playlist', async (req, res) => {
     saveCache();
     res.json({ playlistId: id, fromCache: false, ...entry });
   } catch (e) {
+    console.error(`Failed to fetch playlist ${id}:`, e);
     const stale = playlistCache[id];
     if (stale) {
       const withOverrides = {

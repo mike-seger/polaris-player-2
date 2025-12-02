@@ -73,6 +73,7 @@
     .icon.volume-up:before { content: "\e5d6"; }     /* volume_up */
     .icon.volume-down:before { content: "\e5d7"; }   /* volume_down */
     .icon.cancel:before { content: "\e5c9"; }       /* cancel */
+    .icon.close:before { content: "\e5cd"; }       /* close */
     /* you can add volume icons later if desired */
 
     /* ---- Layout ---- */
@@ -111,6 +112,18 @@
     button:hover,
     button:focus {
       color: var(--color-text);
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
     }
 
     button:focus-visible,
@@ -237,6 +250,85 @@
     #playlistDeleteBtn:disabled {
       opacity: 0.35;
       cursor: not-allowed;
+    }
+
+    .alert-overlay {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(10, 12, 18, 0.72);
+      z-index: 1000;
+      padding: 1rem;
+    }
+
+    .alert-overlay.visible {
+      display: flex;
+    }
+
+    .alert-dialog {
+      background: var(--color-panel);
+      color: var(--color-text);
+      border: 1px solid var(--color-border-strong);
+      border-radius: 8px;
+      box-shadow: 0 18px 48px rgba(0, 0, 0, 0.45);
+      width: min(600px, 90vw);
+      max-height: 80vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .alert-body {
+      padding: 1.25rem 1.25rem 0.5rem;
+      overflow: auto;
+      font-size: 0.85rem;
+    }
+
+    .alert-body pre {
+      margin: 0;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+
+    #alertCloseBtn {
+      align-self: flex-end;
+      margin: 0 1.25rem 1.25rem;
+      padding: 0.35rem 1.25rem;
+      font-size: 0.85rem;
+      border: 1px solid #5b6b85;
+      background: #2f3b52;
+      color: #ffffff;
+      border-radius: 4px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.25rem;
+      line-height: 1;
+      cursor: pointer;
+    }
+
+    .alert-close-text {
+      font-weight: 600;
+      letter-spacing: 0.05em;
+    }
+
+    #alertCloseBtn:hover {
+      background: #3a4966;
+      border-color: #7485a2;
+    }
+
+    #alertCloseBtn:focus-visible {
+      outline: 2px solid #9db1d5;
+      outline-offset: 2px;
+    }
+
+    #alertCloseBtn .icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
     }
 
     #playlistInput,
@@ -781,6 +873,25 @@
     </div>
   </div>
 
+  <div
+    id="alertOverlay"
+    class="alert-overlay"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="alertMessage"
+    aria-hidden="true"
+  >
+    <div class="alert-dialog">
+      <div class="alert-body">
+        <pre id="alertMessage"></pre>
+      </div>
+      <button id="alertCloseBtn" type="button">
+        <span class="icon close" aria-hidden="true"></span>
+        <span class="alert-close-text">OK</span>
+      </button>
+    </div>
+  </div>
+
   <!-- IFrame Player API -->
   <script src="https://www.youtube.com/iframe_api"></script>
 
@@ -856,6 +967,54 @@
     const downloadBtn = document.getElementById('downloadBtn');
     const playlistHistorySelect = document.getElementById('playlistHistorySelect');
     const playlistDeleteBtn = document.getElementById('playlistDeleteBtn');
+    const alertOverlay = document.getElementById('alertOverlay');
+    const alertMessageEl = document.getElementById('alertMessage');
+    const alertCloseBtn = document.getElementById('alertCloseBtn');
+    let lastFocusedElement = null;
+
+    function hideAlert() {
+      if (!alertOverlay) return;
+      alertOverlay.classList.remove('visible');
+      alertOverlay.style.display = '';
+      alertOverlay.setAttribute('aria-hidden', 'true');
+      if (lastFocusedElement && typeof lastFocusedElement.focus === 'function') {
+        lastFocusedElement.focus({ preventScroll: true });
+      }
+      lastFocusedElement = null;
+    }
+
+    function showAlert(message) {
+      if (!alertOverlay || !alertMessageEl || !alertCloseBtn) {
+        window.alert(typeof message === 'string' ? message : JSON.stringify(message, null, 2));
+        return;
+      }
+      const formatted = typeof message === 'string' ? message : JSON.stringify(message, null, 2);
+      alertMessageEl.textContent = formatted;
+      alertMessageEl.scrollTop = 0;
+      lastFocusedElement = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+      alertOverlay.style.display = 'flex';
+      alertOverlay.classList.add('visible');
+      alertOverlay.setAttribute('aria-hidden', 'false');
+      alertCloseBtn.focus({ preventScroll: true });
+    }
+
+    if (alertCloseBtn) {
+      alertCloseBtn.addEventListener('click', hideAlert);
+    }
+
+    if (alertOverlay) {
+      alertOverlay.addEventListener('click', (event) => {
+        if (event.target === alertOverlay) {
+          hideAlert();
+        }
+      });
+    }
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && alertOverlay?.classList.contains('visible')) {
+        hideAlert();
+      }
+    });
 
     function persistPlaylistHistory() {
       settings.playlistHistory = playlistHistory;
@@ -1171,9 +1330,26 @@
 
       const url = `${API_BASE_PATH}/api/playlist?playlistId=${encodeURIComponent(input)}${forceRefresh ? '&forceRefresh=1' : ''}`;
 
-      const resp = await fetch(url);
+      let resp;
+      try {
+        resp = await fetch(url);
+      } catch (networkError) {
+        console.error('Playlist request failed:', networkError);
+        showAlert('Failed to load playlist: network error');
+        return;
+      }
       if (!resp.ok) {
-        alert('Failed to load playlist');
+        let message = 'Failed to load playlist';
+        try {
+          const err = await resp.json();
+          const detail = err?.error || err?.message;
+          if (detail && typeof detail === 'string') {
+            message += `: ${detail}`;
+          }
+        } catch (parseErr) {
+          console.warn('Failed to parse playlist error response:', parseErr);
+        }
+        showAlert(message);
         return;
       }
       const data = await resp.json();
@@ -1214,7 +1390,7 @@
     if (downloadBtn) {
       downloadBtn.addEventListener('click', () => {
         if (!playlistItems || playlistItems.length === 0) {
-          alert('No playlist loaded yet.');
+          showAlert('No playlist loaded yet.');
           return;
         }
 
