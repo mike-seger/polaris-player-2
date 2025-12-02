@@ -15,6 +15,7 @@ U+E057	forward_30
 U+E259	cast
 U+E307	cast_connected
 U+E508	catching_pokemon
+U+E5C9	cancel
 U+E5D0	more_vert
 U+E5D1	unfold_less
 U+E5D2	unfold_more
@@ -25,7 +26,9 @@ U+E8B8	settings_applications
 U+E8D5	info_outline
 U+E8B6	search
 U+E998	connected_tv
-#U+E9B9	lists
+U+E9B9	lists
 U+E9BD	markunread_mailbox
 U+F090	download
 U+F09B	upload
+U+F734	thumbnail_bar
+U+F508	close_small

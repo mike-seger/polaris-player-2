@@ -68,6 +68,9 @@
     .icon.prev:before { content: "\e045"; }         /* skip_previous */
     .icon.search:before { content: "\e8b6"; }       /* search */
     .icon.upload:before { content: "\f09b"; }       /* upload */
+    .icon.volume-up:before { content: "\e5d6"; }     /* volume_up */
+    .icon.volume-down:before { content: "\e5d7"; }   /* volume_down */
+    .icon.cancel:before { content: "\e5c9"; }       /* cancel */
     /* you can add volume icons later if desired */
 
     /* ---- Layout ---- */
@@ -137,36 +140,8 @@
     /* Playlist controls at top */
     #playlistControls {
       flex: 0 0 auto;
-      border-bottom: 1px solid var(--color-border);
-      padding-bottom: 0.25rem;
-      margin-bottom: 0.25rem;
-    }
-
-    .pc-header {
-      display: flex;
-      justify-content: flex-end;
-      align-items: center;
-      margin-bottom: 0.15rem;
-    }
-
-    #pcToggle {
-      border: none;
-      background: transparent;
-      cursor: pointer;
-      font-size: 0.8rem;
-      padding: 0.1rem 0.3rem;
-      line-height: 1;
-      transform-origin: center;
-      transition: transform 0.15s;
-      color: var(--color-text);
-    }
-
-    #pcToggle:hover {
-      color: var(--color-accent);
-    }
-
-    #playlistControls.collapsed #pcToggle {
-      transform: rotate(-90deg);
+      padding-bottom: 0;
+      margin-bottom: 0;
     }
 
     .pc-body {
@@ -260,17 +235,27 @@
 
     #clearFilterBtn {
       position: absolute;
-      right: 0.2rem;
+      right: 0.15rem;
       top: 50%;
       transform: translateY(-50%);
       border: none;
       background: transparent;
       cursor: pointer;
-      font-size: 0.8rem;
       padding: 0;
       line-height: 1;
       opacity: 0.6;
       color: var(--color-text-muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: var(--player-controls-height);
+      height: var(--player-controls-height);
+    }
+
+    #clearFilterBtn .icon {
+      font-size: var(--player-controls-height);
+      color: inherit;
+      line-height: var(--player-controls-height);
     }
 
     #clearFilterBtn:hover {
@@ -290,18 +275,6 @@
       font-size: 1rem;
       opacity: 0.6;
       pointer-events: none;
-      color: var(--color-text-muted);
-    }
-
-    .pc-thumbs-row {
-      display: flex;
-      align-items: center;
-      gap: 0.25rem;
-      font-size: 0.75rem;
-      margin-top: 0.1rem;
-    }
-
-    .pc-thumbs-row label {
       color: var(--color-text-muted);
     }
 
@@ -433,9 +406,8 @@
     /* Track controls at bottom of sidebar */
     #trackControls {
       flex: 0 0 auto;
-      border-bottom: 1px solid var(--color-border);
-      padding: 0.35rem 0.35rem 0.4rem;
-      margin-bottom: 0.25rem;
+      padding: 0.35rem;
+      margin-bottom: 0.2em;
       background: var(--color-panel);
     }
 
@@ -457,6 +429,30 @@
       display: flex;
       align-items: center;
       gap: 0.2rem;
+      width: 100%;
+    }
+
+    .track-controls-group {
+      display: flex;
+      align-items: center;
+      gap: 0.2rem;
+    }
+
+    .track-controls-group.right {
+      margin-left: auto;
+    }
+
+    #thumbToggleBtn span {
+      font-size: 0.7rem;
+      display: inline-block;
+      min-width: 1.2rem;
+      text-align: center;
+      color: var(--color-text);
+      font-weight: 600;
+    }
+
+    #thumbToggleBtn.active span {
+      color: var(--color-accent);
     }
 
     #trackControls-buttons button {
@@ -473,6 +469,9 @@
     }
 
     #trackControls-buttons button:hover {
+      color: var(--color-accent);
+    }
+    #thumbToggleBtn:hover span {
       color: var(--color-accent);
     }
 
@@ -543,19 +542,17 @@
 
     /* Player between control groups */
     #player-container {
-      padding: 0.4rem 0.35rem 0.5rem;
+      padding: 0;
       display: flex;
       justify-content: center;
       align-items: center;
       flex: 0 0 auto;
       background: #0b0d12;
-      border-bottom: 1px solid var(--color-border);
     }
     #player {
       width: 320px;
       height: 200px;
       background: #000;
-      border: 1px solid var(--color-border);
       border-radius: 8px;
     }
   </style>
@@ -565,9 +562,6 @@
   <div id="sidebar">
     <!-- Top playlist controls -->
     <div id="playlistControls" class="collapsed">
-      <div class="pc-header">
-        <button type="button" id="pcToggle" aria-label="Toggle playlist controls">▾</button>
-      </div>
       <div class="pc-body">
         <form id="playlistForm">
           <!-- ID / URL row -->
@@ -594,16 +588,13 @@
                   type="text"
                   aria-label="Filter tracks"
                 />
-                <button type="button" id="clearFilterBtn" aria-label="Clear filter">×</button>
+                <button type="button" id="clearFilterBtn" aria-label="Clear filter">
+                  <span class="icon cancel" aria-hidden="true"></span>
+                </button>
               </div>
             </div>
           </div>
 
-          <!-- Thumbnails toggle -->
-          <div class="pc-thumbs-row">
-            <input type="checkbox" id="toggleThumbs" checked />
-            <label for="toggleThumbs">Thumbnails</label>
-          </div>
         </form>
       </div>
     </div>
@@ -618,16 +609,36 @@
       <span id="nowPlaying"></span>
       <div id="trackControls-top">
         <div id="trackControls-buttons">
-          <button id="prevBtn" type="button" aria-label="Previous track">
-            <span class="icon prev" aria-hidden="true"></span>
-          </button>
-          <button id="playPauseBtn" type="button" aria-label="Play/Pause">
-            <span class="icon play" id="playPauseIcon" aria-hidden="true"></span>
-          </button>
-          <button id="nextBtn" type="button" aria-label="Next track">
-            <span class="icon next" aria-hidden="true"></span>
-          </button>
-          <button id="debugBtn" type="button" aria-label="Debug font">D</button>
+          <div class="track-controls-group">
+            <button id="prevBtn" type="button" aria-label="Previous track">
+              <span class="icon prev" aria-hidden="true"></span>
+            </button>
+            <button id="playPauseBtn" type="button" aria-label="Play/Pause">
+              <span class="icon play" id="playPauseIcon" aria-hidden="true"></span>
+            </button>
+            <button id="nextBtn" type="button" aria-label="Next track">
+              <span class="icon next" aria-hidden="true"></span>
+            </button>
+          </div>
+          <div class="track-controls-group right">
+            <button id="debugBtn" type="button" aria-label="Debug font">D</button>
+            <button
+              id="thumbToggleBtn"
+              type="button"
+              aria-label="Hide thumbnails"
+              aria-pressed="true"
+            >
+              <span id="thumbToggleIcon" aria-hidden="true">T</span>
+            </button>
+            <button
+              id="playlistToggleBtn"
+              type="button"
+              aria-label="Show playlist controls"
+              aria-expanded="false"
+            >
+              <span class="icon volume-up" id="playlistToggleIcon" aria-hidden="true"></span>
+            </button>
+          </div>
         </div>
       </div>
       <div id="progressWrapper">
@@ -689,11 +700,13 @@
     const filterInputEl = document.getElementById('filterInput');
     const filterWrapper = document.getElementById('filterWrapper');
     const clearFilterBtn = document.getElementById('clearFilterBtn');
-    const toggleThumbsEl = document.getElementById('toggleThumbs');
+    const thumbToggleBtn = document.getElementById('thumbToggleBtn');
+    const thumbToggleIcon = document.getElementById('thumbToggleIcon');
     const progressRange = document.getElementById('progressRange');
     const timeLabel = document.getElementById('timeLabel');
     const playlistControls = document.getElementById('playlistControls');
-    const pcToggle = document.getElementById('pcToggle');
+    const playlistToggleBtn = document.getElementById('playlistToggleBtn');
+    const playlistToggleIcon = document.getElementById('playlistToggleIcon');
     const playPauseIcon = document.getElementById('playPauseIcon');
 
     // viewport height adjustments for mobile browsers with dynamic toolbars
@@ -716,9 +729,8 @@
     }
     if (typeof settings.showThumbnails === 'boolean') {
       showThumbnails = settings.showThumbnails;
-      toggleThumbsEl.checked = showThumbnails;
     } else {
-      showThumbnails = toggleThumbsEl.checked;
+      showThumbnails = true;
     }
     if (typeof settings.filterText === 'string') {
       filterText = settings.filterText;
@@ -726,11 +738,39 @@
     }
     document.body.classList.toggle('no-thumbs', !showThumbnails);
     updateFilterWrapperClass();
+    updateThumbToggleState();
+
+    function updatePlaylistToggleState() {
+      if (!playlistControls || !playlistToggleBtn || !playlistToggleIcon) return;
+      const collapsed = playlistControls.classList.contains('collapsed');
+      const label = collapsed ? 'Show playlist controls' : 'Hide playlist controls';
+      playlistToggleBtn.setAttribute('aria-expanded', String(!collapsed));
+      playlistToggleBtn.setAttribute('aria-label', label);
+      playlistToggleBtn.title = label;
+      playlistToggleIcon.className = collapsed ? 'icon volume-down' : 'icon volume-up';
+    }
+
+    function updateThumbToggleState() {
+      if (!thumbToggleBtn || !thumbToggleIcon) return;
+      const label = showThumbnails ? 'Hide thumbnails' : 'Show thumbnails';
+      thumbToggleBtn.setAttribute('aria-pressed', String(showThumbnails));
+      thumbToggleBtn.setAttribute('aria-label', label);
+      thumbToggleBtn.title = label;
+      thumbToggleBtn.classList.toggle('active', showThumbnails);
+      thumbToggleIcon.textContent = 'T';
+    }
 
     // collapsible controls (not persisted)
-    pcToggle.addEventListener('click', () => {
-      playlistControls.classList.toggle('collapsed');
-    });
+    if (playlistToggleBtn) {
+      playlistToggleBtn.addEventListener('click', () => {
+        if (!playlistControls) return;
+        playlistControls.classList.toggle('collapsed');
+        updatePlaylistToggleState();
+      });
+    }
+
+    updatePlaylistToggleState();
+    updateThumbToggleState();
 
     // IFrame API ready
     function onYouTubeIframeAPIReady() {
@@ -922,12 +962,15 @@
     });
 
     // thumbnails toggle
-    toggleThumbsEl.addEventListener('change', (e) => {
-      showThumbnails = e.target.checked;
-      document.body.classList.toggle('no-thumbs', !showThumbnails);
-      renderTrackList();
-      saveSettings({ showThumbnails });
-    });
+    if (thumbToggleBtn) {
+      thumbToggleBtn.addEventListener('click', () => {
+        showThumbnails = !showThumbnails;
+        document.body.classList.toggle('no-thumbs', !showThumbnails);
+        renderTrackList();
+        updateThumbToggleState();
+        saveSettings({ showThumbnails });
+      });
+    }
 
     // filter
     filterInputEl.addEventListener('input', () => {
