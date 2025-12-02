@@ -74,19 +74,29 @@ function renderGlyphOverlay(glyphs, errorMessage) {
     overlay.style.zIndex = '9999';
 
     const panel = document.createElement('div');
-    panel.style.background = '#fff';
+    panel.style.background = '#161921';
+    panel.style.color = '#f5f7fa';
     panel.style.padding = '1rem';
     panel.style.borderRadius = '8px';
     panel.style.width = 'min(420px, 90vw)';
     panel.style.maxHeight = '80vh';
     panel.style.overflow = 'auto';
-    panel.style.boxShadow = '0 6px 18px rgba(0,0,0,0.25)';
+    panel.style.boxShadow = '0 6px 18px rgba(0,0,0,0.35)';
+    panel.style.border = '1px solid #2b2f3a';
 
     const closeBtn = document.createElement('button');
     closeBtn.type = 'button';
     closeBtn.textContent = 'Close';
     closeBtn.style.alignSelf = 'flex-end';
     closeBtn.style.marginBottom = '0.5rem';
+    closeBtn.style.background = '#28344d';
+    closeBtn.style.color = '#f5f7fa';
+    closeBtn.style.border = '1px solid #394150';
+    closeBtn.style.borderRadius = '4px';
+    closeBtn.style.padding = '0.35rem 0.85rem';
+    closeBtn.style.cursor = 'pointer';
+    closeBtn.style.fontSize = '0.85rem';
+    closeBtn.style.fontWeight = '600';
     closeBtn.addEventListener('click', () => overlay.remove());
 
     const list = document.createElement('div');
@@ -94,6 +104,7 @@ function renderGlyphOverlay(glyphs, errorMessage) {
     list.style.display = 'flex';
     list.style.flexDirection = 'column';
     list.style.gap = '0.75rem';
+    list.style.color = '#f5f7fa';
 
     panel.appendChild(closeBtn);
     panel.appendChild(list);
@@ -123,6 +134,8 @@ function renderGlyphOverlay(glyphs, errorMessage) {
     row.style.display = 'flex';
     row.style.alignItems = 'center';
     row.style.gap = '0.75rem';
+    row.style.padding = '0.5rem 0.25rem';
+    row.style.borderBottom = '1px solid #2b2f3a';
 
     const iconPreview = document.createElement('span');
     iconPreview.setAttribute('aria-hidden', 'true');
@@ -130,13 +143,22 @@ function renderGlyphOverlay(glyphs, errorMessage) {
     iconPreview.style.fontSize = '32px';
     iconPreview.style.lineHeight = '1';
     iconPreview.style.minWidth = '32px';
+    iconPreview.style.color = '#f5f7fa';
     iconPreview.textContent = char;
 
       const codeLine = document.createElement('code');
       codeLine.textContent = name ? `U+${hex} ${name}` : `U+${hex}`;
+    codeLine.style.fontFamily = 'SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace';
+    codeLine.style.fontSize = '0.85rem';
+    codeLine.style.color = '#a8b3c7';
 
     row.appendChild(iconPreview);
     row.appendChild(codeLine);
     list.appendChild(row);
   });
+
+  const rows = list.querySelectorAll('div');
+  if (rows.length) {
+    rows[rows.length - 1].style.borderBottom = 'none';
+  }
 }
