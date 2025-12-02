@@ -69,6 +69,7 @@
     .icon.search:before { content: "\e8b6"; }       /* search */
     .icon.upload:before { content: "\f09b"; }       /* upload */
     .icon.download:before { content: "\f090"; }     /* download */
+    .icon.delete:before { content: "\e872"; }       /* delete */
     .icon.volume-up:before { content: "\e5d6"; }     /* volume_up */
     .icon.volume-down:before { content: "\e5d7"; }   /* volume_down */
     .icon.cancel:before { content: "\e5c9"; }       /* cancel */
@@ -180,6 +181,64 @@
       flex: 1;
     }
 
+    .playlist-history-wrapper {
+      flex: 1 1 auto;
+      width: 100%;
+    }
+
+    .playlist-select-group {
+      display: flex;
+      align-items: center;
+      gap: 0.2rem;
+      flex: 1 1 100%;
+      min-width: 0;
+    }
+
+    #playlistHistorySelect {
+      flex: 1 1 100%;
+      min-width: 0;
+      padding: 0.25rem 0.4rem;
+      font-size: 0.8rem;
+      background: #202633;
+      border: 1px solid var(--color-border);
+      color: var(--color-text);
+      border-radius: 4px;
+    }
+
+    #playlistHistorySelect:focus {
+      border-color: var(--color-border-strong);
+      outline: none;
+    }
+
+    #playlistHistorySelect:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    #playlistDeleteBtn {
+      padding: 0;
+      width: var(--player-controls-height);
+      height: var(--player-controls-height);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      color: var(--color-text-muted);
+      border-radius: 4px;
+      font-size: 0;
+    }
+
+    #playlistDeleteBtn:hover:not(:disabled) {
+      color: var(--color-text);
+    }
+
+    #playlistDeleteBtn:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+
     #playlistInput,
     #filterInput {
       width: 100%;
@@ -190,6 +249,12 @@
       border: 1px solid var(--color-border);
       color: var(--color-text);
       border-radius: 4px;
+    }
+
+    #playlistInput {
+      flex: 1 1 auto;
+      min-width: 0;
+      width: auto;
     }
 
     #playlistInput:focus,
@@ -596,6 +661,28 @@
     <div id="playlistControls" class="collapsed">
       <div class="pc-body">
         <form id="playlistForm">
+          <!-- Saved playlist selector row -->
+          <div class="pc-row">
+            <div class="pc-input-wrapper playlist-history-wrapper">
+              <div class="playlist-select-group">
+                <select
+                  id="playlistHistorySelect"
+                  aria-label="Saved playlists"
+                  disabled
+                ></select>
+                <button
+                  type="button"
+                  id="playlistDeleteBtn"
+                  aria-label="Remove saved playlist"
+                  title="Remove saved playlist"
+                  disabled
+                >
+                  <span class="icon delete" aria-hidden="true"></span>
+                </button>
+              </div>
+            </div>
+          </div>
+
           <!-- ID / URL row -->
           <div class="pc-row">
             <div class="pc-input-wrapper">
@@ -710,6 +797,11 @@
     const STORAGE_KEY = 'ytAudioPlayer.settings';
     let settings = loadSettings();
     const API_BASE_PATH = window.location.hostname.endsWith('polaris.net128.com') ? '/u2b' : '';
+    const PLAYLIST_HISTORY_LIMIT = 25;
+    const rawPlaylistHistory = Array.isArray(settings.playlistHistory) ? settings.playlistHistory : [];
+    let playlistHistory = normalizePlaylistHistory(rawPlaylistHistory);
+    settings.playlistHistory = playlistHistory;
+    const historyNeedsPersist = JSON.stringify(rawPlaylistHistory) !== JSON.stringify(playlistHistory);
 
     // settings helpers
     function loadSettings() {
@@ -730,6 +822,24 @@
       }
     }
 
+    function normalizePlaylistHistory(raw) {
+      if (!Array.isArray(raw)) return [];
+      const cleaned = [];
+      const seen = new Set();
+      for (const entry of raw) {
+        if (!entry || typeof entry !== 'object') continue;
+        const id = typeof entry.id === 'string' ? entry.id.trim() : '';
+        if (!id || seen.has(id)) continue;
+        seen.add(id);
+        const title = typeof entry.title === 'string' && entry.title.trim().length
+          ? entry.title.trim()
+          : id;
+        cleaned.push({ id, title });
+        if (cleaned.length >= PLAYLIST_HISTORY_LIMIT) break;
+      }
+      return cleaned;
+    }
+
     // DOM refs
     const playlistInput = document.getElementById('playlistInput');
     const filterInputEl = document.getElementById('filterInput');
@@ -744,6 +854,103 @@
     const playlistToggleIcon = document.getElementById('playlistToggleIcon');
     const playPauseIcon = document.getElementById('playPauseIcon');
     const downloadBtn = document.getElementById('downloadBtn');
+    const playlistHistorySelect = document.getElementById('playlistHistorySelect');
+    const playlistDeleteBtn = document.getElementById('playlistDeleteBtn');
+
+    function persistPlaylistHistory() {
+      settings.playlistHistory = playlistHistory;
+      saveSettings({ playlistHistory });
+    }
+
+    function updatePlaylistDeleteButtonState() {
+      if (!playlistDeleteBtn) return;
+      const hasEntries = playlistHistory && playlistHistory.length > 0;
+      const selectedValue = playlistHistorySelect && playlistHistorySelect.value;
+      const selectDisabled = playlistHistorySelect ? playlistHistorySelect.disabled : true;
+      playlistDeleteBtn.disabled = selectDisabled || !hasEntries || !selectedValue;
+    }
+
+    function updatePlaylistHistorySelect(selectedId = '') {
+      if (!playlistHistorySelect) return;
+
+      playlistHistorySelect.innerHTML = '';
+
+      if (!playlistHistory.length) {
+        playlistHistorySelect.disabled = true;
+        playlistHistorySelect.title = 'No saved playlists yet';
+        playlistHistorySelect.value = '';
+        updatePlaylistDeleteButtonState();
+        return;
+      }
+
+      playlistHistorySelect.disabled = false;
+      playlistHistorySelect.title = 'Select a saved playlist';
+
+      let matched = false;
+      playlistHistory.forEach((entry) => {
+        const option = document.createElement('option');
+        option.value = entry.id;
+        option.textContent = entry.title;
+        if (entry.id === selectedId) {
+          option.selected = true;
+          matched = true;
+        }
+        playlistHistorySelect.appendChild(option);
+      });
+
+      if (!matched) {
+        playlistHistorySelect.selectedIndex = 0;
+      }
+
+      updatePlaylistDeleteButtonState();
+    }
+
+    function addPlaylistToHistory(id, title) {
+      if (!id) return;
+      const cleanedTitle = title && title.trim().length ? title.trim() : id;
+
+      const existing = playlistHistory.filter((entry) => entry.id !== id);
+      playlistHistory = [{ id, title: cleanedTitle }, ...existing];
+      if (playlistHistory.length > PLAYLIST_HISTORY_LIMIT) {
+        playlistHistory = playlistHistory.slice(0, PLAYLIST_HISTORY_LIMIT);
+      }
+      persistPlaylistHistory();
+      updatePlaylistHistorySelect(id);
+    }
+
+    function removePlaylistFromHistory(id) {
+      if (!id) return;
+      playlistHistory = playlistHistory.filter((entry) => entry.id !== id);
+      persistPlaylistHistory();
+      updatePlaylistHistorySelect('');
+    }
+
+    if (historyNeedsPersist) {
+      persistPlaylistHistory();
+    }
+
+    updatePlaylistHistorySelect(settings.playlistId || '');
+
+    if (playlistHistorySelect) {
+      playlistHistorySelect.addEventListener('change', () => {
+        updatePlaylistDeleteButtonState();
+        const selectedId = playlistHistorySelect.value;
+        if (!selectedId) return;
+        if (playlistInput) {
+          playlistInput.value = selectedId;
+        }
+        saveSettings({ playlistId: selectedId });
+        loadPlaylistFromServer(false);
+      });
+    }
+
+    if (playlistDeleteBtn) {
+      playlistDeleteBtn.addEventListener('click', () => {
+        const selectedId = playlistHistorySelect ? playlistHistorySelect.value : '';
+        if (!selectedId) return;
+        removePlaylistFromHistory(selectedId);
+      });
+    }
 
     // viewport height adjustments for mobile browsers with dynamic toolbars
     function updateViewportHeight() {
@@ -971,6 +1178,17 @@
       }
       const data = await resp.json();
       playlistItems = data.items || [];
+      const resolvedPlaylistId =
+        (typeof data.playlistId === 'string' && data.playlistId.trim().length
+          ? data.playlistId.trim()
+          : input) || input;
+      if (playlistInput) {
+        playlistInput.value = resolvedPlaylistId;
+      }
+      const playlistTitle =
+        (typeof data.title === 'string' && data.title.trim().length ? data.title.trim() : '') ||
+        (typeof data.playlistTitle === 'string' && data.playlistTitle.trim().length ? data.playlistTitle.trim() : '') ||
+        resolvedPlaylistId;
 
       const storedVideoId = settings.currentVideoId;
       let idxFromStorage = -1;
@@ -989,7 +1207,8 @@
       updateNowPlaying();
       updatePlayPauseButton();
 
-      saveSettings({ playlistId: input });
+      saveSettings({ playlistId: resolvedPlaylistId });
+      addPlaylistToHistory(resolvedPlaylistId, playlistTitle);
     }
 
     if (downloadBtn) {

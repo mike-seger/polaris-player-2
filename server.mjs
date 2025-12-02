@@ -101,6 +101,7 @@ function applyTitleOverrides(items) {
 }
 
 async function fetchPlaylistFromYouTube(id) {
+  const titlePromise = fetchPlaylistTitle(id).catch(() => '');
   const results = [];
   let pageToken = '';
   do {
@@ -128,7 +129,25 @@ async function fetchPlaylistFromYouTube(id) {
     }
     pageToken = data.nextPageToken || '';
   } while (pageToken);
-  return results;
+  const playlistTitle = await titlePromise;
+  return { title: playlistTitle, items: results };
+}
+
+async function fetchPlaylistTitle(id) {
+  const params = new URLSearchParams({
+    part: 'snippet',
+    id,
+    maxResults: '1',
+    key: YT_API_KEY
+  });
+
+  const resp = await fetch(`https://www.googleapis.com/youtube/v3/playlists?${params}`);
+  if (!resp.ok) {
+    throw new Error(`Failed to fetch playlist metadata: ${resp.status}`);
+  }
+  const data = await resp.json();
+  const title = data.items?.[0]?.snippet?.title;
+  return title || '';
 }
 
 app.get('/api/playlist', async (req, res) => {
@@ -151,10 +170,15 @@ app.get('/api/playlist', async (req, res) => {
       }
     }
 
-    let items = await fetchPlaylistFromYouTube(id);
-    items = applyTitleOverrides(items);
+    const playlistData = await fetchPlaylistFromYouTube(id);
+    const items = applyTitleOverrides(playlistData.items);
 
-    const entry = { playlistId: id, fetchedAt: new Date().toISOString(), items };
+    const entry = {
+      playlistId: id,
+      fetchedAt: new Date().toISOString(),
+      title: playlistData.title,
+      items
+    };
     playlistCache[id] = entry;
     saveCache();
     res.json({ playlistId: id, fromCache: false, ...entry });
