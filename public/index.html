@@ -68,6 +68,7 @@
     .icon.prev:before { content: "\e045"; }         /* skip_previous */
     .icon.search:before { content: "\e8b6"; }       /* search */
     .icon.upload:before { content: "\f09b"; }       /* upload */
+    .icon.download:before { content: "\f090"; }     /* download */
     .icon.volume-up:before { content: "\e5d6"; }     /* volume_up */
     .icon.volume-down:before { content: "\e5d7"; }   /* volume_down */
     .icon.cancel:before { content: "\e5c9"; }       /* cancel */
@@ -220,6 +221,30 @@
     }
 
     #loadBtn:hover {
+      color: var(--color-text);
+    }
+
+    #loadBtn .icon,
+    #downloadBtn .icon {
+      font-size: var(--player-controls-height);
+      line-height: var(--player-controls-height);
+    }
+
+    #downloadBtn {
+      padding: 0;
+      width: calc(var(--player-controls-height) + 6px);
+      height: calc(var(--player-controls-height) + 6px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      color: var(--color-text);
+      border-radius: 4px;
+    }
+
+    #downloadBtn:hover {
       color: var(--color-text);
     }
 
@@ -575,6 +600,9 @@
               <button id="loadBtn" type="submit" aria-label="Load playlist">
                 <span class="icon upload" aria-hidden="true"></span>
               </button>
+              <button id="downloadBtn" type="button" aria-label="Download playlist">
+                <span class="icon download" aria-hidden="true"></span>
+              </button>
             </div>
           </div>
 
@@ -708,6 +736,7 @@
     const playlistToggleBtn = document.getElementById('playlistToggleBtn');
     const playlistToggleIcon = document.getElementById('playlistToggleIcon');
     const playPauseIcon = document.getElementById('playPauseIcon');
+    const downloadBtn = document.getElementById('downloadBtn');
 
     // viewport height adjustments for mobile browsers with dynamic toolbars
     function updateViewportHeight() {
@@ -954,6 +983,35 @@
       updatePlayPauseButton();
 
       saveSettings({ playlistId: input });
+    }
+
+    if (downloadBtn) {
+      downloadBtn.addEventListener('click', () => {
+        if (!playlistItems || playlistItems.length === 0) {
+          alert('No playlist loaded yet.');
+          return;
+        }
+
+        const payload = {
+          playlistId: settings.playlistId || playlistInput.value.trim(),
+          fetchedAt: new Date().toISOString(),
+          itemCount: playlistItems.length,
+          items: playlistItems
+        };
+
+        const blob = new Blob([JSON.stringify(payload, null, 2)], {
+          type: 'application/json'
+        });
+        const url = URL.createObjectURL(blob);
+
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'yt-playlist.json';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      });
     }
 
     document.getElementById('playlistForm').addEventListener('submit', (e) => {
