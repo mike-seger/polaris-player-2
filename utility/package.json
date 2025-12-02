@@ -1,0 +1,16 @@
+{
+  "name": "polaris-player-utility",
+  "version": "1.0.0",
+  "description": "CLI helpers for Polaris Player",
+  "type": "module",
+  "bin": {
+    "yt-playlist-import": "create-playlist.mjs"
+  },
+  "scripts": {
+    "start": "node create-playlist.mjs"
+  },
+  "dependencies": {
+    "googleapis": "^131.0.0",
+    "yargs": "^17.7.2"
+  }
+}

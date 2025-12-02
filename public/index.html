@@ -208,8 +208,8 @@
 
     #loadBtn {
       padding: 0;
-      width: calc(var(--player-controls-height) + 6px);
-      height: calc(var(--player-controls-height) + 6px);
+      width: var(--player-controls-height);
+      height: var(--player-controls-height);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -218,6 +218,7 @@
       cursor: pointer;
       color: var(--color-text);
       border-radius: 4px;
+      font-size: 0;
     }
 
     #loadBtn:hover {
@@ -226,14 +227,19 @@
 
     #loadBtn .icon,
     #downloadBtn .icon {
-      font-size: var(--player-controls-height);
-      line-height: var(--player-controls-height);
+      width: var(--player-controls-height);
+      height: var(--player-controls-height);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: calc(var(--player-controls-height) - 6px);
+      line-height: 1;
     }
 
     #downloadBtn {
       padding: 0;
-      width: calc(var(--player-controls-height) + 6px);
-      height: calc(var(--player-controls-height) + 6px);
+      width: var(--player-controls-height);
+      height: var(--player-controls-height);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -242,6 +248,7 @@
       cursor: pointer;
       color: var(--color-text);
       border-radius: 4px;
+      font-size: 0;
     }
 
     #downloadBtn:hover {
@@ -996,7 +1003,10 @@
           playlistId: settings.playlistId || playlistInput.value.trim(),
           fetchedAt: new Date().toISOString(),
           itemCount: playlistItems.length,
-          items: playlistItems
+          items: playlistItems.map((item) => ({
+            ...item,
+            userTitle: item.userTitle ?? item.title
+          }))
         };
 
         const blob = new Blob([JSON.stringify(payload, null, 2)], {
