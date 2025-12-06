@@ -7,7 +7,8 @@
       onDownload = () => undefined,
       showAlert = (message) => window.alert(message),
       getPlaylistHistory = () => [],
-      removePlaylist = () => {}
+      removePlaylist = () => {},
+      getUserSettings = () => ({})
     } = options;
 
     const state = {
@@ -23,7 +24,11 @@
       bodyOverflow: '',
       historyList: null,
       overlayHost: document.body,
-      panelBoundsHandler: null
+      panelBoundsHandler: null,
+      sections: new Map(),
+      openSectionId: null,
+      settingsStatus: null,
+      settingsPre: null
     };
 
     function applyPanelBounds(panelArg, overlayArg) {
@@ -35,12 +40,12 @@
       const trackList = document.getElementById('trackListContainer');
       const sidebarRect = sidebar instanceof HTMLElement ? sidebar.getBoundingClientRect() : null;
       const trackRect = trackList instanceof HTMLElement ? trackList.getBoundingClientRect() : null;
+      const viewportHeight = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight || 0;
 
       if (sidebarRect || trackRect) {
         const topOffset = Math.max(sidebarRect ? sidebarRect.top : trackRect.top, 0);
         const targetLeft = trackRect ? trackRect.left : (sidebarRect ? sidebarRect.left : 0);
         const targetWidth = trackRect ? trackRect.width : (sidebarRect ? sidebarRect.width : undefined);
-
         overlay.style.alignItems = 'flex-start';
         overlay.style.justifyContent = 'flex-start';
         overlay.style.padding = '0';
@@ -49,7 +54,7 @@
         panel.style.top = `${topOffset}px`;
         panel.style.left = `${targetLeft}px`;
         panel.style.right = 'auto';
-        panel.style.bottom = 'auto';
+        panel.style.bottom = '0';
         if (typeof targetWidth === 'number') {
           panel.style.width = `${targetWidth}px`;
           panel.style.maxWidth = `${targetWidth}px`;
@@ -57,11 +62,14 @@
         }
         panel.style.transform = 'none';
         panel.style.margin = '0';
-        panel.style.alignSelf = 'flex-start';
+        panel.style.alignSelf = 'stretch';
+        const availableHeight = Math.max(viewportHeight - topOffset, 0);
+        panel.style.height = `${availableHeight}px`;
+        panel.style.maxHeight = `${availableHeight}px`;
       } else {
-        overlay.style.alignItems = 'center';
+        overlay.style.alignItems = 'flex-start';
         overlay.style.justifyContent = 'center';
-        overlay.style.padding = '1rem';
+        overlay.style.padding = '0';
         panel.style.position = 'relative';
         panel.style.top = 'auto';
         panel.style.left = 'auto';
@@ -71,9 +79,176 @@
         panel.style.maxWidth = 'min(560px, 92vw)';
         panel.style.minWidth = '0';
         panel.style.transform = 'none';
-        panel.style.margin = '0 auto';
-        panel.style.alignSelf = 'center';
+        panel.style.margin = '1rem auto';
+        panel.style.alignSelf = 'stretch';
+        let fallbackHeight = Math.max(viewportHeight - 32, 0);
+        if (fallbackHeight <= 0) {
+          fallbackHeight = Math.max(viewportHeight, 0);
+        }
+        panel.style.height = `${fallbackHeight}px`;
+        panel.style.maxHeight = `${fallbackHeight}px`;
       }
+    }
+
+    async function refreshSettingsView() {
+      if (!state.settingsStatus) return;
+      const statusEl = state.settingsStatus;
+      const preEl = state.settingsPre;
+
+      statusEl.textContent = 'Loading stored settings…';
+      statusEl.style.color = '#a8b3c7';
+      if (preEl) {
+        preEl.textContent = '';
+        preEl.style.display = 'none';
+      }
+
+      try {
+        const raw = await Promise.resolve().then(() => getUserSettings());
+        const data = raw === null || raw === undefined ? {} : raw;
+        const isObject = typeof data === 'object' && !Array.isArray(data);
+        const hasEntries = isObject ? Object.keys(data).length > 0 : Boolean(data);
+
+        if (!hasEntries) {
+          statusEl.textContent = 'No stored settings found.';
+          statusEl.style.color = '#6c7488';
+          return;
+        }
+
+        if (preEl) {
+          const text = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
+          preEl.textContent = text;
+          preEl.style.display = 'block';
+        }
+        statusEl.textContent = 'Stored in localStorage as ytAudioPlayer.settings.';
+        statusEl.style.color = '#a8b3c7';
+      } catch (error) {
+        const message = error && error.message ? error.message : 'Failed to load settings.';
+        statusEl.textContent = message;
+        statusEl.style.color = '#ff8080';
+        if (preEl) {
+          preEl.textContent = '';
+          preEl.style.display = 'none';
+        }
+      }
+    }
+
+    function setSectionOpen(sectionId) {
+      if (!state.sections || state.sections.size === 0) return;
+      if (!sectionId || !state.sections.has(sectionId)) {
+        const first = state.sections.keys().next();
+        if (first.done) return;
+        sectionId = first.value;
+      }
+
+      state.sections.forEach((section, id) => {
+        const isOpen = id === sectionId;
+        section.header.setAttribute('aria-expanded', String(isOpen));
+        section.icon.className = `icon ${isOpen ? 'unfold-less' : 'unfold-more'}`;
+        section.wrapper.style.flex = isOpen ? '1 1 auto' : '0 0 auto';
+        section.wrapper.style.borderColor = isOpen ? '#394150' : '#2b2f3a';
+        section.wrapper.style.minHeight = isOpen ? '0' : 'auto';
+        section.content.style.display = isOpen ? 'flex' : 'none';
+        section.content.style.flex = isOpen ? '1 1 auto' : '0 0 auto';
+        section.content.style.overflowY = isOpen ? 'auto' : 'hidden';
+        section.content.style.minHeight = isOpen ? '0' : 'auto';
+      });
+
+      state.openSectionId = sectionId;
+
+      if (sectionId === 'playlist' && state.input && state.overlay && state.overlay.style.display !== 'none') {
+        state.input.focus({ preventScroll: true });
+      }
+      if (sectionId === 'settings') {
+        refreshSettingsView();
+      }
+    }
+
+    function createAccordionSection({ id, title }) {
+      const wrapper = document.createElement('section');
+      wrapper.dataset.sectionId = id;
+      wrapper.style.border = '1px solid #2b2f3a';
+      wrapper.style.borderRadius = '6px';
+      wrapper.style.background = '#11141c';
+      wrapper.style.overflow = 'hidden';
+      wrapper.style.display = 'flex';
+      wrapper.style.flexDirection = 'column';
+      wrapper.style.minHeight = '0';
+      wrapper.style.margin = '0';
+
+      const headerBtn = document.createElement('button');
+      headerBtn.type = 'button';
+      headerBtn.style.display = 'flex';
+      headerBtn.style.alignItems = 'center';
+      headerBtn.style.justifyContent = 'flex-start';
+      headerBtn.style.padding = '0.55rem 0';
+      headerBtn.style.background = 'transparent';
+      headerBtn.style.border = 'none';
+      headerBtn.style.color = '#f5f7fa';
+      headerBtn.style.fontSize = '0.82rem';
+      headerBtn.style.fontWeight = '600';
+      headerBtn.style.letterSpacing = '0.06em';
+      headerBtn.style.textTransform = 'uppercase';
+      headerBtn.style.cursor = 'pointer';
+      headerBtn.style.width = '100%';
+      headerBtn.style.gap = '0.6rem';
+
+      const iconSpan = document.createElement('span');
+      iconSpan.className = 'icon unfold-more';
+      iconSpan.setAttribute('aria-hidden', 'true');
+      iconSpan.style.fontSize = '1rem';
+
+      const labelSpan = document.createElement('span');
+      labelSpan.textContent = title;
+      labelSpan.style.pointerEvents = 'none';
+      labelSpan.style.flex = '1 1 auto';
+      labelSpan.style.textAlign = 'left';
+
+      headerBtn.appendChild(iconSpan);
+      headerBtn.appendChild(labelSpan);
+
+      const content = document.createElement('div');
+      content.classList.add('playlist-overlay-content');
+      content.style.display = 'none';
+      content.style.flexDirection = 'column';
+      content.style.gap = '0.75rem';
+      content.style.padding = '0';
+      content.style.borderTop = '1px solid #2b2f3a';
+      content.style.background = '#141926';
+      content.style.flex = '1 1 auto';
+      content.style.minHeight = '0';
+      content.style.overflowY = 'hidden';
+      content.id = `playlistIOSection-${id}`;
+
+      const titleSpan = document.createElement('span');
+      headerBtn.appendChild(document.createElement('span')); // placeholder to maintain structure
+      headerBtn.removeChild(headerBtn.lastChild);
+      headerBtn.appendChild(titleSpan);
+
+      headerBtn.setAttribute('aria-controls', content.id);
+      headerBtn.setAttribute('aria-expanded', 'false');
+
+      headerBtn.addEventListener('click', () => {
+        if (state.openSectionId === id) return;
+        setSectionOpen(id);
+      });
+
+      wrapper.appendChild(headerBtn);
+      wrapper.appendChild(content);
+
+      state.sections.set(id, {
+        id,
+        wrapper,
+        header: headerBtn,
+        icon: iconSpan,
+        content
+      });
+
+      return {
+        wrapper,
+        header: headerBtn,
+        icon: iconSpan,
+        content
+      };
     }
 
     function ensureOverlay() {
@@ -123,28 +298,31 @@
       const panel = document.createElement('div');
       panel.style.background = '#161921';
       panel.style.color = '#f5f7fa';
-      panel.style.padding = '1.25rem';
+      panel.style.padding = '0';
       panel.style.border = '1px solid #2b2f3a';
       panel.style.borderRadius = '8px';
       panel.style.boxShadow = '0 18px 48px rgba(0, 0, 0, 0.45)';
       panel.style.maxWidth = '100%';
-      panel.style.maxHeight = '80vh';
+      panel.style.height = '100vh';
+      panel.style.maxHeight = '100vh';
       panel.style.display = 'flex';
       panel.style.flexDirection = 'column';
-      panel.style.gap = '1rem';
+      panel.style.gap = 0;
       panel.style.boxSizing = 'border-box';
-      panel.style.overflowY = 'auto';
-      panel.style.alignSelf = 'flex-start';
+      panel.style.overflow = 'hidden';
+      panel.style.alignSelf = 'stretch';
+      panel.style.minHeight = '0';
 
       const header = document.createElement('div');
       header.style.display = 'flex';
       header.style.alignItems = 'center';
       header.style.justifyContent = 'space-between';
       header.style.gap = '0.75rem';
+      header.style.padding = '1rem0 0';
 
       const title = document.createElement('h2');
       title.id = 'playlistIOOverlayTitle';
-      title.textContent = 'Playlist Management';
+      title.textContent = 'Settings';
       title.style.margin = '0';
       title.style.fontSize = '1rem';
 
@@ -154,7 +332,7 @@
       header.appendChild(closeBtn);
 
       const description = document.createElement('p');
-      description.textContent = 'Enter a YouTube playlist URL or ID to load it, or download the current playlist snapshot.';
+      description.textContent = 'Enter a YouTube playlist URL or ID to load, refresh server data, or download the current snapshot.';
       description.style.margin = '0';
       description.style.fontSize = '0.8rem';
       description.style.color = '#a8b3c7';
@@ -164,6 +342,8 @@
       form.style.display = 'flex';
       form.style.flexDirection = 'column';
       form.style.gap = '0.75rem';
+      form.style.flex = '1 1 auto';
+      form.style.minHeight = '0';
       form.addEventListener('submit', (event) => {
         event.preventDefault();
         triggerLoad(false);
@@ -306,9 +486,62 @@
       form.appendChild(historyWrapper);
       form.appendChild(statusEl);
 
+      state.sections = new Map();
+
+      const accordion = document.createElement('div');
+      accordion.style.display = 'flex';
+      accordion.style.flexDirection = 'column';
+      accordion.style.gap = '0.2rem';
+      accordion.style.flex = '1 1 auto';
+      accordion.style.minHeight = '0';
+      accordion.style.padding = '1rem 0 '
+      const playlistSection = createAccordionSection({ id: 'playlist', title: 'Playlist Managment' });
+      playlistSection.content.appendChild(description);
+      playlistSection.content.appendChild(form);
+
+      const settingsSection = createAccordionSection({ id: 'settings', title: 'View Stored Settings' });
+      settingsSection.content.style.gap = '0.6rem';
+      settingsSection.content.style.flex = '1 1 auto';
+      settingsSection.content.style.minHeight = '0';
+
+      const settingsIntro = document.createElement('p');
+      settingsIntro.textContent = 'Inspect the current ytAudioPlayer.settings snapshot saved in localStorage.';
+      settingsIntro.style.margin = '0';
+      settingsIntro.style.fontSize = '0.8rem';
+      settingsIntro.style.color = '#a8b3c7';
+      settingsIntro.style.lineHeight = '1.5';
+
+      const settingsStatus = document.createElement('div');
+      settingsStatus.style.fontSize = '0.75rem';
+      settingsStatus.style.color = '#a8b3c7';
+      settingsStatus.textContent = 'Loading stored settings…';
+
+      const settingsPre = document.createElement('pre');
+      settingsPre.style.margin = '0';
+      settingsPre.style.padding = '0.5rem 0.6rem';
+      settingsPre.style.background = '#11141c';
+      settingsPre.style.border = '1px solid #2b2f3a';
+      settingsPre.style.borderRadius = '4px';
+      settingsPre.style.fontSize = '0.8rem';
+      settingsPre.style.lineHeight = '1.4';
+      settingsPre.style.color = '#f5f7fa';
+      settingsPre.style.whiteSpace = 'pre-wrap';
+      settingsPre.style.wordBreak = 'break-word';
+      settingsPre.style.display = 'none';
+      settingsPre.style.flex = '1 1 auto';
+      settingsPre.style.minHeight = '0';
+      settingsPre.style.maxHeight = '100%';
+      settingsPre.style.overflow = 'auto';
+
+      settingsSection.content.appendChild(settingsIntro);
+      settingsSection.content.appendChild(settingsStatus);
+      settingsSection.content.appendChild(settingsPre);
+
+      accordion.appendChild(playlistSection.wrapper);
+      accordion.appendChild(settingsSection.wrapper);
+
       panel.appendChild(header);
-      panel.appendChild(description);
-      panel.appendChild(form);
+      panel.appendChild(accordion);
       overlay.appendChild(panel);
 
       overlay.addEventListener('click', (event) => {
@@ -341,8 +574,12 @@
       state.downloadBtn = downloadBtn;
       state.statusEl = statusEl;
       state.historyList = historyList;
+      state.settingsStatus = settingsStatus;
+      state.settingsPre = settingsPre;
 
+      setSectionOpen('playlist');
       refreshHistoryList();
+      refreshSettingsView();
 
       return overlay;
     }
@@ -431,11 +668,15 @@
         document.body.style.overflow = 'hidden';
       }
       updateStatus('');
+      setSectionOpen('playlist');
       refreshHistoryList();
+      refreshSettingsView();
       if (state.input) {
         const currentId = typeof getPlaylistId === 'function' ? getPlaylistId() : '';
         state.input.value = currentId || '';
-        state.input.focus({ preventScroll: true });
+        if (state.openSectionId === 'playlist') {
+          state.input.focus({ preventScroll: true });
+        }
       }
     }
 
@@ -751,7 +992,8 @@
     return {
       open: openOverlay,
       close: closeOverlay,
-      updateStatus
+      updateStatus,
+      refreshSettings: refreshSettingsView
     };
   }
 

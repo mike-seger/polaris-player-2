@@ -82,9 +82,39 @@
     .icon.cancel { --icon-glyph: "cancel"; }
     .icon.settings { --icon-glyph: "settings"; }
     .icon.refresh { --icon-glyph: "refresh"; }
+    .icon.unfold-more { --icon-glyph: "unfold_more"; }
+    .icon.unfold-less { --icon-glyph: "unfold_less"; }
     .icon.circle { --icon-glyph: "circle"; }
     .icon.check-circle { --icon-glyph: "check_circle"; }
     .icon.close { --icon-glyph: "close"; }
+
+    #playlistIOOverlay section {
+      margin: 0;
+    }
+
+    .playlist-overlay-content {
+      scrollbar-width: thin;
+      scrollbar-color: #394150 #11141c;
+    }
+
+    .playlist-overlay-content::-webkit-scrollbar {
+      width: 10px;
+    }
+
+    .playlist-overlay-content::-webkit-scrollbar-track {
+      background: #11141c;
+      border-radius: 999px;
+    }
+
+    .playlist-overlay-content::-webkit-scrollbar-thumb {
+      background: #394150;
+      border-radius: 999px;
+      border: 2px solid #11141c;
+    }
+
+    .playlist-overlay-content::-webkit-scrollbar-thumb:hover {
+      background: #4a566e;
+    }
 
     /* ---- Layout ---- */
     html {
@@ -354,45 +384,6 @@
       color: var(--color-text-muted);
     }
 
-    .debug-select-wrapper {
-      position: relative;
-      flex: 1;
-      min-width: 0;
-      display: flex;
-    }
-
-    .debug-select-wrapper::after {
-      content: '';
-      position: absolute;
-      top: 50%;
-      right: 0.9rem;
-      width: 0;
-      height: 0;
-      border-left: 5px solid transparent;
-      border-right: 5px solid transparent;
-      border-top: 5px solid var(--color-text-muted);
-      transform: translateY(-30%);
-      pointer-events: none;
-    }
-
-    #debugOverlaySelect {
-      width: 100%;
-      -webkit-appearance: none;
-      -moz-appearance: none;
-      appearance: none;
-      background-color: #202633;
-      border: 1px solid #394150;
-      color: #f5f7fa;
-      border-radius: 4px;
-      padding: 0.3rem 1.8rem 0.3rem 0.6rem;
-      font-size: 0.85rem;
-    }
-
-    #debugOverlaySelect:focus {
-      outline: none;
-      border-color: #556384;
-    }
-
     input[type="checkbox"] {
       accent-color: var(--color-accent);
     }
@@ -524,32 +515,6 @@
 
     #trackListContainer::-webkit-scrollbar-thumb:hover {
       background-color: var(--color-hover);
-    }
-
-    #debugOverlay .debug-overlay-scroll {
-      scrollbar-width: thin;
-      scrollbar-color: var(--color-border-strong) rgba(17, 20, 26, 0.9);
-      color-scheme: dark;
-    }
-
-    #debugOverlay .debug-overlay-scroll::-webkit-scrollbar {
-      width: 10px;
-      background-color: #0f1115 !important;
-    }
-
-    #debugOverlay .debug-overlay-scroll::-webkit-scrollbar-track {
-      background: rgba(17, 20, 26, 0.85);
-      border-radius: 999px;
-    }
-
-    #debugOverlay .debug-overlay-scroll::-webkit-scrollbar-thumb {
-      background: linear-gradient(180deg, var(--color-border-strong), var(--color-border));
-      border-radius: 999px;
-      border: 2px solid rgba(17, 20, 26, 0.85);
-    }
-
-    #debugOverlay .debug-overlay-scroll::-webkit-scrollbar-thumb:hover {
-      background: linear-gradient(180deg, var(--color-border-strong), var(--color-hover));
     }
 
     #trackList {
@@ -739,17 +704,6 @@
     }
     #thumbToggleBtn:hover span {
       color: var(--color-accent);
-    }
-
-    #debugBtn {
-      font-size: 0.7rem;
-      color: var(--color-text-muted);
-      border-radius: 4px;
-      border: 1px solid transparent;
-    }
-
-    #debugBtn:hover {
-      color: var(--color-text);
     }
 
     /* progress slider */
@@ -968,7 +922,6 @@
             </button>
           </div>
           <div class="track-controls-group right">
-            <button id="debugBtn" type="button" aria-label="Debug font">D</button>
             <button
               id="thumbToggleBtn"
               type="button"
@@ -1021,7 +974,6 @@
   <script src="https://www.youtube.com/iframe_api"></script>
   <script src="./overlay-shared.js"></script>
   <script src="./playlist-management.js"></script>
-
   <script>
     let player;
     let playlistItems = [];
@@ -1046,6 +998,7 @@
     const initialPlaylistId = (urlParams.get('pl') || '').trim();
 
     // settings helpers
+    let notifySettingsUpdated = () => {};
     function loadSettings() {
       try {
         const raw = localStorage.getItem(STORAGE_KEY);
@@ -1061,6 +1014,11 @@
         localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
       } catch (e) {
         console.warn('Failed to save settings:', e);
+      }
+      try {
+        notifySettingsUpdated();
+      } catch (notifyError) {
+        console.warn('Settings overlay update failed:', notifyError);
       }
     }
 
@@ -1710,6 +1668,13 @@
           getPlaylistId: () => (typeof settings.playlistId === 'string' ? settings.playlistId : ''),
           getPlaylistHistory: () => playlistHistory.slice(),
           removePlaylist: (id) => removePlaylistFromHistory(id),
+          getUserSettings: () => {
+            try {
+              return JSON.parse(JSON.stringify(settings));
+            } catch (error) {
+              return settings;
+            }
+          },
           onLoad: async ({ playlistId, forceRefresh }) => {
             await loadPlaylistFromServer(Boolean(forceRefresh), playlistId);
           },
@@ -1717,6 +1682,16 @@
           showAlert
         })
       : null;
+
+    if (playlistIO && typeof playlistIO.refreshSettings === 'function') {
+      notifySettingsUpdated = () => {
+        try {
+          playlistIO.refreshSettings();
+        } catch (error) {
+          console.warn('Failed to refresh playlist overlay settings view:', error);
+        }
+      };
+    }
 
     document.getElementById('playlistForm').addEventListener('submit', (e) => {
       e.preventDefault();
@@ -1858,6 +1833,5 @@
       player.seekTo(newTime, true);
     });
   </script>
-  <script src="./debug.js"></script>
 </body>
 </html>
