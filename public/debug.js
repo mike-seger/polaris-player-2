@@ -1,5 +1,10 @@
 const USED_SYMBOLS_URL = './used-symbols.txt';
 let cachedSymbols = null;
+let cachedUserSettings = null;
+const AVAILABLE_VIEWS = [
+  { id: 'icons', label: 'Icon Encodings' },
+  { id: 'settings', label: 'User Settings' }
+];
 
 document.addEventListener('DOMContentLoaded', () => {
   const debugBtn = document.getElementById('debugBtn');
@@ -14,13 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    try {
-      const glyphs = await loadUsedSymbols();
-      renderGlyphOverlay(glyphs);
-    } catch (err) {
-      console.error('Failed to load used symbols:', err);
-      renderGlyphOverlay([], err.message || 'Failed to load symbol list.');
-    }
+      await openDebugOverlay();
   });
 });
 
@@ -36,6 +35,19 @@ async function loadUsedSymbols() {
   const parsed = parseUsedSymbols(text);
   cachedSymbols = parsed;
   return parsed;
+}
+
+async function loadUserSettings() {
+  if (cachedUserSettings) return cachedUserSettings;
+  const STORAGE_KEY = 'ytAudioPlayer.settings';
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    cachedUserSettings = raw ? JSON.parse(raw) : {};
+  } catch (error) {
+    console.warn('Failed to read user settings from localStorage:', error);
+    cachedUserSettings = { error: error.message };
+  }
+  return cachedUserSettings;
 }
 
 function parseUsedSymbols(raw) {
@@ -59,7 +71,22 @@ function parseUsedSymbols(raw) {
     .filter(Boolean);
 }
 
-function renderGlyphOverlay(glyphs, errorMessage) {
+async function openDebugOverlay() {
+  try {
+    const [glyphs, userSettings] = await Promise.all([loadUsedSymbols(), loadUserSettings()]);
+      renderDebugOverlay({ view: 'icons', glyphs, userSettings });
+  } catch (error) {
+    console.error('Failed to open debug overlay:', error);
+    renderDebugOverlay({
+      view: 'icons',
+      glyphs: [],
+      userSettings: {},
+      errorMessage: error.message || 'Failed to load debug data.'
+    });
+  }
+}
+
+function renderDebugOverlay({ view, glyphs, userSettings, errorMessage }) {
   let overlay = document.getElementById('debugOverlay');
   if (!overlay) {
     const host = document.getElementById('sidebar') || document.body;
@@ -113,6 +140,36 @@ function renderGlyphOverlay(glyphs, errorMessage) {
     closeBtn.style.fontWeight = '600';
     closeBtn.addEventListener('click', () => overlay.remove());
 
+    const selector = document.createElement('select');
+    selector.id = 'debugOverlaySelect';
+    selector.style.background = '#202633';
+    selector.style.color = '#f5f7fa';
+    selector.style.border = '1px solid #394150';
+    selector.style.borderRadius = '4px';
+    selector.style.padding = '0.3rem 0.6rem';
+    selector.style.fontSize = '0.85rem';
+    selector.style.flex = '1';
+
+    AVAILABLE_VIEWS.forEach(({ id, label }) => {
+      const option = document.createElement('option');
+      option.value = id;
+      option.textContent = label;
+      selector.appendChild(option);
+    });
+
+    selector.addEventListener('change', async (event) => {
+      const selected = event.target.value;
+      await refreshDebugOverlay(selected);
+    });
+
+    const headerRow = document.createElement('div');
+    headerRow.style.display = 'flex';
+    headerRow.style.alignItems = 'center';
+    headerRow.style.justifyContent = 'space-between';
+    headerRow.style.gap = '0.75rem';
+    headerRow.appendChild(selector);
+    headerRow.appendChild(closeBtn);
+
     const list = document.createElement('div');
     list.id = 'debugOverlayContent';
     list.style.display = 'flex';
@@ -124,13 +181,44 @@ function renderGlyphOverlay(glyphs, errorMessage) {
     list.style.paddingRight = '0.25rem';
     list.classList.add('debug-overlay-scroll');
 
-    panel.appendChild(closeBtn);
+    panel.appendChild(headerRow);
     panel.appendChild(list);
     overlay.appendChild(panel);
     host.appendChild(overlay);
   }
 
+  const selector = document.getElementById('debugOverlaySelect');
+  if (selector) {
+    selector.value = view;
+  }
+
+  fillDebugOverlay(view, { glyphs, userSettings, errorMessage });
+}
+
+async function refreshDebugOverlay(viewId) {
+  let glyphs = cachedSymbols;
+  let userSettings = cachedUserSettings;
+  let errorMessage;
+
+  try {
+    if (!glyphs && viewId === 'icons') {
+      glyphs = await loadUsedSymbols();
+    }
+    if (!userSettings && viewId === 'settings') {
+      userSettings = await loadUserSettings();
+    }
+  } catch (error) {
+    console.error('Failed to refresh debug overlay view:', error);
+    errorMessage = error.message || 'Failed to load data for this view.';
+  }
+
+  fillDebugOverlay(viewId, { glyphs: glyphs || [], userSettings: userSettings || {}, errorMessage });
+}
+
+function fillDebugOverlay(view, { glyphs, userSettings, errorMessage }) {
   const list = document.getElementById('debugOverlayContent');
+  if (!list) return;
+
   list.innerHTML = '';
 
   if (errorMessage) {
@@ -140,10 +228,47 @@ function renderGlyphOverlay(glyphs, errorMessage) {
     return;
   }
 
-  if (!glyphs.length) {
+  if (view === 'settings') {
+    renderUserSettings(list, userSettings);
+  } else {
+    renderIconEncodings(list, glyphs);
+  }
+}
+
+function renderUserSettings(container, settings) {
+  const title = document.createElement('div');
+  title.textContent = 'User Settings (localStorage)';
+  title.style.fontWeight = '600';
+  container.appendChild(title);
+
+  if (!settings || (typeof settings === 'object' && Object.keys(settings).length === 0)) {
+    const empty = document.createElement('div');
+    empty.textContent = 'No stored settings found.';
+    container.appendChild(empty);
+    return;
+  }
+
+  const pre = document.createElement('pre');
+  pre.textContent = JSON.stringify(settings, null, 2);
+  pre.style.margin = '0';
+  pre.style.padding = '0.5rem';
+  pre.style.background = '#11141c';
+  pre.style.border = '1px solid #2b2f3a';
+  pre.style.borderRadius = '4px';
+  pre.style.fontSize = '0.8rem';
+  pre.style.lineHeight = '1.4';
+  pre.style.color = '#f5f7fa';
+  pre.style.whiteSpace = 'pre-wrap';
+  pre.style.wordBreak = 'break-word';
+
+  container.appendChild(pre);
+}
+
+function renderIconEncodings(container, glyphs) {
+  if (!glyphs || !glyphs.length) {
     const empty = document.createElement('div');
     empty.textContent = 'No glyphs listed in used-symbols.txt.';
-    list.appendChild(empty);
+    container.appendChild(empty);
     return;
   }
 
@@ -164,18 +289,18 @@ function renderGlyphOverlay(glyphs, errorMessage) {
     iconPreview.style.color = '#f5f7fa';
     iconPreview.textContent = char;
 
-      const codeLine = document.createElement('code');
-      codeLine.textContent = name ? `U+${hex} ${name}` : `U+${hex}`;
+    const codeLine = document.createElement('code');
+    codeLine.textContent = name ? `U+${hex} ${name}` : `U+${hex}`;
     codeLine.style.fontFamily = 'SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace';
     codeLine.style.fontSize = '0.85rem';
     codeLine.style.color = '#a8b3c7';
 
     row.appendChild(iconPreview);
     row.appendChild(codeLine);
-    list.appendChild(row);
+    container.appendChild(row);
   });
 
-  const rows = list.querySelectorAll('div');
+  const rows = container.querySelectorAll('div');
   if (rows.length) {
     rows[rows.length - 1].style.borderBottom = 'none';
   }

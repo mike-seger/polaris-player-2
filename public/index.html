@@ -933,6 +933,41 @@
       }
     }
 
+    function getCurrentVideoMap() {
+      const map = settings.currentVideoMap;
+      if (map && typeof map === 'object' && !Array.isArray(map)) {
+        return map;
+      }
+      return {};
+    }
+
+    function updateCurrentVideo(playlistId, videoId) {
+      if (!playlistId || !videoId) {
+        return;
+      }
+      const map = getCurrentVideoMap();
+      map[playlistId] = videoId;
+      saveSettings({ currentVideoMap: map });
+    }
+
+    function migrateLegacySettings() {
+      const legacyPlaylistId =
+        typeof settings.playlistId === 'string' ? settings.playlistId.trim() : '';
+      const legacyVideoId =
+        typeof settings.currentVideoId === 'string' ? settings.currentVideoId.trim() : '';
+      if (!legacyPlaylistId || !legacyVideoId) {
+        return;
+      }
+      const map = getCurrentVideoMap();
+      if (!map[legacyPlaylistId]) {
+        map[legacyPlaylistId] = legacyVideoId;
+      }
+      delete settings.currentVideoId;
+      saveSettings({ currentVideoMap: map });
+    }
+
+    migrateLegacySettings();
+
     function normalizePlaylistHistory(raw) {
       if (!Array.isArray(raw)) return [];
       const cleaned = [];
@@ -1081,6 +1116,11 @@
       if (!id) return;
       playlistHistory = playlistHistory.filter((entry) => entry.id !== id);
       persistPlaylistHistory();
+      const map = getCurrentVideoMap();
+      if (map[id]) {
+        delete map[id];
+        saveSettings({ currentVideoMap: map });
+      }
       updatePlaylistHistorySelect('');
     }
 
@@ -1301,7 +1341,8 @@
       updateNowPlaying();
       renderTrackList();
       updatePlayPauseButton();
-      saveSettings({ currentVideoId: videoId });
+      const playlistId = settings.playlistId || playlistInput?.value?.trim();
+      updateCurrentVideo(playlistId, videoId);
     }
 
     function playNext() {
@@ -1366,7 +1407,10 @@
         (typeof data.playlistTitle === 'string' && data.playlistTitle.trim().length ? data.playlistTitle.trim() : '') ||
         resolvedPlaylistId;
 
-      const storedVideoId = settings.currentVideoId;
+      saveSettings({ playlistId: resolvedPlaylistId });
+
+      const savedMap = getCurrentVideoMap();
+      const storedVideoId = savedMap[resolvedPlaylistId];
       let idxFromStorage = -1;
       if (storedVideoId) {
         idxFromStorage = playlistItems.findIndex((it) => it.videoId === storedVideoId);
@@ -1379,11 +1423,14 @@
 
       filterText = filterInputEl.value || '';
       computeFilteredIndices();
-      renderTrackList();
-      updateNowPlaying();
-      updatePlayPauseButton();
+      if (currentIndex >= 0 && player) {
+        playIndex(currentIndex);
+      } else {
+        renderTrackList();
+        updateNowPlaying();
+        updatePlayPauseButton();
+      }
 
-      saveSettings({ playlistId: resolvedPlaylistId });
       addPlaylistToHistory(resolvedPlaylistId, playlistTitle);
     }
 
