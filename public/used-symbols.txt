@@ -26,6 +26,8 @@ U+E5D7	volume_down
 U+E8B8	settings_applications
 U+E8D5	info_outline
 U+E8B6	search
+U+E8DB	thumb_down
+U+E8DC	thumb_up
 U+E998	connected_tv
 U+E9B9	lists
 U+E9BD	markunread_mailbox

@@ -331,7 +331,6 @@
       height: 18px;
     }
 
-    #playlistInput,
     #filterInput {
       width: 100%;
       box-sizing: border-box;
@@ -343,18 +342,10 @@
       border-radius: 4px;
     }
 
-    #playlistInput {
-      flex: 1 1 auto;
-      min-width: 0;
-      width: auto;
-    }
-
-    #playlistInput:focus,
     #filterInput:focus {
       border-color: var(--color-border-strong);
     }
 
-    #playlistInput::placeholder,
     #filterInput::placeholder {
       color: var(--color-text-muted);
     }
@@ -363,53 +354,29 @@
       accent-color: var(--color-accent);
     }
 
-    #loadBtn {
-      padding: 0;
-      width: var(--player-controls-height);
-      height: var(--player-controls-height);
-      display: flex;
+    #playlistIOBtn {
+      flex: 1 1 auto;
+      display: inline-flex;
       align-items: center;
       justify-content: center;
-      border: none;
-      background: transparent;
-      cursor: pointer;
-      color: var(--color-text);
+      gap: 0.5rem;
+      padding: 0.35rem 0.75rem;
+      font-size: 0.8rem;
+      font-weight: 600;
       border-radius: 4px;
-      font-size: 0;
-    }
-
-    #loadBtn:hover {
+      border: 1px solid var(--color-border-strong);
+      background: #263047;
       color: var(--color-text);
-    }
-
-    #loadBtn .icon,
-    #downloadBtn .icon {
-      width: var(--player-controls-height);
-      height: var(--player-controls-height);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: calc(var(--player-controls-height) - 6px);
-      line-height: 1;
-    }
-
-    #downloadBtn {
-      padding: 0;
-      width: var(--player-controls-height);
-      height: var(--player-controls-height);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border: none;
-      background: transparent;
       cursor: pointer;
-      color: var(--color-text);
-      border-radius: 4px;
-      font-size: 0;
+      transition: background 0.15s ease, border-color 0.15s ease;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
     }
 
-    #downloadBtn:hover {
-      color: var(--color-text);
+    #playlistIOBtn:hover,
+    #playlistIOBtn:focus {
+      background: #2f3a55;
+      border-color: #46526d;
     }
 
     .filter-wrapper {
@@ -731,7 +698,7 @@
 
     /* Player between control groups */
     #player-container {
-      padding: 0;
+      padding: 0.5rem 0.25rem;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -739,10 +706,85 @@
       background: #0b0d12;
     }
     #player {
-      width: 320px;
-      height: 200px;
+      width: 100%;
+      max-width: 100%;
+      aspect-ratio: 16 / 9;
       background: #000;
       border-radius: 8px;
+      overflow: hidden;
+    }
+    #player iframe {
+      width: 100% !important;
+      height: 100% !important;
+      border: 0;
+      border-radius: inherit;
+      display: block;
+    }
+
+    @media (min-width: 1024px) {
+      body {
+        display: block;
+      }
+
+      #sidebar {
+        width: 100%;
+        max-width: none;
+        display: grid;
+        grid-template-columns: 340px minmax(0, 1fr);
+        grid-template-rows: auto auto 1fr;
+        grid-template-areas:
+          "playlist player"
+          "controls player"
+          "list player";
+        column-gap: 0;
+        row-gap: 0.75rem;
+        padding-right: 0;
+        align-items: start;
+        border-right: none;
+        height: calc(var(--app-vh, 1vh) * 100);
+        min-height: 0;
+        overflow: visible;
+      }
+
+      #playlistControls {
+        grid-area: playlist;
+        max-width: 340px;
+      }
+
+      #trackControls {
+        grid-area: controls;
+        max-width: 340px;
+      }
+
+      #trackListContainer {
+        grid-area: list;
+        max-width: 340px;
+        height: 100%;
+        min-height: 0;
+      }
+
+      #player-container {
+        grid-area: player;
+        padding: 0;
+        align-items: stretch;
+        justify-content: center;
+        background: var(--color-bg);
+        min-height: 0;
+        height: 100%;
+      }
+
+      #player {
+        width: 100%;
+        height: 100%;
+        max-width: none;
+        max-height: none;
+        border-radius: 12px;
+        box-shadow: 0 18px 48px rgba(0, 0, 0, 0.45);
+        aspect-ratio: auto;
+      }
+      #player iframe {
+        border-radius: inherit;
+      }
     }
   </style>
   <script src="https://unpkg.com/opentype.js@latest/dist/opentype.min.js"></script>
@@ -778,16 +820,12 @@
           <!-- ID / URL row -->
           <div class="pc-row">
             <div class="pc-input-wrapper">
-              <input
-                id="playlistInput"
-                type="text"
-                placeholder="Playlist URL or ID"
-              />
-              <button id="loadBtn" type="submit" aria-label="Load playlist">
-                <span class="icon upload" aria-hidden="true"></span>
-              </button>
-              <button id="downloadBtn" type="button" aria-label="Download playlist">
-                <span class="icon download" aria-hidden="true"></span>
+              <button
+                id="playlistIOBtn"
+                type="button"
+                aria-label="Open playlist import/export"
+              >
+                Manage Playlists...
               </button>
             </div>
           </div>
@@ -894,6 +932,7 @@
 
   <!-- IFrame Player API -->
   <script src="https://www.youtube.com/iframe_api"></script>
+  <script src="./playlist-io.js"></script>
 
   <script>
     let player;
@@ -987,7 +1026,7 @@
     }
 
     // DOM refs
-    const playlistInput = document.getElementById('playlistInput');
+    const playlistIOBtn = document.getElementById('playlistIOBtn');
     const filterInputEl = document.getElementById('filterInput');
     const filterWrapper = document.getElementById('filterWrapper');
     const clearFilterBtn = document.getElementById('clearFilterBtn');
@@ -999,7 +1038,6 @@
     const playlistToggleBtn = document.getElementById('playlistToggleBtn');
     const playlistToggleIcon = document.getElementById('playlistToggleIcon');
     const playPauseIcon = document.getElementById('playPauseIcon');
-    const downloadBtn = document.getElementById('downloadBtn');
     const playlistHistorySelect = document.getElementById('playlistHistorySelect');
     const playlistDeleteBtn = document.getElementById('playlistDeleteBtn');
     const alertOverlay = document.getElementById('alertOverlay');
@@ -1135,11 +1173,8 @@
         updatePlaylistDeleteButtonState();
         const selectedId = playlistHistorySelect.value;
         if (!selectedId) return;
-        if (playlistInput) {
-          playlistInput.value = selectedId;
-        }
         saveSettings({ playlistId: selectedId });
-        loadPlaylistFromServer(false);
+        loadPlaylistFromServer(false, selectedId);
       });
     }
 
@@ -1166,9 +1201,6 @@
     }
 
     // init from settings
-    if (settings.playlistId) {
-      playlistInput.value = settings.playlistId;
-    }
     if (typeof settings.showThumbnails === 'boolean') {
       showThumbnails = settings.showThumbnails;
     } else {
@@ -1341,7 +1373,7 @@
       updateNowPlaying();
       renderTrackList();
       updatePlayPauseButton();
-      const playlistId = settings.playlistId || playlistInput?.value?.trim();
+      const playlistId = settings.playlistId || '';
       updateCurrentVideo(playlistId, videoId);
     }
 
@@ -1365,11 +1397,15 @@
     document.getElementById('nextBtn').addEventListener('click', playNext);
     document.getElementById('prevBtn').addEventListener('click', playPrev);
 
-    async function loadPlaylistFromServer(forceRefresh = false) {
-      const input = playlistInput.value.trim();
-      if (!input) return;
+    async function loadPlaylistFromServer(forceRefresh = false, playlistIdOverride = '') {
+      const override = typeof playlistIdOverride === 'string' ? playlistIdOverride.trim() : '';
+      const fallback = typeof settings.playlistId === 'string' ? settings.playlistId.trim() : '';
+      const targetId = override || fallback;
+      if (!targetId) {
+        return undefined;
+      }
 
-      const url = `${API_BASE_PATH}/api/playlist?playlistId=${encodeURIComponent(input)}${forceRefresh ? '&forceRefresh=1' : ''}`;
+      const url = `${API_BASE_PATH}/api/playlist?playlistId=${encodeURIComponent(targetId)}${forceRefresh ? '&forceRefresh=1' : ''}`;
 
       let resp;
       try {
@@ -1398,10 +1434,7 @@
       const resolvedPlaylistId =
         (typeof data.playlistId === 'string' && data.playlistId.trim().length
           ? data.playlistId.trim()
-          : input) || input;
-      if (playlistInput) {
-        playlistInput.value = resolvedPlaylistId;
-      }
+          : targetId) || targetId;
       const playlistTitle =
         (typeof data.title === 'string' && data.title.trim().length ? data.title.trim() : '') ||
         (typeof data.playlistTitle === 'string' && data.playlistTitle.trim().length ? data.playlistTitle.trim() : '') ||
@@ -1432,43 +1465,56 @@
       }
 
       addPlaylistToHistory(resolvedPlaylistId, playlistTitle);
+
+      return resolvedPlaylistId;
     }
 
-    if (downloadBtn) {
-      downloadBtn.addEventListener('click', () => {
-        if (!playlistItems || playlistItems.length === 0) {
-          showAlert('No playlist loaded yet.');
-          return;
-        }
+    function downloadCurrentPlaylist() {
+      if (!playlistItems || playlistItems.length === 0) {
+        showAlert('No playlist loaded yet.');
+        return false;
+      }
 
-        const payload = {
-          playlistId: settings.playlistId || playlistInput.value.trim(),
-          fetchedAt: new Date().toISOString(),
-          itemCount: playlistItems.length,
-          items: playlistItems.map((item) => ({
-            ...item,
-            userTitle: item.userTitle ?? item.title
-          }))
-        };
+      const payload = {
+        playlistId: settings.playlistId || '',
+        fetchedAt: new Date().toISOString(),
+        itemCount: playlistItems.length,
+        items: playlistItems.map((item) => ({
+          ...item,
+          userTitle: item.userTitle ?? item.title
+        }))
+      };
 
-        const blob = new Blob([JSON.stringify(payload, null, 2)], {
-          type: 'application/json'
-        });
-        const url = URL.createObjectURL(blob);
-
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'yt-playlist.json';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+      const blob = new Blob([JSON.stringify(payload, null, 2)], {
+        type: 'application/json'
       });
+      const url = URL.createObjectURL(blob);
+
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'yt-playlist.json';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      return true;
     }
+
+    const playlistIO = typeof initPlaylistIO === 'function'
+      ? initPlaylistIO({
+          triggerElement: playlistIOBtn,
+          getPlaylistId: () => (typeof settings.playlistId === 'string' ? settings.playlistId : ''),
+          onLoad: async ({ playlistId, forceRefresh }) => {
+            await loadPlaylistFromServer(Boolean(forceRefresh), playlistId);
+          },
+          onDownload: () => downloadCurrentPlaylist(),
+          showAlert
+        })
+      : null;
 
     document.getElementById('playlistForm').addEventListener('submit', (e) => {
       e.preventDefault();
-      loadPlaylistFromServer(false);
     });
 
     // thumbnails toggle
