@@ -5,7 +5,9 @@
       getPlaylistId = () => '',
       onLoad = async () => undefined,
       onDownload = () => undefined,
-      showAlert = (message) => window.alert(message)
+      showAlert = (message) => window.alert(message),
+      getPlaylistHistory = () => [],
+      removePlaylist = () => {}
     } = options;
 
     const state = {
@@ -18,7 +20,8 @@
       statusEl: null,
       loading: false,
       lastFocused: null,
-      bodyOverflow: ''
+      bodyOverflow: '',
+      historyList: null
     };
 
     function ensureOverlay() {
@@ -67,16 +70,20 @@
 
       const closeBtn = document.createElement('button');
       closeBtn.type = 'button';
-      closeBtn.textContent = 'Close';
+      closeBtn.setAttribute('aria-label', 'Close overlay');
       closeBtn.style.background = '#28344d';
       closeBtn.style.color = '#f5f7fa';
       closeBtn.style.border = '1px solid #394150';
       closeBtn.style.borderRadius = '4px';
-      closeBtn.style.padding = '0.35rem 0.85rem';
+      closeBtn.style.padding = '0.35rem';
       closeBtn.style.cursor = 'pointer';
-      closeBtn.style.fontSize = '0.85rem';
-      closeBtn.style.fontWeight = '600';
+      closeBtn.style.fontSize = '0';
       closeBtn.addEventListener('click', closeOverlay);
+
+      const closeIcon = document.createElement('span');
+      closeIcon.className = 'icon close';
+      closeIcon.setAttribute('aria-hidden', 'true');
+      closeBtn.appendChild(closeIcon);
 
       header.appendChild(title);
       header.appendChild(closeBtn);
@@ -91,7 +98,7 @@
       const form = document.createElement('form');
       form.style.display = 'flex';
       form.style.flexDirection = 'column';
-      form.style.gap = '0.65rem';
+      form.style.gap = '0.75rem';
       form.addEventListener('submit', (event) => {
         event.preventDefault();
         triggerLoad(false);
@@ -148,6 +155,42 @@
       buttonRow.appendChild(refreshBtn);
       buttonRow.appendChild(downloadBtn);
 
+      const historyWrapper = document.createElement('div');
+      historyWrapper.id = 'playlistIOHistory';
+      historyWrapper.style.border = '1px solid #2b2f3a';
+      historyWrapper.style.borderRadius = '6px';
+      historyWrapper.style.background = '#11141c';
+      historyWrapper.style.padding = '0.45rem 0.35rem 0.6rem';
+      historyWrapper.style.overflow = 'hidden';
+      historyWrapper.style.display = 'flex';
+      historyWrapper.style.flexDirection = 'column';
+      historyWrapper.style.gap = '0.45rem';
+
+      const historyLabel = document.createElement('div');
+      historyLabel.textContent = 'Saved Playlists';
+      historyLabel.style.fontSize = '0.75rem';
+      historyLabel.style.letterSpacing = '0.05em';
+      historyLabel.style.textTransform = 'uppercase';
+      historyLabel.style.color = '#a8b3c7';
+      historyLabel.style.fontWeight = '600';
+      historyLabel.style.margin = '0';
+      historyLabel.style.padding = '0 0.15rem';
+
+      const historyList = document.createElement('div');
+      historyList.id = 'playlistIOHistoryList';
+      historyList.style.display = 'flex';
+      historyList.style.flexDirection = 'column';
+      historyList.style.gap = '0.25rem';
+      historyList.style.maxHeight = 'calc(5 * 2.2rem)';
+      historyList.style.minHeight = 'calc(5 * 2.2rem)';
+      historyList.style.overflowY = 'auto';
+      historyList.style.overflowX = 'hidden';
+      historyList.style.paddingRight = '0.1rem';
+      historyList.style.margin = '0';
+
+      historyWrapper.appendChild(historyLabel);
+      historyWrapper.appendChild(historyList);
+
       const statusEl = document.createElement('div');
       statusEl.id = 'playlistIOStatus';
       statusEl.style.minHeight = '1em';
@@ -157,6 +200,7 @@
       form.appendChild(inputLabel);
       form.appendChild(input);
       form.appendChild(buttonRow);
+      form.appendChild(historyWrapper);
       form.appendChild(statusEl);
 
       panel.appendChild(header);
@@ -181,6 +225,9 @@
       state.refreshBtn = refreshBtn;
       state.downloadBtn = downloadBtn;
       state.statusEl = statusEl;
+      state.historyList = historyList;
+
+      refreshHistoryList();
 
       return overlay;
     }
@@ -266,6 +313,7 @@
       state.bodyOverflow = document.body.style.overflow;
       document.body.style.overflow = 'hidden';
       updateStatus('');
+      refreshHistoryList();
       if (state.input) {
         const currentId = typeof getPlaylistId === 'function' ? getPlaylistId() : '';
         state.input.value = currentId || '';
@@ -342,6 +390,7 @@
         }
       } finally {
         setLoading(false);
+        refreshHistoryList();
       }
     }
 
@@ -361,6 +410,212 @@
           showAlert(message);
         }
       }
+
+      refreshHistoryList();
+    }
+
+    function refreshHistoryList() {
+      if (!state.historyList) return;
+      state.historyList.innerHTML = '';
+      const items = typeof getPlaylistHistory === 'function' ? getPlaylistHistory() : [];
+      if (!items || !items.length) {
+        const empty = document.createElement('div');
+        empty.textContent = 'No saved playlists.';
+        empty.style.fontSize = '0.8rem';
+        empty.style.color = '#6c7488';
+        empty.style.padding = '0.35rem 0.5rem';
+        empty.style.textAlign = 'center';
+        state.historyList.appendChild(empty);
+        return;
+      }
+
+      items.forEach((entry, index) => {
+        const row = document.createElement('div');
+        row.dataset.historyRow = 'true';
+        row.style.display = 'flex';
+        row.style.alignItems = 'center';
+        row.style.gap = '0.45rem';
+        row.style.padding = '0 0.45rem';
+        row.style.minHeight = '2.1rem';
+        row.style.background = '#171c26';
+        row.style.color = '#f5f7fa';
+        row.style.borderRadius = '4px';
+        row.style.boxSizing = 'border-box';
+        row.style.width = '100%';
+        row.style.transition = 'background-color 120ms ease';
+        row.style.cursor = 'pointer';
+
+        const textBtn = document.createElement('button');
+        textBtn.type = 'button';
+        textBtn.dataset.historyTitle = 'true';
+        textBtn.textContent = entry.title || entry.id;
+        textBtn.title = entry.id;
+        textBtn.style.flex = '1 1 auto';
+        textBtn.style.display = 'flex';
+        textBtn.style.alignItems = 'center';
+        textBtn.style.textAlign = 'left';
+        textBtn.style.background = 'transparent';
+        textBtn.style.border = 'none';
+        textBtn.style.color = 'inherit';
+        textBtn.style.fontSize = '0.82rem';
+        textBtn.style.cursor = 'pointer';
+        textBtn.style.padding = '0';
+        textBtn.style.minWidth = '0';
+        textBtn.style.height = '100%';
+        textBtn.style.overflow = 'hidden';
+        textBtn.style.textOverflow = 'ellipsis';
+        textBtn.style.whiteSpace = 'nowrap';
+        textBtn.addEventListener('click', (event) => {
+          event.stopPropagation();
+          selectHistoryRow(index);
+        });
+
+        row.addEventListener('click', (event) => {
+          const target = event.target instanceof HTMLElement ? event.target : null;
+          if (target && target.closest('[data-history-action="true"]')) {
+            return;
+          }
+          selectHistoryRow(index);
+        });
+
+        const openBtn = createIconButton('open_in_browser', 'Open in YouTube');
+        openBtn.dataset.historyAction = 'true';
+        openBtn.addEventListener('click', () => {
+          const url = entry.id.startsWith('http')
+            ? entry.id
+            : `https://www.youtube.com/playlist?list=${encodeURIComponent(entry.id)}`;
+          window.open(url, '_blank', 'noopener');
+        });
+
+        const deleteBtn = createIconButton('delete', 'Remove from saved');
+        deleteBtn.dataset.historyAction = 'true';
+        deleteBtn.addEventListener('click', () => {
+          if (typeof removePlaylist === 'function') {
+            removePlaylist(entry.id);
+            updateStatus('Removed playlist from saved list.', 'success');
+            refreshHistoryList();
+          }
+        });
+
+        row.appendChild(textBtn);
+        row.appendChild(openBtn);
+        row.appendChild(deleteBtn);
+        state.historyList.appendChild(row);
+      });
+
+      // If we have an input value matching a row, highlight it.
+      if (state.input && state.input.value) {
+        const matchIndex = items.findIndex((entry) => entry.id === state.input.value.trim());
+        if (matchIndex >= 0) {
+          highlightHistoryRow(matchIndex);
+        }
+      }
+    }
+
+    function selectHistoryRow(index) {
+      if (!state.historyList) return;
+      const items = typeof getPlaylistHistory === 'function' ? getPlaylistHistory() : [];
+      if (!items[index]) return;
+
+      if (state.input) {
+        state.input.value = items[index].id;
+        state.input.focus({ preventScroll: true });
+        state.input.select();
+      }
+
+      highlightHistoryRow(index);
+    }
+
+    function highlightHistoryRow(index) {
+      if (!state.historyList) return;
+      const rows = Array.from(state.historyList.children);
+      rows.forEach((node, idx) => {
+        if (!(node instanceof HTMLElement)) return;
+        if (idx === index) {
+          node.dataset.selected = 'true';
+          node.style.outline = 'none';
+          node.style.background = '#242b3a';
+          node.style.color = '#f5f7fa';
+        } else {
+          delete node.dataset.selected;
+          node.style.outline = 'none';
+          node.style.background = '#171c26';
+          node.style.color = '#f5f7fa';
+        }
+        const titleBtn = node.querySelector('[data-history-title="true"]');
+        if (titleBtn instanceof HTMLElement) {
+          titleBtn.style.color = 'inherit';
+        }
+        node.querySelectorAll('[data-history-action="true"]').forEach((btn) => {
+          if (btn instanceof HTMLElement) {
+            applyHistoryActionButtonState(btn, false);
+          }
+        });
+      });
+    }
+
+    function applyHistoryActionButtonState(btn, hover) {
+      const row = btn.closest('[data-history-row="true"]');
+      const isSelected = Boolean(row && row.dataset.selected === 'true');
+      if (isSelected) {
+        if (hover) {
+          btn.style.background = '#384257';
+          btn.style.color = '#f5f7fa';
+          btn.style.borderColor = '#445069';
+        } else {
+          btn.style.background = '#2d3648';
+          btn.style.color = '#f5f7fa';
+          btn.style.borderColor = '#2d3648';
+        }
+      } else {
+        if (hover) {
+          btn.style.background = '#273043';
+          btn.style.color = '#f5f7fa';
+          btn.style.borderColor = '#394150';
+        } else {
+          btn.style.background = '#1f2532';
+          btn.style.color = '#a8b3c7';
+          btn.style.borderColor = 'transparent';
+        }
+      }
+    }
+
+    function createIconButton(iconName, tooltip) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.style.width = '28px';
+      btn.style.height = '28px';
+      btn.style.flex = '0 0 28px';
+      btn.style.display = 'inline-flex';
+      btn.style.alignItems = 'center';
+      btn.style.justifyContent = 'center';
+      btn.style.borderRadius = '4px';
+      btn.style.border = '1px solid transparent';
+      btn.style.background = '#1f2532';
+      btn.style.cursor = 'pointer';
+      btn.style.color = '#a8b3c7';
+      btn.style.padding = '0';
+      btn.title = tooltip;
+      btn.setAttribute('aria-label', tooltip);
+      btn.style.fontSize = '0';
+
+      const iconSpan = document.createElement('span');
+      iconSpan.setAttribute('aria-hidden', 'true');
+      iconSpan.className = 'icon';
+      const iconClass = iconName.replace(/_/g, '-');
+      iconSpan.classList.add(iconClass);
+      btn.appendChild(iconSpan);
+
+      applyHistoryActionButtonState(btn, false);
+
+      btn.addEventListener('mouseover', () => {
+        applyHistoryActionButtonState(btn, true);
+      });
+      btn.addEventListener('mouseout', () => {
+        applyHistoryActionButtonState(btn, false);
+      });
+
+      return btn;
     }
 
     function handleGlobalKeydown(event) {

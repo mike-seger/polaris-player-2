@@ -70,6 +70,7 @@
     .icon.upload:before { content: "\f09b"; }       /* upload */
     .icon.download:before { content: "\f090"; }     /* download */
     .icon.delete:before { content: "\e872"; }       /* delete */
+    .icon.open-in-browser:before { content: "\e89d"; } /* open_in_browser */
     .icon.volume-up:before { content: "\e5d6"; }     /* volume_up */
     .icon.volume-down:before { content: "\e5d7"; }   /* volume_down */
     .icon.cancel:before { content: "\e5c9"; }       /* cancel */
@@ -223,34 +224,6 @@
       outline: none;
     }
 
-    #playlistHistorySelect:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-
-    #playlistDeleteBtn {
-      padding: 0;
-      width: var(--player-controls-height);
-      height: var(--player-controls-height);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border: none;
-      background: transparent;
-      cursor: pointer;
-      color: var(--color-text-muted);
-      border-radius: 4px;
-      font-size: 0;
-    }
-
-    #playlistDeleteBtn:hover:not(:disabled) {
-      color: var(--color-text);
-    }
-
-    #playlistDeleteBtn:disabled {
-      opacity: 0.35;
-      cursor: not-allowed;
-    }
 
     .alert-overlay {
       position: fixed;
@@ -804,15 +777,6 @@
                   aria-label="Saved playlists"
                   disabled
                 ></select>
-                <button
-                  type="button"
-                  id="playlistDeleteBtn"
-                  aria-label="Remove saved playlist"
-                  title="Remove saved playlist"
-                  disabled
-                >
-                  <span class="icon delete" aria-hidden="true"></span>
-                </button>
               </div>
             </div>
           </div>
@@ -1012,14 +976,36 @@
       const cleaned = [];
       const seen = new Set();
       for (const entry of raw) {
-        if (!entry || typeof entry !== 'object') continue;
-        const id = typeof entry.id === 'string' ? entry.id.trim() : '';
-        if (!id || seen.has(id)) continue;
+        if (!entry) continue;
+
+        let id = '';
+        let title = '';
+
+        if (typeof entry === 'string') {
+          id = entry.trim();
+          title = id;
+        } else if (typeof entry === 'object') {
+          if (typeof entry.id === 'string') {
+            id = entry.id.trim();
+          } else if (typeof entry.playlistId === 'string') {
+            id = entry.playlistId.trim();
+          } else if (typeof entry.url === 'string') {
+            const url = entry.url.trim();
+            const match = url.match(/[?&]list=([^&#]+)/);
+            id = match ? decodeURIComponent(match[1]) : url;
+          }
+
+          if (typeof entry.title === 'string' && entry.title.trim().length) {
+            title = entry.title.trim();
+          } else if (typeof entry.name === 'string' && entry.name.trim().length) {
+            title = entry.name.trim();
+          }
+        }
+
+        if (!id) continue;
+        if (seen.has(id)) continue;
         seen.add(id);
-        const title = typeof entry.title === 'string' && entry.title.trim().length
-          ? entry.title.trim()
-          : id;
-        cleaned.push({ id, title });
+        cleaned.push({ id, title: title || id });
         if (cleaned.length >= PLAYLIST_HISTORY_LIMIT) break;
       }
       return cleaned;
@@ -1039,7 +1025,6 @@
     const playlistToggleIcon = document.getElementById('playlistToggleIcon');
     const playPauseIcon = document.getElementById('playPauseIcon');
     const playlistHistorySelect = document.getElementById('playlistHistorySelect');
-    const playlistDeleteBtn = document.getElementById('playlistDeleteBtn');
     const alertOverlay = document.getElementById('alertOverlay');
     const alertMessageEl = document.getElementById('alertMessage');
     const alertCloseBtn = document.getElementById('alertCloseBtn');
@@ -1094,14 +1079,6 @@
       saveSettings({ playlistHistory });
     }
 
-    function updatePlaylistDeleteButtonState() {
-      if (!playlistDeleteBtn) return;
-      const hasEntries = playlistHistory && playlistHistory.length > 0;
-      const selectedValue = playlistHistorySelect && playlistHistorySelect.value;
-      const selectDisabled = playlistHistorySelect ? playlistHistorySelect.disabled : true;
-      playlistDeleteBtn.disabled = selectDisabled || !hasEntries || !selectedValue;
-    }
-
     function updatePlaylistHistorySelect(selectedId = '') {
       if (!playlistHistorySelect) return;
 
@@ -1111,7 +1088,6 @@
         playlistHistorySelect.disabled = true;
         playlistHistorySelect.title = 'No saved playlists yet';
         playlistHistorySelect.value = '';
-        updatePlaylistDeleteButtonState();
         return;
       }
 
@@ -1133,8 +1109,6 @@
       if (!matched) {
         playlistHistorySelect.selectedIndex = 0;
       }
-
-      updatePlaylistDeleteButtonState();
     }
 
     function addPlaylistToHistory(id, title) {
@@ -1170,19 +1144,10 @@
 
     if (playlistHistorySelect) {
       playlistHistorySelect.addEventListener('change', () => {
-        updatePlaylistDeleteButtonState();
         const selectedId = playlistHistorySelect.value;
         if (!selectedId) return;
         saveSettings({ playlistId: selectedId });
         loadPlaylistFromServer(false, selectedId);
-      });
-    }
-
-    if (playlistDeleteBtn) {
-      playlistDeleteBtn.addEventListener('click', () => {
-        const selectedId = playlistHistorySelect ? playlistHistorySelect.value : '';
-        if (!selectedId) return;
-        removePlaylistFromHistory(selectedId);
       });
     }
 
@@ -1269,7 +1234,7 @@
 
       const storedPlaylistId = settings.playlistId;
       if (storedPlaylistId) {
-        loadPlaylistFromServer(false);
+        loadPlaylistFromServer(false, storedPlaylistId);
       } else {
         computeFilteredIndices();
         renderTrackList();
@@ -1505,6 +1470,8 @@
       ? initPlaylistIO({
           triggerElement: playlistIOBtn,
           getPlaylistId: () => (typeof settings.playlistId === 'string' ? settings.playlistId : ''),
+          getPlaylistHistory: () => playlistHistory.slice(),
+          removePlaylist: (id) => removePlaylistFromHistory(id),
           onLoad: async ({ playlistId, forceRefresh }) => {
             await loadPlaylistFromServer(Boolean(forceRefresh), playlistId);
           },
