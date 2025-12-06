@@ -74,6 +74,7 @@
     .icon.volume-up:before { content: "\e5d6"; }     /* volume_up */
     .icon.volume-down:before { content: "\e5d7"; }   /* volume_down */
     .icon.cancel:before { content: "\e5c9"; }       /* cancel */
+      .icon.settings:before { content: "\e8b8"; }     /* settings */
     .icon.close:before { content: "\e5cd"; }       /* close */
     /* you can add volume icons later if desired */
 
@@ -166,10 +167,6 @@
       gap: 0.2rem;
     }
 
-    #playlistControls.collapsed .pc-body {
-      display: none;
-    }
-
     #playlistForm {
       margin: 0;
     }
@@ -217,6 +214,7 @@
       border: 1px solid var(--color-border);
       color: var(--color-text);
       border-radius: 4px;
+      height: 34px;
     }
 
     #playlistHistorySelect:focus {
@@ -328,28 +326,33 @@
     }
 
     #playlistIOBtn {
-      flex: 1 1 auto;
+      flex: 0 0 auto;
+      width: 34px;
+      height: 34px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 0.5rem;
-      padding: 0.35rem 0.75rem;
-      font-size: 0.8rem;
-      font-weight: 600;
       border-radius: 4px;
-      border: 1px solid var(--color-border-strong);
-      background: #263047;
+      border: 1px solid var(--color-border);
+      background: #1f2532;
       color: var(--color-text);
       cursor: pointer;
       transition: background 0.15s ease, border-color 0.15s ease;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
+      padding: 0;
     }
 
     #playlistIOBtn:hover,
     #playlistIOBtn:focus {
-      background: #2f3a55;
-      border-color: #46526d;
+      background: #273043;
+      border-color: var(--color-border-strong);
+      color: var(--color-text);
+    }
+
+    #playlistIOBtn .icon {
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+      line-height: 20px;
     }
 
     .filter-wrapper {
@@ -540,12 +543,6 @@
       background: var(--color-panel);
     }
 
-    #nowPlaying {
-      font-size: 0.8rem;
-      display: block;
-      margin-bottom: 0.2rem;
-      color: var(--color-text-muted);
-    }
 
     #trackControls-top {
       display: flex;
@@ -765,7 +762,7 @@
 <body>
   <div id="sidebar">
     <!-- Top playlist controls -->
-    <div id="playlistControls" class="collapsed">
+    <div id="playlistControls">
       <div class="pc-body">
         <form id="playlistForm">
           <!-- Saved playlist selector row -->
@@ -777,20 +774,15 @@
                   aria-label="Saved playlists"
                   disabled
                 ></select>
+                <button
+                  id="playlistIOBtn"
+                  type="button"
+                  aria-label="Manage playlists"
+                  title="Manage playlists"
+                >
+                  <span class="icon settings" aria-hidden="true"></span>
+                </button>
               </div>
-            </div>
-          </div>
-
-          <!-- ID / URL row -->
-          <div class="pc-row">
-            <div class="pc-input-wrapper">
-              <button
-                id="playlistIOBtn"
-                type="button"
-                aria-label="Open playlist import/export"
-              >
-                Manage Playlists...
-              </button>
             </div>
           </div>
 
@@ -822,7 +814,6 @@
 
     <!-- Playback controls -->
     <div id="trackControls">
-      <span id="nowPlaying"></span>
       <div id="trackControls-top">
         <div id="trackControls-buttons">
           <div class="track-controls-group">
@@ -845,14 +836,6 @@
               aria-pressed="true"
             >
               <span id="thumbToggleIcon" aria-hidden="true">T</span>
-            </button>
-            <button
-              id="playlistToggleBtn"
-              type="button"
-              aria-label="Show playlist controls"
-              aria-expanded="false"
-            >
-              <span class="icon volume-up" id="playlistToggleIcon" aria-hidden="true"></span>
             </button>
           </div>
         </div>
@@ -1020,9 +1003,6 @@
     const thumbToggleIcon = document.getElementById('thumbToggleIcon');
     const progressRange = document.getElementById('progressRange');
     const timeLabel = document.getElementById('timeLabel');
-    const playlistControls = document.getElementById('playlistControls');
-    const playlistToggleBtn = document.getElementById('playlistToggleBtn');
-    const playlistToggleIcon = document.getElementById('playlistToggleIcon');
     const playPauseIcon = document.getElementById('playPauseIcon');
     const playlistHistorySelect = document.getElementById('playlistHistorySelect');
     const alertOverlay = document.getElementById('alertOverlay');
@@ -1179,16 +1159,6 @@
     updateFilterWrapperClass();
     updateThumbToggleState();
 
-    function updatePlaylistToggleState() {
-      if (!playlistControls || !playlistToggleBtn || !playlistToggleIcon) return;
-      const collapsed = playlistControls.classList.contains('collapsed');
-      const label = collapsed ? 'Show playlist controls' : 'Hide playlist controls';
-      playlistToggleBtn.setAttribute('aria-expanded', String(!collapsed));
-      playlistToggleBtn.setAttribute('aria-label', label);
-      playlistToggleBtn.title = label;
-      playlistToggleIcon.className = collapsed ? 'icon volume-down' : 'icon volume-up';
-    }
-
     function updateThumbToggleState() {
       if (!thumbToggleBtn || !thumbToggleIcon) return;
       const label = showThumbnails ? 'Hide thumbnails' : 'Show thumbnails';
@@ -1199,16 +1169,6 @@
       thumbToggleIcon.textContent = 'T';
     }
 
-    // collapsible controls (not persisted)
-    if (playlistToggleBtn) {
-      playlistToggleBtn.addEventListener('click', () => {
-        if (!playlistControls) return;
-        playlistControls.classList.toggle('collapsed');
-        updatePlaylistToggleState();
-      });
-    }
-
-    updatePlaylistToggleState();
     updateThumbToggleState();
 
     // IFrame API ready
@@ -1322,6 +1282,7 @@
 
     function updateNowPlaying() {
       const el = document.getElementById('nowPlaying');
+      if (!el) return;
       if (currentIndex < 0 || !playlistItems[currentIndex]) {
         el.textContent = '–';
       } else {

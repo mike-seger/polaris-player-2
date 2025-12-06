@@ -548,7 +548,7 @@
         }
         node.querySelectorAll('[data-history-action="true"]').forEach((btn) => {
           if (btn instanceof HTMLElement) {
-            applyHistoryActionButtonState(btn, false);
+            applyHistoryActionButtonState(btn, btn.matches(':hover'));
           }
         });
       });
