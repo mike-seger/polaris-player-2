@@ -5,10 +5,9 @@ https://onlinefontconverter.com/
 https://transfonter.org/
 
 ## font customization
-adapt [text](public/used-symbols.txt)
+adapt [ligature list](original/used-symbols-names.txt)
 run:
 ```
 original/convert-material-symbols.sh --fill 0 --grad 0 --opsz 48 --wght 500
-# or to convert the old icon font
-original/convertfont.sh
 ```
+then open `original/index.html` to preview the generated ligatures.

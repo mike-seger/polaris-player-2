@@ -1,8 +1,5 @@
-const USED_SYMBOLS_URL = './used-symbols.txt';
-let cachedSymbols = null;
 let cachedUserSettings = null;
 const AVAILABLE_VIEWS = [
-  { id: 'icons', label: 'Icon Encodings' },
   { id: 'settings', label: 'User Settings' }
 ];
 
@@ -23,20 +20,6 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 
-async function loadUsedSymbols() {
-  if (cachedSymbols) return cachedSymbols;
-
-  const resp = await fetch(USED_SYMBOLS_URL, { cache: 'no-store' });
-  if (!resp.ok) {
-    throw new Error(`HTTP ${resp.status} while fetching ${USED_SYMBOLS_URL}`);
-  }
-
-  const text = await resp.text();
-  const parsed = parseUsedSymbols(text);
-  cachedSymbols = parsed;
-  return parsed;
-}
-
 async function loadUserSettings() {
   if (cachedUserSettings) return cachedUserSettings;
   const STORAGE_KEY = 'ytAudioPlayer.settings';
@@ -50,43 +33,21 @@ async function loadUserSettings() {
   return cachedUserSettings;
 }
 
-function parseUsedSymbols(raw) {
-  return raw
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter((line) => line && !line.startsWith('#'))
-    .map((line) => {
-      const match = line.match(/^U\+([0-9a-fA-F]+)\s+(.*)$/);
-      if (!match) return null;
-      const hex = match[1].toUpperCase();
-      const name = (match[2] || '').trim();
-      const codePoint = parseInt(hex, 16);
-      if (!Number.isFinite(codePoint)) return null;
-      return {
-        hex,
-        name,
-        char: String.fromCodePoint(codePoint)
-      };
-    })
-    .filter(Boolean);
-}
-
 async function openDebugOverlay() {
   try {
-    const [glyphs, userSettings] = await Promise.all([loadUsedSymbols(), loadUserSettings()]);
-      renderDebugOverlay({ view: 'icons', glyphs, userSettings });
+    const userSettings = await loadUserSettings();
+    renderDebugOverlay({ view: 'settings', userSettings });
   } catch (error) {
     console.error('Failed to open debug overlay:', error);
     renderDebugOverlay({
-      view: 'icons',
-      glyphs: [],
+      view: 'settings',
       userSettings: {},
       errorMessage: error.message || 'Failed to load debug data.'
     });
   }
 }
 
-function renderDebugOverlay({ view, glyphs, userSettings, errorMessage }) {
+function renderDebugOverlay({ view, userSettings, errorMessage }) {
   let overlay = document.getElementById('debugOverlay');
   if (!overlay) {
     const sidebar = document.getElementById('sidebar');
@@ -197,40 +158,50 @@ function renderDebugOverlay({ view, glyphs, userSettings, errorMessage }) {
           return btn;
         })();
 
-    const selector = document.createElement('select');
-    selector.id = 'debugOverlaySelect';
-    selector.style.background = '#202633';
-    selector.style.color = '#f5f7fa';
-    selector.style.border = '1px solid #394150';
-    selector.style.borderRadius = '4px';
-    selector.style.padding = '0.3rem 0.6rem';
-    selector.style.fontSize = '0.85rem';
-    selector.style.paddingRight = '1.8rem';
-    selector.style.webkitAppearance = 'none';
-    selector.style.mozAppearance = 'none';
-    selector.style.appearance = 'none';
-
-    AVAILABLE_VIEWS.forEach(({ id, label }) => {
-      const option = document.createElement('option');
-      option.value = id;
-      option.textContent = label;
-      selector.appendChild(option);
-    });
-
-    selector.addEventListener('change', async (event) => {
-      const selected = event.target.value;
-      await refreshDebugOverlay(selected);
-    });
-
     const headerRow = document.createElement('div');
     headerRow.style.display = 'flex';
     headerRow.style.alignItems = 'center';
     headerRow.style.justifyContent = 'space-between';
     headerRow.style.gap = '0.75rem';
-    const selectWrapper = document.createElement('div');
-    selectWrapper.className = 'debug-select-wrapper';
-    selectWrapper.appendChild(selector);
-    headerRow.appendChild(selectWrapper);
+    let selector = null;
+    if (AVAILABLE_VIEWS.length > 1) {
+      selector = document.createElement('select');
+      selector.id = 'debugOverlaySelect';
+      selector.style.background = '#202633';
+      selector.style.color = '#f5f7fa';
+      selector.style.border = '1px solid #394150';
+      selector.style.borderRadius = '4px';
+      selector.style.padding = '0.3rem 0.6rem';
+      selector.style.fontSize = '0.85rem';
+      selector.style.paddingRight = '1.8rem';
+      selector.style.webkitAppearance = 'none';
+      selector.style.mozAppearance = 'none';
+      selector.style.appearance = 'none';
+
+      AVAILABLE_VIEWS.forEach(({ id, label }) => {
+        const option = document.createElement('option');
+        option.value = id;
+        option.textContent = label;
+        selector.appendChild(option);
+      });
+
+      selector.addEventListener('change', async (event) => {
+        const selected = event.target.value;
+        await refreshDebugOverlay(selected);
+      });
+
+      const selectWrapper = document.createElement('div');
+      selectWrapper.className = 'debug-select-wrapper';
+      selectWrapper.appendChild(selector);
+      headerRow.appendChild(selectWrapper);
+    } else {
+      const heading = document.createElement('h2');
+      heading.textContent = 'Debug Tools';
+      heading.style.margin = '0';
+      heading.style.fontSize = '1rem';
+      heading.style.fontWeight = '600';
+      headerRow.appendChild(heading);
+    }
     headerRow.appendChild(closeBtn);
 
     const list = document.createElement('div');
@@ -280,19 +251,15 @@ function renderDebugOverlay({ view, glyphs, userSettings, errorMessage }) {
     overlay._applyPanelPlacement();
   }
 
-  fillDebugOverlay(view, { glyphs, userSettings, errorMessage });
+  fillDebugOverlay(view, { userSettings, errorMessage });
 }
 
 async function refreshDebugOverlay(viewId) {
-  let glyphs = cachedSymbols;
   let userSettings = cachedUserSettings;
   let errorMessage;
 
   try {
-    if (!glyphs && viewId === 'icons') {
-      glyphs = await loadUsedSymbols();
-    }
-    if (!userSettings && viewId === 'settings') {
+    if (!userSettings) {
       userSettings = await loadUserSettings();
     }
   } catch (error) {
@@ -300,10 +267,10 @@ async function refreshDebugOverlay(viewId) {
     errorMessage = error.message || 'Failed to load data for this view.';
   }
 
-  fillDebugOverlay(viewId, { glyphs: glyphs || [], userSettings: userSettings || {}, errorMessage });
+  fillDebugOverlay(viewId, { userSettings: userSettings || {}, errorMessage });
 }
 
-function fillDebugOverlay(view, { glyphs, userSettings, errorMessage }) {
+function fillDebugOverlay(view, { userSettings, errorMessage }) {
   const list = document.getElementById('debugOverlayContent');
   if (!list) return;
 
@@ -316,11 +283,7 @@ function fillDebugOverlay(view, { glyphs, userSettings, errorMessage }) {
     return;
   }
 
-  if (view === 'settings') {
-    renderUserSettings(list, userSettings);
-  } else {
-    renderIconEncodings(list, glyphs);
-  }
+  renderUserSettings(list, userSettings);
 }
 
 function renderUserSettings(container, settings) {
@@ -350,46 +313,4 @@ function renderUserSettings(container, settings) {
   pre.style.wordBreak = 'break-word';
 
   container.appendChild(pre);
-}
-
-function renderIconEncodings(container, glyphs) {
-  if (!glyphs || !glyphs.length) {
-    const empty = document.createElement('div');
-    empty.textContent = 'No glyphs listed in used-symbols.txt.';
-    container.appendChild(empty);
-    return;
-  }
-
-  glyphs.forEach(({ hex, char, name }) => {
-    const row = document.createElement('div');
-    row.style.display = 'flex';
-    row.style.alignItems = 'center';
-    row.style.gap = '0.75rem';
-    row.style.padding = '0.5rem 0.25rem';
-    row.style.borderBottom = '1px solid #2b2f3a';
-
-    const iconPreview = document.createElement('span');
-    iconPreview.setAttribute('aria-hidden', 'true');
-    iconPreview.style.fontFamily = "'Material Icons Round-Regular'";
-    iconPreview.style.fontSize = '32px';
-    iconPreview.style.lineHeight = '1';
-    iconPreview.style.minWidth = '32px';
-    iconPreview.style.color = '#f5f7fa';
-    iconPreview.textContent = char;
-
-    const codeLine = document.createElement('code');
-    codeLine.textContent = name ? `U+${hex} ${name}` : `U+${hex}`;
-    codeLine.style.fontFamily = 'SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace';
-    codeLine.style.fontSize = '0.85rem';
-    codeLine.style.color = '#a8b3c7';
-
-    row.appendChild(iconPreview);
-    row.appendChild(codeLine);
-    container.appendChild(row);
-  });
-
-  const rows = container.querySelectorAll('div');
-  if (rows.length) {
-    rows[rows.length - 1].style.borderBottom = 'none';
-  }
 }
