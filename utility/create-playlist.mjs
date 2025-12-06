@@ -58,6 +58,11 @@ const argv = await yargs(hideBin(process.argv))
     default: false,
     describe: 'Delete any of your playlists with the same title before creating the new one'
   })
+  .option('append', {
+    type: 'boolean',
+    default: false,
+    describe: 'Append to an existing playlist with the same title; skips videos already present'
+  })
   .option('token-path', {
     type: 'string',
     default: DEFAULT_TOKEN_PATH,
@@ -97,35 +102,86 @@ if (argv['dry-run']) {
 const youtube = google.youtube({ version: 'v3', auth: authClient });
 
 let playlistId = null;
+let existingVideoIds = new Set();
+let existingVideoCount = 0;
+const skippedDuplicates = [];
+let usedExistingPlaylist = false;
+
+if (argv.append && argv.replace) {
+  console.error('Options --append and --replace cannot be used together. Choose one.');
+  process.exit(1);
+}
 
 if (!argv['dry-run']) {
-  if (argv.replace) {
-    await deleteExistingPlaylists(youtube, argv.title);
+  if (argv.append) {
+    const existing = await findPlaylistByTitle(youtube, argv.title);
+    if (existing) {
+      playlistId = existing.id;
+      console.log(`Appending to existing playlist "${argv.title}" (${playlistId}).`);
+      existingVideoIds = await fetchPlaylistVideoIds(youtube, playlistId);
+      existingVideoCount = existingVideoIds.size;
+      console.log(`Found ${existingVideoCount} existing videos; duplicates will be skipped.`);
+      usedExistingPlaylist = true;
+    } else {
+      console.log(`No playlist titled "${argv.title}" found. A new playlist will be created.`);
+      playlistId = await createPlaylist(youtube, {
+        title: argv.title,
+        privacyStatus: argv.privacy
+      });
+    }
+  } else {
+    if (argv.replace) {
+      await deleteExistingPlaylists(youtube, argv.title);
+    }
+    playlistId = await createPlaylist(youtube, {
+      title: argv.title,
+      privacyStatus: argv.privacy
+    });
   }
-  playlistId = await createPlaylist(youtube, {
-    title: argv.title,
-    privacyStatus: argv.privacy
-  });
 } else {
-  if (argv.replace) {
-    console.log(`Would delete any existing playlists titled "${argv.title}" before recreation.`);
+  if (argv.append) {
+    const existing = await findPlaylistByTitle(youtube, argv.title);
+    if (existing) {
+      playlistId = existing.id;
+      existingVideoIds = await fetchPlaylistVideoIds(youtube, playlistId);
+      existingVideoCount = existingVideoIds.size;
+      console.log(`Dry run: would append to playlist "${argv.title}" (${playlistId}) containing ${existingVideoCount} videos.`);
+      usedExistingPlaylist = true;
+    } else {
+      console.log(`Dry run: no playlist titled "${argv.title}" found. Would create a new playlist.`);
+      playlistId = 'DRY_RUN_PLAYLIST_ID';
+    }
+  } else {
+    if (argv.replace) {
+      console.log(`Would delete any existing playlists titled "${argv.title}" before recreation.`);
+    }
+    console.log(`Would create playlist titled "${argv.title}" with privacy "${argv.privacy}".`);
+    playlistId = 'DRY_RUN_PLAYLIST_ID';
   }
-  console.log(`Would create playlist titled "${argv.title}" with privacy "${argv.privacy}".`);
-  playlistId = 'DRY_RUN_PLAYLIST_ID';
 }
 
 let successCount = 0;
 const failures = [];
 
 for (const [position, item] of playlistData.entries()) {
-  const videoId = item.videoId || item.contentDetails?.videoId || item.id;
+  let videoId = item.videoId || item.contentDetails?.videoId || item.id;
   if (!videoId) {
     failures.push({ item, reason: 'Missing videoId' });
     console.warn(`Skipping item without videoId: ${item.title ?? item.userTitle ?? '[untitled]'}`);
     continue;
   }
 
+  if (typeof videoId === 'string') {
+    videoId = videoId.trim();
+  }
+
   const displayTitle = item.userTitle || item.title || videoId;
+
+  if (argv.append && existingVideoIds.has(videoId)) {
+    skippedDuplicates.push(displayTitle);
+    console.log(`Skipping duplicate already in playlist: ${displayTitle} [videoId=${videoId}]`);
+    continue;
+  }
 
   if (argv['dry-run']) {
     console.log(`Would add #${position + 1}: ${displayTitle} [videoId=${videoId}]`);
@@ -134,17 +190,22 @@ for (const [position, item] of playlistData.entries()) {
   }
 
   try {
+    const snippet = {
+      playlistId,
+      resourceId: {
+        kind: 'youtube#video',
+        videoId
+      }
+    };
+
+    if (!argv.append) {
+      snippet.position = position;
+    }
+
     await youtube.playlistItems.insert({
       part: ['snippet'],
       requestBody: {
-        snippet: {
-          playlistId,
-          position,
-          resourceId: {
-            kind: 'youtube#video',
-            videoId
-          }
-        }
+        snippet
       }
     });
     process.stdout.write(`✔ Added #${position + 1}: ${displayTitle}\n`);
@@ -165,6 +226,10 @@ const summaryLines = [
   `Inserted videos: ${successCount}/${playlistData.length}`
 ];
 
+if (skippedDuplicates.length > 0) {
+  summaryLines.push(`Skipped duplicates already present: ${skippedDuplicates.length}`);
+}
+
 if (failures.length > 0) {
   summaryLines.push(`Failures (${failures.length}):`);
   for (const failure of failures) {
@@ -175,7 +240,11 @@ if (failures.length > 0) {
 
 if (!argv['dry-run']) {
   const playlistUrl = `https://www.youtube.com/playlist?list=${playlistId}`;
-  summaryLines.push(`New playlist URL: ${playlistUrl}`);
+  if (argv.append && usedExistingPlaylist) {
+    summaryLines.push(`Updated playlist URL: ${playlistUrl}`);
+  } else {
+    summaryLines.push(`New playlist URL: ${playlistUrl}`);
+  }
 } else {
   summaryLines.push('Dry run complete; no playlist was created.');
 }
@@ -396,6 +465,56 @@ async function deleteExistingPlaylists(youtube, title) {
       console.warn(`Failed to delete playlist ${id}: ${extractErrorMessage(error)}`);
     }
   }
+}
+
+async function findPlaylistByTitle(youtube, title) {
+  let pageToken;
+  do {
+    const resp = await youtube.playlists.list({
+      part: ['id', 'snippet', 'contentDetails'],
+      mine: true,
+      maxResults: 50,
+      pageToken
+    });
+
+    for (const item of resp.data.items ?? []) {
+      if ((item.snippet?.title ?? '') === title) {
+        return {
+          id: item.id,
+          itemCount: item.contentDetails?.itemCount ?? null
+        };
+      }
+    }
+
+    pageToken = resp.data.nextPageToken ?? null;
+  } while (pageToken);
+
+  return null;
+}
+
+async function fetchPlaylistVideoIds(youtube, playlistId) {
+  const ids = new Set();
+  let pageToken;
+
+  do {
+    const resp = await youtube.playlistItems.list({
+      part: ['contentDetails'],
+      maxResults: 50,
+      playlistId,
+      pageToken
+    });
+
+    for (const item of resp.data.items ?? []) {
+      const vid = item.contentDetails?.videoId;
+      if (typeof vid === 'string') {
+        ids.add(vid.trim());
+      }
+    }
+
+    pageToken = resp.data.nextPageToken ?? null;
+  } while (pageToken);
+
+  return ids;
 }
 
 function extractErrorMessage(error) {
