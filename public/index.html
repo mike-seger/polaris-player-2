@@ -314,6 +314,7 @@
       width: 100%;
       box-sizing: border-box;
       padding: 0.4rem 0.4rem;
+      margin-top: 0.375rem;
       font-size: 0.8rem;
       background: #202633;
       border: 1px solid var(--color-border);
@@ -412,7 +413,8 @@
       left: 0.3rem;
       top: 50%;
       transform: translateY(-50%);
-      font-size: 1rem;
+      font-size: 1.3rem;
+      margin-top: 0.15em;
       opacity: 0.6;
       pointer-events: none;
       color: var(--color-text-muted);
@@ -428,6 +430,11 @@
       border-top: 1px solid var(--color-border);
       scrollbar-width: thin;
       scrollbar-color: var(--color-border-strong) rgba(32, 38, 51, 0.75);
+    }
+
+    #trackListContainer:focus {
+      outline: none;
+      box-shadow: none;
     }
 
     #trackListContainer::-webkit-scrollbar {
@@ -909,7 +916,7 @@
     </div>
 
     <!-- Scrollable list -->
-    <div id="trackListContainer">
+    <div id="trackListContainer" tabindex="0" aria-label="Playlist tracks">
       <ul id="trackList"></ul>
     </div>
   </div>
@@ -1121,6 +1128,7 @@
     const timeLabel = document.getElementById('timeLabel');
     const playPauseIcon = document.getElementById('playPauseIcon');
     const playlistHistorySelect = document.getElementById('playlistHistorySelect');
+    const trackListContainerEl = document.getElementById('trackListContainer');
     const alertOverlay = document.getElementById('alertOverlay');
     const alertMessageEl = document.getElementById('alertMessage');
     const alertCloseBtn = document.getElementById('alertCloseBtn');
@@ -1397,6 +1405,19 @@
           playIndex(realIdx);
         });
 
+        li.addEventListener('auxclick', (event) => {
+          if (event.button !== 1) return;
+          const targetEl = event.target instanceof Element ? event.target : null;
+          if (targetEl && targetEl.closest('.track-state-btn')) return;
+          event.preventDefault();
+          const playlistId = getActivePlaylistId();
+          const baseUrl = `https://www.youtube.com/watch?v=${encodeURIComponent(item.videoId)}`;
+          const url = playlistId
+            ? `${baseUrl}&list=${encodeURIComponent(playlistId)}`
+            : baseUrl;
+          window.open(url, '_blank', 'noopener');
+        });
+
         ul.appendChild(li);
       });
 
@@ -1657,6 +1678,20 @@
       renderTrackList();
       saveSettings({ filterText: '' });
     });
+
+    if (trackListContainerEl) {
+      trackListContainerEl.addEventListener('keydown', (event) => {
+        if (event.defaultPrevented) return;
+        if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
+          event.preventDefault();
+          if (event.key === 'ArrowUp') {
+            playPrev();
+          } else {
+            playNext();
+          }
+        }
+      });
+    }
 
     // keyboard handling
     function isTextInputFocused() {

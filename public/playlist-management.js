@@ -21,22 +21,78 @@
       loading: false,
       lastFocused: null,
       bodyOverflow: '',
-      historyList: null
+      historyList: null,
+      overlayHost: document.body,
+      panelBoundsHandler: null
     };
+
+    function applyPanelBounds(panelArg, overlayArg) {
+      const panel = panelArg || state.panel;
+      const overlay = overlayArg || state.overlay;
+      if (!panel || !overlay) return;
+
+      const sidebar = document.getElementById('sidebar');
+      const trackList = document.getElementById('trackListContainer');
+      const sidebarRect = sidebar instanceof HTMLElement ? sidebar.getBoundingClientRect() : null;
+      const trackRect = trackList instanceof HTMLElement ? trackList.getBoundingClientRect() : null;
+
+      if (sidebarRect || trackRect) {
+        const topOffset = Math.max(sidebarRect ? sidebarRect.top : trackRect.top, 0);
+        const targetLeft = trackRect ? trackRect.left : (sidebarRect ? sidebarRect.left : 0);
+        const targetWidth = trackRect ? trackRect.width : (sidebarRect ? sidebarRect.width : undefined);
+
+        overlay.style.alignItems = 'flex-start';
+        overlay.style.justifyContent = 'flex-start';
+        overlay.style.padding = '0';
+
+        panel.style.position = 'fixed';
+        panel.style.top = `${topOffset}px`;
+        panel.style.left = `${targetLeft}px`;
+        panel.style.right = 'auto';
+        panel.style.bottom = 'auto';
+        if (typeof targetWidth === 'number') {
+          panel.style.width = `${targetWidth}px`;
+          panel.style.maxWidth = `${targetWidth}px`;
+          panel.style.minWidth = `${targetWidth}px`;
+        }
+        panel.style.transform = 'none';
+        panel.style.margin = '0';
+        panel.style.alignSelf = 'flex-start';
+      } else {
+        overlay.style.alignItems = 'center';
+        overlay.style.justifyContent = 'center';
+        overlay.style.padding = '1rem';
+        panel.style.position = 'relative';
+        panel.style.top = 'auto';
+        panel.style.left = 'auto';
+        panel.style.right = 'auto';
+        panel.style.bottom = 'auto';
+        panel.style.width = 'min(560px, 92vw)';
+        panel.style.maxWidth = 'min(560px, 92vw)';
+        panel.style.minWidth = '0';
+        panel.style.transform = 'none';
+        panel.style.margin = '0 auto';
+        panel.style.alignSelf = 'center';
+      }
+    }
 
     function ensureOverlay() {
       if (state.overlay) return state.overlay;
+
+      state.overlayHost = document.body;
 
       const overlay = document.createElement('div');
       overlay.id = 'playlistIOOverlay';
       overlay.style.position = 'fixed';
       overlay.style.inset = '0';
       overlay.style.display = 'none';
-      overlay.style.alignItems = 'center';
-      overlay.style.justifyContent = 'center';
+      overlay.style.alignItems = 'flex-start';
+      overlay.style.justifyContent = 'flex-start';
       overlay.style.background = 'rgba(10, 12, 18, 0.72)';
       overlay.style.zIndex = '1000';
-      overlay.style.padding = '1rem';
+      overlay.style.padding = '0';
+      overlay.style.boxSizing = 'border-box';
+      overlay.style.pointerEvents = 'auto';
       overlay.setAttribute('role', 'dialog');
       overlay.setAttribute('aria-modal', 'true');
       overlay.setAttribute('aria-labelledby', 'playlistIOOverlayTitle');
@@ -49,12 +105,14 @@
       panel.style.border = '1px solid #2b2f3a';
       panel.style.borderRadius = '8px';
       panel.style.boxShadow = '0 18px 48px rgba(0, 0, 0, 0.45)';
-      panel.style.width = 'min(560px, 92vw)';
+      panel.style.maxWidth = '100%';
       panel.style.maxHeight = '80vh';
       panel.style.display = 'flex';
       panel.style.flexDirection = 'column';
       panel.style.gap = '1rem';
       panel.style.boxSizing = 'border-box';
+      panel.style.overflowY = 'auto';
+      panel.style.alignSelf = 'flex-start';
 
       const header = document.createElement('div');
       header.style.display = 'flex';
@@ -249,6 +307,18 @@
 
       document.body.appendChild(overlay);
 
+      applyPanelBounds(panel, overlay);
+
+      if (!state.panelBoundsHandler) {
+        state.panelBoundsHandler = () => {
+          if (state.panel && state.overlay && state.overlay.style.display !== 'none') {
+            applyPanelBounds();
+          }
+        };
+        window.addEventListener('resize', state.panelBoundsHandler, { passive: true });
+        window.addEventListener('scroll', state.panelBoundsHandler, { passive: true });
+      }
+
       state.overlay = overlay;
       state.panel = panel;
       state.input = input;
@@ -340,9 +410,12 @@
       const overlay = ensureOverlay();
       state.lastFocused = document.activeElement instanceof HTMLElement ? document.activeElement : null;
       overlay.style.display = 'flex';
+      applyPanelBounds();
       overlay.setAttribute('aria-hidden', 'false');
-      state.bodyOverflow = document.body.style.overflow;
-      document.body.style.overflow = 'hidden';
+      if (state.overlayHost === document.body) {
+        state.bodyOverflow = document.body.style.overflow;
+        document.body.style.overflow = 'hidden';
+      }
       updateStatus('');
       refreshHistoryList();
       if (state.input) {
@@ -359,7 +432,9 @@
       if (!state.overlay) return;
       state.overlay.style.display = 'none';
       state.overlay.setAttribute('aria-hidden', 'true');
-      document.body.style.overflow = state.bodyOverflow || '';
+      if (state.overlayHost === document.body) {
+        document.body.style.overflow = state.bodyOverflow || '';
+      }
       state.bodyOverflow = '';
       state.loading = false;
       setLoading(false);
