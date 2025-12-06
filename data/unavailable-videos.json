@@ -1,11 +1,879 @@
 {
   "unavailable": [
     {
+      "videoId": "nIBV2exYCU0",
+      "title": "The Age Of Love (Jam & Spoon Watch Out For Stella Mix)",
+      "position": 15,
+      "reason": "playability:UNPLAYABLE",
+      "durationSeconds": 409,
+      "playabilityStatus": "UNPLAYABLE",
+      "playabilityReason": "Video unavailable"
+    },
+    {
+      "videoId": "kMrUWRujBXA",
+      "title": "Love Nation (Digital Remastered 1999 Classic)",
+      "position": 40,
+      "reason": "playability:UNPLAYABLE",
+      "durationSeconds": 391,
+      "playabilityStatus": "UNPLAYABLE",
+      "playabilityReason": "Video unavailable"
+    },
+    {
+      "videoId": "_Udpz6EIT8c",
+      "title": "Blackmaster - Time Never Stops (Maxi Version)",
+      "position": 100,
+      "reason": "playability:UNPLAYABLE",
+      "durationSeconds": 487,
+      "playabilityStatus": "UNPLAYABLE",
+      "playabilityReason": "Video unavailable"
+    },
+    {
+      "videoId": "28RKJEFLqOo",
+      "title": "Cream (Long Version)",
+      "position": 103,
+      "reason": "playability:UNPLAYABLE",
+      "durationSeconds": 439,
+      "playabilityStatus": "UNPLAYABLE",
+      "playabilityReason": "Video unavailable"
+    },
+    {
+      "videoId": "DzDQGTdZM-U",
+      "title": "Airbag",
+      "position": 114,
+      "reason": "playability:UNPLAYABLE",
+      "durationSeconds": 348,
+      "playabilityStatus": "UNPLAYABLE",
+      "playabilityReason": "Video unavailable"
+    },
+    {
+      "videoId": "4sGNuPwjA3w",
+      "title": "Cry For Love (DJ Philip Remix)",
+      "position": 153,
+      "reason": "playability:UNPLAYABLE",
+      "durationSeconds": 451,
+      "playabilityStatus": "UNPLAYABLE",
+      "playabilityReason": "Video unavailable"
+    },
+    {
+      "videoId": "WT_lKA94VKk",
+      "title": "Pianodreams",
+      "position": 241,
+      "reason": "playability:UNPLAYABLE",
+      "durationSeconds": 339,
+      "playabilityStatus": "UNPLAYABLE",
+      "playabilityReason": "Video unavailable"
+    },
+    {
+      "videoId": "FRswKvfE5Hs",
+      "title": "DJ Gollum - Emergency",
+      "position": 281,
+      "reason": "playability:UNPLAYABLE",
+      "durationSeconds": 465,
+      "playabilityStatus": "UNPLAYABLE",
+      "playabilityReason": "Video unavailable"
+    },
+    {
+      "videoId": "NAamCVZ9hZI",
+      "title": "dj tibby - Firedance (Club Mix)",
+      "position": 331,
+      "reason": "playability:UNPLAYABLE",
+      "durationSeconds": 374,
+      "playabilityStatus": "UNPLAYABLE",
+      "playabilityReason": "Video unavailable"
+    },
+    {
+      "videoId": "rw_AXwdYzKg",
+      "title": "Energy 52 - Cafe Del Mar (Nalin & Kane Remix)",
+      "position": 379,
+      "reason": "playability:UNPLAYABLE",
+      "durationSeconds": 582,
+      "playabilityStatus": "UNPLAYABLE",
+      "playabilityReason": "Video unavailable"
+    },
+    {
+      "videoId": "7_ad_d7Y4fk",
+      "title": "globlal trancemission - Dream mission",
+      "position": 460,
+      "reason": "playability:UNPLAYABLE",
+      "durationSeconds": 347,
+      "playabilityStatus": "UNPLAYABLE",
+      "playabilityReason": "Video unavailable"
+    },
+    {
+      "videoId": "aAgCeJJ6wNk",
+      "title": "Dignified (Allan McLoud Remix)",
+      "position": 485,
+      "reason": "playability:UNPLAYABLE",
+      "durationSeconds": 598,
+      "playabilityStatus": "UNPLAYABLE",
+      "playabilityReason": "Video unavailable"
+    },
+    {
+      "videoId": "KlpzzcIU8u0",
+      "title": "Ingmar Veeck - Wave Trip",
+      "position": 516,
+      "reason": "playability:UNPLAYABLE",
+      "durationSeconds": 410,
+      "playabilityStatus": "UNPLAYABLE",
+      "playabilityReason": "Video unavailable"
+    },
+    {
+      "videoId": "tFo70aCh8wk",
+      "title": "Innertales - Odyssee",
+      "position": 518,
+      "reason": "playability:UNPLAYABLE",
+      "durationSeconds": 509,
+      "playabilityStatus": "UNPLAYABLE",
+      "playabilityReason": "Video unavailable"
+    },
+    {
+      "videoId": "c4Mtkser5HE",
+      "title": "Ives & CurrierGet Party (Etienne M. Picard Remix)",
+      "position": 526,
+      "reason": "playability:UNPLAYABLE",
+      "durationSeconds": 367,
+      "playabilityStatus": "UNPLAYABLE",
+      "playabilityReason": "Video unavailable"
+    },
+    {
+      "videoId": "RLHdB3TctzA",
+      "title": "Psycho Strings (Kay Cee Remix)",
+      "position": 534,
+      "reason": "playability:UNPLAYABLE",
+      "durationSeconds": 414,
+      "playabilityStatus": "UNPLAYABLE",
+      "playabilityReason": "Video unavailable"
+    },
+    {
+      "videoId": "nk6qwO3DpvU",
+      "title": "Mackenzie feat Jessy - Look at me now (DJ Philip Remix)",
+      "position": 538,
+      "reason": "playability:UNPLAYABLE",
+      "durationSeconds": 430,
+      "playabilityStatus": "UNPLAYABLE",
+      "playabilityReason": "Video unavailable"
+    },
+    {
+      "videoId": "sE90UkV_eoY",
+      "title": "Join Me (Lightforce Club Mix)",
+      "position": 586,
+      "reason": "playability:UNPLAYABLE",
+      "durationSeconds": 404,
+      "playabilityStatus": "UNPLAYABLE",
+      "playabilityReason": "Video unavailable"
+    },
+    {
+      "videoId": "V5oM4cC1UOg",
+      "title": "L.S.G. - The Hidden Sun Of Venus (Oliver Lieb Remix)",
+      "position": 607,
+      "reason": "playability:UNPLAYABLE",
+      "durationSeconds": 491,
+      "playabilityStatus": "UNPLAYABLE",
+      "playabilityReason": "Video unavailable"
+    },
+    {
+      "videoId": "ImegOW6K0W4",
+      "title": "Into My Brain (Mario Lopez vs. Red Sector) (Plug n Play Club Mix)",
+      "position": 635,
+      "reason": "playability:UNPLAYABLE",
+      "durationSeconds": 424,
+      "playabilityStatus": "UNPLAYABLE",
+      "playabilityReason": "Video unavailable"
+    },
+    {
+      "videoId": "nEuXGi7xSoE",
+      "title": "Higher",
+      "position": 651,
+      "reason": "playability:UNPLAYABLE",
+      "durationSeconds": 347,
+      "playabilityStatus": "UNPLAYABLE",
+      "playabilityReason": "Video unavailable"
+    },
+    {
+      "videoId": "EI0QAgmK7WE",
+      "title": "Microcosmica - Estrella De La Noche / The Star Of The Night (Medianoche Mix)",
+      "position": 666,
+      "reason": "playability:UNPLAYABLE",
+      "durationSeconds": 267,
+      "playabilityStatus": "UNPLAYABLE",
+      "playabilityReason": "Video unavailable"
+    },
+    {
+      "videoId": "IK2a2bWat-s",
+      "title": "Aurafloat",
+      "position": 716,
+      "reason": "playability:UNPLAYABLE",
+      "durationSeconds": 580,
+      "playabilityStatus": "UNPLAYABLE",
+      "playabilityReason": "Video unavailable"
+    },
+    {
+      "videoId": "9HsdSHwUr0Q",
+      "title": "Drifting Around the Galaxy",
+      "position": 722,
+      "reason": "playability:UNPLAYABLE",
+      "durationSeconds": 419,
+      "playabilityStatus": "UNPLAYABLE",
+      "playabilityReason": "Video unavailable"
+    },
+    {
+      "videoId": "9lbA_Qd0Gaw",
+      "title": "Into The Future (Dentist Dub)",
+      "position": 724,
+      "reason": "playability:UNPLAYABLE",
+      "durationSeconds": 313,
+      "playabilityStatus": "UNPLAYABLE",
+      "playabilityReason": "Video unavailable"
+    },
+    {
+      "videoId": "6SaDLCpYyXw",
+      "title": "Niels Van Gogh - Pulverturm (DJ Tomcraft Remix)",
+      "position": 745,
+      "reason": "playability:UNPLAYABLE",
+      "durationSeconds": 554,
+      "playabilityStatus": "UNPLAYABLE",
+      "playabilityReason": "Video unavailable"
+    },
+    {
+      "videoId": "RQFqzPFgcns",
+      "title": "NIP Collective - Moments Of Decision (Transpose Mix) 1995",
+      "position": 752,
+      "reason": "playability:LOGIN_REQUIRED",
+      "durationSeconds": null,
+      "playabilityStatus": "LOGIN_REQUIRED",
+      "playabilityReason": "Sign in to confirm you’re not a bot"
+    },
+    {
+      "videoId": "uzC1Nxvu2Tw",
+      "title": "Non Eric - 1996 - S.E.A.L.s",
+      "position": 757,
+      "reason": "playability:LOGIN_REQUIRED",
+      "durationSeconds": null,
+      "playabilityStatus": "LOGIN_REQUIRED",
+      "playabilityReason": "Sign in to confirm you’re not a bot"
+    },
+    {
+      "videoId": "Xc6nUHiIWRo",
+      "title": "Nostradamus - Injection",
+      "position": 759,
+      "reason": "playability:LOGIN_REQUIRED",
+      "durationSeconds": null,
+      "playabilityStatus": "LOGIN_REQUIRED",
+      "playabilityReason": "Sign in to confirm you’re not a bot"
+    },
+    {
+      "videoId": "p2DUYIZC_gw",
+      "title": "Nostradamus - Veto",
+      "position": 760,
+      "reason": "playability:LOGIN_REQUIRED",
+      "durationSeconds": null,
+      "playabilityStatus": "LOGIN_REQUIRED",
+      "playabilityReason": "Sign in to confirm you’re not a bot"
+    },
+    {
+      "videoId": "vyfCFPTJFlE",
+      "title": "Nostrum - Aciction (303 Remix)",
+      "position": 761,
+      "reason": "playability:LOGIN_REQUIRED",
+      "durationSeconds": null,
+      "playabilityStatus": "LOGIN_REQUIRED",
+      "playabilityReason": "Sign in to confirm you’re not a bot"
+    },
+    {
+      "videoId": "21GV2UH6pCU",
+      "title": "Nostrum - Brainchild '97",
+      "position": 766,
+      "reason": "playability:LOGIN_REQUIRED",
+      "durationSeconds": null,
+      "playabilityStatus": "LOGIN_REQUIRED",
+      "playabilityReason": "Sign in to confirm you’re not a bot"
+    },
+    {
+      "videoId": "fert4USojCk",
+      "title": "Nostrum - Brainchild",
+      "position": 767,
+      "reason": "playability:LOGIN_REQUIRED",
+      "durationSeconds": null,
+      "playabilityStatus": "LOGIN_REQUIRED",
+      "playabilityReason": "Sign in to confirm you’re not a bot"
+    },
+    {
+      "videoId": "EZK05KWJwM4",
+      "title": "Nostrum - Brilliant",
+      "position": 769,
+      "reason": "playability:LOGIN_REQUIRED",
+      "durationSeconds": null,
+      "playabilityStatus": "LOGIN_REQUIRED",
+      "playabilityReason": "Sign in to confirm you’re not a bot"
+    },
+    {
+      "videoId": "vwucEbibjq4",
+      "title": "Nostrum - Dating Rob (HQ)",
+      "position": 770,
+      "reason": "playability:LOGIN_REQUIRED",
+      "durationSeconds": null,
+      "playabilityStatus": "LOGIN_REQUIRED",
+      "playabilityReason": "Sign in to confirm you’re not a bot"
+    },
+    {
+      "videoId": "htFZngzEsBA",
+      "title": "Nostrum - E-Motion",
+      "position": 771,
+      "reason": "playability:LOGIN_REQUIRED",
+      "durationSeconds": null,
+      "playabilityStatus": "LOGIN_REQUIRED",
+      "playabilityReason": "Sign in to confirm you’re not a bot"
+    },
+    {
+      "videoId": "xwzWlXMMvaw",
+      "title": "Nostrum - Faith",
+      "position": 772,
+      "reason": "playability:LOGIN_REQUIRED",
+      "durationSeconds": null,
+      "playabilityStatus": "LOGIN_REQUIRED",
+      "playabilityReason": "Sign in to confirm you’re not a bot"
+    },
+    {
+      "videoId": "22FfZ-aLcsM",
+      "title": "Nostrum - Melancholic Child (Dream Mix)",
+      "position": 773,
+      "reason": "playability:LOGIN_REQUIRED",
+      "durationSeconds": null,
+      "playabilityStatus": "LOGIN_REQUIRED",
+      "playabilityReason": "Sign in to confirm you’re not a bot"
+    },
+    {
+      "videoId": "_yb58C_D_5M",
+      "title": "Nostrum - Melancholic Child (Original Mix)",
+      "position": 774,
+      "reason": "playability:LOGIN_REQUIRED",
+      "durationSeconds": null,
+      "playabilityStatus": "LOGIN_REQUIRED",
+      "playabilityReason": "Sign in to confirm you’re not a bot"
+    },
+    {
+      "videoId": "_lnVCv9XV6U",
+      "title": "Nostrum - Mindgames (Onda Del Futuro Remix)",
+      "position": 775,
+      "reason": "playability:LOGIN_REQUIRED",
+      "durationSeconds": null,
+      "playabilityStatus": "LOGIN_REQUIRED",
+      "playabilityReason": "Sign in to confirm you’re not a bot"
+    },
+    {
+      "videoId": "sdN5DRCyRgc",
+      "title": "Nostrum - Nostrum - cccMirror (Original Mix)",
+      "position": 776,
+      "reason": "playability:UNPLAYABLE",
+      "durationSeconds": 387,
+      "playabilityStatus": "UNPLAYABLE",
+      "playabilityReason": "Video unavailable"
+    },
+    {
+      "videoId": "eTHusBmPQVQ",
+      "title": "Nostrum - Mirth",
+      "position": 777,
+      "reason": "playability:LOGIN_REQUIRED",
+      "durationSeconds": null,
+      "playabilityStatus": "LOGIN_REQUIRED",
+      "playabilityReason": "Sign in to confirm you’re not a bot"
+    },
+    {
+      "videoId": "tOpZZ5u2dfI",
+      "title": "Nostrum - Monastery (Remix)",
+      "position": 779,
+      "reason": "playability:LOGIN_REQUIRED",
+      "durationSeconds": null,
+      "playabilityStatus": "LOGIN_REQUIRED",
+      "playabilityReason": "Sign in to confirm you’re not a bot"
+    },
+    {
+      "videoId": "rvPpxHBWbuk",
+      "title": "Nostrum - Multible (Original Mix)",
+      "position": 780,
+      "reason": "playability:UNPLAYABLE",
+      "durationSeconds": 411,
+      "playabilityStatus": "UNPLAYABLE",
+      "playabilityReason": "Video unavailable"
+    },
+    {
+      "videoId": "DBnOLRqed68",
+      "title": "Nuclear Hyde - Spectral (Acidtrance 1995)",
+      "position": 785,
+      "reason": "playability:LOGIN_REQUIRED",
+      "durationSeconds": null,
+      "playabilityStatus": "LOGIN_REQUIRED",
+      "playabilityReason": "Sign in to confirm you’re not a bot"
+    },
+    {
+      "videoId": "V-Mu1yALNAc",
+      "title": "Nuke feat Red Drummer - Open Doors (Listen! Mix)",
+      "position": 786,
+      "reason": "playability:LOGIN_REQUIRED",
+      "durationSeconds": null,
+      "playabilityStatus": "LOGIN_REQUIRED",
+      "playabilityReason": "Sign in to confirm you’re not a bot"
+    },
+    {
+      "videoId": "gkaRVUwP9Ws",
+      "title": "Odyssey Of Light - Metal Master (Solid Sleep Remix) (1999)",
+      "position": 792,
+      "reason": "playability:LOGIN_REQUIRED",
+      "durationSeconds": null,
+      "playabilityStatus": "LOGIN_REQUIRED",
+      "playabilityReason": "Sign in to confirm you’re not a bot"
+    },
+    {
+      "videoId": "OxwuxIgJUUE",
+      "title": "Off Beats - Vibrations (X-Ite Remix) (A)",
+      "position": 793,
+      "reason": "playability:LOGIN_REQUIRED",
+      "durationSeconds": null,
+      "playabilityStatus": "LOGIN_REQUIRED",
+      "playabilityReason": "Sign in to confirm you’re not a bot"
+    },
+    {
+      "videoId": "Ortf1dTGmpE",
+      "title": "Oliver Lieb - Lightspeed Main Mix 1",
+      "position": 796,
+      "reason": "playability:LOGIN_REQUIRED",
+      "durationSeconds": null,
+      "playabilityStatus": "LOGIN_REQUIRED",
+      "playabilityReason": "Sign in to confirm you’re not a bot"
+    },
+    {
+      "videoId": "ybwmIOtyKcM",
+      "title": "Oliver Lieb - Subraumstimulation (W.J. Henze Mix) (1999)",
+      "position": 798,
+      "reason": "playability:LOGIN_REQUIRED",
+      "durationSeconds": null,
+      "playabilityStatus": "LOGIN_REQUIRED",
+      "playabilityReason": "Sign in to confirm you’re not a bot"
+    },
+    {
+      "videoId": "dG9ofm7ZATA",
+      "title": "Omega Force - Beyond the Clouds",
+      "position": 800,
+      "reason": "playability:LOGIN_REQUIRED",
+      "durationSeconds": null,
+      "playabilityStatus": "LOGIN_REQUIRED",
+      "playabilityReason": "Sign in to confirm you’re not a bot"
+    },
+    {
+      "videoId": "riKtnprSlRA",
+      "title": "Universo (Club Trance Version)",
+      "position": 802,
+      "reason": "playability:UNPLAYABLE",
+      "durationSeconds": 342,
+      "playabilityStatus": "UNPLAYABLE",
+      "playabilityReason": "Video unavailable"
+    },
+    {
+      "videoId": "3QL2LMdleQE",
+      "title": "Over 2 - Rhythm Of Wind (Dj's Mix) (1996)",
+      "position": 806,
+      "reason": "playability:LOGIN_REQUIRED",
+      "durationSeconds": null,
+      "playabilityStatus": "LOGIN_REQUIRED",
+      "playabilityReason": "Sign in to confirm you’re not a bot"
+    },
+    {
+      "videoId": "o83zg73VTKY",
+      "title": "Overcharge feat. G-Meter - Paddyman",
+      "position": 807,
+      "reason": "playability:LOGIN_REQUIRED",
+      "durationSeconds": null,
+      "playabilityStatus": "LOGIN_REQUIRED",
+      "playabilityReason": "Sign in to confirm you’re not a bot"
+    },
+    {
+      "videoId": "SKG_2rLcn3I",
+      "title": "The O Zone - Mischka",
+      "position": 810,
+      "reason": "playability:LOGIN_REQUIRED",
+      "durationSeconds": null,
+      "playabilityStatus": "LOGIN_REQUIRED",
+      "playabilityReason": "Sign in to confirm you’re not a bot"
+    },
+    {
+      "videoId": "213QGNYZAAk",
+      "title": "Pablo Gargano - Headlines [HQ]",
+      "position": 812,
+      "reason": "playability:LOGIN_REQUIRED",
+      "durationSeconds": null,
+      "playabilityStatus": "LOGIN_REQUIRED",
+      "playabilityReason": "Sign in to confirm you’re not a bot"
+    },
+    {
+      "videoId": "1JLoqL2BOxM",
+      "title": "Pablo Gargano - Holding You Tight",
+      "position": 813,
+      "reason": "playability:LOGIN_REQUIRED",
+      "durationSeconds": null,
+      "playabilityStatus": "LOGIN_REQUIRED",
+      "playabilityReason": "Sign in to confirm you’re not a bot"
+    },
+    {
+      "videoId": "V2pteMgw0Nk",
+      "title": "Genetic Waste - Palace Of Wisdom (CLASSIC 1994)",
+      "position": 818,
+      "reason": "playability:LOGIN_REQUIRED",
+      "durationSeconds": null,
+      "playabilityStatus": "LOGIN_REQUIRED",
+      "playabilityReason": "Sign in to confirm you’re not a bot"
+    },
+    {
+      "videoId": "mrBqPlvUEFo",
+      "title": "Panama - Slave (Slave To The Trance Mix)",
+      "position": 823,
+      "reason": "playability:LOGIN_REQUIRED",
+      "durationSeconds": null,
+      "playabilityStatus": "LOGIN_REQUIRED",
+      "playabilityReason": "Sign in to confirm you’re not a bot"
+    },
+    {
+      "videoId": "o3IAyndGqik",
+      "title": "Paradise connection - JD Distortion (psytrance)",
+      "position": 824,
+      "reason": "playability:LOGIN_REQUIRED",
+      "durationSeconds": null,
+      "playabilityStatus": "LOGIN_REQUIRED",
+      "playabilityReason": "Sign in to confirm you’re not a bot"
+    },
+    {
+      "videoId": "pcrZEqGvC7M",
+      "title": "Paradise connection - Portamento",
+      "position": 825,
+      "reason": "playability:LOGIN_REQUIRED",
+      "durationSeconds": null,
+      "playabilityStatus": "LOGIN_REQUIRED",
+      "playabilityReason": "Sign in to confirm you’re not a bot"
+    },
+    {
+      "videoId": "biEXM8Tleng",
+      "title": "Paragliders - Change Me (Original Club Mix) 1998",
+      "position": 826,
+      "reason": "playability:LOGIN_REQUIRED",
+      "durationSeconds": null,
+      "playabilityStatus": "LOGIN_REQUIRED",
+      "playabilityReason": "Sign in to confirm you’re not a bot"
+    },
+    {
+      "videoId": "HOVfWqj_oZA",
+      "title": "Paragliders - Lithium (Oliver Lieb Remix)",
+      "position": 827,
+      "reason": "playability:LOGIN_REQUIRED",
+      "durationSeconds": null,
+      "playabilityStatus": "LOGIN_REQUIRED",
+      "playabilityReason": "Sign in to confirm you’re not a bot"
+    },
+    {
+      "videoId": "QAC8lCoEP0c",
+      "title": "Oasis (Damn Sheik Mix)",
+      "position": 828,
+      "reason": "playability:UNPLAYABLE",
+      "durationSeconds": 350,
+      "playabilityStatus": "UNPLAYABLE",
+      "playabilityReason": "Video unavailable"
+    },
+    {
+      "videoId": "c48baEsPM4Y",
+      "title": "Paragliders - Paraglide (1993)",
+      "position": 830,
+      "reason": "playability:LOGIN_REQUIRED",
+      "durationSeconds": null,
+      "playabilityStatus": "LOGIN_REQUIRED",
+      "playabilityReason": "Sign in to confirm you’re not a bot"
+    },
+    {
+      "videoId": "NI_JkpdDO3U",
+      "title": "Paraphonatic - The Past, the Present, the Future (DJ Mellow-D´s Pure NRG Remix)",
+      "position": 833,
+      "reason": "playability:LOGIN_REQUIRED",
+      "durationSeconds": null,
+      "playabilityStatus": "LOGIN_REQUIRED",
+      "playabilityReason": "Sign in to confirm you’re not a bot"
+    },
+    {
+      "videoId": "7a8i3pQUC10",
+      "title": "Teleportation (Original Mix)",
+      "position": 836,
+      "reason": "playability:UNPLAYABLE",
+      "durationSeconds": 462,
+      "playabilityStatus": "UNPLAYABLE",
+      "playabilityReason": "Video unavailable"
+    },
+    {
+      "videoId": "hfsXvz9aV6k",
+      "title": "Persistence of Vision - Sanctuary (After On Sunday George’s Mix)",
+      "position": 843,
+      "reason": "playability:UNPLAYABLE",
+      "durationSeconds": 597,
+      "playabilityStatus": "UNPLAYABLE",
+      "playabilityReason": "Video unavailable"
+    },
+    {
+      "videoId": "-jIAsaQCTiM",
+      "title": "Persistence of Vision - Sanctuary (Crazy Mix)",
+      "position": 844,
+      "reason": "playability:UNPLAYABLE",
+      "durationSeconds": 358,
+      "playabilityStatus": "UNPLAYABLE",
+      "playabilityReason": "Video unavailable"
+    },
+    {
+      "videoId": "uksK2vl23-I",
+      "title": "Persistence of Vision - Sanctuary (Original Mix)",
+      "position": 845,
+      "reason": "playability:UNPLAYABLE",
+      "durationSeconds": 557,
+      "playabilityStatus": "UNPLAYABLE",
+      "playabilityReason": "Video unavailable"
+    },
+    {
+      "videoId": "0aZRs7FssfI",
+      "title": "Phenoxine - S C A N",
+      "position": 847,
+      "reason": "playability:LOGIN_REQUIRED",
+      "durationSeconds": null,
+      "playabilityStatus": "LOGIN_REQUIRED",
+      "playabilityReason": "Sign in to confirm you’re not a bot"
+    },
+    {
+      "videoId": "41QFilWq7jM",
+      "title": "Philippe - Incubo (Goa Constrictor Remix) 1996",
+      "position": 848,
+      "reason": "playability:LOGIN_REQUIRED",
+      "durationSeconds": null,
+      "playabilityStatus": "LOGIN_REQUIRED",
+      "playabilityReason": "Sign in to confirm you’re not a bot"
+    },
+    {
+      "videoId": "0AGJ3gh6CgM",
+      "title": "Philippe Van Mullem - The Secret Folder (Part 1)",
+      "position": 851,
+      "reason": "playability:LOGIN_REQUIRED",
+      "durationSeconds": null,
+      "playabilityStatus": "LOGIN_REQUIRED",
+      "playabilityReason": "Sign in to confirm you’re not a bot"
+    },
+    {
+      "videoId": "QHnBOBYRz_4",
+      "title": "Phrenetic System - Basic Tune (Jon The Dentist Remix)",
+      "position": 857,
+      "reason": "playability:LOGIN_REQUIRED",
+      "durationSeconds": null,
+      "playabilityStatus": "LOGIN_REQUIRED",
+      "playabilityReason": "Sign in to confirm you’re not a bot"
+    },
+    {
+      "videoId": "Axn73nVGI9U",
+      "title": "Phrenetic System - Intensity (Original Mix)",
+      "position": 858,
+      "reason": "playability:UNPLAYABLE",
+      "durationSeconds": 593,
+      "playabilityStatus": "UNPLAYABLE",
+      "playabilityReason": "Video unavailable"
+    },
+    {
+      "videoId": "Txt7dqdAlsM",
+      "title": "Phutura - Gitchie-Manidoo (Original Mix)",
+      "position": 859,
+      "reason": "playability:UNPLAYABLE",
+      "durationSeconds": 309,
+      "playabilityStatus": "UNPLAYABLE",
+      "playabilityReason": "Video unavailable"
+    },
+    {
+      "videoId": "So2fVpEDirw",
+      "title": "Planet Fuse - Silent Wishes (Egoist Mix)",
+      "position": 864,
+      "reason": "playability:LOGIN_REQUIRED",
+      "durationSeconds": null,
+      "playabilityStatus": "LOGIN_REQUIRED",
+      "playabilityReason": "Sign in to confirm you’re not a bot"
+    },
+    {
+      "videoId": "JOD1NzP2uhA",
+      "title": "Planet Fuse - The Real Face (Egoist Mix)",
+      "position": 865,
+      "reason": "playability:LOGIN_REQUIRED",
+      "durationSeconds": null,
+      "playabilityStatus": "LOGIN_REQUIRED",
+      "playabilityReason": "Sign in to confirm you’re not a bot"
+    },
+    {
+      "videoId": "9wsYs67AAas",
+      "title": "Planet K - Memory [Original Mix] STE009",
+      "position": 867,
+      "reason": "playability:LOGIN_REQUIRED",
+      "durationSeconds": null,
+      "playabilityStatus": "LOGIN_REQUIRED",
+      "playabilityReason": "Sign in to confirm you’re not a bot"
+    },
+    {
+      "videoId": "0doa2f4Kfqg",
+      "title": "Plasma ID - Virtual Energy (Volt Remix)",
+      "position": 869,
+      "reason": "playability:LOGIN_REQUIRED",
+      "durationSeconds": null,
+      "playabilityStatus": "LOGIN_REQUIRED",
+      "playabilityReason": "Sign in to confirm you’re not a bot"
+    },
+    {
+      "videoId": "0NDQcRoQJ7Y",
+      "title": "Plastic Angel - Pascale (Clubmix)",
+      "position": 870,
+      "reason": "playability:LOGIN_REQUIRED",
+      "durationSeconds": null,
+      "playabilityStatus": "LOGIN_REQUIRED",
+      "playabilityReason": "Sign in to confirm you’re not a bot"
+    },
+    {
+      "videoId": "9N_Fm83kLzM",
+      "title": "Plastic Boy - Twixt (Original Mix)",
+      "position": 874,
+      "reason": "playability:LOGIN_REQUIRED",
+      "durationSeconds": null,
+      "playabilityStatus": "LOGIN_REQUIRED",
+      "playabilityReason": "Sign in to confirm you’re not a bot"
+    },
+    {
+      "videoId": "NNv7BuA-9_E",
+      "title": "Plastic Enemy - Bulldozer",
+      "position": 875,
+      "reason": "playability:LOGIN_REQUIRED",
+      "durationSeconds": null,
+      "playabilityStatus": "LOGIN_REQUIRED",
+      "playabilityReason": "Sign in to confirm you’re not a bot"
+    },
+    {
+      "videoId": "4SndzPRxZFY",
+      "title": "Plastic Enemy - Bulldozer (Remix)",
+      "position": 876,
+      "reason": "playability:LOGIN_REQUIRED",
+      "durationSeconds": null,
+      "playabilityStatus": "LOGIN_REQUIRED",
+      "playabilityReason": "Sign in to confirm you’re not a bot"
+    },
+    {
+      "videoId": "eJUag7ZcHs8",
+      "title": "Quadran - Unlovable (Remix) feat. Tasha",
+      "position": 911,
+      "reason": "playability:UNPLAYABLE",
+      "durationSeconds": 527,
+      "playabilityStatus": "UNPLAYABLE",
+      "playabilityReason": "Video unavailable"
+    },
+    {
+      "videoId": "OzKDKhOuu2k",
+      "title": "Quadran Trax - Neural Phase (Remix)",
+      "position": 912,
+      "reason": "playability:UNPLAYABLE",
+      "durationSeconds": 453,
+      "playabilityStatus": "UNPLAYABLE",
+      "playabilityReason": "Video unavailable"
+    },
+    {
+      "videoId": "bOH4w40kIaE",
+      "title": "Rank 1 - Airwave",
+      "position": 928,
+      "reason": "playability:UNPLAYABLE",
+      "durationSeconds": 504,
+      "playabilityStatus": "UNPLAYABLE",
+      "playabilityReason": "Video unavailable"
+    },
+    {
+      "videoId": "uQBNZ9GBnjk",
+      "title": "Svenson & Gielen - The Beauty Of Silence (Original Mix)",
+      "position": 1060,
+      "reason": "playability:UNPLAYABLE",
+      "durationSeconds": 556,
+      "playabilityStatus": "UNPLAYABLE",
+      "playabilityReason": "Video unavailable"
+    },
+    {
       "videoId": "YC8SJTyScCY",
       "title": "flatliners - i can red your mind",
-      "position": 1083
+      "position": 1083,
+      "reason": "oEmbedUnavailable",
+      "durationSeconds": null,
+      "playabilityStatus": null,
+      "playabilityReason": null
+    },
+    {
+      "videoId": "HlR2AK_ftDI",
+      "title": "The Men From Del Bosca - The Poet",
+      "position": 1087,
+      "reason": "playability:UNPLAYABLE",
+      "durationSeconds": 487,
+      "playabilityStatus": "UNPLAYABLE",
+      "playabilityReason": "Video unavailable"
+    },
+    {
+      "videoId": "iTiLryT_WtQ",
+      "title": "The Platidudinarian Doctors - Xyster",
+      "position": 1090,
+      "reason": "playability:UNPLAYABLE",
+      "durationSeconds": 324,
+      "playabilityStatus": "UNPLAYABLE",
+      "playabilityReason": "Video unavailable"
+    },
+    {
+      "videoId": "dEkozKAk440",
+      "title": "No Good (Start the Dance)",
+      "position": 1091,
+      "reason": "playability:UNPLAYABLE",
+      "durationSeconds": 378,
+      "playabilityStatus": "UNPLAYABLE",
+      "playabilityReason": "Video unavailable"
+    },
+    {
+      "videoId": "HfWq2DLgIH8",
+      "title": "Cmos-K",
+      "position": 1110,
+      "reason": "playability:UNPLAYABLE",
+      "durationSeconds": 363,
+      "playabilityStatus": "UNPLAYABLE",
+      "playabilityReason": "Video unavailable"
+    },
+    {
+      "videoId": "ntJ6pIyrMIA",
+      "title": "TMM - Cmos-K",
+      "position": 1111,
+      "reason": "playability:UNPLAYABLE",
+      "durationSeconds": 650,
+      "playabilityStatus": "UNPLAYABLE",
+      "playabilityReason": "Video unavailable"
+    },
+    {
+      "videoId": "jc6_mA-Htdk",
+      "title": "Canyon (Original Mix)",
+      "position": 1117,
+      "reason": "playability:UNPLAYABLE",
+      "durationSeconds": 364,
+      "playabilityStatus": "UNPLAYABLE",
+      "playabilityReason": "Video unavailable"
+    },
+    {
+      "videoId": "BKFKWNgbgGA",
+      "title": "Trancelab - Landscape",
+      "position": 1119,
+      "reason": "playability:UNPLAYABLE",
+      "durationSeconds": 405,
+      "playabilityStatus": "UNPLAYABLE",
+      "playabilityReason": "Video unavailable"
+    },
+    {
+      "videoId": "05DqIGS_koU",
+      "title": "No Video Available",
+      "position": 1203,
+      "reason": "durationTooShort",
+      "durationSeconds": 10,
+      "playabilityStatus": "OK",
+      "playabilityReason": null
     }
   ],
-  "count": 1,
-  "checkedAt": "2025-12-05T23:06:58.146Z"
+  "count": 98,
+  "checkedAt": "2025-12-06T00:39:17.114Z"
 }

@@ -59,6 +59,7 @@ Alternatively, after `npm install -g` inside this folder, you can run `yt-playli
 - `--dry-run`: print the actions that would be taken without calling the YouTube API.
 - `--token-path`: override where OAuth tokens are cached (default `utility/.oauth-token.json`).
 - `--replace`: delete any of your existing playlists with the same title before creating the new one.
+- `--append`: append to an existing playlist with the same title instead of creating a new one. The script loads the current playlist first and skips any videos that are already present. Cannot be combined with `--replace`.
 
 ### Output
 
@@ -77,3 +78,15 @@ OAuth tokens are stored locally at `utility/.oauth-token.json`. Delete this file
 ---
 
 **Note:** YouTube API quotas apply. Creating a large playlist will consume quota for each inserted item.
+
+## Checking video availability
+
+The helper script `utility/check-availability.mjs` audits every cached playlist entry using the YouTube oEmbed endpoint plus watch-page parsing. By default it scans all videos across `cache/playlists*.json`, flagging the ones that are removed, region blocked, shorter than 30 seconds, or missing duration metadata.
+
+To focus on specific videos without touching the whole cache, set the `CHECK_AVAILABLE_IDS` environment variable to a comma-separated list of video IDs:
+
+```bash
+CHECK_AVAILABLE_IDS=_Udpz6EIT8c node utility/check-availability.mjs
+```
+
+Multiple IDs are supported (`CHECK_AVAILABLE_IDS=abc123,def456`). The script will restrict its checks to those IDs, making iterative debugging faster.
