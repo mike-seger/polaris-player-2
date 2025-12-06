@@ -89,18 +89,17 @@ async function openDebugOverlay() {
 function renderDebugOverlay({ view, glyphs, userSettings, errorMessage }) {
   let overlay = document.getElementById('debugOverlay');
   if (!overlay) {
-    const host = document.getElementById('sidebar') || document.body;
+    const sidebar = document.getElementById('sidebar');
     overlay = document.createElement('div');
     overlay.id = 'debugOverlay';
-    overlay.style.position = host === document.body ? 'fixed' : 'absolute';
+    overlay.style.position = 'fixed';
     overlay.style.inset = '0';
-    overlay.style.background = 'rgba(0, 0, 0, 0.65)';
+    overlay.style.background = 'rgba(10, 12, 18, 0.72)';
     overlay.style.display = 'flex';
-    overlay.style.flexDirection = 'column';
-    overlay.style.alignItems = 'center';
-    overlay.style.justifyContent = 'center';
-    overlay.style.zIndex = '9999';
-    overlay.style.padding = host === document.body ? '0' : '0.5rem';
+    overlay.style.alignItems = 'flex-start';
+    overlay.style.justifyContent = 'flex-start';
+    overlay.style.zIndex = '1000';
+    overlay.style.pointerEvents = 'auto';
 
     const panel = document.createElement('div');
     panel.classList.add('debug-overlay-panel');
@@ -111,34 +110,92 @@ function renderDebugOverlay({ view, glyphs, userSettings, errorMessage }) {
     panel.style.display = 'flex';
     panel.style.flexDirection = 'column';
     panel.style.gap = '0.75rem';
-    if (host === document.body) {
-      panel.style.width = 'min(420px, 90vw)';
-      panel.style.maxWidth = 'min(420px, 90vw)';
-      panel.style.maxHeight = '80vh';
-    } else {
-      panel.style.width = 'calc(100% - 1.75rem)';
-      panel.style.maxWidth = 'calc(100% - 1.75rem)';
-      panel.style.maxHeight = 'calc(100% - 1.75rem)';
-    }
+    panel.style.flex = '1';
+    panel.style.maxHeight = 'none';
     panel.style.overflow = 'hidden';
     panel.style.boxSizing = 'border-box';
     panel.style.boxShadow = '0 6px 18px rgba(0,0,0,0.35)';
     panel.style.border = '1px solid #2b2f3a';
 
-    const closeBtn = document.createElement('button');
-    closeBtn.type = 'button';
-    closeBtn.textContent = 'Close';
-    closeBtn.style.alignSelf = 'flex-end';
-    closeBtn.style.marginBottom = '0.25rem';
-    closeBtn.style.background = '#28344d';
-    closeBtn.style.color = '#f5f7fa';
-    closeBtn.style.border = '1px solid #394150';
-    closeBtn.style.borderRadius = '4px';
-    closeBtn.style.padding = '0.35rem 0.85rem';
-    closeBtn.style.cursor = 'pointer';
-    closeBtn.style.fontSize = '0.85rem';
-    closeBtn.style.fontWeight = '600';
-    closeBtn.addEventListener('click', () => overlay.remove());
+    function applyPanelPlacement() {
+      if (!panel || !overlay) return;
+      const sidebarRect = sidebar instanceof HTMLElement ? sidebar.getBoundingClientRect() : null;
+      const trackList = document.getElementById('trackListContainer');
+      const trackRect = trackList instanceof HTMLElement ? trackList.getBoundingClientRect() : null;
+
+      if (sidebarRect || trackRect) {
+        const topOffset = Math.max(sidebarRect ? sidebarRect.top : (trackRect ? trackRect.top : 0), 0);
+        const leftOffset = trackRect ? trackRect.left : (sidebarRect ? sidebarRect.left : 0);
+        const targetWidth = trackRect ? trackRect.width : (sidebarRect ? sidebarRect.width : undefined);
+
+        overlay.style.alignItems = 'flex-start';
+        overlay.style.justifyContent = 'flex-start';
+        overlay.style.padding = '0';
+        overlay.style.paddingTop = `${topOffset}px`;
+        overlay.style.paddingLeft = `${leftOffset}px`;
+        overlay.style.paddingRight = '0';
+        overlay.style.paddingBottom = '0';
+        panel.style.position = 'relative';
+        panel.style.top = '0';
+        panel.style.left = '0';
+        if (typeof targetWidth === 'number') {
+          panel.style.width = `${targetWidth}px`;
+          panel.style.maxWidth = `${targetWidth}px`;
+          panel.style.minWidth = `${targetWidth}px`;
+        } else {
+          panel.style.width = 'auto';
+          panel.style.maxWidth = '100%';
+          panel.style.minWidth = '0';
+        }
+      } else {
+        overlay.style.padding = '1rem';
+        overlay.style.alignItems = 'center';
+        overlay.style.justifyContent = 'center';
+        panel.style.position = 'relative';
+        panel.style.top = 'auto';
+        panel.style.left = 'auto';
+        panel.style.width = 'min(420px, 90vw)';
+        panel.style.maxWidth = 'min(420px, 90vw)';
+        panel.style.minWidth = '0';
+      }
+      const viewportHeight = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
+      const topOffset = parseFloat(overlay.style.paddingTop || '0');
+      const bottomOffset = parseFloat(overlay.style.paddingBottom || '0');
+      const availableHeight = Math.max(viewportHeight - topOffset - bottomOffset, 0);
+      panel.style.maxHeight = `${availableHeight}px`;
+      panel.style.overflow = 'hidden';
+    }
+
+    const removeOverlay = () => {
+      if (typeof overlay._placementCleanup === 'function') {
+        overlay._placementCleanup();
+      }
+      overlay.remove();
+    };
+
+    const closeBtn = window.OverlayShared && typeof window.OverlayShared.createOverlayCloseButton === 'function'
+      ? window.OverlayShared.createOverlayCloseButton({ onClick: removeOverlay })
+      : (function fallbackCloseButton() {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.setAttribute('aria-label', 'Close overlay');
+          btn.style.background = '#28344d';
+          btn.style.color = '#f5f7fa';
+          btn.style.border = '1px solid #394150';
+          btn.style.borderRadius = '4px';
+          btn.style.padding = '0.35rem';
+          btn.style.cursor = 'pointer';
+          btn.style.fontSize = '0';
+          btn.style.display = 'inline-flex';
+          btn.style.alignItems = 'center';
+          btn.style.justifyContent = 'center';
+          const icon = document.createElement('span');
+          icon.className = 'icon close';
+          icon.setAttribute('aria-hidden', 'true');
+          btn.appendChild(icon);
+          btn.addEventListener('click', removeOverlay);
+          return btn;
+        })();
 
     const selector = document.createElement('select');
     selector.id = 'debugOverlaySelect';
@@ -148,7 +205,10 @@ function renderDebugOverlay({ view, glyphs, userSettings, errorMessage }) {
     selector.style.borderRadius = '4px';
     selector.style.padding = '0.3rem 0.6rem';
     selector.style.fontSize = '0.85rem';
-    selector.style.flex = '1';
+    selector.style.paddingRight = '1.8rem';
+    selector.style.webkitAppearance = 'none';
+    selector.style.mozAppearance = 'none';
+    selector.style.appearance = 'none';
 
     AVAILABLE_VIEWS.forEach(({ id, label }) => {
       const option = document.createElement('option');
@@ -167,7 +227,10 @@ function renderDebugOverlay({ view, glyphs, userSettings, errorMessage }) {
     headerRow.style.alignItems = 'center';
     headerRow.style.justifyContent = 'space-between';
     headerRow.style.gap = '0.75rem';
-    headerRow.appendChild(selector);
+    const selectWrapper = document.createElement('div');
+    selectWrapper.className = 'debug-select-wrapper';
+    selectWrapper.appendChild(selector);
+    headerRow.appendChild(selectWrapper);
     headerRow.appendChild(closeBtn);
 
     const list = document.createElement('div');
@@ -180,16 +243,41 @@ function renderDebugOverlay({ view, glyphs, userSettings, errorMessage }) {
     list.style.overflowY = 'auto';
     list.style.paddingRight = '0.25rem';
     list.classList.add('debug-overlay-scroll');
+    list.style.maxHeight = '100%';
 
     panel.appendChild(headerRow);
     panel.appendChild(list);
     overlay.appendChild(panel);
-    host.appendChild(overlay);
+    overlay.addEventListener('click', (event) => {
+      if (event.target === overlay) {
+        removeOverlay();
+      }
+    });
+    document.body.appendChild(overlay);
+    applyPanelPlacement();
+
+    const updatePlacement = () => {
+      if (!overlay.isConnected) return;
+      applyPanelPlacement();
+    };
+
+    window.addEventListener('resize', updatePlacement, { passive: true });
+    window.addEventListener('scroll', updatePlacement, { passive: true });
+    overlay._placementCleanup = () => {
+      window.removeEventListener('resize', updatePlacement);
+      window.removeEventListener('scroll', updatePlacement);
+    };
+
+    overlay._applyPanelPlacement = applyPanelPlacement;
   }
 
   const selector = document.getElementById('debugOverlaySelect');
   if (selector) {
     selector.value = view;
+  }
+
+  if (overlay && typeof overlay._applyPanelPlacement === 'function') {
+    overlay._applyPanelPlacement();
   }
 
   fillDebugOverlay(view, { glyphs, userSettings, errorMessage });

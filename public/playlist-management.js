@@ -81,6 +81,28 @@
 
       state.overlayHost = document.body;
 
+      function buildCloseButton(handler) {
+        if (window.OverlayShared && typeof window.OverlayShared.createOverlayCloseButton === 'function') {
+          return window.OverlayShared.createOverlayCloseButton({ onClick: handler });
+        }
+        const fallback = document.createElement('button');
+        fallback.type = 'button';
+        fallback.setAttribute('aria-label', 'Close overlay');
+        fallback.style.background = '#28344d';
+        fallback.style.color = '#f5f7fa';
+        fallback.style.border = '1px solid #394150';
+        fallback.style.borderRadius = '4px';
+        fallback.style.padding = '0.35rem';
+        fallback.style.cursor = 'pointer';
+        fallback.style.fontSize = '0';
+        const icon = document.createElement('span');
+        icon.className = 'icon close';
+        icon.setAttribute('aria-hidden', 'true');
+        fallback.appendChild(icon);
+        fallback.addEventListener('click', handler);
+        return fallback;
+      }
+
       const overlay = document.createElement('div');
       overlay.id = 'playlistIOOverlay';
       overlay.style.position = 'fixed';
@@ -126,22 +148,7 @@
       title.style.margin = '0';
       title.style.fontSize = '1rem';
 
-      const closeBtn = document.createElement('button');
-      closeBtn.type = 'button';
-      closeBtn.setAttribute('aria-label', 'Close overlay');
-      closeBtn.style.background = '#28344d';
-      closeBtn.style.color = '#f5f7fa';
-      closeBtn.style.border = '1px solid #394150';
-      closeBtn.style.borderRadius = '4px';
-      closeBtn.style.padding = '0.35rem';
-      closeBtn.style.cursor = 'pointer';
-      closeBtn.style.fontSize = '0';
-      closeBtn.addEventListener('click', closeOverlay);
-
-      const closeIcon = document.createElement('span');
-      closeIcon.className = 'icon close';
-      closeIcon.setAttribute('aria-hidden', 'true');
-      closeBtn.appendChild(closeIcon);
+      const closeBtn = buildCloseButton(closeOverlay);
 
       header.appendChild(title);
       header.appendChild(closeBtn);
@@ -187,12 +194,15 @@
 
       const buttonRow = document.createElement('div');
       buttonRow.style.display = 'flex';
-      buttonRow.style.flexWrap = 'wrap';
+      buttonRow.style.flexWrap = 'nowrap';
       buttonRow.style.gap = '0.5rem';
+      buttonRow.style.alignItems = 'stretch';
+      buttonRow.style.minWidth = '0';
 
       const loadBtn = document.createElement('button');
       loadBtn.type = 'submit';
-      loadBtn.style.flex = '1 1 150px';
+      loadBtn.style.flex = '1 1 0';
+      loadBtn.style.minWidth = '0';
       stylePrimaryButton(loadBtn);
       loadBtn.textContent = '';
       loadBtn.setAttribute('aria-label', 'Upload playlist');
@@ -207,8 +217,9 @@
 
       const refreshBtn = document.createElement('button');
       refreshBtn.type = 'button';
-      refreshBtn.style.flex = '1 1 150px';
-      styleSecondaryButton(refreshBtn);
+      refreshBtn.style.flex = '1 1 0';
+      refreshBtn.style.minWidth = '0';
+      stylePrimaryButton(refreshBtn);
       refreshBtn.textContent = '';
       refreshBtn.setAttribute('aria-label', 'Upload and refresh playlist');
       const refreshUploadIcon = document.createElement('span');
@@ -227,8 +238,9 @@
 
       const downloadBtn = document.createElement('button');
       downloadBtn.type = 'button';
-      downloadBtn.style.flex = '1 1 150px';
-      styleTertiaryButton(downloadBtn);
+      downloadBtn.style.flex = '1 1 0';
+      downloadBtn.style.minWidth = '0';
+      stylePrimaryButton(downloadBtn);
       downloadBtn.textContent = '';
       downloadBtn.setAttribute('aria-label', 'Download playlist JSON');
       const downloadIcon = document.createElement('span');
@@ -237,6 +249,8 @@
       downloadBtn.appendChild(downloadIcon);
       const downloadLabel = document.createElement('span');
       downloadLabel.textContent = 'JSON';
+      downloadLabel.style.fontWeight = '600';
+      downloadLabel.style.color = '#f5f7fa';
       downloadBtn.appendChild(downloadLabel);
       downloadBtn.addEventListener('click', handleDownload);
 
@@ -422,9 +436,6 @@
         const currentId = typeof getPlaylistId === 'function' ? getPlaylistId() : '';
         state.input.value = currentId || '';
         state.input.focus({ preventScroll: true });
-        if (state.input.value) {
-          state.input.select();
-        }
       }
     }
 

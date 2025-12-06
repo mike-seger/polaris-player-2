@@ -8,5 +8,7 @@ https://transfonter.org/
 adapt [text](public/used-symbols.txt)
 run:
 ```
+original/convert-material-symbols.sh --fill 0 --grad 0 --opsz 48 --wght 500
+# or to convert the old icon font
 original/convertfont.sh
 ```

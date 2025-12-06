@@ -211,13 +211,18 @@
       gap: 0.2rem;
       flex: 1 1 100%;
       min-width: 0;
+      position: relative;
     }
 
     #playlistHistorySelect {
       flex: 1 1 100%;
       min-width: 0;
       padding: 0.25rem 0.4rem;
-      font-size: 0.8rem;
+      padding-right: 1.8rem;
+      font-size: 1rem;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
       background: #202633;
       border: 1px solid var(--color-border);
       color: var(--color-text);
@@ -228,6 +233,20 @@
     #playlistHistorySelect:focus {
       border-color: var(--color-border-strong);
       outline: none;
+    }
+
+    .playlist-select-group::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      right: 0.85rem;
+      width: 0;
+      height: 0;
+      border-left: 5px solid transparent;
+      border-right: 5px solid transparent;
+      border-top: 5px solid var(--color-text-muted);
+      transform: translateY(-25%);
+      pointer-events: none;
     }
 
 
@@ -330,6 +349,45 @@
       color: var(--color-text-muted);
     }
 
+    .debug-select-wrapper {
+      position: relative;
+      flex: 1;
+      min-width: 0;
+      display: flex;
+    }
+
+    .debug-select-wrapper::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      right: 0.9rem;
+      width: 0;
+      height: 0;
+      border-left: 5px solid transparent;
+      border-right: 5px solid transparent;
+      border-top: 5px solid var(--color-text-muted);
+      transform: translateY(-30%);
+      pointer-events: none;
+    }
+
+    #debugOverlaySelect {
+      width: 100%;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
+      background-color: #202633;
+      border: 1px solid #394150;
+      color: #f5f7fa;
+      border-radius: 4px;
+      padding: 0.3rem 1.8rem 0.3rem 0.6rem;
+      font-size: 0.85rem;
+    }
+
+    #debugOverlaySelect:focus {
+      outline: none;
+      border-color: #556384;
+    }
+
     input[type="checkbox"] {
       accent-color: var(--color-accent);
     }
@@ -430,6 +488,7 @@
       border-top: 1px solid var(--color-border);
       scrollbar-width: thin;
       scrollbar-color: var(--color-border-strong) rgba(32, 38, 51, 0.75);
+      color-scheme: dark;
     }
 
     #trackListContainer:focus {
@@ -439,30 +498,38 @@
 
     #trackListContainer::-webkit-scrollbar {
       width: 10px;
+      background-color: #0f1115 !important;
     }
 
     #trackListContainer::-webkit-scrollbar-track {
-      background: rgba(17, 20, 26, 0.75);
+      background-color: #0f1115 !important;
+      border-radius: 999px;
+    }
+
+    #trackListContainer::-webkit-scrollbar-track-piece {
+      background-color: #0f1115 !important;
       border-radius: 999px;
     }
 
     #trackListContainer::-webkit-scrollbar-thumb {
-      background: linear-gradient(180deg, var(--color-border-strong), var(--color-border));
+      background-color: var(--color-border-strong);
       border-radius: 999px;
-      border: 2px solid rgba(17, 20, 26, 0.75);
+      border: 2px solid rgba(17, 20, 26, 0.95);
     }
 
     #trackListContainer::-webkit-scrollbar-thumb:hover {
-      background: linear-gradient(180deg, var(--color-border-strong), var(--color-hover));
+      background-color: var(--color-hover);
     }
 
     #debugOverlay .debug-overlay-scroll {
       scrollbar-width: thin;
       scrollbar-color: var(--color-border-strong) rgba(17, 20, 26, 0.9);
+      color-scheme: dark;
     }
 
     #debugOverlay .debug-overlay-scroll::-webkit-scrollbar {
       width: 10px;
+      background-color: #0f1115 !important;
     }
 
     #debugOverlay .debug-overlay-scroll::-webkit-scrollbar-track {
@@ -541,6 +608,11 @@
       flex-shrink: 0;
       font-family: "SF Mono", ui-monospace, Menlo, Monaco, Consolas,
         "Liberation Mono", "Courier New", monospace;
+      line-height: 1.2;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding-top: 0.05rem;
     }
     .title {
       font-size: 0.9rem;
@@ -942,6 +1014,7 @@
 
   <!-- IFrame Player API -->
   <script src="https://www.youtube.com/iframe_api"></script>
+  <script src="./overlay-shared.js"></script>
   <script src="./playlist-management.js"></script>
 
   <script>
@@ -964,6 +1037,8 @@
     const historyNeedsPersist = JSON.stringify(rawPlaylistHistory) !== JSON.stringify(playlistHistory);
     const TRACK_STATE_DEFAULT = 'default';
     const TRACK_STATE_CHECKED = 'checked';
+    const urlParams = new URLSearchParams(window.location.search);
+    const initialPlaylistId = (urlParams.get('pl') || '').trim();
 
     // settings helpers
     function loadSettings() {
@@ -1327,9 +1402,9 @@
     function onPlayerReady() {
       startProgressTimer();
 
-      const storedPlaylistId = settings.playlistId;
-      if (storedPlaylistId) {
-        loadPlaylistFromServer(false, storedPlaylistId);
+      const startupPlaylistId = initialPlaylistId || settings.playlistId;
+      if (startupPlaylistId) {
+        loadPlaylistFromServer(false, startupPlaylistId);
       } else {
         computeFilteredIndices();
         renderTrackList();
@@ -1709,7 +1784,7 @@
         if (!player || typeof player.getCurrentTime !== 'function' || typeof player.seekTo !== 'function') {
           return;
         }
-        const delta = e.key === 'ArrowLeft' ? -5 : 5;
+        const delta = e.key === 'ArrowLeft' ? -10 : 10;
         const currentTime = player.getCurrentTime();
         const newTime = Math.max(0, currentTime + delta);
         player.seekTo(newTime, true);

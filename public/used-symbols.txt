@@ -28,7 +28,7 @@ U+E5D7	volume_down
 U+E88F	info_outline
 U+E89D	open_in_browser
 U+E8B8	settings
-U+E8B8	settings_applications
+U+E8B9	settings_applications
 U+E8D5	info_outline
 U+E8B6	search
 U+E8DB	thumb_down
@@ -41,4 +41,5 @@ U+E86C	check_circle
 U+EF4A	circle
 U+F090	download
 U+F09B	upload
+U+F625	settings_b_roll
 U+F8CE	arrow_outward
