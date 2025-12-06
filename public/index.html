@@ -35,18 +35,20 @@
       font-style: normal;
       font-weight: normal;
       font-display: swap;
-      src: 
-        url('./player.woff2') format('woff2')
-        ,url('./player.woff')  format('woff')
-        ,url('./player.otf')  format('opentype')
-        ;
+      src:
+        url('./player.woff2') format('woff2'),
+        url('./player.woff') format('woff'),
+        url('./player.ttf') format('truetype');
     }
 
     .icon {
       font-family: 'Material Icons Round-Regular';
-      font-weight: normal;
+      font-weight: 400;
       font-style: normal;
-      display: inline-block;
+      font-variation-settings: 'FILL' 0, 'GRAD' 0, 'opsz' 24, 'wght' 400;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
       text-transform: none;
       letter-spacing: normal;
       word-wrap: normal;
@@ -60,26 +62,31 @@
       line-height: var(--player-controls-height);
       font-size: var(--player-controls-height);
       color: inherit;
+      --icon-glyph: '';
     }
     .icon.inactive { display: none; }
-    .icon.play:before { content: "\e037"; }         /* play_arrow */
-    .icon.pause:before { content: "\e034"; }        /* pause */
-    .icon.next:before { content: "\e044"; }         /* skip_next */
-    .icon.prev:before { content: "\e045"; }         /* skip_previous */
-    .icon.search:before { content: "\e8b6"; }       /* search */
-    .icon.upload:before { content: "\f09b"; }       /* upload */
-    .icon.download:before { content: "\f090"; }     /* download */
-    .icon.delete:before { content: "\e872"; }       /* delete */
-    .icon.open-in-browser:before { content: "\e89d"; } /* open_in_browser */
-    .icon.volume-up:before { content: "\e5d6"; }     /* volume_up */
-    .icon.volume-down:before { content: "\e5d7"; }   /* volume_down */
-    .icon.cancel:before { content: "\e5c9"; }       /* cancel */
-    .icon.settings:before { content: "\e8b8"; }     /* settings */
-    .icon.refresh:before { content: "\e5d5"; }      /* refresh */
-    .icon.circle:before { content: "\ef4a"; }       /* circle */
-    .icon.check-circle:before { content: "\e86c"; } /* check_circle */
-    .icon.close:before { content: "\e5cd"; }       /* close */
-    /* you can add volume icons later if desired */
+    .icon::before {
+      content: var(--icon-glyph);
+      display: inline-block;
+      line-height: inherit;
+    }
+    .icon.play { --icon-glyph: "play_arrow"; }
+    .icon.pause { --icon-glyph: "pause"; }
+    .icon.next { --icon-glyph: "skip_next"; }
+    .icon.prev { --icon-glyph: "skip_previous"; }
+    .icon.search { --icon-glyph: "search"; }
+    .icon.upload { --icon-glyph: "upload"; }
+    .icon.download { --icon-glyph: "download"; }
+    .icon.delete { --icon-glyph: "delete"; }
+    .icon.open-in-browser { --icon-glyph: "open_in_browser"; }
+    .icon.volume-up { --icon-glyph: "volume_up"; }
+    .icon.volume-down { --icon-glyph: "volume_down"; }
+    .icon.cancel { --icon-glyph: "cancel"; }
+    .icon.settings { --icon-glyph: "settings"; }
+    .icon.refresh { --icon-glyph: "refresh"; }
+    .icon.circle { --icon-glyph: "circle"; }
+    .icon.check-circle { --icon-glyph: "check_circle"; }
+    .icon.close { --icon-glyph: "close"; }
 
     /* ---- Layout ---- */
     html {

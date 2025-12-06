@@ -103,12 +103,17 @@ fi
 
 mkdir -p "$OUTPUT_DIR"
 
-GLYPH_LIST=$(grep -v '^#' "$NAMES_FILE" | awk 'NF' | awk '!seen[$0]++' | paste -sd, -)
+mapfile -t ICON_NAMES < <(grep -v '^#' "$NAMES_FILE" | awk 'NF' | awk '!seen[$0]++')
 
-if [[ -z "${GLYPH_LIST//,/}" ]]; then
+if [[ ${#ICON_NAMES[@]} -eq 0 ]]; then
   echo "Error: no glyph names discovered in $NAMES_FILE" >&2
   exit 1
 fi
+
+GLYPH_LIST=$(printf '%s\n' "${ICON_NAMES[@]}" | paste -sd, -)
+ICON_NAME_TEXT=$(printf '%s ' "${ICON_NAMES[@]}" | sed 's/ $//')
+TEXT_ASCII=" _abcdefghijklmnopqrstuvwxyz0123456789"
+TEXT_PAYLOAD="${ICON_NAME_TEXT}${TEXT_ASCII}"
 
 TEMP_DIR="$(mktemp -d)"
 trap 'rm -rf "$TEMP_DIR"' EXIT
@@ -130,6 +135,9 @@ subset_font() {
     --glyphs="$GLYPH_LIST" \
     --no-hinting \
     --ignore-missing-glyphs \
+    --no-layout-closure \
+    --glyph-names \
+    --text="$TEXT_PAYLOAD" \
     --output-file="$output_file")
 
   if [[ -n "$flavor" ]]; then

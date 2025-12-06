@@ -15,7 +15,6 @@ forward_30
 cast
 cast_connected
 delete
-catching_pokemon
 cancel
 close
 more_vert
@@ -25,15 +24,12 @@ more_horiz
 refresh
 volume_up
 volume_down
-info_outline
 open_in_browser
 settings
 settings_applications
-info_outline
 search
 thumb_down
 thumb_up
-thumb_up_down
 connected_tv
 markunread_mailbox
 recommend
