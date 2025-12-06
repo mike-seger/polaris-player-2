@@ -119,7 +119,7 @@
           preEl.textContent = text;
           preEl.style.display = 'block';
         }
-        statusEl.textContent = 'Stored in localStorage as ytAudioPlayer.settings.';
+        statusEl.textContent = 'Saved in localStorageas ytAudioPlayer.settings.';
         statusEl.style.color = '#a8b3c7';
       } catch (error) {
         const message = error && error.message ? error.message : 'Failed to load settings.';
@@ -210,7 +210,7 @@
       content.classList.add('playlist-overlay-content');
       content.style.display = 'none';
       content.style.flexDirection = 'column';
-      content.style.gap = '0.75rem';
+      //content.style.gap = '0.75rem';
       content.style.padding = '0';
       content.style.borderTop = '1px solid #2b2f3a';
       content.style.background = '#141926';
@@ -443,7 +443,7 @@
       historyWrapper.style.border = '1px solid #2b2f3a';
       historyWrapper.style.borderRadius = '6px';
       historyWrapper.style.background = '#11141c';
-      historyWrapper.style.padding = '0.45rem 0.35rem 0.6rem';
+      historyWrapper.style.padding = '0.45rem 0.35rem 0';
       historyWrapper.style.overflow = 'hidden';
       historyWrapper.style.display = 'flex';
       historyWrapper.style.flexDirection = 'column';
@@ -500,12 +500,12 @@
       playlistSection.content.appendChild(form);
 
       const settingsSection = createAccordionSection({ id: 'settings', title: 'View Stored Settings' });
-      settingsSection.content.style.gap = '0.6rem';
+      //settingsSection.content.style.gap = '0.6rem';
       settingsSection.content.style.flex = '1 1 auto';
       settingsSection.content.style.minHeight = '0';
 
       const settingsIntro = document.createElement('p');
-      settingsIntro.textContent = 'Inspect the current ytAudioPlayer.settings snapshot saved in localStorage.';
+      settingsIntro.textContent = 'Inspect the current ytAudioPlayer.settings.';
       settingsIntro.style.margin = '0';
       settingsIntro.style.fontSize = '0.8rem';
       settingsIntro.style.color = '#a8b3c7';
