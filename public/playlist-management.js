@@ -64,7 +64,7 @@
 
       const title = document.createElement('h2');
       title.id = 'playlistIOOverlayTitle';
-      title.textContent = 'Playlist Import / Export';
+      title.textContent = 'Playlist Management';
       title.style.margin = '0';
       title.style.fontSize = '1rem';
 
@@ -124,6 +124,7 @@
       input.style.border = '1px solid #394150';
       input.style.background = '#202633';
       input.style.color = '#f5f7fa';
+      input.style.outline = 'none';
       input.autocomplete = 'off';
 
       const buttonRow = document.createElement('div');
@@ -133,22 +134,52 @@
 
       const loadBtn = document.createElement('button');
       loadBtn.type = 'submit';
-      loadBtn.textContent = 'Load Playlist';
       loadBtn.style.flex = '1 1 150px';
       stylePrimaryButton(loadBtn);
+      loadBtn.textContent = '';
+      loadBtn.setAttribute('aria-label', 'Upload playlist');
+      const loadIcon = document.createElement('span');
+      loadIcon.className = 'icon upload';
+      loadIcon.setAttribute('aria-hidden', 'true');
+      loadBtn.appendChild(loadIcon);
+      const loadSr = document.createElement('span');
+      loadSr.className = 'sr-only';
+      loadSr.textContent = 'Upload';
+      loadBtn.appendChild(loadSr);
 
       const refreshBtn = document.createElement('button');
       refreshBtn.type = 'button';
-      refreshBtn.textContent = 'Load + Refresh';
       refreshBtn.style.flex = '1 1 150px';
       styleSecondaryButton(refreshBtn);
+      refreshBtn.textContent = '';
+      refreshBtn.setAttribute('aria-label', 'Upload and refresh playlist');
+      const refreshUploadIcon = document.createElement('span');
+      refreshUploadIcon.className = 'icon upload';
+      refreshUploadIcon.setAttribute('aria-hidden', 'true');
+      refreshBtn.appendChild(refreshUploadIcon);
+      const refreshSyncIcon = document.createElement('span');
+      refreshSyncIcon.className = 'icon refresh';
+      refreshSyncIcon.setAttribute('aria-hidden', 'true');
+      refreshBtn.appendChild(refreshSyncIcon);
+      const refreshSr = document.createElement('span');
+      refreshSr.className = 'sr-only';
+      refreshSr.textContent = 'Upload and refresh';
+      refreshBtn.appendChild(refreshSr);
       refreshBtn.addEventListener('click', () => triggerLoad(true));
 
       const downloadBtn = document.createElement('button');
       downloadBtn.type = 'button';
-      downloadBtn.textContent = 'Download JSON';
       downloadBtn.style.flex = '1 1 150px';
       styleTertiaryButton(downloadBtn);
+      downloadBtn.textContent = '';
+      downloadBtn.setAttribute('aria-label', 'Download playlist JSON');
+      const downloadIcon = document.createElement('span');
+      downloadIcon.className = 'icon download';
+      downloadIcon.setAttribute('aria-hidden', 'true');
+      downloadBtn.appendChild(downloadIcon);
+      const downloadLabel = document.createElement('span');
+      downloadLabel.textContent = 'JSON';
+      downloadBtn.appendChild(downloadLabel);
       downloadBtn.addEventListener('click', handleDownload);
 
       buttonRow.appendChild(loadBtn);

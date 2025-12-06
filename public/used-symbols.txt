@@ -22,6 +22,7 @@ U+E5D0	more_vert
 U+E5D1	unfold_less
 U+E5D2	unfold_more
 U+E5D3	more_horiz
+U+E5D5	refresh
 U+E5D6	volume_up
 U+E5D7	volume_down
 U+E88F	info_outline
@@ -35,6 +36,9 @@ U+E8DC	thumb_up
 U+E8DD	thumb_up_down
 U+E998	connected_tv
 U+E9BD	markunread_mailbox
+U+E9D2	recommend
+U+E86C	check_circle
+U+EF4A	circle
 U+F090	download
 U+F09B	upload
 U+F8CE	arrow_outward
