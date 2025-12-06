@@ -28,6 +28,7 @@
       --color-hover: #1f2531;
       --color-active: #28344d;
       --color-accent: #cc0000;
+      --playlist-manager-button-size: 34px;
     }
 
     @font-face {
@@ -225,7 +226,7 @@
       flex: 1 1 100%;
       min-width: 0;
       padding: 0.25rem 0.4rem;
-      padding-right: 1.8rem;
+      padding-right: calc(1.8rem + var(--playlist-manager-button-size));
       font-size: 1rem;
       -webkit-appearance: none;
       -moz-appearance: none;
@@ -246,7 +247,7 @@
       content: '';
       position: absolute;
       top: 50%;
-      right: 0.85rem;
+      right: calc(var(--playlist-manager-button-size) + 0.6rem);
       width: 0;
       height: 0;
       border-left: 5px solid transparent;
@@ -401,8 +402,8 @@
 
     #playlistIOBtn {
       flex: 0 0 auto;
-      width: 34px;
-      height: 34px;
+      width: var(--playlist-manager-button-size);
+      height: var(--playlist-manager-button-size);
       display: inline-flex;
       align-items: center;
       justify-content: center;
