@@ -1,10 +1,10 @@
 # Polaeis Player 2
 
 This is a web audio player supporting playlists.
-Currently it supports playing Youtube Ausio/Video playlists.
+Currently it supports playing Youtube Audio/Video playlists.
 
-For full functionality, it requires the provided server application and an API key
-for its full functionality.
+For its full functionality, it requires the provided server application and an API
+key.
 
 It does support running serverless, but currently only with a static YT
 playlist.  
