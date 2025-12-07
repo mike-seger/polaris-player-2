@@ -1558,6 +1558,24 @@
 
     function playIndex(idx) {
       if (!player || !playlistItems[idx]) return;
+      const getState = typeof player.getPlayerState === 'function' ? player.getPlayerState.bind(player) : null;
+      const playerState = getState ? getState() : undefined;
+      const playerStates = window.YT?.PlayerState ?? {};
+      const sameIndex = currentIndex === idx;
+      const isActivelyPlaying = playerState === playerStates.PLAYING || playerState === playerStates.BUFFERING;
+
+      if (sameIndex) {
+        if (isActivelyPlaying) {
+          return;
+        }
+        if (playerState === playerStates.PAUSED) {
+          player.playVideo();
+          isPlaying = true;
+          updatePlayPauseButton();
+          return;
+        }
+      }
+
       currentIndex = idx;
       const videoId = playlistItems[currentIndex].videoId;
       player.loadVideoById(videoId);
@@ -1581,10 +1599,19 @@
       }
     }
 
-    document.getElementById('playPauseBtn').addEventListener('click', () => {
+    function togglePlayback() {
       if (!player) return;
-      if (isPlaying) player.pauseVideo();
-      else player.playVideo();
+      if (isPlaying) {
+        if (typeof player.pauseVideo === 'function') {
+          player.pauseVideo();
+        }
+      } else if (typeof player.playVideo === 'function') {
+        player.playVideo();
+      }
+    }
+
+    document.getElementById('playPauseBtn').addEventListener('click', () => {
+      togglePlayback();
     });
     document.getElementById('nextBtn').addEventListener('click', playNext);
     document.getElementById('prevBtn').addEventListener('click', playPrev);
@@ -1802,6 +1829,22 @@
 
     document.addEventListener('keydown', (e) => {
       if (isTextInputFocused()) return;
+
+      if (e.code === 'Space' || e.key === ' ' || e.key === 'Spacebar') {
+        const activeEl = document.activeElement;
+        if (activeEl) {
+          const tagName = activeEl.tagName;
+          if (tagName === 'BUTTON' || tagName === 'A') {
+            return;
+          }
+          if (activeEl.isContentEditable) {
+            return;
+          }
+        }
+        togglePlayback();
+        e.preventDefault();
+        return;
+      }
 
       if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
         if (!player || typeof player.getCurrentTime !== 'function' || typeof player.seekTo !== 'function') {
