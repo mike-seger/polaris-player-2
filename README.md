@@ -1,4 +1,4 @@
-# Polaeis Player 2
+# Polaris Player 2
 
 This is a web audio player supporting playlists.
 Currently it supports playing Youtube Audio/Video playlists.
