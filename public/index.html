@@ -9,6 +9,29 @@
   <title>YouTube Playlist Audio Player</title>
   <style>
     /* ---- Material Icons Round (from your CSS) ---- */
+    @font-face {
+      font-family: 'Material Icons Round-Regular';
+      font-style: normal;
+      font-weight: 400;
+      font-display: swap;
+      src: url('player.woff2') format('woff2');
+    }
+
+    .icon {
+      font-family: 'Material Icons Round-Regular';
+      font-style: normal;
+      font-weight: 400;
+      font-variation-settings: 'FILL' 0, 'GRAD' 0, 'opsz' 24, 'wght' 400;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      line-height: 1;
+      letter-spacing: normal;
+      text-transform: none;
+      white-space: nowrap;
+      speak: none;
+    }
     :root {
       --player-controls-height: 24px;
       --player-min-slider-width: 160px;
@@ -29,68 +52,6 @@
       --color-active: #28344d;
       --color-accent: #cc0000;
       --playlist-manager-button-size: 34px;
-    }
-
-    @font-face {
-      font-family: 'Material Icons Round-Regular';
-      font-style: normal;
-      font-weight: normal;
-      font-display: swap;
-      src: url('./player.woff2') format('woff2');
-    }
-
-    .icon {
-      font-family: 'Material Icons Round-Regular';
-      font-weight: 400;
-      font-style: normal;
-      font-variation-settings: 'FILL' 0, 'GRAD' 0, 'opsz' 24, 'wght' 400;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      text-transform: none;
-      letter-spacing: normal;
-      word-wrap: normal;
-      white-space: nowrap;
-      direction: ltr;
-      -webkit-font-smoothing: antialiased;
-      text-rendering: optimizeLegibility;
-      -moz-osx-font-smoothing: grayscale;
-      font-feature-settings: 'liga';
-      height: var(--player-controls-height);
-      line-height: var(--player-controls-height);
-      font-size: var(--player-controls-height);
-      color: inherit;
-      --icon-glyph: '';
-    }
-    .icon.inactive { display: none; }
-    .icon::before {
-      content: var(--icon-glyph);
-      display: inline-block;
-      line-height: inherit;
-    }
-    .icon.play { --icon-glyph: "play_arrow"; }
-    .icon.pause { --icon-glyph: "pause"; }
-    .icon.next { --icon-glyph: "skip_next"; }
-    .icon.prev { --icon-glyph: "skip_previous"; }
-    .icon.search { --icon-glyph: "search"; }
-    .icon.upload { --icon-glyph: "upload"; }
-    .icon.download { --icon-glyph: "download"; }
-    .icon.delete { --icon-glyph: "delete"; }
-    .icon.open-in-browser { --icon-glyph: "open_in_browser"; }
-    .icon.volume-up { --icon-glyph: "volume_up"; }
-    .icon.volume-down { --icon-glyph: "volume_down"; }
-    .icon.cancel { --icon-glyph: "cancel"; }
-    .icon.settings { --icon-glyph: "settings"; }
-    .icon.refresh { --icon-glyph: "refresh"; }
-    .icon.unfold-more { --icon-glyph: "unfold_more"; }
-    .icon.unfold-less { --icon-glyph: "unfold_less"; }
-    .icon.circle { --icon-glyph: "circle"; }
-    .icon.check-circle { --icon-glyph: "check_circle"; }
-    .icon.close { --icon-glyph: "close"; }
-    .icon.sort-by-alpha { --icon-glyph: "sort_by_alpha"; }
-
-    #playlistIOOverlay section {
-      margin: 0;
     }
 
     .playlist-overlay-content {
@@ -879,7 +840,7 @@
                   aria-label="Manage playlists"
                   title="Manage playlists"
                 >
-                  <span class="icon settings" aria-hidden="true"></span>
+                  <span class="icon settings" aria-hidden="true">settings</span>
                 </button>
               </div>
             </div>
@@ -889,14 +850,14 @@
           <div class="pc-row">
             <div class="pc-input-wrapper">
               <div class="filter-wrapper" id="filterWrapper">
-                <span class="icon search filter-icon" aria-hidden="true"></span>
+                <span class="icon search filter-icon" aria-hidden="true">search</span>
                 <input
                   id="filterInput"
                   type="text"
                   aria-label="Filter tracks"
                 />
                 <button type="button" id="clearFilterBtn" aria-label="Clear filter">
-                  <span class="icon cancel" aria-hidden="true"></span>
+                  <span class="icon cancel" aria-hidden="true">cancel</span>
                 </button>
               </div>
             </div>
@@ -917,13 +878,13 @@
         <div id="trackControls-buttons">
           <div class="track-controls-group">
             <button id="prevBtn" type="button" aria-label="Previous track">
-              <span class="icon prev" aria-hidden="true"></span>
+              <span class="icon prev" aria-hidden="true">skip_previous</span>
             </button>
             <button id="playPauseBtn" type="button" aria-label="Play/Pause">
-              <span class="icon play" id="playPauseIcon" aria-hidden="true"></span>
+              <span class="icon play" id="playPauseIcon" aria-hidden="true">play_arrow</span>
             </button>
             <button id="nextBtn" type="button" aria-label="Next track">
-              <span class="icon next" aria-hidden="true"></span>
+              <span class="icon next" aria-hidden="true">skip_next</span>
             </button>
           </div>
           <div class="track-controls-group right">
@@ -933,7 +894,7 @@
               aria-label="Sort alphabetically"
               aria-pressed="false"
             >
-              <span class="icon sort-by-alpha" aria-hidden="true"></span>
+              <span class="icon sort-by-alpha" aria-hidden="true">sort_by_alpha</span>
             </button>
             <button
               id="thumbToggleBtn"
@@ -977,7 +938,7 @@
         <pre id="alertMessage"></pre>
       </div>
       <button id="alertCloseBtn" type="button">
-        <span class="icon close" aria-hidden="true"></span>
+        <span class="icon close" aria-hidden="true">close</span>
         <span class="alert-close-text">OK</span>
       </button>
     </div>
@@ -997,6 +958,7 @@
 
     let filterText = '';
     let filteredIndices = [];
+    let trackRowElements = new Map();
     let visibleIndices = [];
 
     const STORAGE_KEY = 'ytAudioPlayer.settings';
@@ -1486,8 +1448,10 @@
       if (!playPauseIcon) return;
       if (isPlaying) {
         playPauseIcon.className = 'icon pause';
+        playPauseIcon.textContent = 'pause';
       } else {
         playPauseIcon.className = 'icon play';
+        playPauseIcon.textContent = 'play_arrow';
       }
     }
 
@@ -1525,6 +1489,7 @@
     function renderTrackList() {
       const ul = document.getElementById('trackList');
       ul.innerHTML = '';
+      trackRowElements = new Map();
 
       const hasFilter = (filterText || '').trim().length > 0;
       let indices = hasFilter ? filteredIndices.slice() : playlistItems.map((_, i) => i);
@@ -1552,11 +1517,13 @@
 
         const span = document.createElement('span');
         span.className = 'title';
-        span.textContent = item.userTitle?item.userTitle:item.title;
+        span.textContent = item.userTitle ? item.userTitle : item.title;
         li.appendChild(span);
 
         const stateBtn = createTrackStateButton(item.videoId, activePlaylistId);
         li.appendChild(stateBtn);
+
+        trackRowElements.set(realIdx, li);
 
         li.addEventListener('click', () => {
           playIndex(realIdx);
@@ -1567,6 +1534,7 @@
           const targetEl = event.target instanceof Element ? event.target : null;
           if (targetEl && targetEl.closest('.track-state-btn')) return;
           event.preventDefault();
+
           const playlistId = getActivePlaylistId();
           const baseUrl = `https://www.youtube.com/watch?v=${encodeURIComponent(item.videoId)}`;
           const url = playlistId
@@ -1579,6 +1547,28 @@
       });
 
       scrollActiveIntoView();
+    }
+
+    function updateActiveTrackRow(previousIdx, nextIdx) {
+      if (previousIdx === nextIdx) {
+        const currentEl = trackRowElements.get(nextIdx);
+        if (currentEl) {
+          currentEl.classList.add('active');
+        }
+        return;
+      }
+
+      if (typeof previousIdx === 'number') {
+        const prevEl = trackRowElements.get(previousIdx);
+        if (prevEl) {
+          prevEl.classList.remove('active');
+        }
+      }
+
+      const nextEl = trackRowElements.get(nextIdx);
+      if (nextEl) {
+        nextEl.classList.add('active');
+      }
     }
 
     function createTrackStateButton(videoId, playlistId) {
@@ -1599,12 +1589,14 @@
           btn.title = 'Mark video as incomplete';
           btn.setAttribute('aria-pressed', 'true');
           icon.className = 'icon check-circle';
+          icon.textContent = 'check_circle';
         } else {
           btn.classList.remove('is-checked');
           btn.setAttribute('aria-label', 'Mark video as completed');
           btn.title = 'Mark video as completed';
           btn.setAttribute('aria-pressed', 'false');
           icon.className = 'icon circle';
+          icon.textContent = 'circle';
         }
       }
 
@@ -1659,6 +1651,7 @@
         : undefined;
       const isSameVideo = sameIndex && targetVideoId && currentVideoId === targetVideoId;
       const isActivelyPlaying = playerState === playerStates.PLAYING || playerState === playerStates.BUFFERING;
+      const previousIndex = currentIndex;
 
       if (isSameVideo) {
         focusActiveTrack();
@@ -1678,12 +1671,16 @@
       const videoId = targetVideoId;
       isPlaying = false;
       updateNowPlaying();
-      renderTrackList();
+      if (!trackRowElements.size || !trackRowElements.has(currentIndex)) {
+        renderTrackList();
+      } else {
+        updateActiveTrackRow(previousIndex, currentIndex);
+      }
       updatePlayPauseButton();
       player.loadVideoById(videoId);
       const playlistId = settings.playlistId || '';
       updateCurrentVideo(playlistId, videoId);
-      focusActiveTrack({ scroll: false });
+      focusActiveTrack();
     }
 
     function getRelativeVisibleIndex(offset) {
@@ -1807,12 +1804,11 @@
 
       filterText = filterInputEl.value || '';
       computeFilteredIndices();
+      renderTrackList();
+      updateNowPlaying();
+      updatePlayPauseButton();
       if (currentIndex >= 0 && player) {
         playIndex(currentIndex);
-      } else {
-        renderTrackList();
-        updateNowPlaying();
-        updatePlayPauseButton();
       }
 
       addPlaylistToHistory(resolvedPlaylistId, playlistTitle);

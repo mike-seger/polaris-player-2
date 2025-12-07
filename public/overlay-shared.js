@@ -19,6 +19,7 @@
 
     const icon = document.createElement('span');
     icon.className = 'icon close';
+    icon.textContent = 'close';
     icon.setAttribute('aria-hidden', 'true');
     button.appendChild(icon);
 

@@ -151,6 +151,7 @@
         state.sections.forEach((section) => {
           section.header.setAttribute('aria-expanded', 'false');
           section.icon.className = 'icon unfold-more';
+          section.icon.textContent = 'unfold_more';
           section.wrapper.style.flex = '0 0 auto';
           section.wrapper.style.minHeight = 'auto';
           section.content.style.display = 'none';
@@ -172,6 +173,7 @@
         const isOpen = id === sectionId;
         section.header.setAttribute('aria-expanded', String(isOpen));
         section.icon.className = `icon ${isOpen ? 'unfold-less' : 'unfold-more'}`;
+        section.icon.textContent = isOpen ? 'unfold_less' : 'unfold_more';
         section.wrapper.style.flex = isOpen ? '1 1 auto' : '0 0 auto';
         section.wrapper.style.minHeight = isOpen ? '0' : 'auto';
         section.content.style.display = isOpen ? 'flex' : 'none';
@@ -221,6 +223,7 @@
 
       const iconSpan = document.createElement('span');
       iconSpan.className = 'icon unfold-more';
+      iconSpan.textContent = 'unfold_more';
       iconSpan.setAttribute('aria-hidden', 'true');
       iconSpan.style.fontSize = '1rem';
 
@@ -292,6 +295,7 @@
         fallback.style.fontSize = '0';
         const icon = document.createElement('span');
         icon.className = 'icon close';
+        icon.textContent = 'close';
         icon.setAttribute('aria-hidden', 'true');
         fallback.appendChild(icon);
         fallback.addEventListener('click', handler);
@@ -408,6 +412,7 @@
       loadBtn.setAttribute('aria-label', 'Upload playlist');
       const loadIcon = document.createElement('span');
       loadIcon.className = 'icon upload';
+      loadIcon.textContent = 'upload';
       loadIcon.setAttribute('aria-hidden', 'true');
       loadBtn.appendChild(loadIcon);
       const loadSr = document.createElement('span');
@@ -424,10 +429,12 @@
       refreshBtn.setAttribute('aria-label', 'Upload and refresh playlist');
       const refreshUploadIcon = document.createElement('span');
       refreshUploadIcon.className = 'icon upload';
+      refreshUploadIcon.textContent = 'upload';
       refreshUploadIcon.setAttribute('aria-hidden', 'true');
       refreshBtn.appendChild(refreshUploadIcon);
       const refreshSyncIcon = document.createElement('span');
       refreshSyncIcon.className = 'icon refresh';
+      refreshSyncIcon.textContent = 'refresh';
       refreshSyncIcon.setAttribute('aria-hidden', 'true');
       refreshBtn.appendChild(refreshSyncIcon);
       const refreshSr = document.createElement('span');
@@ -445,6 +452,7 @@
       downloadBtn.setAttribute('aria-label', 'Download playlist JSON');
       const downloadIcon = document.createElement('span');
       downloadIcon.className = 'icon download';
+      downloadIcon.textContent = 'download';
       downloadIcon.setAttribute('aria-hidden', 'true');
       downloadBtn.appendChild(downloadIcon);
       const downloadLabel = document.createElement('span');
@@ -567,6 +575,7 @@
       resetBtn.title = 'Reset stored settings';
       const resetIcon = document.createElement('span');
       resetIcon.className = 'icon delete';
+      resetIcon.textContent = 'delete';
       resetIcon.setAttribute('aria-hidden', 'true');
       resetIcon.style.fontSize = '1rem';
       resetBtn.appendChild(resetIcon);
@@ -1193,6 +1202,7 @@
       iconSpan.className = 'icon';
       const iconClass = iconName.replace(/_/g, '-');
       iconSpan.classList.add(iconClass);
+      iconSpan.textContent = iconName;
       btn.appendChild(iconSpan);
 
       applyHistoryActionButtonState(btn, false);
