@@ -996,6 +996,7 @@
     const TRACK_STATE_CHECKED = 'checked';
     const urlParams = new URLSearchParams(window.location.search);
     const initialPlaylistId = (urlParams.get('pl') || '').trim();
+    const hadInitialPlaylistParam = urlParams.has('pl');
     const shouldResetSettingsFromQuery = ((urlParams.get('reset') || '').trim().toLowerCase() === 'true');
 
     // settings helpers
@@ -1222,6 +1223,25 @@
       saveSettings({ playlistHistory });
     }
 
+    function updateUrlPlaylistParam(playlistId) {
+      if (!window || !window.history || typeof window.history.replaceState !== 'function') {
+        return;
+      }
+      try {
+        const url = new URL(window.location.href);
+        if (!hadInitialPlaylistParam) {
+          url.searchParams.delete('pl');
+        } else if (playlistId) {
+          url.searchParams.set('pl', playlistId);
+        } else {
+          url.searchParams.delete('pl');
+        }
+        window.history.replaceState({}, document.title, `${url.pathname}${url.search}${url.hash}`);
+      } catch (err) {
+        console.warn('Failed to update playlist URL parameter:', err);
+      }
+    }
+
     function updatePlaylistHistorySelect(selectedId = '') {
       if (!playlistHistorySelect) return;
 
@@ -1425,6 +1445,10 @@
         isPlaying = false;
         updatePlayPauseButton();
         focusActiveTrack({ scroll: false });
+      } else if (event.data === YT.PlayerState.CUED || event.data === YT.PlayerState.UNSTARTED) {
+        isPlaying = false;
+        updatePlayPauseButton();
+        focusActiveTrack({ scroll: false });
       }
     }
 
@@ -1574,9 +1598,14 @@
       const playerState = getState ? getState() : undefined;
       const playerStates = window.YT?.PlayerState ?? {};
       const sameIndex = currentIndex === idx;
+      const targetVideoId = playlistItems[idx].videoId;
+      const currentVideoId = typeof player.getVideoData === 'function'
+        ? player.getVideoData()?.video_id
+        : undefined;
+      const isSameVideo = sameIndex && targetVideoId && currentVideoId === targetVideoId;
       const isActivelyPlaying = playerState === playerStates.PLAYING || playerState === playerStates.BUFFERING;
 
-      if (sameIndex) {
+      if (isSameVideo) {
         focusActiveTrack();
         if (isActivelyPlaying) {
           return;
@@ -1591,12 +1620,12 @@
       }
 
       currentIndex = idx;
-      const videoId = playlistItems[currentIndex].videoId;
-      player.loadVideoById(videoId);
-      isPlaying = true;
+      const videoId = targetVideoId;
+      isPlaying = false;
       updateNowPlaying();
       renderTrackList();
       updatePlayPauseButton();
+      player.loadVideoById(videoId);
       const playlistId = settings.playlistId || '';
       updateCurrentVideo(playlistId, videoId);
       focusActiveTrack({ scroll: false });
@@ -1616,7 +1645,17 @@
 
     function togglePlayback() {
       if (!player) return;
-      if (isPlaying) {
+      const getState = typeof player.getPlayerState === 'function' ? player.getPlayerState.bind(player) : null;
+      const playerStates = window.YT?.PlayerState ?? {};
+      const state = getState ? getState() : undefined;
+      const activelyPlaying = state === playerStates.PLAYING || state === playerStates.BUFFERING;
+
+      if (isPlaying !== activelyPlaying) {
+        isPlaying = activelyPlaying;
+        updatePlayPauseButton();
+      }
+
+      if (activelyPlaying) {
         if (typeof player.pauseVideo === 'function') {
           player.pauseVideo();
         }
@@ -1700,6 +1739,7 @@
       }
 
       addPlaylistToHistory(resolvedPlaylistId, playlistTitle);
+      updateUrlPlaylistParam(resolvedPlaylistId);
 
       return resolvedPlaylistId;
     }
