@@ -687,6 +687,10 @@
       color: var(--color-accent);
     }
 
+    #sortToggleBtn.active {
+      color: var(--color-accent);
+    }
+
     #trackControls-buttons button {
       border: none;
       background: transparent;
@@ -924,6 +928,14 @@
           </div>
           <div class="track-controls-group right">
             <button
+              id="sortToggleBtn"
+              type="button"
+              aria-label="Sort alphabetically"
+              aria-pressed="false"
+            >
+              <span class="icon sort-by-alpha" aria-hidden="true"></span>
+            </button>
+            <button
               id="thumbToggleBtn"
               type="button"
               aria-label="Hide thumbnails"
@@ -981,9 +993,11 @@
     let currentIndex = -1;
     let isPlaying = false;
     let showThumbnails = true;
+    let sortAlphabetically = false;
 
     let filterText = '';
     let filteredIndices = [];
+    let visibleIndices = [];
 
     const STORAGE_KEY = 'ytAudioPlayer.settings';
     let settings = loadSettings();
@@ -1165,6 +1179,7 @@
     const clearFilterBtn = document.getElementById('clearFilterBtn');
     const thumbToggleBtn = document.getElementById('thumbToggleBtn');
     const thumbToggleIcon = document.getElementById('thumbToggleIcon');
+    const sortToggleBtn = document.getElementById('sortToggleBtn');
     const progressRange = document.getElementById('progressRange');
     const timeLabel = document.getElementById('timeLabel');
     const playPauseIcon = document.getElementById('playPauseIcon');
@@ -1384,13 +1399,15 @@
     } else {
       showThumbnails = true;
     }
+    if (typeof settings.sortAlphabetically === 'boolean') {
+      sortAlphabetically = settings.sortAlphabetically;
+    }
     if (typeof settings.filterText === 'string') {
       filterText = settings.filterText;
       filterInputEl.value = filterText;
     }
     document.body.classList.toggle('no-thumbs', !showThumbnails);
     updateFilterWrapperClass();
-    updateThumbToggleState();
 
     function updateThumbToggleState() {
       if (!thumbToggleBtn || !thumbToggleIcon) return;
@@ -1403,6 +1420,17 @@
     }
 
     updateThumbToggleState();
+
+    function updateSortToggleState() {
+      if (!sortToggleBtn) return;
+      const label = sortAlphabetically ? 'Show original order' : 'Sort alphabetically';
+      sortToggleBtn.setAttribute('aria-pressed', String(sortAlphabetically));
+      sortToggleBtn.setAttribute('aria-label', label);
+      sortToggleBtn.title = label;
+      sortToggleBtn.classList.toggle('active', sortAlphabetically);
+    }
+
+    updateSortToggleState();
 
     // IFrame API ready
     function onYouTubeIframeAPIReady() {
@@ -1467,9 +1495,30 @@
       filteredIndices = [];
       const f = (filterText || '').trim().toLowerCase();
       playlistItems.forEach((item, idx) => {
-        if (!f || item.title.toLowerCase().includes(f)) {
+        const title = (item.title || '').toLowerCase();
+        const customTitle = (typeof item.userTitle === 'string' ? item.userTitle : '').toLowerCase();
+        if (!f || title.includes(f) || customTitle.includes(f)) {
           filteredIndices.push(idx);
         }
+      });
+    }
+
+    function getSortKeyForIndex(idx) {
+      const item = playlistItems[idx];
+      if (!item) return '';
+      const title = typeof item.userTitle === 'string' && item.userTitle.trim().length
+        ? item.userTitle
+        : item.title || '';
+      return title.toLowerCase();
+    }
+
+    function getSortedIndices(indices) {
+      return indices.slice().sort((a, b) => {
+        const keyA = getSortKeyForIndex(a);
+        const keyB = getSortKeyForIndex(b);
+        if (keyA < keyB) return -1;
+        if (keyA > keyB) return 1;
+        return a - b;
       });
     }
 
@@ -1478,7 +1527,11 @@
       ul.innerHTML = '';
 
       const hasFilter = (filterText || '').trim().length > 0;
-      const indices = hasFilter ? filteredIndices : playlistItems.map((_, i) => i);
+      let indices = hasFilter ? filteredIndices.slice() : playlistItems.map((_, i) => i);
+      if (sortAlphabetically) {
+        indices = getSortedIndices(indices);
+      }
+      visibleIndices = indices.slice();
       const activePlaylistId = getActivePlaylistId();
 
       indices.forEach((realIdx, displayIdx) => {
@@ -1633,15 +1686,37 @@
       focusActiveTrack({ scroll: false });
     }
 
+    function getRelativeVisibleIndex(offset) {
+      const indices = visibleIndices.length ? visibleIndices : playlistItems.map((_, idx) => idx);
+      if (!indices.length) return -1;
+      const currentPos = indices.indexOf(currentIndex);
+      if (currentPos === -1) {
+        if (offset > 0) {
+          return indices[0];
+        }
+        if (offset < 0) {
+          return indices[indices.length - 1];
+        }
+        return -1;
+      }
+      const targetPos = currentPos + offset;
+      if (targetPos < 0 || targetPos >= indices.length) {
+        return -1;
+      }
+      return indices[targetPos];
+    }
+
     function playNext() {
-      if (currentIndex + 1 < playlistItems.length) {
-        playIndex(currentIndex + 1);
+      const nextIdx = getRelativeVisibleIndex(1);
+      if (nextIdx >= 0) {
+        playIndex(nextIdx);
       }
     }
 
     function playPrev() {
-      if (currentIndex > 0) {
-        playIndex(currentIndex - 1);
+      const prevIdx = getRelativeVisibleIndex(-1);
+      if (prevIdx >= 0) {
+        playIndex(prevIdx);
       }
     }
 
@@ -1833,6 +1908,16 @@
         renderTrackList();
         updateThumbToggleState();
         saveSettings({ showThumbnails });
+      });
+    }
+
+    if (sortToggleBtn) {
+      sortToggleBtn.addEventListener('click', () => {
+        sortAlphabetically = !sortAlphabetically;
+        updateSortToggleState();
+        renderTrackList();
+        focusActiveTrack({ scroll: false });
+        saveSettings({ sortAlphabetically });
       });
     }
 
