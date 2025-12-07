@@ -36,7 +36,7 @@
       settingsConfirmCancelBtn: null,
       resettingSettings: false,
       serverAvailable: true,
-      offlineNotice: null,
+      staticNotice: null,
       loadBtnIcon: null,
       loadBtnSr: null,
       refreshUploadIcon: null,
@@ -533,19 +533,19 @@
       accordion.style.minHeight = '0';
       accordion.style.padding = '1rem 0 0';
       const playlistSection = createAccordionSection({ id: 'playlist', title: 'Playlist Management' });
-      const offlineNotice = document.createElement('div');
-      offlineNotice.style.display = 'none';
-      offlineNotice.style.padding = '0.55rem 0.65rem';
-      offlineNotice.style.margin = '0 0 0.5rem';
-      offlineNotice.style.borderRadius = '6px';
-      offlineNotice.style.border = '1px solid #3a4254';
-      offlineNotice.style.background = '#1f2532';
-      offlineNotice.style.color = '#f2d88c';
-      offlineNotice.style.fontSize = '0.78rem';
-      offlineNotice.style.lineHeight = '1.45';
-      offlineNotice.textContent = 'Server unavailable. Uploading new playlists is disabled, but you can still load cached playlists and manage saved settings.';
+      const staticNotice = document.createElement('div');
+      staticNotice.style.display = 'none';
+      staticNotice.style.padding = '0.55rem 0.65rem';
+      staticNotice.style.margin = '0 0 0.5rem';
+      staticNotice.style.borderRadius = '6px';
+      staticNotice.style.border = '1px solid #3a4254';
+      staticNotice.style.background = '#1f2532';
+      staticNotice.style.color = '#f2d88c';
+      staticNotice.style.fontSize = '0.78rem';
+      staticNotice.style.lineHeight = '1.45';
+      staticNotice.textContent = 'Server unavailable. Uploading new playlists is disabled, but you can still load cached playlists and manage saved settings.';
       playlistSection.content.appendChild(description);
-      playlistSection.content.appendChild(offlineNotice);
+      playlistSection.content.appendChild(staticNotice);
       playlistSection.content.appendChild(form);
 
       const settingsSection = createAccordionSection({ id: 'settings', title: 'Stored Settings' });
@@ -763,7 +763,7 @@
       state.refreshSr = refreshSr;
       state.downloadBtn = downloadBtn;
       state.statusEl = statusEl;
-      state.offlineNotice = offlineNotice;
+      state.staticNotice = staticNotice;
       state.historyList = historyList;
       state.settingsStatus = settingsStatus;
       state.settingsPre = settingsPre;
@@ -920,33 +920,33 @@
     }
 
     function updateOverlayAvailability() {
-      const offline = !state.serverAvailable;
+      const isStatic = !state.serverAvailable;
 
-      if (state.offlineNotice) {
-        state.offlineNotice.style.display = offline ? 'block' : 'none';
+      if (state.staticNotice) {
+        state.staticNotice.style.display = isStatic ? 'block' : 'none';
       }
 
       if (state.input) {
-        state.input.disabled = state.loading || offline;
-        state.input.placeholder = offline
-          ? 'Enter cached playlist ID (server offline)'
+        state.input.disabled = state.loading || isStatic;
+        state.input.placeholder = isStatic
+          ? 'Enter cached playlist ID (server static)'
           : 'https://www.youtube.com/playlist?list=...';
       }
 
       if (state.loadBtn) {
-        const loadDisabled = state.loading || offline;
+        const loadDisabled = state.loading || isStatic;
         state.loadBtn.disabled = loadDisabled;
         state.loadBtn.setAttribute('aria-disabled', String(loadDisabled));
         state.loadBtn.setAttribute(
           'aria-label',
-          offline ? 'Upload disabled while offline' : 'Upload playlist'
+          isStatic ? 'Upload disabled while running in static mode' : 'Upload playlist'
         );
-        state.loadBtn.title = offline
+        state.loadBtn.title = isStatic
           ? 'Server unavailable; uploading new playlists is disabled.'
           : 'Upload playlist';
-        state.loadBtn.style.opacity = offline ? '0.5' : '1';
-        state.loadBtn.style.cursor = offline ? 'not-allowed' : 'pointer';
-        state.loadBtn.style.pointerEvents = offline ? 'none' : 'auto';
+        state.loadBtn.style.opacity = isStatic ? '0.5' : '1';
+        state.loadBtn.style.cursor = isStatic ? 'not-allowed' : 'pointer';
+        state.loadBtn.style.pointerEvents = isStatic ? 'none' : 'auto';
         if (state.loadBtnIcon) {
           state.loadBtnIcon.className = 'icon upload';
           state.loadBtnIcon.textContent = 'upload';
@@ -957,25 +957,25 @@
       }
 
       if (state.refreshBtn) {
-        state.refreshBtn.disabled = state.loading || offline;
+        state.refreshBtn.disabled = state.loading || isStatic;
         state.refreshBtn.setAttribute(
           'aria-label',
-          offline ? 'Refresh requires server connection' : 'Upload and refresh playlist'
+          isStatic ? 'Refresh requires server connection' : 'Upload and refresh playlist'
         );
-        state.refreshBtn.title = offline
-          ? 'Refreshing playlists requires the server; unavailable in offline mode.'
+        state.refreshBtn.title = isStatic
+          ? 'Refreshing playlists requires the server; unavailable in static mode.'
           : 'Upload and refresh playlist';
-        state.refreshBtn.style.opacity = offline ? '0.5' : '1';
-        state.refreshBtn.style.cursor = offline ? 'not-allowed' : 'pointer';
-        state.refreshBtn.style.pointerEvents = offline ? 'none' : 'auto';
+        state.refreshBtn.style.opacity = isStatic ? '0.5' : '1';
+        state.refreshBtn.style.cursor = isStatic ? 'not-allowed' : 'pointer';
+        state.refreshBtn.style.pointerEvents = isStatic ? 'none' : 'auto';
         if (state.refreshSr) {
-          state.refreshSr.textContent = offline ? 'Refresh (requires server)' : 'Upload and refresh';
+          state.refreshSr.textContent = isStatic ? 'Refresh (requires server)' : 'Upload and refresh';
         }
         if (state.refreshUploadIcon) {
-          state.refreshUploadIcon.style.opacity = offline ? '0.35' : '1';
+          state.refreshUploadIcon.style.opacity = isStatic ? '0.35' : '1';
         }
         if (state.refreshSyncIcon) {
-          state.refreshSyncIcon.style.opacity = offline ? '0.35' : '1';
+          state.refreshSyncIcon.style.opacity = isStatic ? '0.35' : '1';
         }
       }
 
@@ -983,7 +983,7 @@
         state.downloadBtn.disabled = state.loading;
       }
 
-      if (state.statusEl && !state.loading && !state.statusEl.textContent && offline) {
+      if (state.statusEl && !state.loading && !state.statusEl.textContent && isStatic) {
         state.statusEl.textContent = 'Offline mode: cached playlists only.';
         state.statusEl.style.color = '#d7c37a';
       }
