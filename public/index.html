@@ -7,6 +7,10 @@
     content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
   />
   <title>YouTube Playlist Audio Player</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="./favicon-32x32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="./favicon-16x16.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png" />
+  <link rel="icon" href="./favicon.ico" />
   <style>
     /* ---- Material Icons Round (from your CSS) ---- */
     @font-face {
@@ -30,7 +34,6 @@
       letter-spacing: normal;
       text-transform: none;
       white-space: nowrap;
-      speak: none;
     }
     :root {
       --player-controls-height: 24px;
@@ -960,10 +963,17 @@
     let filteredIndices = [];
     let trackRowElements = new Map();
     let visibleIndices = [];
+    let useLocalMode = false;
+    let localPlaylistLibrary = null;
+    let localFallbackNotified = false;
+    let playlistIOInstance = null;
 
     const STORAGE_KEY = 'ytAudioPlayer.settings';
     let settings = loadSettings();
     const API_BASE_PATH = window.location.hostname.endsWith('polaris.net128.com') ? '/u2b' : '';
+    const STATUS_ENDPOINT = `${API_BASE_PATH}/api/status`;
+    const PLAYLIST_ENDPOINT = `${API_BASE_PATH}/api/playlist`;
+    const LOCAL_PLAYLIST_PATH = './local-playlist.json';
     const PLAYLIST_HISTORY_LIMIT = 25;
     const rawPlaylistHistory = Array.isArray(settings.playlistHistory) ? settings.playlistHistory : [];
     let playlistHistory = normalizePlaylistHistory(rawPlaylistHistory);
@@ -1412,12 +1422,34 @@
     }
     window.onYouTubeIframeAPIReady = onYouTubeIframeAPIReady;
 
-    function onPlayerReady() {
+    async function onPlayerReady() {
       startProgressTimer();
 
+      try {
+        await dataSourceReadyPromise;
+      } catch (readyError) {
+        console.warn('Data source readiness failed:', readyError);
+      }
+
       const startupPlaylistId = initialPlaylistId || settings.playlistId;
+
+      if (useLocalMode) {
+        if (!playlistItems.length) {
+          await loadPlaylistFromLocal(startupPlaylistId || '');
+        }
+        if (currentIndex >= 0 && playlistItems[currentIndex] && player) {
+          playIndex(currentIndex);
+        } else {
+          computeFilteredIndices();
+          renderTrackList();
+          updateNowPlaying();
+          updatePlayPauseButton();
+        }
+        return;
+      }
+
       if (startupPlaylistId) {
-        loadPlaylistFromServer(false, startupPlaylistId);
+        await loadPlaylistFromServer(false, startupPlaylistId);
       } else {
         computeFilteredIndices();
         renderTrackList();
@@ -1746,6 +1778,10 @@
     document.getElementById('prevBtn').addEventListener('click', playPrev);
 
     async function loadPlaylistFromServer(forceRefresh = false, playlistIdOverride = '') {
+      if (useLocalMode) {
+        return loadPlaylistFromLocal(playlistIdOverride);
+      }
+
       const override = typeof playlistIdOverride === 'string' ? playlistIdOverride.trim() : '';
       const fallback = typeof settings.playlistId === 'string' ? settings.playlistId.trim() : '';
       const targetId = override || fallback;
@@ -1753,29 +1789,26 @@
         return undefined;
       }
 
-      const url = `${API_BASE_PATH}/api/playlist?playlistId=${encodeURIComponent(targetId)}${forceRefresh ? '&forceRefresh=1' : ''}`;
+      const url = `${PLAYLIST_ENDPOINT}?playlistId=${encodeURIComponent(targetId)}${forceRefresh ? '&forceRefresh=1' : ''}`;
 
       let resp;
       try {
         resp = await fetch(url);
       } catch (networkError) {
         console.error('Playlist request failed:', networkError);
-        showAlert('Failed to load playlist: network error');
-        return;
+        return enterLocalFallback(playlistIdOverride);
       }
       if (!resp.ok) {
-        let message = 'Failed to load playlist';
         try {
           const err = await resp.json();
           const detail = err?.error || err?.message;
           if (detail && typeof detail === 'string') {
-            message += `: ${detail}`;
+            console.warn('Playlist request failed:', detail);
           }
         } catch (parseErr) {
           console.warn('Failed to parse playlist error response:', parseErr);
         }
-        showAlert(message);
-        return;
+        return enterLocalFallback(playlistIdOverride);
       }
       const data = await resp.json();
       playlistItems = data.items || [];
@@ -1856,37 +1889,189 @@
       return true;
     }
 
-    const playlistIO = typeof initPlaylistIO === 'function'
-      ? initPlaylistIO({
-          triggerElement: playlistIOBtn,
-          getPlaylistId: () => (typeof settings.playlistId === 'string' ? settings.playlistId : ''),
-          getPlaylistHistory: () => playlistHistory.slice(),
-          removePlaylist: (id) => removePlaylistFromHistory(id),
-          getUserSettings: () => {
-            try {
-              return JSON.parse(JSON.stringify(settings));
-            } catch (error) {
-              return settings;
-            }
-          },
-          resetUserSettings: () => resetStoredSettings(),
-          onLoad: async ({ playlistId, forceRefresh }) => {
-            await loadPlaylistFromServer(Boolean(forceRefresh), playlistId);
-          },
-          onDownload: () => downloadCurrentPlaylist(),
-          showAlert
-        })
-      : null;
+    function setupPlaylistOverlay() {
+      if (playlistIOInstance || typeof initPlaylistIO !== 'function') {
+        return;
+      }
 
-    if (playlistIO && typeof playlistIO.refreshSettings === 'function') {
-      notifySettingsUpdated = () => {
-        try {
-          playlistIO.refreshSettings();
-        } catch (error) {
-          console.warn('Failed to refresh playlist overlay settings view:', error);
-        }
-      };
+      if (playlistIOBtn) {
+        playlistIOBtn.style.display = '';
+        playlistIOBtn.removeAttribute('aria-hidden');
+      }
+
+      playlistIOInstance = initPlaylistIO({
+        triggerElement: playlistIOBtn,
+        getPlaylistId: () => (typeof settings.playlistId === 'string' ? settings.playlistId : ''),
+        getPlaylistHistory: () => playlistHistory.slice(),
+        removePlaylist: (id) => removePlaylistFromHistory(id),
+        getUserSettings: () => {
+          try {
+            return JSON.parse(JSON.stringify(settings));
+          } catch (error) {
+            return settings;
+          }
+        },
+        resetUserSettings: () => resetStoredSettings(),
+        onLoad: async ({ playlistId, forceRefresh }) => {
+          await loadPlaylistFromServer(Boolean(forceRefresh), playlistId);
+        },
+        onDownload: () => downloadCurrentPlaylist(),
+        showAlert
+      });
+
+      if (playlistIOInstance && typeof playlistIOInstance.refreshSettings === 'function') {
+        notifySettingsUpdated = () => {
+          try {
+            playlistIOInstance.refreshSettings();
+          } catch (error) {
+            console.warn('Failed to refresh playlist overlay settings view:', error);
+          }
+        };
+      } else {
+        notifySettingsUpdated = () => {};
+      }
+
+      if (playlistIOInstance && typeof playlistIOInstance.setServerAvailability === 'function') {
+        playlistIOInstance.setServerAvailability(!useLocalMode);
+      }
     }
+
+    function enableLocalModeUi() {
+      useLocalMode = true;
+      setupPlaylistOverlay();
+      if (playlistIOInstance && typeof playlistIOInstance.setServerAvailability === 'function') {
+        playlistIOInstance.setServerAvailability(false);
+      }
+    }
+
+    async function checkServerAvailability() {
+      try {
+        const resp = await fetch(STATUS_ENDPOINT, { cache: 'no-store' });
+        if (!resp || !resp.ok) {
+          return false;
+        }
+        try {
+          const body = await resp.json();
+          if (body && body.ok === false) {
+            return false;
+          }
+        } catch (error) {
+          // ignore JSON parse errors, treat as available
+        }
+        return true;
+      } catch (error) {
+        console.warn('Server status check failed:', error);
+        return false;
+      }
+    }
+
+    async function ensureLocalPlaylistData() {
+      if (localPlaylistLibrary) {
+        return localPlaylistLibrary;
+      }
+      try {
+        const resp = await fetch(LOCAL_PLAYLIST_PATH, { cache: 'no-store' });
+        if (!resp.ok) {
+          console.error('Failed to load local playlist file:', resp.status);
+          return null;
+        }
+        localPlaylistLibrary = await resp.json();
+        return localPlaylistLibrary;
+      } catch (error) {
+        console.error('Failed to load local playlist file:', error);
+        return null;
+      }
+    }
+
+    async function loadPlaylistFromLocal(playlistIdOverride = '') {
+      const library = await ensureLocalPlaylistData();
+      if (!library || typeof library !== 'object') {
+        showAlert('Local playlist data is unavailable.');
+        return undefined;
+      }
+
+      const availableIds = Object.keys(library);
+      if (!availableIds.length) {
+        showAlert('Local playlist file does not contain any playlists.');
+        return undefined;
+      }
+
+      const override = typeof playlistIdOverride === 'string' ? playlistIdOverride.trim() : '';
+      const fallback = typeof settings.playlistId === 'string' ? settings.playlistId.trim() : '';
+      let targetId = override || fallback;
+      if (!targetId || !library[targetId]) {
+        targetId = availableIds[0];
+      }
+
+      const entry = library[targetId];
+      if (!entry || typeof entry !== 'object') {
+        showAlert('Selected playlist is not available in local data.');
+        return undefined;
+      }
+
+      const playlistTitle = (typeof entry.title === 'string' && entry.title.trim().length)
+        ? entry.title.trim()
+        : targetId;
+
+      playlistItems = Array.isArray(entry.items) ? entry.items.slice() : [];
+      saveSettings({ playlistId: targetId });
+
+      const savedMap = getCurrentVideoMap();
+      const storedVideoId = savedMap[targetId];
+      let idxFromStorage = -1;
+      if (storedVideoId) {
+        idxFromStorage = playlistItems.findIndex((it) => it.videoId === storedVideoId);
+      }
+      currentIndex = idxFromStorage >= 0 ? idxFromStorage : (playlistItems.length ? 0 : -1);
+
+      filterText = filterInputEl.value || '';
+      computeFilteredIndices();
+      renderTrackList();
+      updateNowPlaying();
+      updatePlayPauseButton();
+      addPlaylistToHistory(targetId, playlistTitle);
+      updateUrlPlaylistParam(targetId);
+
+      if (currentIndex >= 0 && player) {
+        playIndex(currentIndex);
+      }
+
+      return targetId;
+    }
+
+    async function enterLocalFallback(playlistIdOverride = '') {
+      if (!useLocalMode) {
+        enableLocalModeUi();
+        if (!localFallbackNotified) {
+          console.warn('Server unavailable. Falling back to local playlist data.');
+          localFallbackNotified = true;
+        }
+      }
+      return loadPlaylistFromLocal(playlistIdOverride);
+    }
+
+    async function initializeDataSource() {
+      const available = await checkServerAvailability();
+      setupPlaylistOverlay();
+      if (available) {
+        useLocalMode = false;
+        if (playlistIOInstance && typeof playlistIOInstance.setServerAvailability === 'function') {
+          playlistIOInstance.setServerAvailability(true);
+        }
+        return true;
+      }
+
+      enableLocalModeUi();
+      try {
+        const startupPlaylistId = initialPlaylistId || settings.playlistId || '';
+        await loadPlaylistFromLocal(startupPlaylistId);
+      } catch (error) {
+        console.warn('Failed to initialize local playlist fallback:', error);
+      }
+      return false;
+    }
+
+    const dataSourceReadyPromise = initializeDataSource();
 
     if (shouldResetSettingsFromQuery) {
       resetStoredSettings();

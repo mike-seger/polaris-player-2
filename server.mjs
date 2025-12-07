@@ -75,6 +75,10 @@ function saveCache() {
   } catch {}
 }
 
+app.get('/api/status', (req, res) => {
+  res.json({ ok: true, timestamp: new Date().toISOString() });
+});
+
 function getPlaylistId(input) {
   try {
     const url = new URL(input);

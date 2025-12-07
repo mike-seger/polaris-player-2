@@ -17,3 +17,8 @@ npm start
 npm run dev
 
 ```
+
+## start a plain file server
+```
+python3 -m http.server 8000 --directory public
+```
