@@ -1167,6 +1167,7 @@
     const progressRange = document.getElementById('progressRange');
     const timeLabel = document.getElementById('timeLabel');
     const playPauseIcon = document.getElementById('playPauseIcon');
+    const trackControlsEl = document.getElementById('trackControls');
     const playlistHistorySelect = document.getElementById('playlistHistorySelect');
     const trackListContainerEl = document.getElementById('trackListContainer');
     const alertOverlay = document.getElementById('alertOverlay');
@@ -1861,7 +1862,40 @@
     });
 
     if (trackListContainerEl) {
+      trackListContainerEl.addEventListener('mousedown', (event) => {
+        if (event.target === trackListContainerEl && document.activeElement !== trackListContainerEl && typeof trackListContainerEl.focus === 'function') {
+          trackListContainerEl.focus({ preventScroll: true });
+        }
+      });
       trackListContainerEl.addEventListener('keydown', (event) => {
+        if (event.defaultPrevented) return;
+        if (event.key === 'Enter' || event.key === 'Return' || event.code === 'NumpadEnter') {
+          const activePlaylistId = getActivePlaylistId();
+          const activeItem = currentIndex >= 0 ? playlistItems[currentIndex] : null;
+          if (activePlaylistId && activeItem && activeItem.videoId) {
+            event.preventDefault();
+            toggleTrackStateForPlaylist(activePlaylistId, activeItem.videoId);
+            renderTrackList();
+            focusActiveTrack({ scroll: false });
+          }
+          return;
+        }
+        if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
+          event.preventDefault();
+          if (event.key === 'ArrowUp') {
+            playPrev();
+          } else {
+            playNext();
+          }
+        }
+      });
+    }
+
+    if (trackControlsEl) {
+      if (!trackControlsEl.hasAttribute('tabindex')) {
+        trackControlsEl.setAttribute('tabindex', '0');
+      }
+      trackControlsEl.addEventListener('keydown', (event) => {
         if (event.defaultPrevented) return;
         if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
           event.preventDefault();
