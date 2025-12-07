@@ -1289,6 +1289,43 @@
       updatePlaylistHistorySelect('');
     }
 
+    function resetStoredSettings() {
+      try {
+        localStorage.removeItem(STORAGE_KEY);
+      } catch (error) {
+        console.warn('Failed to clear stored settings:', error);
+        throw error;
+      }
+
+      settings = {};
+      playlistHistory = [];
+      updatePlaylistHistorySelect('');
+
+      filterText = '';
+      if (filterInputEl) {
+        filterInputEl.value = '';
+      }
+
+      showThumbnails = true;
+      document.body.classList.remove('no-thumbs');
+      updateFilterWrapperClass();
+      updateThumbToggleState();
+
+      filteredIndices = [];
+      computeFilteredIndices();
+      renderTrackList();
+      updateNowPlaying();
+      updatePlayPauseButton();
+
+      try {
+        notifySettingsUpdated();
+      } catch (notifyError) {
+        console.warn('Settings overlay update failed:', notifyError);
+      }
+
+      return true;
+    }
+
     if (historyNeedsPersist) {
       persistPlaylistHistory();
     }
@@ -1675,6 +1712,7 @@
               return settings;
             }
           },
+          resetUserSettings: () => resetStoredSettings(),
           onLoad: async ({ playlistId, forceRefresh }) => {
             await loadPlaylistFromServer(Boolean(forceRefresh), playlistId);
           },

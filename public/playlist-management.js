@@ -8,7 +8,8 @@
       showAlert = (message) => window.alert(message),
       getPlaylistHistory = () => [],
       removePlaylist = () => {},
-      getUserSettings = () => ({})
+      getUserSettings = () => ({}),
+      resetUserSettings = () => {}
     } = options;
 
     const state = {
@@ -28,7 +29,12 @@
       sections: new Map(),
       openSectionId: null,
       settingsStatus: null,
-      settingsPre: null
+      settingsPre: null,
+      settingsResetBtn: null,
+      settingsConfirmBox: null,
+      settingsConfirmConfirmBtn: null,
+      settingsConfirmCancelBtn: null,
+      resettingSettings: false
     };
 
     function applyPanelBounds(panelArg, overlayArg) {
@@ -97,6 +103,7 @@
 
       statusEl.textContent = 'Loading stored settings…';
       statusEl.style.color = '#a8b3c7';
+      updateSettingsResetButtonState(true);
       if (preEl) {
         preEl.textContent = '';
         preEl.style.display = 'none';
@@ -111,6 +118,7 @@
         if (!hasEntries) {
           statusEl.textContent = 'No stored settings found.';
           statusEl.style.color = '#6c7488';
+          hideSettingsResetPrompt();
           return;
         }
 
@@ -119,8 +127,9 @@
           preEl.textContent = text;
           preEl.style.display = 'block';
         }
-        statusEl.textContent = 'Saved in localStorageas ytAudioPlayer.settings.';
+        statusEl.textContent = 'Saved in localStorage as ytAudioPlayer.settings.';
         statusEl.style.color = '#a8b3c7';
+        updateSettingsResetButtonState(false);
       } catch (error) {
         const message = error && error.message ? error.message : 'Failed to load settings.';
         statusEl.textContent = message;
@@ -129,11 +138,30 @@
           preEl.textContent = '';
           preEl.style.display = 'none';
         }
+        updateSettingsResetButtonState(false);
+        hideSettingsResetPrompt();
       }
     }
 
-    function setSectionOpen(sectionId) {
+    function setSectionOpen(sectionId, options = {}) {
+      const force = Boolean(options.force);
       if (!state.sections || state.sections.size === 0) return;
+      if (sectionId && state.openSectionId === sectionId) {
+        if (force) return;
+        state.sections.forEach((section) => {
+          section.header.setAttribute('aria-expanded', 'false');
+          section.icon.className = 'icon unfold-more';
+          section.wrapper.style.flex = '0 0 auto';
+          section.wrapper.style.minHeight = 'auto';
+          section.content.style.display = 'none';
+          section.content.style.flex = '0 0 auto';
+          section.content.style.overflowY = 'hidden';
+          section.content.style.minHeight = 'auto';
+        });
+        state.openSectionId = null;
+        return;
+      }
+
       if (!sectionId || !state.sections.has(sectionId)) {
         const first = state.sections.keys().next();
         if (first.done) return;
@@ -145,7 +173,6 @@
         section.header.setAttribute('aria-expanded', String(isOpen));
         section.icon.className = `icon ${isOpen ? 'unfold-less' : 'unfold-more'}`;
         section.wrapper.style.flex = isOpen ? '1 1 auto' : '0 0 auto';
-        section.wrapper.style.borderColor = isOpen ? '#394150' : '#2b2f3a';
         section.wrapper.style.minHeight = isOpen ? '0' : 'auto';
         section.content.style.display = isOpen ? 'flex' : 'none';
         section.content.style.flex = isOpen ? '1 1 auto' : '0 0 auto';
@@ -166,7 +193,7 @@
     function createAccordionSection({ id, title }) {
       const wrapper = document.createElement('section');
       wrapper.dataset.sectionId = id;
-      wrapper.style.border = '1px solid #2b2f3a';
+      wrapper.style.border = 'none';
       wrapper.style.borderRadius = '6px';
       wrapper.style.background = '#11141c';
       wrapper.style.overflow = 'hidden';
@@ -212,23 +239,16 @@
       content.style.flexDirection = 'column';
       //content.style.gap = '0.75rem';
       content.style.padding = '0';
-      content.style.borderTop = '1px solid #2b2f3a';
       content.style.background = '#141926';
       content.style.flex = '1 1 auto';
       content.style.minHeight = '0';
       content.style.overflowY = 'hidden';
       content.id = `playlistIOSection-${id}`;
 
-      const titleSpan = document.createElement('span');
-      headerBtn.appendChild(document.createElement('span')); // placeholder to maintain structure
-      headerBtn.removeChild(headerBtn.lastChild);
-      headerBtn.appendChild(titleSpan);
-
       headerBtn.setAttribute('aria-controls', content.id);
       headerBtn.setAttribute('aria-expanded', 'false');
 
       headerBtn.addEventListener('click', () => {
-        if (state.openSectionId === id) return;
         setSectionOpen(id);
       });
 
@@ -318,7 +338,7 @@
       header.style.alignItems = 'center';
       header.style.justifyContent = 'space-between';
       header.style.gap = '0.75rem';
-      header.style.padding = '1rem0 0';
+      header.style.padding = '1rem 0 0';
 
       const title = document.createElement('h2');
       title.id = 'playlistIOOverlayTitle';
@@ -448,6 +468,8 @@
       historyWrapper.style.display = 'flex';
       historyWrapper.style.flexDirection = 'column';
       historyWrapper.style.gap = '0.45rem';
+      historyWrapper.style.flex = '1 1 auto';
+      historyWrapper.style.minHeight = '0';
 
       const historyLabel = document.createElement('div');
       historyLabel.textContent = 'Saved Playlists';
@@ -465,7 +487,7 @@
       historyList.style.flexDirection = 'column';
       historyList.style.gap = '0.25rem';
       historyList.style.maxHeight = 'calc(5 * 2.2rem)';
-      historyList.style.minHeight = 'calc(5 * 2.2rem)';
+      historyList.style.minHeight = '0';
       historyList.style.overflowY = 'auto';
       historyList.style.overflowX = 'hidden';
       historyList.style.paddingRight = '0.1rem';
@@ -494,12 +516,12 @@
       accordion.style.gap = '0.2rem';
       accordion.style.flex = '1 1 auto';
       accordion.style.minHeight = '0';
-      accordion.style.padding = '1rem 0 '
-      const playlistSection = createAccordionSection({ id: 'playlist', title: 'Playlist Managment' });
+      accordion.style.padding = '1rem 0 0';
+      const playlistSection = createAccordionSection({ id: 'playlist', title: 'Playlist Management' });
       playlistSection.content.appendChild(description);
       playlistSection.content.appendChild(form);
 
-      const settingsSection = createAccordionSection({ id: 'settings', title: 'View Stored Settings' });
+      const settingsSection = createAccordionSection({ id: 'settings', title: 'Stored Settings' });
       //settingsSection.content.style.gap = '0.6rem';
       settingsSection.content.style.flex = '1 1 auto';
       settingsSection.content.style.minHeight = '0';
@@ -511,10 +533,145 @@
       settingsIntro.style.color = '#a8b3c7';
       settingsIntro.style.lineHeight = '1.5';
 
-      const settingsStatus = document.createElement('div');
+      const settingsStatus = document.createElement('p');
+      settingsStatus.style.margin = '0';
       settingsStatus.style.fontSize = '0.75rem';
       settingsStatus.style.color = '#a8b3c7';
+      settingsStatus.style.lineHeight = '1.5';
       settingsStatus.textContent = 'Loading stored settings…';
+
+      const settingsCopy = document.createElement('div');
+      settingsCopy.style.flex = '1 1 auto';
+      settingsCopy.style.minWidth = '0';
+      settingsCopy.style.display = 'flex';
+      settingsCopy.style.flexDirection = 'column';
+      settingsCopy.style.gap = '0.4rem';
+      settingsCopy.appendChild(settingsIntro);
+      settingsCopy.appendChild(settingsStatus);
+
+      const resetBtn = document.createElement('button');
+      resetBtn.type = 'button';
+      resetBtn.style.flex = '0 0 auto';
+      resetBtn.style.display = 'inline-flex';
+      resetBtn.style.alignItems = 'center';
+      resetBtn.style.justifyContent = 'center';
+      resetBtn.style.width = '32px';
+      resetBtn.style.height = '32px';
+      resetBtn.style.borderRadius = '4px';
+      resetBtn.style.border = '1px solid #2b2f3a';
+      resetBtn.style.background = '#1b2231';
+      resetBtn.style.color = '#a8b3c7';
+      resetBtn.style.cursor = 'pointer';
+      resetBtn.style.transition = 'background-color 120ms ease, border-color 120ms ease, color 120ms ease';
+      resetBtn.setAttribute('aria-label', 'Reset stored settings');
+      resetBtn.title = 'Reset stored settings';
+      const resetIcon = document.createElement('span');
+      resetIcon.className = 'icon delete';
+      resetIcon.setAttribute('aria-hidden', 'true');
+      resetIcon.style.fontSize = '1rem';
+      resetBtn.appendChild(resetIcon);
+      resetBtn.addEventListener('mouseover', () => {
+        if (resetBtn.disabled) return;
+        resetBtn.style.background = '#232c3d';
+        resetBtn.style.borderColor = '#394150';
+        resetBtn.style.color = '#f5f7fa';
+      });
+      resetBtn.addEventListener('mouseout', () => {
+        resetBtn.style.background = '#1b2231';
+        resetBtn.style.borderColor = '#2b2f3a';
+        resetBtn.style.color = '#a8b3c7';
+      });
+      resetBtn.addEventListener('click', handleSettingsReset);
+
+      const settingsHeaderRow = document.createElement('div');
+      settingsHeaderRow.style.display = 'flex';
+      settingsHeaderRow.style.alignItems = 'flex-start';
+      settingsHeaderRow.style.gap = '0.6rem';
+      settingsHeaderRow.style.marginBottom = '0.75rem';
+      settingsHeaderRow.appendChild(settingsCopy);
+      settingsHeaderRow.appendChild(resetBtn);
+
+      const settingsConfirmBox = document.createElement('div');
+      settingsConfirmBox.style.display = 'none';
+      settingsConfirmBox.style.flexDirection = 'column';
+      settingsConfirmBox.style.gap = '0.75rem';
+      settingsConfirmBox.style.padding = '0.75rem 0.85rem';
+      settingsConfirmBox.style.margin = '0 0 0.75rem';
+      settingsConfirmBox.style.background = '#1b2231';
+      settingsConfirmBox.style.border = '1px solid #394150';
+      settingsConfirmBox.style.borderRadius = '6px';
+
+      const settingsConfirmMessage = document.createElement('p');
+      settingsConfirmMessage.textContent = 'Reset stored settings? This clears ytAudioPlayer.settings from localStorage.';
+      settingsConfirmMessage.style.margin = '0';
+      settingsConfirmMessage.style.fontSize = '0.8rem';
+      settingsConfirmMessage.style.color = '#f5f7fa';
+      settingsConfirmMessage.style.lineHeight = '1.5';
+
+      const settingsConfirmActions = document.createElement('div');
+      settingsConfirmActions.style.display = 'flex';
+      settingsConfirmActions.style.justifyContent = 'flex-end';
+      settingsConfirmActions.style.alignItems = 'center';
+      settingsConfirmActions.style.gap = '0.5rem';
+
+      const settingsConfirmCancelBtn = document.createElement('button');
+      settingsConfirmCancelBtn.type = 'button';
+      settingsConfirmCancelBtn.textContent = 'Cancel';
+      settingsConfirmCancelBtn.style.padding = '0.45rem 0.9rem';
+      settingsConfirmCancelBtn.style.fontSize = '0.78rem';
+      settingsConfirmCancelBtn.style.fontWeight = '600';
+      settingsConfirmCancelBtn.style.letterSpacing = '0.05em';
+      settingsConfirmCancelBtn.style.textTransform = 'uppercase';
+      settingsConfirmCancelBtn.style.borderRadius = '4px';
+      settingsConfirmCancelBtn.style.border = '1px solid #394150';
+      settingsConfirmCancelBtn.style.background = 'transparent';
+      settingsConfirmCancelBtn.style.color = '#a8b3c7';
+      settingsConfirmCancelBtn.style.cursor = 'pointer';
+      settingsConfirmCancelBtn.addEventListener('mouseover', () => {
+        settingsConfirmCancelBtn.style.color = '#f5f7fa';
+        settingsConfirmCancelBtn.style.borderColor = '#46526d';
+        settingsConfirmCancelBtn.style.background = '#232c3d';
+      });
+      settingsConfirmCancelBtn.addEventListener('mouseout', () => {
+        settingsConfirmCancelBtn.style.color = '#a8b3c7';
+        settingsConfirmCancelBtn.style.borderColor = '#394150';
+        settingsConfirmCancelBtn.style.background = 'transparent';
+      });
+      settingsConfirmCancelBtn.addEventListener('click', () => {
+        hideSettingsResetPrompt();
+        updateStatus('Reset cancelled.', 'neutral');
+      });
+
+      const settingsConfirmConfirmBtn = document.createElement('button');
+      settingsConfirmConfirmBtn.type = 'button';
+      settingsConfirmConfirmBtn.textContent = 'Reset';
+      settingsConfirmConfirmBtn.style.padding = '0.45rem 0.9rem';
+      settingsConfirmConfirmBtn.style.fontSize = '0.78rem';
+      settingsConfirmConfirmBtn.style.fontWeight = '600';
+      settingsConfirmConfirmBtn.style.letterSpacing = '0.05em';
+      settingsConfirmConfirmBtn.style.textTransform = 'uppercase';
+      settingsConfirmConfirmBtn.style.borderRadius = '4px';
+      settingsConfirmConfirmBtn.style.border = '1px solid #46526d';
+      settingsConfirmConfirmBtn.style.background = '#3a4a67';
+      settingsConfirmConfirmBtn.style.color = '#f5f7fa';
+      settingsConfirmConfirmBtn.style.cursor = 'pointer';
+      settingsConfirmConfirmBtn.addEventListener('mouseover', () => {
+        settingsConfirmConfirmBtn.style.background = '#425374';
+        settingsConfirmConfirmBtn.style.borderColor = '#556384';
+      });
+      settingsConfirmConfirmBtn.addEventListener('mouseout', () => {
+        settingsConfirmConfirmBtn.style.background = '#3a4a67';
+        settingsConfirmConfirmBtn.style.borderColor = '#46526d';
+      });
+      settingsConfirmConfirmBtn.addEventListener('click', () => {
+        performSettingsReset();
+      });
+
+      settingsConfirmActions.appendChild(settingsConfirmCancelBtn);
+      settingsConfirmActions.appendChild(settingsConfirmConfirmBtn);
+
+      settingsConfirmBox.appendChild(settingsConfirmMessage);
+      settingsConfirmBox.appendChild(settingsConfirmActions);
 
       const settingsPre = document.createElement('pre');
       settingsPre.style.margin = '0';
@@ -533,8 +690,8 @@
       settingsPre.style.maxHeight = '100%';
       settingsPre.style.overflow = 'auto';
 
-      settingsSection.content.appendChild(settingsIntro);
-      settingsSection.content.appendChild(settingsStatus);
+  settingsSection.content.appendChild(settingsHeaderRow);
+      settingsSection.content.appendChild(settingsConfirmBox);
       settingsSection.content.appendChild(settingsPre);
 
       accordion.appendChild(playlistSection.wrapper);
@@ -576,8 +733,13 @@
       state.historyList = historyList;
       state.settingsStatus = settingsStatus;
       state.settingsPre = settingsPre;
+      state.settingsResetBtn = resetBtn;
+      state.settingsConfirmBox = settingsConfirmBox;
+      state.settingsConfirmConfirmBtn = settingsConfirmConfirmBtn;
+      state.settingsConfirmCancelBtn = settingsConfirmCancelBtn;
+      updateSettingsResetButtonState(true);
 
-      setSectionOpen('playlist');
+      setSectionOpen('playlist', { force: true });
       refreshHistoryList();
       refreshSettingsView();
 
@@ -668,7 +830,7 @@
         document.body.style.overflow = 'hidden';
       }
       updateStatus('');
-      setSectionOpen('playlist');
+      setSectionOpen('playlist', { force: true });
       refreshHistoryList();
       refreshSettingsView();
       if (state.input) {
@@ -707,6 +869,37 @@
       } else {
         state.statusEl.style.color = '#a8b3c7';
       }
+    }
+
+    function updateSettingsResetButtonState(disabled) {
+      if (!state.settingsResetBtn) return;
+      const isDisabled = Boolean(disabled);
+      state.settingsResetBtn.disabled = isDisabled;
+      state.settingsResetBtn.setAttribute('aria-disabled', String(isDisabled));
+      state.settingsResetBtn.style.opacity = isDisabled ? '0.55' : '1';
+      state.settingsResetBtn.style.cursor = isDisabled ? 'not-allowed' : 'pointer';
+      state.settingsResetBtn.style.pointerEvents = isDisabled ? 'none' : 'auto';
+      state.settingsResetBtn.style.background = isDisabled ? '#1b2231' : '#1b2231';
+      state.settingsResetBtn.style.borderColor = '#2b2f3a';
+      state.settingsResetBtn.style.color = '#a8b3c7';
+      if (isDisabled) {
+        hideSettingsResetPrompt();
+      }
+    }
+
+    function showSettingsResetPrompt() {
+      if (!state.settingsConfirmBox) return;
+      if (state.settingsConfirmBox.style.display === 'flex') return;
+      state.settingsConfirmBox.style.display = 'flex';
+      state.settingsConfirmBox.style.flexDirection = 'column';
+      if (state.settingsConfirmConfirmBtn) {
+        state.settingsConfirmConfirmBtn.focus({ preventScroll: true });
+      }
+    }
+
+    function hideSettingsResetPrompt() {
+      if (!state.settingsConfirmBox) return;
+      state.settingsConfirmBox.style.display = 'none';
     }
 
     function setLoading(isLoading) {
@@ -770,6 +963,41 @@
       }
 
       refreshHistoryList();
+    }
+
+    function handleSettingsReset() {
+      if (state.resettingSettings) return;
+      if (!state.settingsResetBtn || state.settingsResetBtn.disabled) return;
+      showSettingsResetPrompt();
+    }
+
+    async function performSettingsReset() {
+      if (state.resettingSettings) return;
+      if (typeof resetUserSettings !== 'function') return;
+
+      state.resettingSettings = true;
+      updateSettingsResetButtonState(true);
+      hideSettingsResetPrompt();
+      if (state.settingsStatus) {
+        state.settingsStatus.textContent = 'Resetting stored settings…';
+        state.settingsStatus.style.color = '#a8b3c7';
+      }
+
+      try {
+        const result = await Promise.resolve().then(() => resetUserSettings());
+        if (result === false) {
+          updateStatus('Reset cancelled.', 'neutral');
+        } else {
+          updateStatus('Stored settings reset.', 'success');
+        }
+      } catch (error) {
+        console.error('Stored settings reset failed:', error);
+        updateStatus('Failed to reset stored settings.', 'error');
+      } finally {
+        state.resettingSettings = false;
+        refreshSettingsView();
+        refreshHistoryList();
+      }
     }
 
     function refreshHistoryList() {
@@ -878,7 +1106,10 @@
       if (state.input) {
         state.input.value = items[index].id;
         state.input.focus({ preventScroll: true });
-        state.input.select();
+        const cursor = state.input.value.length;
+        if (typeof state.input.setSelectionRange === 'function') {
+          state.input.setSelectionRange(cursor, cursor);
+        }
       }
 
       highlightHistoryRow(index);
