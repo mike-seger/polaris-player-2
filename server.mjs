@@ -24,8 +24,6 @@ if (!YT_API_KEY) {
   process.exit(1);
 }
 
-app.use(express.static(path.join(__dirname, 'public')));
-
 const CACHE_DIR = path.join(__dirname, 'cache');
 const CACHE_FILE = path.join(CACHE_DIR, 'playlists.json');
 
@@ -455,6 +453,9 @@ app.get('/api/playlist', async (req, res) => {
 app.get('/api/cache-info', (req, res) => {
   res.json(playlistCache);
 });
+
+// Register static file handling after API routes so dynamic endpoints take precedence.
+app.use(express.static(path.join(__dirname, 'public')));
 
 // load overrides first so cache entries get userTitle baked in on initial fetch
 loadOverrides();
