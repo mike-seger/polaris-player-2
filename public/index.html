@@ -820,7 +820,6 @@
       }
     }
   </style>
-  <script src="https://unpkg.com/opentype.js@latest/dist/opentype.min.js"></script>
 </head>
 <body>
   <div id="sidebar">
@@ -967,6 +966,8 @@
     let localPlaylistLibrary = null;
     let localFallbackNotified = false;
     let playlistIOInstance = null;
+    let playerReady = false;
+    let pendingPlayIndex = null;
 
     const STORAGE_KEY = 'ytAudioPlayer.settings';
     let settings = loadSettings();
@@ -1406,13 +1407,18 @@
 
     // IFrame API ready
     function onYouTubeIframeAPIReady() {
+      const playerOrigin = (window.location && window.location.origin)
+        ? window.location.origin
+        : `${window.location.protocol}//${window.location.host}`;
+      playerReady = false;
       player = new YT.Player('player', {
         height: '200',
         width: '320',
         videoId: '',
         playerVars: {
           autoplay: 0,
-          controls: 0
+          controls: 0,
+          origin: playerOrigin
         },
         events: {
           onReady: onPlayerReady,
@@ -1423,6 +1429,7 @@
     window.onYouTubeIframeAPIReady = onYouTubeIframeAPIReady;
 
     async function onPlayerReady() {
+      playerReady = true;
       startProgressTimer();
 
       try {
@@ -1445,6 +1452,11 @@
           updateNowPlaying();
           updatePlayPauseButton();
         }
+        if (pendingPlayIndex !== null) {
+          const queuedIndex = pendingPlayIndex;
+          pendingPlayIndex = null;
+          playIndex(queuedIndex);
+        }
         return;
       }
 
@@ -1455,6 +1467,11 @@
         renderTrackList();
         updateNowPlaying();
         updatePlayPauseButton();
+      }
+      if (pendingPlayIndex !== null) {
+        const queuedIndex = pendingPlayIndex;
+        pendingPlayIndex = null;
+        playIndex(queuedIndex);
       }
     }
 
@@ -1691,10 +1708,15 @@
           return;
         }
         if (playerState === playerStates.PAUSED) {
-          player.playVideo();
-          isPlaying = true;
-          updatePlayPauseButton();
-          focusActiveTrack({ scroll: false });
+          if (playerReady && typeof player.playVideo === 'function') {
+            player.playVideo();
+            isPlaying = true;
+            updatePlayPauseButton();
+            focusActiveTrack({ scroll: false });
+          } else {
+            console.warn('YouTube player API is not ready to resume playback; skipping play request.');
+            pendingPlayIndex = idx;
+          }
           return;
         }
       }
@@ -1709,7 +1731,23 @@
         updateActiveTrackRow(previousIndex, currentIndex);
       }
       updatePlayPauseButton();
-      player.loadVideoById(videoId);
+      if (!playerReady) {
+        pendingPlayIndex = idx;
+        return;
+      }
+      const invokeLoadVideo =
+        typeof player.loadVideoById === 'function'
+          ? player.loadVideoById.bind(player)
+          : typeof player.cueVideoById === 'function'
+            ? player.cueVideoById.bind(player)
+            : null;
+      if (invokeLoadVideo) {
+        invokeLoadVideo(videoId);
+        pendingPlayIndex = null;
+      } else {
+        console.warn('YouTube player API is not ready to load videos; skipping video load.');
+        pendingPlayIndex = idx;
+      }
       const playlistId = settings.playlistId || '';
       updateCurrentVideo(playlistId, videoId);
       focusActiveTrack();
