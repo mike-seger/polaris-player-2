@@ -899,7 +899,7 @@
       if (!state.statusEl) return;
       const text = message || '';
       if (!text && !state.serverAvailable) {
-        state.statusEl.textContent = 'Offline mode: cached playlists only.';
+        state.statusEl.textContent = 'Static server mode: cached playlists only.';
         state.statusEl.style.color = '#d7c37a';
         return;
       }
@@ -984,7 +984,7 @@
       }
 
       if (state.statusEl && !state.loading && !state.statusEl.textContent && isStatic) {
-        state.statusEl.textContent = 'Offline mode: cached playlists only.';
+        state.statusEl.textContent = 'Static server mode: cached playlists only.';
         state.statusEl.style.color = '#d7c37a';
       }
     }
