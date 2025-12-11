@@ -158,7 +158,7 @@
         state.sections.forEach((section) => {
           section.header.setAttribute('aria-expanded', 'false');
           section.icon.className = 'icon unfold-more';
-          section.icon.textContent = 'unfold_more';
+          section.icon.textContent = 'folder';
           section.wrapper.style.flex = '0 0 auto';
           section.wrapper.style.minHeight = 'auto';
           section.content.style.display = 'none';
@@ -179,8 +179,8 @@
       state.sections.forEach((section, id) => {
         const isOpen = id === sectionId;
         section.header.setAttribute('aria-expanded', String(isOpen));
-        section.icon.className = `icon ${isOpen ? 'unfold-less' : 'unfold-more'}`;
-        section.icon.textContent = isOpen ? 'unfold_less' : 'unfold_more';
+        section.icon.className = `icon ${isOpen ? 'folder_open' : 'folder'}`;
+        section.icon.textContent = isOpen ? 'folder_open' : 'folder';
         section.wrapper.style.flex = isOpen ? '1 1 auto' : '0 0 auto';
         section.wrapper.style.minHeight = isOpen ? '0' : 'auto';
         section.content.style.display = isOpen ? 'flex' : 'none';
@@ -348,16 +348,63 @@
       header.style.display = 'flex';
       header.style.alignItems = 'center';
       header.style.justifyContent = 'space-between';
-      header.style.gap = '0.75rem';
-      header.style.padding = '1rem 0 0';
+      header.style.gap = '0.25rem';
+      header.style.padding = '0.4rem 0.4rem 0';
+      header.style.minHeight = 'var(--playlist-manager-button-size, 34px)';
 
       const title = document.createElement('h2');
       title.id = 'playlistIOOverlayTitle';
       title.textContent = 'Settings';
       title.style.margin = '0';
       title.style.fontSize = '1rem';
+      title.style.flex = '1 1 auto';
 
       const closeBtn = buildCloseButton(closeOverlay);
+      const applyCloseBtnRestState = () => {
+        closeBtn.style.background = '#1f2532';
+        closeBtn.style.borderColor = 'var(--color-border, #2b2f3a)';
+        closeBtn.style.color = 'var(--color-text, #f5f7fa)';
+      };
+      closeBtn.style.width = 'var(--playlist-manager-button-size, 34px)';
+      closeBtn.style.height = 'var(--playlist-manager-button-size, 34px)';
+      closeBtn.style.minWidth = 'var(--playlist-manager-button-size, 34px)';
+      closeBtn.style.minHeight = 'var(--playlist-manager-button-size, 34px)';
+      closeBtn.style.borderRadius = '4px';
+      closeBtn.style.border = '1px solid var(--color-border, #2b2f3a)';
+      closeBtn.style.background = '#1f2532';
+      closeBtn.style.color = 'var(--color-text, #f5f7fa)';
+      closeBtn.style.padding = '0';
+      closeBtn.style.display = 'inline-flex';
+      closeBtn.style.alignItems = 'center';
+      closeBtn.style.justifyContent = 'center';
+      closeBtn.style.transition = 'background 0.15s ease, border-color 0.15s ease';
+      closeBtn.style.fontSize = '0';
+      closeBtn.style.cursor = 'pointer';
+      const closeBtnIcon = closeBtn.querySelector('.icon');
+      if (closeBtnIcon) {
+        closeBtnIcon.style.fontSize = '20px';
+        closeBtnIcon.style.width = '20px';
+        closeBtnIcon.style.height = '20px';
+        closeBtnIcon.style.lineHeight = '1';
+      }
+      closeBtn.addEventListener('mouseenter', () => {
+        closeBtn.style.background = '#273043';
+        closeBtn.style.borderColor = 'var(--color-border-strong, #394150)';
+      });
+      closeBtn.addEventListener('mouseleave', () => {
+        applyCloseBtnRestState();
+      });
+      closeBtn.addEventListener('focus', () => {
+        closeBtn.style.background = '#273043';
+        closeBtn.style.borderColor = 'var(--color-border-strong, #394150)';
+      });
+      closeBtn.addEventListener('blur', () => {
+        applyCloseBtnRestState();
+      });
+      closeBtn.addEventListener('click', () => {
+        applyCloseBtnRestState();
+      });
+      applyCloseBtnRestState();
 
       header.appendChild(title);
       header.appendChild(closeBtn);
@@ -531,7 +578,7 @@
       accordion.style.gap = '0.2rem';
       accordion.style.flex = '1 1 auto';
       accordion.style.minHeight = '0';
-      accordion.style.padding = '1rem 0 0';
+      accordion.style.padding = '0.75rem 0.4rem 1rem';
       const playlistSection = createAccordionSection({ id: 'playlist', title: 'Playlist Management' });
       const staticNotice = document.createElement('div');
       staticNotice.style.display = 'none';
