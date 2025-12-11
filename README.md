@@ -29,7 +29,7 @@ npm run dev
 
 ## start a plain file server
 ```
-python3 -m http.server 8000 --directory public
+python3 utility/no_cache_server.py --port 8080 --directory public --bind 127.0.0.1
 ```
 
 

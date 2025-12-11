@@ -7,10 +7,15 @@
     content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
   />
   <title>YouTube Playlist Audio Player</title>
+  <link rel="preload" href="./player.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="icon" type="image/png" sizes="32x32" href="./favicon-32x32.png" />
   <link rel="icon" type="image/png" sizes="16x16" href="./favicon-16x16.png" />
   <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png" />
   <link rel="icon" href="./favicon.ico" />
+  <script>
+    // Prevent Material icon glyph names flashing before the font loads.
+    document.documentElement.classList.remove('icons-ready');
+  </script>
   <style>
     /* ---- Material Icons Round (from your CSS) ---- */
     @font-face {
@@ -18,7 +23,11 @@
       font-style: normal;
       font-weight: 400;
       font-display: swap;
-      src: url('player.woff2') format('woff2');
+      src: url('./player.woff2') format('woff2');
+    }
+
+    html:not(.icons-ready) .icon {
+      visibility: hidden;
     }
 
     .icon {
@@ -1054,6 +1063,25 @@
   <script src="https://www.youtube.com/iframe_api"></script>
   <script src="./overlay-shared.js"></script>
   <script src="./playlist-management.js"></script>
+  <script>
+    (function () {
+      function markReady() {
+        document.documentElement.classList.add('icons-ready');
+      }
+      try {
+        if (document.fonts && typeof document.fonts.load === 'function') {
+          Promise.race([
+            document.fonts.load("1em 'Material Icons Round-Regular'"),
+            new Promise((resolve) => setTimeout(resolve, 1500))
+          ]).then(markReady, markReady);
+        } else {
+          setTimeout(markReady, 0);
+        }
+      } catch (e) {
+        markReady();
+      }
+    })();
+  </script>
   <script>
     let player;
     let playlistItems = [];
