@@ -638,17 +638,77 @@
       margin-left: auto;
     }
 
-    #thumbToggleBtn span {
-      font-size: 20px;
-      display: inline-block;
-      min-width: 2.4rem;
-      text-align: center;
-      color: var(--color-text);
-      font-weight: 600;
+    .details-toggle-wrapper {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
     }
 
-    #thumbToggleBtn.active span {
+    #thumbToggleBtn .icon {
+      font-size: 30px;
+      width: 30px;
+      height: 30px;
+      line-height: 1;
+    }
+
+    #thumbToggleBtn.active {
       color: var(--color-accent);
+    }
+
+    .track-details-overlay {
+      position: absolute;
+      top: calc(100% + 0.4rem);
+      right: 0;
+      background: var(--color-panel);
+      border: 1px solid var(--color-border-strong);
+      border-radius: 8px;
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45);
+      padding: 0.75rem;
+      min-width: 190px;
+      display: none;
+      flex-direction: column;
+      gap: 0.35rem;
+      z-index: 200;
+    }
+
+    .track-details-overlay.visible {
+      display: flex;
+    }
+
+    .track-details-header {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--color-text);
+      margin-bottom: 0.15rem;
+    }
+
+    .track-details-option {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      font-size: 0.85rem;
+      color: var(--color-text);
+      cursor: pointer;
+    }
+
+    .track-details-option input[type="checkbox"] {
+      margin: 0;
+      width: 1rem;
+      height: 1rem;
+    }
+
+    body.hide-track-number .track-number {
+      display: none;
+    }
+
+    body.no-wrap-lines .title {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    body.hide-track-check .track-state-btn {
+      display: none;
     }
 
     #sortToggleBtn.active {
@@ -909,14 +969,44 @@
             >
               <span class="icon sort-by-alpha" aria-hidden="true">sort_by_alpha</span>
             </button>
-            <button
-              id="thumbToggleBtn"
-              type="button"
-              aria-label="Hide thumbnails"
-              aria-pressed="true"
-            >
-              <span id="thumbToggleIcon" aria-hidden="true">T</span>
-            </button>
+            <div class="details-toggle-wrapper" id="trackDetailsWrapper">
+              <button
+                id="thumbToggleBtn"
+                type="button"
+                aria-label="Track details"
+                aria-haspopup="true"
+                aria-expanded="false"
+                aria-controls="trackDetailsOverlay"
+              >
+                <span class="icon tune" id="thumbToggleIcon" aria-hidden="true">tune</span>
+              </button>
+              <div
+                id="trackDetailsOverlay"
+                class="track-details-overlay"
+                role="dialog"
+                aria-modal="false"
+                aria-hidden="true"
+                aria-labelledby="trackDetailsHeading"
+              >
+                <div class="track-details-header" id="trackDetailsHeading">Details</div>
+                <label class="track-details-option" for="detailTrackNumber">
+                  <input type="checkbox" id="detailTrackNumber" />
+                  <span>Track number</span>
+                </label>
+                <label class="track-details-option" for="detailThumbnail">
+                  <input type="checkbox" id="detailThumbnail" />
+                  <span>Thumbnail</span>
+                </label>
+                <label class="track-details-option" for="detailWrapLines">
+                  <input type="checkbox" id="detailWrapLines" />
+                  <span>Wrap lines</span>
+                </label>
+                <label class="track-details-option" for="detailCheckTrack">
+                  <input type="checkbox" id="detailCheckTrack" />
+                  <span>Check track</span>
+                </label>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -966,8 +1056,15 @@
     let playlistItems = [];
     let currentIndex = -1;
     let isPlaying = false;
-    let showThumbnails = true;
     let sortAlphabetically = false;
+    const DEFAULT_TRACK_DETAILS = Object.freeze({
+      trackNumber: true,
+      thumbnail: true,
+      wrapLines: true,
+      checkTrack: true
+    });
+    let trackDetailSettings = { ...DEFAULT_TRACK_DETAILS };
+    let trackDetailsOverlayVisible = false;
 
     let filterText = '';
     let filteredIndices = [];
@@ -1163,6 +1260,18 @@
     const clearFilterBtn = document.getElementById('clearFilterBtn');
     const thumbToggleBtn = document.getElementById('thumbToggleBtn');
     const thumbToggleIcon = document.getElementById('thumbToggleIcon');
+    const trackDetailsWrapper = document.getElementById('trackDetailsWrapper');
+    const trackDetailsOverlay = document.getElementById('trackDetailsOverlay');
+    const detailTrackNumberCheckbox = document.getElementById('detailTrackNumber');
+    const detailThumbnailCheckbox = document.getElementById('detailThumbnail');
+    const detailWrapLinesCheckbox = document.getElementById('detailWrapLines');
+    const detailCheckTrackCheckbox = document.getElementById('detailCheckTrack');
+    const detailCheckboxMap = {
+      trackNumber: detailTrackNumberCheckbox,
+      thumbnail: detailThumbnailCheckbox,
+      wrapLines: detailWrapLinesCheckbox,
+      checkTrack: detailCheckTrackCheckbox
+    };
     const sortToggleBtn = document.getElementById('sortToggleBtn');
     const progressRange = document.getElementById('progressRange');
     const timeLabel = document.getElementById('timeLabel');
@@ -1214,8 +1323,19 @@
     }
 
     document.addEventListener('keydown', (event) => {
-      if (event.key === 'Escape' && alertOverlay?.classList.contains('visible')) {
-        hideAlert();
+      if (event.key === 'Escape') {
+        let handled = false;
+        if (alertOverlay?.classList.contains('visible')) {
+          hideAlert();
+          handled = true;
+        }
+        if (trackDetailsOverlayVisible) {
+          closeTrackDetailsOverlay({ focusButton: !handled });
+          handled = true;
+        }
+        if (handled) {
+          event.preventDefault();
+        }
       }
     });
 
@@ -1328,10 +1448,11 @@
         filterInputEl.value = '';
       }
 
-      showThumbnails = true;
-      document.body.classList.remove('no-thumbs');
+      trackDetailSettings = { ...DEFAULT_TRACK_DETAILS };
+      applyTrackDetailPreferences();
+      syncTrackDetailsControls();
+      closeTrackDetailsOverlay();
       updateFilterWrapperClass();
-      updateThumbToggleState();
 
       filteredIndices = [];
       computeFilteredIndices();
@@ -1378,10 +1499,13 @@
     }
 
     // init from settings
-    if (typeof settings.showThumbnails === 'boolean') {
-      showThumbnails = settings.showThumbnails;
+    if (settings.trackDetailPreferences && typeof settings.trackDetailPreferences === 'object' && !Array.isArray(settings.trackDetailPreferences)) {
+      trackDetailSettings = { ...DEFAULT_TRACK_DETAILS, ...settings.trackDetailPreferences };
     } else {
-      showThumbnails = true;
+      trackDetailSettings = { ...DEFAULT_TRACK_DETAILS };
+      if (typeof settings.showThumbnails === 'boolean') {
+        trackDetailSettings.thumbnail = settings.showThumbnails;
+      }
     }
     if (typeof settings.sortAlphabetically === 'boolean') {
       sortAlphabetically = settings.sortAlphabetically;
@@ -1390,20 +1514,73 @@
       filterText = settings.filterText;
       filterInputEl.value = filterText;
     }
-    document.body.classList.toggle('no-thumbs', !showThumbnails);
     updateFilterWrapperClass();
+    applyTrackDetailPreferences();
+    syncTrackDetailsControls();
+    updateTrackDetailsButtonState();
 
-    function updateThumbToggleState() {
-      if (!thumbToggleBtn || !thumbToggleIcon) return;
-      const label = showThumbnails ? 'Hide thumbnails' : 'Show thumbnails';
-      thumbToggleBtn.setAttribute('aria-pressed', String(showThumbnails));
-      thumbToggleBtn.setAttribute('aria-label', label);
-      thumbToggleBtn.title = label;
-      thumbToggleBtn.classList.toggle('active', showThumbnails);
-      thumbToggleIcon.textContent = 'T';
+    function applyTrackDetailPreferences(options = {}) {
+      const { refreshThumbnails = false, preserveScroll = true } = options || {};
+      const prefs = trackDetailSettings || DEFAULT_TRACK_DETAILS;
+      document.body.classList.toggle('hide-track-number', !prefs.trackNumber);
+      document.body.classList.toggle('no-thumbs', !prefs.thumbnail);
+      document.body.classList.toggle('no-wrap-lines', !prefs.wrapLines);
+      document.body.classList.toggle('hide-track-check', !prefs.checkTrack);
+      if (refreshThumbnails) {
+        renderTrackList({ preserveScroll, skipActiveScroll: preserveScroll });
+      }
     }
 
-    updateThumbToggleState();
+    function syncTrackDetailsControls() {
+      if (!detailCheckboxMap) return;
+      Object.entries(detailCheckboxMap).forEach(([key, checkbox]) => {
+        if (!checkbox) return;
+        checkbox.checked = !!trackDetailSettings[key];
+      });
+    }
+
+    function updateTrackDetailsButtonState() {
+      if (!thumbToggleBtn || !thumbToggleIcon) return;
+      thumbToggleBtn.setAttribute('aria-expanded', String(trackDetailsOverlayVisible));
+      thumbToggleBtn.setAttribute('aria-pressed', String(trackDetailsOverlayVisible));
+      thumbToggleBtn.setAttribute('aria-label', 'Track details');
+      thumbToggleBtn.title = 'Track details';
+      thumbToggleBtn.classList.toggle('active', trackDetailsOverlayVisible);
+      thumbToggleIcon.className = 'icon tune';
+      thumbToggleIcon.textContent = 'tune';
+    }
+
+    function persistTrackDetailSettings() {
+      saveSettings({ trackDetailPreferences: { ...trackDetailSettings } });
+    }
+
+    function openTrackDetailsOverlay() {
+      if (!trackDetailsOverlay) return;
+      syncTrackDetailsControls();
+      trackDetailsOverlay.classList.add('visible');
+      trackDetailsOverlay.setAttribute('aria-hidden', 'false');
+      trackDetailsOverlayVisible = true;
+      updateTrackDetailsButtonState();
+    }
+
+    function closeTrackDetailsOverlay(options = {}) {
+      if (!trackDetailsOverlay) return;
+      trackDetailsOverlay.classList.remove('visible');
+      trackDetailsOverlay.setAttribute('aria-hidden', 'true');
+      trackDetailsOverlayVisible = false;
+      updateTrackDetailsButtonState();
+      if (options && options.focusButton && thumbToggleBtn && typeof thumbToggleBtn.focus === 'function') {
+        thumbToggleBtn.focus({ preventScroll: true });
+      }
+    }
+
+    function toggleTrackDetailsOverlay() {
+      if (trackDetailsOverlayVisible) {
+        closeTrackDetailsOverlay();
+      } else {
+        openTrackDetailsOverlay();
+      }
+    }
 
     function updateSortToggleState() {
       if (!sortToggleBtn) return;
@@ -1546,7 +1723,14 @@
       });
     }
 
-    function renderTrackList() {
+    function renderTrackList(options = {}) {
+      const { preserveScroll = false, skipActiveScroll } = options || {};
+      const container = document.getElementById('trackListContainer');
+      const suppressActiveScroll = typeof skipActiveScroll === 'boolean' ? skipActiveScroll : preserveScroll;
+      let previousScrollTop = 0;
+      if (preserveScroll && container) {
+        previousScrollTop = container.scrollTop;
+      }
       const ul = document.getElementById('trackList');
       ul.innerHTML = '';
       trackRowElements = new Map();
@@ -1569,7 +1753,7 @@
         numSpan.textContent = (displayIdx + 1) + '.';
         li.appendChild(numSpan);
 
-        if (showThumbnails && item.thumbnail) {
+        if (trackDetailSettings.thumbnail && item.thumbnail) {
           const img = document.createElement('img');
           img.src = item.thumbnail;
           li.appendChild(img);
@@ -1606,7 +1790,13 @@
         ul.appendChild(li);
       });
 
-      scrollActiveIntoView();
+      if (preserveScroll && container) {
+        container.scrollTop = previousScrollTop;
+      }
+
+      if (!suppressActiveScroll) {
+        scrollActiveIntoView();
+      }
     }
 
     function updateActiveTrackRow(previousIdx, nextIdx) {
@@ -2130,16 +2320,35 @@
       e.preventDefault();
     });
 
-    // thumbnails toggle
+    // track detail overlay toggle
     if (thumbToggleBtn) {
-      thumbToggleBtn.addEventListener('click', () => {
-        showThumbnails = !showThumbnails;
-        document.body.classList.toggle('no-thumbs', !showThumbnails);
-        renderTrackList();
-        updateThumbToggleState();
-        saveSettings({ showThumbnails });
+      thumbToggleBtn.addEventListener('click', (event) => {
+        event.stopPropagation();
+        toggleTrackDetailsOverlay();
       });
     }
+
+    if (trackDetailsOverlay) {
+      trackDetailsOverlay.addEventListener('click', (event) => {
+        event.stopPropagation();
+      });
+    }
+
+    document.addEventListener('click', (event) => {
+      if (!trackDetailsOverlayVisible) return;
+      if (trackDetailsWrapper && trackDetailsWrapper.contains(event.target)) return;
+      closeTrackDetailsOverlay();
+    });
+
+    Object.entries(detailCheckboxMap).forEach(([key, checkbox]) => {
+      if (!checkbox) return;
+      checkbox.addEventListener('change', () => {
+        trackDetailSettings = { ...trackDetailSettings, [key]: checkbox.checked };
+        const shouldRefreshThumbnails = key === 'thumbnail';
+        applyTrackDetailPreferences({ refreshThumbnails: shouldRefreshThumbnails, preserveScroll: true });
+        persistTrackDetailSettings();
+      });
+    });
 
     if (sortToggleBtn) {
       sortToggleBtn.addEventListener('click', () => {

@@ -11,6 +11,9 @@ download
 fast_forward
 forward_30
 forward_5
+list
+list_alt
+list_alt_check
 markunread_mailbox
 more_horiz
 more_vert
@@ -31,8 +34,10 @@ skip_next
 skip_previous
 slow_motion_video
 sort_by_alpha
+table_eye
 thumb_down
 thumb_up
+tune
 unfold_less
 unfold_more
 upload
