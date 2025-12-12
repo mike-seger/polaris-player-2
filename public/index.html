@@ -637,6 +637,25 @@
       width: 100%;
     }
 
+    /* Offline spectrum display (between left buttons and right icons) */
+    #spectrumCanvas {
+      flex: 1 1 auto;
+      height: 46px;
+      max-height: 46px;
+      min-width: 60px;
+      border-radius: 6px;
+      background: #0b0d12;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    body.spectrum-missing #spectrumCanvas {
+      opacity: 0.35;
+    }
+
+    body.spectrum-hidden #spectrumCanvas {
+      display: none;
+    }
+
     .track-controls-group {
       display: flex;
       align-items: center;
@@ -972,6 +991,7 @@
               <span class="icon next" aria-hidden="true">skip_next</span>
             </button>
           </div>
+          <canvas id="spectrumCanvas" width="320" height="46" aria-label="Spectrum" role="img"></canvas>
           <div class="track-controls-group right">
             <button
               id="sortToggleBtn"
@@ -1313,7 +1333,222 @@
     const alertOverlay = document.getElementById('alertOverlay');
     const alertMessageEl = document.getElementById('alertMessage');
     const alertCloseBtn = document.getElementById('alertCloseBtn');
+    const spectrumCanvas = document.getElementById('spectrumCanvas');
     let lastFocusedElement = null;
+
+    // ---- Offline spectrum cache + renderer ----
+    // Cache format: `public/spectrum-cache/<videoId>.spc32`
+    // Header (32 bytes):
+    // 0..3   magic 'SPC1'
+    // 4      version u8
+    // 5      bins u8
+    // 6      fps u8
+    // 7      reserved
+    // 8..11  sampleRate u32le
+    // 12..15 durationMs u32le
+    // 16..19 frameCount u32le
+    // 20..27 videoIdHash (sha256 first 8 bytes)
+    // 28..31 reserved
+    // Payload: frameCount * bins u8
+
+    const SPECTRUM_CACHE_DIR = './spectrum-cache';
+    const spectrumState = {
+      bins: 16,
+      fps: 20,
+      frameCount: 0,
+      durationMs: 0,
+      frames: null,
+      peaks: null,
+      rafId: null,
+      lastVideoId: '',
+      dpr: 1,
+    };
+
+    function ensureSpectrumPeaks(binCount) {
+      if (spectrumState.peaks && spectrumState.peaks.length === binCount) return;
+      spectrumState.peaks = new Float32Array(binCount);
+      spectrumState.peaks.fill(0);
+    }
+
+    function u8ToHex(u8) {
+      return Array.from(u8, (b) => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    async function sha256First8Bytes(str) {
+      if (!window.crypto?.subtle) return null;
+      const data = new TextEncoder().encode(str);
+      const digest = await window.crypto.subtle.digest('SHA-256', data);
+      return new Uint8Array(digest).slice(0, 8);
+    }
+
+    function drawSpectrumFrame(frameU8) {
+      if (!spectrumCanvas || !frameU8) return;
+      const ctx = spectrumCanvas.getContext('2d');
+      if (!ctx) return;
+
+      const cssW = spectrumCanvas.clientWidth || 1;
+      const cssH = spectrumCanvas.clientHeight || 1;
+      const dpr = window.devicePixelRatio || 1;
+      if (spectrumState.dpr !== dpr || spectrumCanvas.width !== Math.round(cssW * dpr) || spectrumCanvas.height !== Math.round(cssH * dpr)) {
+        spectrumState.dpr = dpr;
+        spectrumCanvas.width = Math.round(cssW * dpr);
+        spectrumCanvas.height = Math.round(cssH * dpr);
+      }
+
+      const W = spectrumCanvas.width;
+      const H = spectrumCanvas.height;
+      ctx.clearRect(0, 0, W, H);
+
+      // Background grid-like dots (subtle Winamp vibe)
+      ctx.fillStyle = 'rgba(255,255,255,0.04)';
+      const grid = Math.max(4, Math.floor(8 * spectrumState.dpr));
+      for (let y = grid; y < H; y += grid) {
+        for (let x = grid; x < W; x += grid) {
+          ctx.fillRect(x, y, 1, 1);
+        }
+      }
+
+      const binCount = Math.min(frameU8.length, spectrumState.bins);
+      ensureSpectrumPeaks(binCount);
+      // More Winamp-like proportion: fewer, chunkier bars.
+      // Reduce gaps ~50% and spend the space on wider bars.
+      const gap = Math.max(1, Math.round(1.5 * spectrumState.dpr));
+      const barW = Math.max(2, Math.floor((W - gap * (binCount + 1)) / binCount));
+      const maxBarH = H - Math.round(6 * spectrumState.dpr);
+      const baseY = H - Math.round(3 * spectrumState.dpr);
+
+      // Peak hold: keep a decaying peak per bin.
+      // Tuned for ~60fps render loop while cache is 20fps.
+      const peakFallPerFrame = 0.018; // fraction per animation frame
+      // Peak marker should be a single device pixel.
+      const peakCapH = Math.max(1, Math.round(1 * spectrumState.dpr));
+
+      for (let i = 0; i < binCount; i++) {
+        const v = frameU8[i] / 255;
+        const h = Math.max(1, Math.round(v * maxBarH));
+        const x = gap + i * (barW + gap);
+        const y = baseY - h;
+
+        // Height-based ramp: green -> yellow -> orange -> red.
+        // Red should occupy a noticeable top band, not just 1px.
+        const grad = ctx.createLinearGradient(0, y, 0, baseY);
+        // More vivid ramp.
+        grad.addColorStop(0.00, '#ff0033'); // vivid red (top)
+        grad.addColorStop(0.18, '#ff6a00'); // vivid orange
+        grad.addColorStop(0.40, '#ffe600'); // vivid yellow
+        grad.addColorStop(1.00, '#00ff57'); // vivid green (bottom)
+        ctx.fillStyle = grad;
+        ctx.fillRect(x, y, barW, h);
+
+        // Peak hold update + draw (thicker cap)
+        const peaks = spectrumState.peaks;
+        const nextPeak = Math.max(v, (peaks[i] || 0) - peakFallPerFrame);
+        peaks[i] = nextPeak;
+
+        const peakH = Math.max(1, Math.round(nextPeak * maxBarH));
+        const peakY = Math.max(0, baseY - peakH);
+        const capY = Math.max(0, peakY);
+        const capH = Math.min(peakCapH, baseY - capY);
+
+        // Pick cap color by level (green/yellow/orange/red)
+        let capColor = '#00ff57';
+        if (nextPeak >= 0.88) capColor = '#ff0033';
+        else if (nextPeak >= 0.76) capColor = '#ff6a00';
+        else if (nextPeak >= 0.60) capColor = '#ffe600';
+        ctx.fillStyle = capColor;
+        ctx.fillRect(x, capY, barW, capH);
+      }
+    }
+
+    function stopSpectrumAnimation() {
+      if (spectrumState.rafId) {
+        cancelAnimationFrame(spectrumState.rafId);
+        spectrumState.rafId = null;
+      }
+    }
+
+    function startSpectrumAnimation() {
+      stopSpectrumAnimation();
+      if (!spectrumCanvas || !spectrumState.frames || !player || typeof player.getCurrentTime !== 'function') return;
+
+      const tick = () => {
+        if (!spectrumState.frames || !player || typeof player.getCurrentTime !== 'function') {
+          spectrumState.rafId = null;
+          return;
+        }
+        const t = player.getCurrentTime();
+        const frameIndex = Math.max(0, Math.min(spectrumState.frameCount - 1, Math.floor(t * spectrumState.fps)));
+        const offset = frameIndex * spectrumState.bins;
+        const frame = spectrumState.frames.subarray(offset, offset + spectrumState.bins);
+        drawSpectrumFrame(frame);
+        spectrumState.rafId = requestAnimationFrame(tick);
+      };
+
+      spectrumState.rafId = requestAnimationFrame(tick);
+    }
+
+    async function loadSpectrumForVideoId(videoId) {
+      if (!videoId) return false;
+      if (videoId === spectrumState.lastVideoId && spectrumState.frames) return true;
+
+      stopSpectrumAnimation();
+      spectrumState.lastVideoId = videoId;
+      spectrumState.frames = null;
+      spectrumState.frameCount = 0;
+      spectrumState.durationMs = 0;
+      document.body.classList.add('spectrum-missing');
+
+      const url = `${SPECTRUM_CACHE_DIR}/${encodeURIComponent(videoId)}.spc32`;
+      let buf;
+      try {
+        const resp = await fetch(url, { cache: 'no-store' });
+        if (!resp.ok) return false;
+        buf = await resp.arrayBuffer();
+      } catch {
+        return false;
+      }
+
+      if (buf.byteLength < 32) return false;
+      const view = new DataView(buf);
+      const magic = String.fromCharCode(view.getUint8(0), view.getUint8(1), view.getUint8(2), view.getUint8(3));
+      if (magic !== 'SPC1') return false;
+      const version = view.getUint8(4);
+      if (version !== 1) return false;
+      const bins = view.getUint8(5);
+      const fps = view.getUint8(6);
+      const durationMs = view.getUint32(12, true);
+      const frameCount = view.getUint32(16, true);
+      const hashBytes = new Uint8Array(buf.slice(20, 28));
+
+      // Optional integrity check (best-effort).
+      try {
+        const expect = await sha256First8Bytes(videoId);
+        if (expect) {
+          for (let i = 0; i < 8; i++) {
+            if (expect[i] !== hashBytes[i]) {
+              console.warn('Spectrum cache hash mismatch for', videoId, 'got', u8ToHex(hashBytes), 'expected', u8ToHex(expect));
+              break;
+            }
+          }
+        }
+      } catch {
+        // ignore
+      }
+
+      const payloadOffset = 32;
+      const expectedBytes = payloadOffset + frameCount * bins;
+      if (buf.byteLength < expectedBytes) return false;
+
+      spectrumState.bins = bins;
+      spectrumState.fps = fps;
+      spectrumState.durationMs = durationMs;
+      spectrumState.frameCount = frameCount;
+      spectrumState.frames = new Uint8Array(buf, payloadOffset, frameCount * bins);
+      spectrumState.peaks = null;
+
+      document.body.classList.remove('spectrum-missing');
+      return true;
+    }
 
     function hideAlert() {
       if (!alertOverlay) return;
@@ -1701,14 +1936,17 @@
         isPlaying = true;
         updatePlayPauseButton();
         focusActiveTrack({ scroll: false });
+        startSpectrumAnimation();
       } else if (event.data === YT.PlayerState.PAUSED) {
         isPlaying = false;
         updatePlayPauseButton();
         focusActiveTrack({ scroll: false });
+        stopSpectrumAnimation();
       } else if (event.data === YT.PlayerState.CUED || event.data === YT.PlayerState.UNSTARTED) {
         isPlaying = false;
         updatePlayPauseButton();
         focusActiveTrack({ scroll: false });
+        stopSpectrumAnimation();
       }
     }
 
@@ -1957,6 +2195,20 @@
       const videoId = targetVideoId;
       isPlaying = false;
       updateNowPlaying();
+
+      // Load offline spectrum cache for this video (non-blocking).
+      loadSpectrumForVideoId(videoId).then((ok) => {
+        if (!ok) {
+          stopSpectrumAnimation();
+          if (spectrumCanvas) {
+            const ctx = spectrumCanvas.getContext('2d');
+            if (ctx) ctx.clearRect(0, 0, spectrumCanvas.width, spectrumCanvas.height);
+          }
+        } else if (isPlaying) {
+          startSpectrumAnimation();
+        }
+      });
+
       if (!trackRowElements.size || !trackRowElements.has(currentIndex)) {
         renderTrackList();
       } else {

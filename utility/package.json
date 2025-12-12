@@ -4,10 +4,12 @@
   "description": "CLI helpers for Polaris Player",
   "type": "module",
   "bin": {
-    "yt-playlist-import": "create-playlist.mjs"
+    "yt-playlist-import": "create-playlist.mjs",
+    "yt-spectrum-cache": "generate-spectrum.mjs"
   },
   "scripts": {
-    "start": "node create-playlist.mjs"
+    "start": "node create-playlist.mjs",
+    "spectrum": "node generate-spectrum.mjs"
   },
   "dependencies": {
     "googleapis": "^131.0.0",
