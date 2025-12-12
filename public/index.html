@@ -717,8 +717,8 @@
       font-size: 0.85rem;
       color: var(--color-text);
       cursor: pointer;
-      padding: 0.4rem 0.5rem;
-      min-height: 1.75rem;
+      padding: 0.2rem 0.3rem;
+      min-height: 1.4rem;
       border-radius: 6px;
     }
 
@@ -742,9 +742,7 @@
       display: none;
     }
 
-    #sortToggleBtn.active {
-      color: var(--color-accent);
-    }
+    /* sort is now in Details overlay */
 
     #trackControls-buttons button {
       border: none;
@@ -993,14 +991,6 @@
           </div>
           <canvas id="spectrumCanvas" width="320" height="46" aria-label="Spectrum" role="img"></canvas>
           <div class="track-controls-group right">
-            <button
-              id="sortToggleBtn"
-              type="button"
-              aria-label="Sort alphabetically"
-              aria-pressed="false"
-            >
-              <span class="icon sort-by-alpha" aria-hidden="true">sort_by_alpha</span>
-            </button>
             <div class="details-toggle-wrapper" id="trackDetailsWrapper">
               <button
                 id="thumbToggleBtn"
@@ -1036,6 +1026,10 @@
                 <label class="track-details-option" for="detailCheckTrack">
                   <input type="checkbox" id="detailCheckTrack" />
                   <span>Check track</span>
+                </label>
+                <label class="track-details-option" for="detailSortAZ">
+                  <input type="checkbox" id="detailSortAZ" />
+                  <span>Sort A-Z</span>
                 </label>
               </div>
             </div>
@@ -1112,7 +1106,8 @@
       trackNumber: true,
       thumbnail: true,
       wrapLines: true,
-      checkTrack: true
+      checkTrack: true,
+      sortAZ: false
     });
     let trackDetailSettings = { ...DEFAULT_TRACK_DETAILS };
     let trackDetailsOverlayVisible = false;
@@ -1317,13 +1312,14 @@
     const detailThumbnailCheckbox = document.getElementById('detailThumbnail');
     const detailWrapLinesCheckbox = document.getElementById('detailWrapLines');
     const detailCheckTrackCheckbox = document.getElementById('detailCheckTrack');
+    const detailSortAZCheckbox = document.getElementById('detailSortAZ');
     const detailCheckboxMap = {
       trackNumber: detailTrackNumberCheckbox,
       thumbnail: detailThumbnailCheckbox,
       wrapLines: detailWrapLinesCheckbox,
-      checkTrack: detailCheckTrackCheckbox
+      checkTrack: detailCheckTrackCheckbox,
+      sortAZ: detailSortAZCheckbox
     };
-    const sortToggleBtn = document.getElementById('sortToggleBtn');
     const progressRange = document.getElementById('progressRange');
     const timeLabel = document.getElementById('timeLabel');
     const playPauseIcon = document.getElementById('playPauseIcon');
@@ -1776,6 +1772,7 @@
     if (typeof settings.sortAlphabetically === 'boolean') {
       sortAlphabetically = settings.sortAlphabetically;
     }
+    trackDetailSettings.sortAZ = !!sortAlphabetically;
     if (typeof settings.filterText === 'string') {
       filterText = settings.filterText;
       filterInputEl.value = filterText;
@@ -1792,6 +1789,15 @@
       document.body.classList.toggle('no-thumbs', !prefs.thumbnail);
       document.body.classList.toggle('no-wrap-lines', !prefs.wrapLines);
       document.body.classList.toggle('hide-track-check', !prefs.checkTrack);
+
+      const nextSort = !!prefs.sortAZ;
+      const sortChanged = sortAlphabetically !== nextSort;
+      if (sortChanged) {
+        sortAlphabetically = nextSort;
+        saveSettings({ sortAlphabetically });
+        renderTrackList({ preserveScroll, skipActiveScroll: preserveScroll });
+      }
+
       if (refreshThumbnails) {
         renderTrackList({ preserveScroll, skipActiveScroll: preserveScroll });
       }
@@ -1847,17 +1853,6 @@
         openTrackDetailsOverlay();
       }
     }
-
-    function updateSortToggleState() {
-      if (!sortToggleBtn) return;
-      const label = sortAlphabetically ? 'Show original order' : 'Sort alphabetically';
-      sortToggleBtn.setAttribute('aria-pressed', String(sortAlphabetically));
-      sortToggleBtn.setAttribute('aria-label', label);
-      sortToggleBtn.title = label;
-      sortToggleBtn.classList.toggle('active', sortAlphabetically);
-    }
-
-    updateSortToggleState();
 
     // IFrame API ready
     function onYouTubeIframeAPIReady() {
@@ -2633,15 +2628,7 @@
       });
     });
 
-    if (sortToggleBtn) {
-      sortToggleBtn.addEventListener('click', () => {
-        sortAlphabetically = !sortAlphabetically;
-        updateSortToggleState();
-        renderTrackList();
-        focusActiveTrack({ scroll: false });
-        saveSettings({ sortAlphabetically });
-      });
-    }
+    // Sorting is controlled via the Details overlay.
 
     // filter
     filterInputEl.addEventListener('input', () => {
