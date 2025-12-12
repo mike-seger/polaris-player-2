@@ -249,6 +249,26 @@ function buildSpc32({ videoId, bins, fps, sampleRate, durationMs, frames }) {
   return Buffer.concat([header, payload]);
 }
 
+async function readVideoIdsFromTsv(tsvPath) {
+  const raw = await fs.readFile(tsvPath, 'utf8');
+  const ids = [];
+  const seen = new Set();
+
+  for (const line of raw.split(/\r?\n/)) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+    if (trimmed.startsWith('#')) continue;
+
+    const firstCol = trimmed.split('\t')[0].trim();
+    if (!firstCol) continue;
+    if (seen.has(firstCol)) continue;
+    seen.add(firstCol);
+    ids.push(firstCol);
+  }
+
+  return ids;
+}
+
 async function main() {
   const argv = await yargs(hideBin(process.argv))
     .parserConfiguration({
@@ -259,6 +279,11 @@ async function main() {
     })
     .positional('videoId', { type: 'string', describe: 'YouTube video id (positional alternative to --videoId)' })
     .option('videoId', { type: 'string', default: '', describe: 'YouTube video id' })
+    .option('tsv', {
+      type: 'string',
+      default: '',
+      describe: 'TSV file with YouTube video ids in column 1; generates for each id (comments starting with # ignored)',
+    })
     .option('outDir', { type: 'string', default: 'public/spectrum-cache', describe: 'Output directory' })
     .option('bins', { type: 'number', default: 16, describe: 'Number of spectrum bins' })
     .option('fps', { type: 'number', default: 20, describe: 'Frames per second' })
@@ -277,19 +302,39 @@ async function main() {
     .parse();
 
   const positionals = (argv._ ?? []).map((v) => String(v));
-  const videoId = String(argv.videoId || positionals[0] || '').trim();
-  if (!videoId) {
-    throw new Error('Missing videoId. Use --videoId=<id> (recommended) or provide it as the first positional argument.');
-  }
   if (positionals.length > 1) {
     throw new Error(
       `Unexpected extra arguments: ${positionals
         .slice(1)
         .map((v) => JSON.stringify(v))
         .join(', ')}\n` +
-        'Tip: ensure your loop does `npx yt-spectrum-cache --videoId "$id" ...` and that `$id` contains only the id.'
+        'Tip: for batch runs prefer `--tsv <file>` or loops like `... --videoId "$id"`.'
     );
   }
+
+  const explicitVideoId = String(argv.videoId || positionals[0] || '').trim();
+  const tsvPath = String(argv.tsv || '').trim();
+
+  if (argv.source && tsvPath) {
+    throw new Error('Cannot use --source with --tsv (source is a single local file).');
+  }
+
+  if (explicitVideoId && tsvPath) {
+    throw new Error('Provide either --videoId (or positional) OR --tsv, not both.');
+  }
+
+  let videoIds = [];
+  if (tsvPath) {
+    videoIds = await readVideoIdsFromTsv(path.resolve(tsvPath));
+    if (!videoIds.length) {
+      throw new Error(`No videoIds found in TSV: ${tsvPath}`);
+    }
+  } else if (explicitVideoId) {
+    videoIds = [explicitVideoId];
+  } else {
+    throw new Error('Missing videoId. Use --videoId=<id> (recommended), a positional id, or --tsv <file>.');
+  }
+
   const bins = Math.max(1, Math.min(255, argv.bins | 0));
   const fps = Math.max(1, Math.min(60, argv.fps | 0));
   const sampleRate = Math.max(8000, argv.sampleRate | 0);
@@ -305,47 +350,49 @@ async function main() {
   await fs.mkdir(argv.outDir, { recursive: true });
   await fs.mkdir(argv.tmpDir, { recursive: true });
 
-  const outPath = path.join(argv.outDir, `${videoId}.spc32`);
-  if (!argv.force) {
-    try {
-      await fs.access(outPath);
-      // eslint-disable-next-line no-console
-      console.log(`Skip ${videoId} (already exists): ${outPath}`);
-      return;
-    } catch {
-      // does not exist
+  for (const videoId of videoIds) {
+    const outPath = path.join(argv.outDir, `${videoId}.spc32`);
+    if (!argv.force) {
+      try {
+        await fs.access(outPath);
+        // eslint-disable-next-line no-console
+        console.log(`Skip ${videoId} (already exists): ${outPath}`);
+        continue;
+      } catch {
+        // does not exist
+      }
     }
+
+    const inputPath = argv.source
+      ? path.resolve(argv.source)
+      : await downloadAudioForVideoId(videoId, { ytDlpPath, tmpDir: path.resolve(argv.tmpDir) });
+
+    const samples = await decodeToMonoFloat32(inputPath, { ffmpegPath, sampleRate });
+
+    const durationSec = samples.length / sampleRate;
+    const durationMs = Math.max(0, Math.round(durationSec * 1000));
+
+    const hop = Math.floor(sampleRate / fps);
+    const frames = [];
+    for (let start = 0; start + frameSize <= samples.length; start += hop) {
+      const frameBins = computeBinsForFrame({
+        samples,
+        sampleRate,
+        startSample: start,
+        frameSize,
+        bins,
+        fMin: argv.minHz,
+        fMax: argv.maxHz,
+      });
+      frames.push(frameBins);
+    }
+
+    const spc = buildSpc32({ videoId, bins, fps, sampleRate, durationMs, frames });
+    await fs.writeFile(outPath, spc);
+
+    // eslint-disable-next-line no-console
+    console.log(`Wrote ${outPath} (${frames.length} frames, ${bins} bins @ ${fps}fps)`);
   }
-
-  const inputPath = argv.source
-    ? path.resolve(argv.source)
-    : await downloadAudioForVideoId(videoId, { ytDlpPath, tmpDir: path.resolve(argv.tmpDir) });
-
-  const samples = await decodeToMonoFloat32(inputPath, { ffmpegPath, sampleRate });
-
-  const durationSec = samples.length / sampleRate;
-  const durationMs = Math.max(0, Math.round(durationSec * 1000));
-
-  const hop = Math.floor(sampleRate / fps);
-  const frames = [];
-  for (let start = 0; start + frameSize <= samples.length; start += hop) {
-    const frameBins = computeBinsForFrame({
-      samples,
-      sampleRate,
-      startSample: start,
-      frameSize,
-      bins,
-      fMin: argv.minHz,
-      fMax: argv.maxHz,
-    });
-    frames.push(frameBins);
-  }
-
-  const spc = buildSpc32({ videoId, bins, fps, sampleRate, durationMs, frames });
-  await fs.writeFile(outPath, spc);
-
-  // eslint-disable-next-line no-console
-  console.log(`Wrote ${outPath} (${frames.length} frames, ${bins} bins @ ${fps}fps)`);
 }
 
 main().catch((err) => {

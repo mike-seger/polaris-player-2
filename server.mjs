@@ -7,6 +7,23 @@ import { fileURLToPath } from 'url';
 
 dotenv.config();
 
+// Prefix all console logs with an ISO timestamp for easier tracing.
+const _consoleLog = console.log.bind(console);
+const _consoleInfo = console.info.bind(console);
+const _consoleWarn = console.warn.bind(console);
+const _consoleError = console.error.bind(console);
+
+function _logWithIso(prefixFn, args) {
+  const ts = new Date().toISOString();
+  if (args.length === 0) return prefixFn(`[${ts}]`);
+  return prefixFn(`[${ts}]`, ...args);
+}
+
+console.log = (...args) => _logWithIso(_consoleLog, args);
+console.info = (...args) => _logWithIso(_consoleInfo, args);
+console.warn = (...args) => _logWithIso(_consoleWarn, args);
+console.error = (...args) => _logWithIso(_consoleError, args);
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 

@@ -63,6 +63,9 @@ jq -r '.. | objects | .videoId? // empty' ../data/yt-playlist.json \
 			[[ -z "$id" ]] && continue
 			npx yt-spectrum-cache --videoId="$id" --outDir ../public/spectrum-cache
 		done
+
+# Or, if you already have a TSV with `videoId` in column 1:
+npx yt-spectrum-cache --tsv ../data/videoIds.tsv --outDir ../public/spectrum-cache
 ```
 
 Requires `yt-dlp` and `ffmpeg` on your PATH.
@@ -80,6 +83,70 @@ npx yt-spectrum-cache --videoId=3lNq3MfH_h0 --outDir ../public/spectrum-cache
 
 # Regenerate even if the cache already exists
 npx yt-spectrum-cache --videoId=3lNq3MfH_h0 --outDir ../public/spectrum-cache --force
+```
+
+## bulk insert/update titles from TSV
+
+If you maintain a list of title overrides/additions as a TSV file (one line per track):
+
+- Format: `videoId<TAB>userTitle`
+- Example: `data/add.tsv`, `data/delete.tsv`
+
+You can insert/update all tracks from the TSV into a playlist inside `public/local-playlist.json`, placing them in the alphabetically correct position (A-Z by `userTitle/title`) and re-numbering `position`:
+
+```zsh
+cd utility
+
+# Dry-run first
+node ./create-playlist.mjs insert-tsv \
+	--playlist ../public/local-playlist.json \
+	--playlistId PL_50zHBR2OufB7T5fHLrhviM0-s_3g4pA \
+	--tsv ../data/add.tsv \
+	--dry-run
+
+# Apply changes
+node ./create-playlist.mjs insert-tsv \
+	--playlist ../public/local-playlist.json \
+	--playlistId PL_50zHBR2OufB7T5fHLrhviM0-s_3g4pA \
+	--tsv ../data/add.tsv
+```
+
+To delete tracks listed in a TSV (title column is ignored):
+
+```zsh
+cd utility
+
+# Dry-run first
+node ./create-playlist.mjs delete-tsv \
+	--playlist ../public/local-playlist.json \
+	--playlistId PL_50zHBR2OufB7T5fHLrhviM0-s_3g4pA \
+	--tsv ../data/delete.tsv \
+	--dry-run
+
+# Apply changes
+node ./create-playlist.mjs delete-tsv \
+	--playlist ../public/local-playlist.json \
+	--playlistId PL_50zHBR2OufB7T5fHLrhviM0-s_3g4pA \
+	--tsv ../data/delete.tsv
+```
+
+To delete from the real YouTube playlist (uses YouTube Data API quota):
+
+```zsh
+cd utility
+
+# Always start with a dry-run so you can inspect what will be deleted
+node ./create-playlist.mjs youtube-delete-tsv \
+	--playlistId PL_50zHBR2OufB7T5fHLrhviM0-s_3g4pA \
+	--tsv ../data/delete.tsv \
+	--dry-run
+
+# Then do a small limited run (optional) to reduce risk/quota impact
+node ./create-playlist.mjs youtube-delete-tsv \
+	--playlistId PL_50zHBR2OufB7T5fHLrhviM0-s_3g4pA \
+	--tsv ../data/delete.tsv \
+	--limit 10 \
+	--sleepMs 500
 ```
 
 
