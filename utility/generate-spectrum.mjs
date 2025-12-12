@@ -251,7 +251,14 @@ function buildSpc32({ videoId, bins, fps, sampleRate, durationMs, frames }) {
 
 async function main() {
   const argv = await yargs(hideBin(process.argv))
-    .option('videoId', { type: 'string', demandOption: true, describe: 'YouTube video id' })
+    .parserConfiguration({
+      // Allows using `--videoId=-abc` without yargs treating `-abc` as flags.
+      'short-option-groups': false,
+      'camel-case-expansion': true,
+      'unknown-options-as-args': false,
+    })
+    .positional('videoId', { type: 'string', describe: 'YouTube video id (positional alternative to --videoId)' })
+    .option('videoId', { type: 'string', default: '', describe: 'YouTube video id' })
     .option('outDir', { type: 'string', default: 'public/spectrum-cache', describe: 'Output directory' })
     .option('bins', { type: 'number', default: 16, describe: 'Number of spectrum bins' })
     .option('fps', { type: 'number', default: 20, describe: 'Frames per second' })
@@ -263,10 +270,26 @@ async function main() {
     .option('tmpDir', { type: 'string', default: '.tmp-spectrum', describe: 'Temp directory for downloads' })
     .option('ytDlpPath', { type: 'string', default: 'yt-dlp', describe: 'yt-dlp executable' })
     .option('ffmpegPath', { type: 'string', default: 'ffmpeg', describe: 'ffmpeg executable' })
-    .strict()
+    .option('force', { type: 'boolean', default: false, describe: 'Regenerate even if output file exists' })
+    // In some shell loops it's easy to accidentally pass an extra token.
+    // Be tolerant here and provide a clearer error below.
+    .strict(false)
     .parse();
 
-  const videoId = argv.videoId.trim();
+  const positionals = (argv._ ?? []).map((v) => String(v));
+  const videoId = String(argv.videoId || positionals[0] || '').trim();
+  if (!videoId) {
+    throw new Error('Missing videoId. Use --videoId=<id> (recommended) or provide it as the first positional argument.');
+  }
+  if (positionals.length > 1) {
+    throw new Error(
+      `Unexpected extra arguments: ${positionals
+        .slice(1)
+        .map((v) => JSON.stringify(v))
+        .join(', ')}\n` +
+        'Tip: ensure your loop does `npx yt-spectrum-cache --videoId "$id" ...` and that `$id` contains only the id.'
+    );
+  }
   const bins = Math.max(1, Math.min(255, argv.bins | 0));
   const fps = Math.max(1, Math.min(60, argv.fps | 0));
   const sampleRate = Math.max(8000, argv.sampleRate | 0);
@@ -281,6 +304,18 @@ async function main() {
 
   await fs.mkdir(argv.outDir, { recursive: true });
   await fs.mkdir(argv.tmpDir, { recursive: true });
+
+  const outPath = path.join(argv.outDir, `${videoId}.spc32`);
+  if (!argv.force) {
+    try {
+      await fs.access(outPath);
+      // eslint-disable-next-line no-console
+      console.log(`Skip ${videoId} (already exists): ${outPath}`);
+      return;
+    } catch {
+      // does not exist
+    }
+  }
 
   const inputPath = argv.source
     ? path.resolve(argv.source)
@@ -307,7 +342,6 @@ async function main() {
   }
 
   const spc = buildSpc32({ videoId, bins, fps, sampleRate, durationMs, frames });
-  const outPath = path.join(argv.outDir, `${videoId}.spc32`);
   await fs.writeFile(outPath, spc);
 
   // eslint-disable-next-line no-console

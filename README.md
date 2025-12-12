@@ -44,7 +44,25 @@ Generate a cache file for a YouTube video id:
 ```zsh
 cd utility
 npm install
-npx yt-spectrum-cache --videoId VIDEO_ID
+npx yt-spectrum-cache --videoId=VIDEO_ID
+```
+
+Notes:
+- If a `videoId` starts with `-`, use the equals form: `--videoId=-abc`.
+- The generator **skips** work when `public/spectrum-cache/<videoId>.spc32` already exists. Use `--force` to regenerate.
+
+Example: generate caches for many ids (safe for whitespace/CRLF):
+
+```zsh
+cd utility
+
+# Extract ids, strip CRLF, and generate missing caches
+jq -r '.. | objects | .videoId? // empty' ../data/yt-playlist.json \
+	| tr -d '\r' \
+	| while IFS= read -r id; do
+			[[ -z "$id" ]] && continue
+			npx yt-spectrum-cache --videoId="$id" --outDir ../public/spectrum-cache
+		done
 ```
 
 Requires `yt-dlp` and `ffmpeg` on your PATH.
@@ -53,12 +71,15 @@ You can also analyze a local audio file instead of downloading:
 
 ```zsh
 cd utility
-npx yt-spectrum-cache --videoId VIDEO_ID --source /path/to/audio-file.mp3
+npx yt-spectrum-cache --videoId=VIDEO_ID --source /path/to/audio-file.mp3
 ```
 
 Other example
 ```
-npx yt-spectrum-cache --videoId 3lNq3MfH_h0 --outDir ../public/spectrum-cache
+npx yt-spectrum-cache --videoId=3lNq3MfH_h0 --outDir ../public/spectrum-cache
+
+# Regenerate even if the cache already exists
+npx yt-spectrum-cache --videoId=3lNq3MfH_h0 --outDir ../public/spectrum-cache --force
 ```
 
 
