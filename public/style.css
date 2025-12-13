@@ -1,0 +1,917 @@
+/* ---- Material Icons Round (from your CSS) ---- */
+@font-face {
+    font-family: 'Material Icons Round-Regular';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url('./player.woff2') format('woff2');
+}
+
+html:not(.icons-ready) .icon {
+    visibility: hidden;
+}
+
+.icon {
+    font-family: 'Material Icons Round-Regular';
+    font-style: normal;
+    font-weight: 400;
+    font-variation-settings: 'FILL' 0, 'GRAD' 0, 'opsz' 24, 'wght' 400;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    line-height: 1;
+    letter-spacing: normal;
+    text-transform: none;
+    white-space: nowrap;
+    margin: 9px;
+}
+
+:root {
+    --player-controls-height: 24px;
+    --player-min-slider-width: 160px;
+    --player-scale: 1;
+    --track-thumb-width: 60px;
+    --track-row-base-height: calc(var(--track-thumb-width) * 0.5625);
+    --track-row-padding: 0.25rem;
+    --track-row-padding-compact: 0.15rem;
+    --track-row-min-height: calc(var(--track-row-base-height) + var(--track-row-padding) * 2);
+    --track-row-min-height-compact: calc(32px + var(--track-row-padding-compact) * 2);
+    --color-bg: #0f1115;
+    --color-panel: #161921;
+    --color-border: #2b2f3a;
+    --color-border-strong: #394150;
+    --color-text: #f5f7fa;
+    --color-text-muted: #a8b3c7;
+    --color-hover: #1f2531;
+    --color-active: #28344d;
+    --color-accent: #cc0000;
+    --playlist-manager-button-size: 34px;
+}
+
+.playlist-overlay-content {
+    scrollbar-width: thin;
+    scrollbar-color: #394150 #11141c;
+}
+
+.playlist-overlay-content::-webkit-scrollbar {
+    width: 10px;
+}
+
+.playlist-overlay-content::-webkit-scrollbar-track {
+    background: #11141c;
+    border-radius: 999px;
+}
+
+.playlist-overlay-content::-webkit-scrollbar-thumb {
+    background: #394150;
+    border-radius: 999px;
+    border: 2px solid #11141c;
+}
+
+.playlist-overlay-content::-webkit-scrollbar-thumb:hover {
+    background: #4a566e;
+}
+
+/* ---- Layout ---- */
+html {
+    height: 100%;
+    overscroll-behavior: none;
+    background: var(--color-bg);
+}
+
+body {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    margin: 0;
+    display: flex;
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
+    height: calc(var(--app-vh, 1vh) * 100);
+    overflow: hidden;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    overscroll-behavior: none;
+    background: var(--color-bg);
+    color: var(--color-text);
+}
+
+button,
+input,
+label,
+span,
+p {
+    color: inherit;
+}
+
+button:hover,
+button:focus {
+    color: var(--color-text);
+}
+
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+button:focus-visible,
+input:focus-visible {
+    outline: 2px solid var(--color-border-strong);
+    outline-offset: 2px;
+}
+
+input[type="text"]:focus,
+input[type="text"]:focus-visible {
+    outline: none;
+}
+
+@supports (height: 100dvh) {
+    body {
+        min-height: 100dvh;
+        height: 100dvh;
+    }
+}
+
+#sidebar {
+    width: 340px;
+    border-right: 1px solid var(--color-border);
+    padding: 0.4rem;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+    background: var(--color-panel);
+    position: relative;
+}
+
+/* Playlist controls at top */
+#playlistControls {
+    flex: 0 0 auto;
+    padding-bottom: 0;
+    margin-bottom: 0;
+}
+
+.pc-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+}
+
+#playlistForm {
+    margin: 0;
+}
+
+.pc-row {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.pc-label {
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+    flex-shrink: 0;
+    width: 1.6rem;
+    text-align: right;
+}
+
+.pc-input-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    flex: 1;
+}
+
+.playlist-history-wrapper {
+    flex: 1 1 auto;
+    width: 100%;
+}
+
+.playlist-select-group {
+    display: flex;
+    align-items: center;
+    gap: 0.2rem;
+    flex: 1 1 100%;
+    min-width: 0;
+    position: relative;
+}
+
+#playlistHistorySelect {
+    flex: 1 1 100%;
+    min-width: 0;
+    padding: 0.25rem 0.6rem;
+    padding-right: calc(0.5rem + var(--playlist-manager-button-size));
+    font-size: 18px;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background: #202633;
+    border: 1px solid var(--color-border);
+    color: var(--color-text);
+    border-radius: 4px;
+    height: 34px;
+}
+
+#playlistHistorySelect:focus {
+    border-color: var(--color-border-strong);
+    outline: none;
+}
+
+.playlist-select-group::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    right: calc(var(--playlist-manager-button-size) + 1.2rem);
+    width: 0;
+    height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 5px solid var(--color-text-muted);
+    transform: translateY(-25%);
+    pointer-events: none;
+}
+
+
+.alert-overlay {
+    position: fixed;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: rgba(10, 12, 18, 0.72);
+    z-index: 1000;
+    padding: 1rem;
+}
+
+.alert-overlay.visible {
+    display: flex;
+}
+
+.alert-dialog {
+    background: var(--color-panel);
+    color: var(--color-text);
+    border: 1px solid var(--color-border-strong);
+    border-radius: 8px;
+    box-shadow: 0 18px 48px rgba(0, 0, 0, 0.45);
+    width: min(600px, 90vw);
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.alert-body {
+    padding: 1.25rem 1.25rem 0.5rem;
+    overflow: auto;
+    font-size: 0.85rem;
+}
+
+.alert-body pre {
+    margin: 0;
+    white-space: pre-wrap;
+    word-break: break-word;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+#alertCloseBtn {
+    align-self: flex-end;
+    margin: 0 1.25rem 1.25rem;
+    padding: 0.35rem 1.25rem;
+    font-size: 0.85rem;
+    border: 1px solid #5b6b85;
+    background: #2f3b52;
+    color: #ffffff;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.alert-close-text {
+    font-weight: 600;
+    letter-spacing: 0.05em;
+}
+
+#alertCloseBtn:hover {
+    background: #3a4966;
+    border-color: #7485a2;
+}
+
+#alertCloseBtn:focus-visible {
+    outline: 2px solid #9db1d5;
+    outline-offset: 2px;
+}
+
+#alertCloseBtn .icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+}
+
+#filterInput {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0.3rem 0.9rem;
+    padding-left: 2.3rem;
+    padding-right: 2.5rem;
+    margin-top: 0.375rem;
+    font-size: 18px;
+    background: #202633;
+    border: 1px solid var(--color-border);
+    color: var(--color-text);
+    border-radius: 6px;
+}
+
+#filterInput:focus {
+    border-color: var(--color-border-strong);
+}
+
+#filterInput::placeholder {
+    color: var(--color-text-muted);
+}
+
+input[type="checkbox"] {
+    accent-color: var(--color-accent);
+}
+
+#playlistIOBtn {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    border: 1px solid var(--color-border);
+    background: #1f2532;
+    color: var(--color-text);
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
+    padding: 0;
+    height: 34px;
+    width: 34px;
+}
+
+#playlistIOBtn:hover,
+#playlistIOBtn:focus {
+    background: #273043;
+    border-color: var(--color-border-strong);
+    color: var(--color-text);
+}
+
+#playlistIOBtn .icon {
+    font-size: 20px;
+    width: auto;
+    height: auto;
+    line-height: 1;
+}
+
+.filter-wrapper {
+    position: relative;
+    flex: 1;
+}
+
+#clearFilterBtn {
+    position: absolute;
+    right: 0.5rem;
+    top: 55%;
+    transform: translateY(-50%);
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+    opacity: 0.6;
+    color: var(--color-text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+}
+
+#clearFilterBtn .icon {
+    font-size: 23px;
+    width: 23px;
+    height: 23px;
+    color: inherit;
+    line-height: 1;
+}
+
+#clearFilterBtn:hover {
+    opacity: 1;
+    color: var(--color-text);
+}
+
+.filter-wrapper:not(.has-value) #clearFilterBtn {
+    display: none;
+}
+
+.filter-wrapper .filter-icon {
+    position: absolute;
+    left: 0.2rem;
+    top: 55%;
+    transform: translateY(-50%);
+    font-size: 20px;
+    margin-top: 0;
+    opacity: 0.75;
+    pointer-events: none;
+    color: var(--color-text-muted);
+}
+
+/* Scrollable track list between top and bottom bars */
+#trackListContainer {
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0;
+    -webkit-overflow-scrolling: touch;
+    background: var(--color-panel);
+    border-top: 1px solid var(--color-border);
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-border-strong) rgba(32, 38, 51, 0.75);
+    color-scheme: dark;
+}
+
+#trackListContainer:focus {
+    outline: none;
+    box-shadow: none;
+}
+
+#trackListContainer::-webkit-scrollbar {
+    width: 10px;
+    background-color: #0f1115 !important;
+}
+
+#trackListContainer::-webkit-scrollbar-track {
+    background-color: #0f1115 !important;
+    border-radius: 999px;
+}
+
+#trackListContainer::-webkit-scrollbar-track-piece {
+    background-color: #0f1115 !important;
+    border-radius: 999px;
+}
+
+#trackListContainer::-webkit-scrollbar-thumb {
+    background-color: var(--color-border-strong);
+    border-radius: 999px;
+    border: 2px solid rgba(17, 20, 26, 0.95);
+}
+
+#trackListContainer::-webkit-scrollbar-thumb:hover {
+    background-color: var(--color-hover);
+}
+
+#trackList {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    /* no gap above first track */
+    background: var(--color-panel);
+}
+
+#trackList li {
+    padding: var(--track-row-padding) 0.35rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    border-bottom: 1px solid var(--color-border);
+    transition: background 0.15s ease;
+    min-height: var(--track-row-min-height);
+    box-sizing: border-box;
+}
+
+#trackList li:hover {
+    background: var(--color-hover);
+}
+
+#trackList li.active {
+    background: var(--color-active);
+}
+
+#trackList li.active .title {
+    color: var(--color-text);
+}
+
+#trackList li.active .track-number {
+    color: var(--color-text);
+}
+
+#trackList li:last-child {
+    border-bottom: none;
+}
+
+#trackList img {
+    width: var(--track-thumb-width);
+    height: auto;
+    flex-shrink: 0;
+}
+
+body.no-thumbs #trackList img {
+    display: none;
+}
+
+body.no-thumbs #trackList li {
+    padding: var(--track-row-padding-compact) 0.25rem;
+    gap: 0.25rem;
+    min-height: var(--track-row-min-height-compact);
+}
+
+body.no-thumbs .title {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.track-number {
+    width: 3em;
+    text-align: right;
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+    flex-shrink: 0;
+    font-family: "SF Mono", ui-monospace, Menlo, Monaco, Consolas,
+        "Liberation Mono", "Courier New", monospace;
+    line-height: 1.2;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-top: 0.05rem;
+}
+
+.title {
+    font-size: 0.9rem;
+    line-height: 1.2;
+    flex: 1;
+    text-transform: lowercase;
+    white-space: normal;
+    min-width: 0;
+}
+
+.track-state-btn {
+    border: none;
+    background: transparent;
+    color: var(--color-text-muted);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    flex: 0 0 auto;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.track-state-btn[data-state="default"] {
+    color: #3a4458;
+}
+
+.track-state-btn:hover,
+.track-state-btn:focus {
+    background: #1b2230;
+    color: var(--color-text);
+    outline: none;
+}
+
+.track-state-btn[data-state="default"]:hover,
+.track-state-btn[data-state="default"]:focus {
+    color: #cbd4e4;
+}
+
+.track-state-btn.is-checked {
+    color: #7ddc8c;
+}
+
+.track-state-btn.is-checked:hover,
+.track-state-btn.is-checked:focus {
+    color: #9af0a8;
+}
+
+.track-state-btn .icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    line-height: 18px;
+}
+
+/* Track controls at bottom of sidebar */
+#trackControls {
+    flex: 0 0 auto;
+    padding: 0.35rem;
+    margin-bottom: 0.5em;
+    background: var(--color-panel);
+}
+
+
+#trackControls-top {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin-bottom: 0.25rem;
+}
+
+#trackControls-buttons {
+    display: flex;
+    align-items: center;
+    gap: 0.2rem;
+    width: 100%;
+}
+
+/* Offline spectrum display (between left buttons and right icons) */
+#spectrumCanvas {
+    flex: 1 1 auto;
+    height: 46px;
+    max-height: 46px;
+    min-width: 60px;
+    border-radius: 6px;
+    background: #0b0d12;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+body.spectrum-missing #spectrumCanvas {
+    opacity: 0.35;
+}
+
+body.spectrum-hidden #spectrumCanvas {
+    display: none;
+}
+
+.track-controls-group {
+    display: flex;
+    align-items: center;
+    gap: 0.2rem;
+}
+
+.track-controls-group.right {
+    margin-left: auto;
+}
+
+.details-toggle-wrapper {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
+
+#thumbToggleBtn .icon {
+    font-size: 30px;
+    width: 30px;
+    height: 30px;
+    line-height: 1;
+}
+
+#thumbToggleBtn.active {
+    color: var(--color-accent);
+}
+
+.track-details-overlay {
+    position: absolute;
+    top: calc(100% + 0.4rem);
+    right: 0;
+    background: var(--color-panel);
+    border: 1px solid var(--color-border-strong);
+    border-radius: 8px;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45);
+    padding: 0.75rem;
+    min-width: 190px;
+    display: none;
+    flex-direction: column;
+    gap: 0.35rem;
+    z-index: 200;
+}
+
+.track-details-overlay.visible {
+    display: flex;
+}
+
+.track-details-header {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--color-text);
+    margin-bottom: 0.15rem;
+}
+
+.track-details-option {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    font-size: 0.85rem;
+    color: var(--color-text);
+    cursor: pointer;
+    padding: 0.2rem 0.3rem;
+    min-height: 1.4rem;
+    border-radius: 6px;
+}
+
+.track-details-option input[type="checkbox"] {
+    margin: 0;
+    width: 1rem;
+    height: 1rem;
+}
+
+body.hide-track-number .track-number {
+    display: none;
+}
+
+body.no-wrap-lines .title {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+body.hide-track-check .track-state-btn {
+    display: none;
+}
+
+/* sort is now in Details overlay */
+
+#trackControls-buttons button {
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 46px;
+    height: 46px;
+    color: var(--color-text);
+}
+
+.track-controls-group button .icon {
+    font-size: 34px;
+    width: 34px;
+    height: 34px;
+    line-height: 1;
+}
+
+#trackControls-buttons button:hover {
+    color: var(--color-accent);
+}
+
+#thumbToggleBtn:hover span {
+    color: var(--color-accent);
+}
+
+/* progress slider */
+#progressWrapper {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+#progressRange {
+    flex: 1;
+    appearance: none;
+    height: 9px;
+    border-radius: 999px;
+    background: #2f3646;
+    outline: none;
+    padding: 0;
+    margin: 0;
+}
+
+#progressRange::-webkit-slider-thumb {
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--color-accent);
+    cursor: pointer;
+    margin-top: -4.5px;
+}
+
+#progressRange::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--color-accent);
+    cursor: pointer;
+    border: none;
+}
+
+#progressRange::-webkit-slider-runnable-track {
+    height: 9px;
+    border-radius: 999px;
+    background: #2f3646;
+}
+
+#progressRange::-moz-range-track {
+    height: 9px;
+    border-radius: 999px;
+    background: #2f3646;
+}
+
+#timeLabel {
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+    min-width: 80px;
+    text-align: right;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+        "Liberation Mono", "Courier New", monospace;
+}
+
+/* Player between control groups */
+#player-container {
+    padding: 0.5rem 0.25rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex: 0 0 auto;
+    background: #0b0d12;
+}
+
+#player {
+    width: 100%;
+    max-width: 100%;
+    aspect-ratio: 16 / 9;
+    background: #000;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+#player iframe {
+    width: 100% !important;
+    height: 100% !important;
+    border: 0;
+    border-radius: inherit;
+    display: block;
+}
+
+@media (min-width: 1024px) {
+    body {
+        display: block;
+    }
+
+    #sidebar {
+        width: 100%;
+        max-width: none;
+        display: grid;
+        grid-template-columns: 340px minmax(0, 1fr);
+        grid-template-rows: auto auto 1fr;
+        grid-template-areas:
+            "playlist player"
+            "controls player"
+            "list player";
+        column-gap: 0;
+        row-gap: 0.25rem;
+        padding-right: 0;
+        align-items: start;
+        border-right: none;
+        height: calc(var(--app-vh, 1vh) * 100);
+        min-height: 0;
+        overflow: visible;
+    }
+
+    #playlistControls {
+        grid-area: playlist;
+        max-width: 340px;
+    }
+
+    #trackControls {
+        grid-area: controls;
+        max-width: 340px;
+    }
+
+    #trackListContainer {
+        grid-area: list;
+        max-width: 340px;
+        height: 100%;
+        min-height: 0;
+    }
+
+    #player-container {
+        grid-area: player;
+        padding: 0;
+        align-items: stretch;
+        justify-content: center;
+        background: var(--color-bg);
+        min-height: 0;
+        height: 100%;
+    }
+
+    #player {
+        width: 100%;
+        height: 100%;
+        max-width: none;
+        max-height: none;
+        border-radius: 12px;
+        box-shadow: 0 18px 48px rgba(0, 0, 0, 0.45);
+        aspect-ratio: auto;
+    }
+
+    #player iframe {
+        border-radius: inherit;
+    }
+}
