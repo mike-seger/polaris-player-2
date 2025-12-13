@@ -507,6 +507,23 @@
       saveSettings({ playlistHistory });
     }
 
+    function getLocalPlaylistOptions() {
+      const library = localPlaylistLibrary;
+      if (!library || typeof library !== 'object' || Array.isArray(library)) return [];
+
+      const options = [];
+      Object.entries(library).forEach(([id, entry]) => {
+        if (!id) return;
+        const title = (entry && typeof entry === 'object' && typeof entry.title === 'string' && entry.title.trim().length)
+          ? entry.title.trim()
+          : id;
+        options.push({ id, title });
+      });
+
+      options.sort((a, b) => a.title.localeCompare(b.title, undefined, { sensitivity: 'base' }));
+      return options;
+    }
+
     function updateUrlPlaylistParam(playlistId) {
       if (!window || !window.history || typeof window.history.replaceState !== 'function') {
         return;
@@ -531,18 +548,28 @@
 
       playlistHistorySelect.innerHTML = '';
 
-      if (!playlistHistory.length) {
+      const localOptions = useLocalMode ? getLocalPlaylistOptions() : [];
+      const useLocalOptions = useLocalMode && localOptions.length > 0;
+      const options = useLocalOptions
+        ? localOptions
+        : playlistHistory.map((entry) => ({ id: entry.id, title: entry.title }));
+
+      if (!options.length) {
         playlistHistorySelect.disabled = true;
-        playlistHistorySelect.title = 'No saved playlists yet';
+        playlistHistorySelect.title = useLocalMode
+          ? 'No local playlists available'
+          : 'No saved playlists yet';
         playlistHistorySelect.value = '';
         return;
       }
 
       playlistHistorySelect.disabled = false;
-      playlistHistorySelect.title = 'Select a saved playlist';
+      playlistHistorySelect.title = useLocalOptions
+        ? 'Select a local playlist'
+        : 'Select a saved playlist';
 
       let matched = false;
-      playlistHistory.forEach((entry) => {
+      options.forEach((entry) => {
         const option = document.createElement('option');
         option.value = entry.id;
         option.textContent = entry.title;
@@ -1360,6 +1387,11 @@
       if (playlistIOInstance && typeof playlistIOInstance.setServerAvailability === 'function') {
         playlistIOInstance.setServerAvailability(false);
       }
+
+      // Once local data is available, populate the selector with all local playlists.
+      ensureLocalPlaylistData()
+        .then(() => updatePlaylistHistorySelect(settings.playlistId || ''))
+        .catch(() => {});
     }
 
     async function checkServerAvailability() {
@@ -1394,6 +1426,12 @@
           return null;
         }
         localPlaylistLibrary = await resp.json();
+
+        // If we're in local mode, refresh the select to show all available playlists.
+        if (useLocalMode) {
+          updatePlaylistHistorySelect(settings.playlistId || '');
+        }
+
         return localPlaylistLibrary;
       } catch (error) {
         console.error('Failed to load local playlist file:', error);
