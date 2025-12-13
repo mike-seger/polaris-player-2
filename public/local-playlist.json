@@ -8387,9 +8387,9 @@
     "fallback": false
   },
   "user:1b3f8510-29cf-433b-9d9e-830810028645": {
-    "playlistId": "user:1b3f8510-29cf-433b-9d9e-830810028645",
-    "fetchedAt": "2025-12-13T16:30:06.000Z",
-    "title": "Static (local) - Darkwave, Coldwave...",
+    "playlistId": "user:20251213165939-25491",
+    "fetchedAt": "2025-12-13T16:59:39.000Z",
+    "title": "Static (local) - Darkwave, Synthwave, Goth, Post Punk",
     "items": [
       {
         "videoId": "OjkZr57hPdM",
@@ -8422,6 +8422,22 @@
         "thumbnail": "https://i.ytimg.com/vi/S30XdiTDINc/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "AGTHA - K3Pt - AGTHA Remix"
+      },
+      {
+        "videoId": "XhiEPmd2J0I",
+        "title": "akiaura - Deathwish",
+        "position": 3,
+        "thumbnail": "https://i.ytimg.com/vi/XhiEPmd2J0I/mqdefault.jpg",
+        "channelTitle": "",
+        "userTitle": "akiaura - Deathwish"
+      },
+      {
+        "videoId": "DrJ7grCnwUc",
+        "title": "akiaura - Sleepwalker",
+        "position": 3,
+        "thumbnail": "https://i.ytimg.com/vi/DrJ7grCnwUc/mqdefault.jpg",
+        "channelTitle": "",
+        "userTitle": "akiaura - Sleepwalker"
       },
       {
         "videoId": "E8SnW0Ldb3I",
@@ -8616,25 +8632,9 @@
         "userTitle": "Boy Harsher - Fate"
       },
       {
-        "videoId": "hbbbark8k7w",
-        "title": "Boy Harsher - Fate",
+        "videoId": "yNVTqgUrJnM",
+        "title": "Boy Harsher - Give Me a Reason",
         "position": 28,
-        "thumbnail": "https://i.ytimg.com/vi/hbbbark8k7w/mqdefault.jpg",
-        "channelTitle": "",
-        "userTitle": "Boy Harsher - Fate"
-      },
-      {
-        "videoId": "yNVTqgUrJnM",
-        "title": "Boy Harsher - Give Me a Reason",
-        "position": 29,
-        "thumbnail": "https://i.ytimg.com/vi/yNVTqgUrJnM/mqdefault.jpg",
-        "channelTitle": "",
-        "userTitle": "Boy Harsher - Give Me a Reason"
-      },
-      {
-        "videoId": "yNVTqgUrJnM",
-        "title": "Boy Harsher - Give Me a Reason",
-        "position": 30,
         "thumbnail": "https://i.ytimg.com/vi/yNVTqgUrJnM/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Boy Harsher - Give Me a Reason"
@@ -8642,7 +8642,7 @@
       {
         "videoId": "yykFKAZuU_g",
         "title": "Boy Harsher - LA",
-        "position": 31,
+        "position": 29,
         "thumbnail": "https://i.ytimg.com/vi/yykFKAZuU_g/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Boy Harsher - LA"
@@ -8650,7 +8650,7 @@
       {
         "videoId": "RvpVbsbhxOo",
         "title": "Boy Harsher - Lost",
-        "position": 32,
+        "position": 30,
         "thumbnail": "https://i.ytimg.com/vi/RvpVbsbhxOo/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Boy Harsher - Lost"
@@ -8658,7 +8658,7 @@
       {
         "videoId": "drlWU_29QyA",
         "title": "Boy Harsher - Lust",
-        "position": 33,
+        "position": 31,
         "thumbnail": "https://i.ytimg.com/vi/drlWU_29QyA/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Boy Harsher - Lust"
@@ -8666,7 +8666,7 @@
       {
         "videoId": "U56IOrWgIfM",
         "title": "Boy Harsher - Lust - Remastered",
-        "position": 34,
+        "position": 32,
         "thumbnail": "https://i.ytimg.com/vi/U56IOrWgIfM/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Boy Harsher - Lust - Remastered"
@@ -8674,7 +8674,7 @@
       {
         "videoId": "CX0OBgJrwjg",
         "title": "Boy Harsher - Morphine",
-        "position": 35,
+        "position": 33,
         "thumbnail": "https://i.ytimg.com/vi/CX0OBgJrwjg/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Boy Harsher - Morphine"
@@ -8682,15 +8682,7 @@
       {
         "videoId": "e1CMdr1lbu0",
         "title": "Boy Harsher - Motion",
-        "position": 36,
-        "thumbnail": "https://i.ytimg.com/vi/e1CMdr1lbu0/mqdefault.jpg",
-        "channelTitle": "",
-        "userTitle": "Boy Harsher - Motion"
-      },
-      {
-        "videoId": "e1CMdr1lbu0",
-        "title": "Boy Harsher - Motion",
-        "position": 37,
+        "position": 34,
         "thumbnail": "https://i.ytimg.com/vi/e1CMdr1lbu0/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Boy Harsher - Motion"
@@ -8698,7 +8690,7 @@
       {
         "videoId": "hBK-7j_K5i0",
         "title": "Boy Harsher - Pain",
-        "position": 38,
+        "position": 35,
         "thumbnail": "https://i.ytimg.com/vi/hBK-7j_K5i0/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Boy Harsher - Pain"
@@ -8706,7 +8698,7 @@
       {
         "videoId": "E8-60GHzXv0",
         "title": "Boy Harsher - Send Me a Vision",
-        "position": 39,
+        "position": 36,
         "thumbnail": "https://i.ytimg.com/vi/E8-60GHzXv0/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Boy Harsher - Send Me a Vision"
@@ -8714,7 +8706,7 @@
       {
         "videoId": "fdlU0K1PA8o",
         "title": "Boy Harsher - Spell",
-        "position": 40,
+        "position": 37,
         "thumbnail": "https://i.ytimg.com/vi/fdlU0K1PA8o/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Boy Harsher - Spell"
@@ -8722,7 +8714,7 @@
       {
         "videoId": "TD3cvuoYBG8",
         "title": "Boy Harsher - Tears",
-        "position": 41,
+        "position": 38,
         "thumbnail": "https://i.ytimg.com/vi/TD3cvuoYBG8/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Boy Harsher - Tears"
@@ -8730,7 +8722,7 @@
       {
         "videoId": "2wbEkkxgIyU",
         "title": "Boy Harsher - The Look You Gave (Jerry)",
-        "position": 42,
+        "position": 39,
         "thumbnail": "https://i.ytimg.com/vi/2wbEkkxgIyU/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Boy Harsher - The Look You Gave (Jerry)"
@@ -8738,7 +8730,7 @@
       {
         "videoId": "QQNJd8xZqbY",
         "title": "Boy Harsher - Yr Body Is Nothing",
-        "position": 43,
+        "position": 40,
         "thumbnail": "https://i.ytimg.com/vi/QQNJd8xZqbY/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Boy Harsher - Yr Body Is Nothing"
@@ -8746,7 +8738,7 @@
       {
         "videoId": "8EJM2rGAB6I",
         "title": "Bragolin - Into Those Woods",
-        "position": 44,
+        "position": 41,
         "thumbnail": "https://i.ytimg.com/vi/8EJM2rGAB6I/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Bragolin - Into Those Woods"
@@ -8754,7 +8746,7 @@
       {
         "videoId": "sEjOQ7IInTY",
         "title": "Bragolin - This Grotesque Dance",
-        "position": 45,
+        "position": 42,
         "thumbnail": "https://i.ytimg.com/vi/sEjOQ7IInTY/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Bragolin - This Grotesque Dance"
@@ -8762,7 +8754,7 @@
       {
         "videoId": "WatcfUBEhNo",
         "title": "Bragolin - To Hide to Shine to Cross",
-        "position": 46,
+        "position": 43,
         "thumbnail": "https://i.ytimg.com/vi/WatcfUBEhNo/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Bragolin - To Hide to Shine to Cross"
@@ -8770,7 +8762,7 @@
       {
         "videoId": "oza-dJqPT30",
         "title": "Bragolin;Adam Tristar - The End Dwells in Us All",
-        "position": 47,
+        "position": 44,
         "thumbnail": "https://i.ytimg.com/vi/oza-dJqPT30/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Bragolin;Adam Tristar - The End Dwells in Us All"
@@ -8778,7 +8770,7 @@
       {
         "videoId": "9GtVhzJbRu0",
         "title": "Cabaret Nocturne - Blind Trust - Original Mix",
-        "position": 48,
+        "position": 45,
         "thumbnail": "https://i.ytimg.com/vi/9GtVhzJbRu0/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Cabaret Nocturne - Blind Trust - Original Mix"
@@ -8786,7 +8778,7 @@
       {
         "videoId": "kIVHBdaZfbg",
         "title": "Cannons - Come Alive",
-        "position": 49,
+        "position": 46,
         "thumbnail": "https://i.ytimg.com/vi/kIVHBdaZfbg/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Cannons - Come Alive"
@@ -8794,7 +8786,7 @@
       {
         "videoId": "_nN48C4HLzA",
         "title": "Caroline Rose - Jeannie Becomes A Mom",
-        "position": 50,
+        "position": 47,
         "thumbnail": "https://i.ytimg.com/vi/_nN48C4HLzA/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Caroline Rose - Jeannie Becomes A Mom"
@@ -8802,7 +8794,7 @@
       {
         "videoId": "pmp6qHkDmNE",
         "title": "Carrellee - Not Here For Fun",
-        "position": 51,
+        "position": 48,
         "thumbnail": "https://i.ytimg.com/vi/pmp6qHkDmNE/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Carrellee - Not Here For Fun"
@@ -8810,7 +8802,7 @@
       {
         "videoId": "zSXZlbWUd_4",
         "title": "Casket Cassette - Into the Sun",
-        "position": 52,
+        "position": 49,
         "thumbnail": "https://i.ytimg.com/vi/zSXZlbWUd_4/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Casket Cassette - Into the Sun"
@@ -8818,7 +8810,7 @@
       {
         "videoId": "fA87p_XhmLo",
         "title": "Cathedral Bells - Ephemeral",
-        "position": 53,
+        "position": 50,
         "thumbnail": "https://i.ytimg.com/vi/fA87p_XhmLo/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Cathedral Bells - Ephemeral"
@@ -8826,7 +8818,7 @@
       {
         "videoId": "YxbeynIfzd8",
         "title": "Cemeteries - Sodus",
-        "position": 54,
+        "position": 51,
         "thumbnail": "https://i.ytimg.com/vi/YxbeynIfzd8/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Cemeteries - Sodus"
@@ -8834,7 +8826,7 @@
       {
         "videoId": "zYAUnSl9VjU",
         "title": "Chelsea Wolfe;Boy Harsher - House Of Self-Undoing - Boy Harsher remix",
-        "position": 55,
+        "position": 52,
         "thumbnail": "https://i.ytimg.com/vi/zYAUnSl9VjU/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Chelsea Wolfe;Boy Harsher - House Of Self-Undoing - Boy Harsher remix"
@@ -8842,7 +8834,7 @@
       {
         "videoId": "OYQ2owM7CtY",
         "title": "Clan of Xymox - A Forest",
-        "position": 56,
+        "position": 53,
         "thumbnail": "https://i.ytimg.com/vi/OYQ2owM7CtY/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Clan of Xymox - A Forest"
@@ -8850,7 +8842,7 @@
       {
         "videoId": "j_cPAsIU0Ao",
         "title": "Clan of Xymox - Jasmine & Rose",
-        "position": 57,
+        "position": 54,
         "thumbnail": "https://i.ytimg.com/vi/j_cPAsIU0Ao/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Clan of Xymox - Jasmine & Rose"
@@ -8858,7 +8850,7 @@
       {
         "videoId": "RcS0nVRdS1I",
         "title": "Clan of Xymox - She",
-        "position": 58,
+        "position": 55,
         "thumbnail": "https://i.ytimg.com/vi/RcS0nVRdS1I/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Clan of Xymox - She"
@@ -8866,7 +8858,7 @@
       {
         "videoId": "I31tuI2Vvo8",
         "title": "Closed Tear - Luna",
-        "position": 59,
+        "position": 56,
         "thumbnail": "https://i.ytimg.com/vi/I31tuI2Vvo8/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Closed Tear - Luna"
@@ -8874,7 +8866,7 @@
       {
         "videoId": "YCugZbHSGmE",
         "title": "Cristoforo Donadi - Innocence",
-        "position": 60,
+        "position": 57,
         "thumbnail": "https://i.ytimg.com/vi/YCugZbHSGmE/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Cristoforo Donadi - Innocence"
@@ -8882,7 +8874,7 @@
       {
         "videoId": "6iN22yYB7oY",
         "title": "Crying Vessel - The Abyss",
-        "position": 61,
+        "position": 58,
         "thumbnail": "https://i.ytimg.com/vi/6iN22yYB7oY/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Crying Vessel - The Abyss"
@@ -8890,7 +8882,7 @@
       {
         "videoId": "Z0NGdLr4img",
         "title": "Crystal Castles - Suffocation",
-        "position": 62,
+        "position": 59,
         "thumbnail": "https://i.ytimg.com/vi/Z0NGdLr4img/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Crystal Castles - Suffocation"
@@ -8898,7 +8890,7 @@
       {
         "videoId": "qlixzytwQPw",
         "title": "Cult Club;Zanias - Play with Lies",
-        "position": 63,
+        "position": 60,
         "thumbnail": "https://i.ytimg.com/vi/qlixzytwQPw/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Cult Club;Zanias - Play with Lies"
@@ -8906,7 +8898,7 @@
       {
         "videoId": "U3jcXA9zPJk",
         "title": "Dance Divine - Salvation",
-        "position": 64,
+        "position": 61,
         "thumbnail": "https://i.ytimg.com/vi/U3jcXA9zPJk/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Dance Divine - Salvation"
@@ -8914,7 +8906,7 @@
       {
         "videoId": "-iXyzd8xNgk",
         "title": "Darkø - Vision of Reality",
-        "position": 65,
+        "position": 62,
         "thumbnail": "https://i.ytimg.com/vi/-iXyzd8xNgk/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Darkø - Vision of Reality"
@@ -8922,7 +8914,7 @@
       {
         "videoId": "iXCGKAruK_8",
         "title": "Dead Husband - Icebox",
-        "position": 66,
+        "position": 63,
         "thumbnail": "https://i.ytimg.com/vi/iXCGKAruK_8/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Dead Husband - Icebox"
@@ -8930,7 +8922,7 @@
       {
         "videoId": "3t3tTUuwRn4",
         "title": "Dead Husband - Memory",
-        "position": 67,
+        "position": 64,
         "thumbnail": "https://i.ytimg.com/vi/3t3tTUuwRn4/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Dead Husband - Memory"
@@ -8938,7 +8930,7 @@
       {
         "videoId": "hEa3FuxJjRM",
         "title": "Dead Husband - Plastic Mind",
-        "position": 68,
+        "position": 65,
         "thumbnail": "https://i.ytimg.com/vi/hEa3FuxJjRM/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Dead Husband - Plastic Mind"
@@ -8946,7 +8938,7 @@
       {
         "videoId": "Bu2W3fT-QV0",
         "title": "Deep Down Wise - Ambers",
-        "position": 69,
+        "position": 66,
         "thumbnail": "https://i.ytimg.com/vi/Bu2W3fT-QV0/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Deep Down Wise - Ambers"
@@ -8954,7 +8946,7 @@
       {
         "videoId": "kulYgxJ1CFI",
         "title": "Deep Down Wise - Out of Sight",
-        "position": 70,
+        "position": 67,
         "thumbnail": "https://i.ytimg.com/vi/kulYgxJ1CFI/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Deep Down Wise - Out of Sight"
@@ -8962,7 +8954,7 @@
       {
         "videoId": "_quwjMURmlQ",
         "title": "Denuit - CYANURE",
-        "position": 71,
+        "position": 68,
         "thumbnail": "https://i.ytimg.com/vi/_quwjMURmlQ/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Denuit - CYANURE"
@@ -8970,23 +8962,15 @@
       {
         "videoId": "xH4q1sxrggw",
         "title": "Deus Ex Lumina;Antipole - Destroy",
-        "position": 72,
+        "position": 69,
         "thumbnail": "https://i.ytimg.com/vi/xH4q1sxrggw/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Deus Ex Lumina;Antipole - Destroy"
       },
       {
-        "videoId": "Die Selektion - Unter Die Haut",
-        "title": "Die Selektion",
-        "position": 73,
-        "thumbnail": "https://i.ytimg.com/vi/Die Selektion - Unter Die Haut/mqdefault.jpg",
-        "channelTitle": "",
-        "userTitle": "Die Selektion"
-      },
-      {
         "videoId": "DnQSdrQGhrA",
         "title": "DIGITAL REY - LAST WISH",
-        "position": 74,
+        "position": 70,
         "thumbnail": "https://i.ytimg.com/vi/DnQSdrQGhrA/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "DIGITAL REY - LAST WISH"
@@ -8994,15 +8978,23 @@
       {
         "videoId": "TCksi_5Owfk",
         "title": "Dionnysuss - Fangs",
-        "position": 75,
+        "position": 71,
         "thumbnail": "https://i.ytimg.com/vi/TCksi_5Owfk/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Dionnysuss - Fangs"
       },
       {
+        "videoId": "-WZeMhiHy4s",
+        "title": "Dionnysuss;Sad Madona - Intoxication",
+        "position": 71,
+        "thumbnail": "https://i.ytimg.com/vi/-WZeMhiHy4s/mqdefault.jpg",
+        "channelTitle": "",
+        "userTitle": "Dionnysuss;Sad Madona - Intoxication"
+      },
+      {
         "videoId": "SMHYL3AdTIA",
         "title": "Dlina Volny - Bipolar",
-        "position": 76,
+        "position": 72,
         "thumbnail": "https://i.ytimg.com/vi/SMHYL3AdTIA/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Dlina Volny - Bipolar"
@@ -9010,15 +9002,7 @@
       {
         "videoId": "6qUBkCdN9aI",
         "title": "Dlina Volny - Dance Me Away",
-        "position": 77,
-        "thumbnail": "https://i.ytimg.com/vi/6qUBkCdN9aI/mqdefault.jpg",
-        "channelTitle": "",
-        "userTitle": "Dlina Volny - Dance Me Away"
-      },
-      {
-        "videoId": "6qUBkCdN9aI",
-        "title": "Dlina Volny - Dance Me Away",
-        "position": 78,
+        "position": 73,
         "thumbnail": "https://i.ytimg.com/vi/6qUBkCdN9aI/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Dlina Volny - Dance Me Away"
@@ -9026,7 +9010,7 @@
       {
         "videoId": "6AP8HXU17pQ",
         "title": "Dlina Volny - Dazed",
-        "position": 79,
+        "position": 74,
         "thumbnail": "https://i.ytimg.com/vi/6AP8HXU17pQ/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Dlina Volny - Dazed"
@@ -9034,7 +9018,7 @@
       {
         "videoId": "pakWr8_qO0U",
         "title": "Dlina Volny - Flair",
-        "position": 80,
+        "position": 75,
         "thumbnail": "https://i.ytimg.com/vi/pakWr8_qO0U/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Dlina Volny - Flair"
@@ -9042,7 +9026,7 @@
       {
         "videoId": "Fv7FKWwiXyg",
         "title": "Dlina Volny - Whatever Happens Next",
-        "position": 81,
+        "position": 76,
         "thumbnail": "https://i.ytimg.com/vi/Fv7FKWwiXyg/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Dlina Volny - Whatever Happens Next"
@@ -9050,7 +9034,7 @@
       {
         "videoId": "OQnQceCmLN0",
         "title": "Dream Affair - The Porter",
-        "position": 82,
+        "position": 77,
         "thumbnail": "https://i.ytimg.com/vi/OQnQceCmLN0/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Dream Affair - The Porter"
@@ -9058,7 +9042,7 @@
       {
         "videoId": "R49OJ0VDu5s",
         "title": "Ductape - Veil of Lies",
-        "position": 83,
+        "position": 78,
         "thumbnail": "https://i.ytimg.com/vi/R49OJ0VDu5s/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Ductape - Veil of Lies"
@@ -9066,7 +9050,7 @@
       {
         "videoId": "7dq43YdRnGo",
         "title": "Echoberyl - A Prey",
-        "position": 84,
+        "position": 79,
         "thumbnail": "https://i.ytimg.com/vi/7dq43YdRnGo/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Echoberyl - A Prey"
@@ -9074,7 +9058,7 @@
       {
         "videoId": "Ldo6z76LA24",
         "title": "Echoberyl - Apparition",
-        "position": 85,
+        "position": 80,
         "thumbnail": "https://i.ytimg.com/vi/Ldo6z76LA24/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Echoberyl - Apparition"
@@ -9082,7 +9066,7 @@
       {
         "videoId": "tl0zfcOau_E",
         "title": "Echoberyl - Into the Beyond",
-        "position": 86,
+        "position": 81,
         "thumbnail": "https://i.ytimg.com/vi/tl0zfcOau_E/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Echoberyl - Into the Beyond"
@@ -9090,7 +9074,7 @@
       {
         "videoId": "Cz_64CBhiGY",
         "title": "Echoberyl - Mother Solitude (Club Version)",
-        "position": 87,
+        "position": 82,
         "thumbnail": "https://i.ytimg.com/vi/Cz_64CBhiGY/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Echoberyl - Mother Solitude (Club Version)"
@@ -9098,7 +9082,7 @@
       {
         "videoId": "ulW6JQ-dmqA",
         "title": "Echoberyl - Rising from the Dead",
-        "position": 88,
+        "position": 83,
         "thumbnail": "https://i.ytimg.com/vi/ulW6JQ-dmqA/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Echoberyl - Rising from the Dead"
@@ -9106,7 +9090,7 @@
       {
         "videoId": "wxdMZqXj9uA",
         "title": "Echoberyl - Salome (Suffer Me)",
-        "position": 89,
+        "position": 84,
         "thumbnail": "https://i.ytimg.com/vi/wxdMZqXj9uA/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Echoberyl - Salome (Suffer Me)"
@@ -9114,7 +9098,7 @@
       {
         "videoId": "YodrCHziY1w",
         "title": "Echoberyl - Silent Monster (The Other Side of the Mirror)",
-        "position": 90,
+        "position": 85,
         "thumbnail": "https://i.ytimg.com/vi/YodrCHziY1w/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Echoberyl - Silent Monster (The Other Side of the Mirror)"
@@ -9122,7 +9106,7 @@
       {
         "videoId": "uySPP5ukTAE",
         "title": "Echoberyl;Gloria de Oliveira - The Siren and the Ghost",
-        "position": 91,
+        "position": 86,
         "thumbnail": "https://i.ytimg.com/vi/uySPP5ukTAE/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Echoberyl;Gloria de Oliveira - The Siren and the Ghost"
@@ -9130,7 +9114,7 @@
       {
         "videoId": "Uefu_EU-dW4",
         "title": "Elley Duhé - MIDDLE OF THE NIGHT",
-        "position": 92,
+        "position": 87,
         "thumbnail": "https://i.ytimg.com/vi/Uefu_EU-dW4/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Elley Duhé - MIDDLE OF THE NIGHT"
@@ -9138,7 +9122,7 @@
       {
         "videoId": "dNTjVsdjam4",
         "title": "Fearing - I Was So Alive",
-        "position": 93,
+        "position": 88,
         "thumbnail": "https://i.ytimg.com/vi/dNTjVsdjam4/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Fearing - I Was So Alive"
@@ -9146,7 +9130,7 @@
       {
         "videoId": "eivriP-Er2Y",
         "title": "FM Attack - Ultraviolet",
-        "position": 94,
+        "position": 89,
         "thumbnail": "https://i.ytimg.com/vi/eivriP-Er2Y/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "FM Attack - Ultraviolet"
@@ -9154,7 +9138,7 @@
       {
         "videoId": "Yz_7Igj8YII",
         "title": "Foie Gras - Psychic Sobriety",
-        "position": 95,
+        "position": 90,
         "thumbnail": "https://i.ytimg.com/vi/Yz_7Igj8YII/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Foie Gras - Psychic Sobriety"
@@ -9162,7 +9146,7 @@
       {
         "videoId": "sK5uhzltArk",
         "title": "Forever Grey - Broken Home",
-        "position": 96,
+        "position": 91,
         "thumbnail": "https://i.ytimg.com/vi/sK5uhzltArk/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Forever Grey - Broken Home"
@@ -9170,7 +9154,7 @@
       {
         "videoId": "HEtlJm-tk3Y",
         "title": "Forever Grey - Common Coffin",
-        "position": 97,
+        "position": 92,
         "thumbnail": "https://i.ytimg.com/vi/HEtlJm-tk3Y/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Forever Grey - Common Coffin"
@@ -9178,7 +9162,7 @@
       {
         "videoId": "bJcC5g1Gdzw",
         "title": "Forever Grey - Familiar Faces",
-        "position": 98,
+        "position": 93,
         "thumbnail": "https://i.ytimg.com/vi/bJcC5g1Gdzw/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Forever Grey - Familiar Faces"
@@ -9186,7 +9170,7 @@
       {
         "videoId": "xNbSB8qI64U",
         "title": "Forever Grey - Lucid Dreaming",
-        "position": 99,
+        "position": 94,
         "thumbnail": "https://i.ytimg.com/vi/xNbSB8qI64U/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Forever Grey - Lucid Dreaming"
@@ -9194,7 +9178,7 @@
       {
         "videoId": "HNisOe1hxaU",
         "title": "Forever Grey - Nothing Ever Changes",
-        "position": 100,
+        "position": 95,
         "thumbnail": "https://i.ytimg.com/vi/HNisOe1hxaU/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Forever Grey - Nothing Ever Changes"
@@ -9202,7 +9186,7 @@
       {
         "videoId": "RdYjs2Jdj10",
         "title": "Forever Grey - People Ask My Age",
-        "position": 101,
+        "position": 96,
         "thumbnail": "https://i.ytimg.com/vi/RdYjs2Jdj10/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Forever Grey - People Ask My Age"
@@ -9210,7 +9194,7 @@
       {
         "videoId": "ILC0klqTJJM",
         "title": "Forever Grey - Seasons",
-        "position": 102,
+        "position": 97,
         "thumbnail": "https://i.ytimg.com/vi/ILC0klqTJJM/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Forever Grey - Seasons"
@@ -9218,7 +9202,7 @@
       {
         "videoId": "wq6Nu_NN6Zg",
         "title": "Forever Grey - The Other Side",
-        "position": 103,
+        "position": 98,
         "thumbnail": "https://i.ytimg.com/vi/wq6Nu_NN6Zg/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Forever Grey - The Other Side"
@@ -9226,7 +9210,7 @@
       {
         "videoId": "UCq_FF1gisI",
         "title": "Fragrance - A Million Replays",
-        "position": 104,
+        "position": 99,
         "thumbnail": "https://i.ytimg.com/vi/UCq_FF1gisI/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Fragrance - A Million Replays"
@@ -9234,7 +9218,7 @@
       {
         "videoId": "K37nGsiXVhI",
         "title": "Fragrance - Collapse",
-        "position": 105,
+        "position": 100,
         "thumbnail": "https://i.ytimg.com/vi/K37nGsiXVhI/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Fragrance - Collapse"
@@ -9242,7 +9226,7 @@
       {
         "videoId": "ROnCSymmLA4",
         "title": "Fragrance - Covered In Gold",
-        "position": 106,
+        "position": 101,
         "thumbnail": "https://i.ytimg.com/vi/ROnCSymmLA4/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Fragrance - Covered In Gold"
@@ -9250,7 +9234,7 @@
       {
         "videoId": "iyqc-_Hs07o",
         "title": "Fragrance - Crawling to the Void",
-        "position": 107,
+        "position": 102,
         "thumbnail": "https://i.ytimg.com/vi/iyqc-_Hs07o/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Fragrance - Crawling to the Void"
@@ -9258,7 +9242,7 @@
       {
         "videoId": "HzWS8RXdyI8",
         "title": "Fragrance - Forevermore",
-        "position": 108,
+        "position": 103,
         "thumbnail": "https://i.ytimg.com/vi/HzWS8RXdyI8/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Fragrance - Forevermore"
@@ -9266,7 +9250,7 @@
       {
         "videoId": "PiHvMJXAb2w",
         "title": "Fragrance - Gone in a Wink",
-        "position": 109,
+        "position": 104,
         "thumbnail": "https://i.ytimg.com/vi/PiHvMJXAb2w/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Fragrance - Gone in a Wink"
@@ -9274,23 +9258,23 @@
       {
         "videoId": "kS78KF7JYsY",
         "title": "Fragrance - Gravity & Grace",
-        "position": 110,
+        "position": 105,
         "thumbnail": "https://i.ytimg.com/vi/kS78KF7JYsY/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Fragrance - Gravity & Grace"
       },
       {
-        "videoId": "6pDraWWQE5M",
+        "videoId": "NnCpbmjvZgY",
         "title": "Fragrance - Hanté de moi",
-        "position": 111,
-        "thumbnail": "https://i.ytimg.com/vi/6pDraWWQE5M/mqdefault.jpg",
+        "position": 106,
+        "thumbnail": "https://i.ytimg.com/vi/NnCpbmjvZgY/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Fragrance - Hanté de moi"
       },
       {
         "videoId": "Iwx77QmVspI",
         "title": "Fragrance - Love Bites",
-        "position": 112,
+        "position": 107,
         "thumbnail": "https://i.ytimg.com/vi/Iwx77QmVspI/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Fragrance - Love Bites"
@@ -9298,7 +9282,7 @@
       {
         "videoId": "6N2xXsWCSBA",
         "title": "Fragrance - Mise en garde",
-        "position": 113,
+        "position": 108,
         "thumbnail": "https://i.ytimg.com/vi/6N2xXsWCSBA/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Fragrance - Mise en garde"
@@ -9306,23 +9290,23 @@
       {
         "videoId": "2-T3jxXYRHM",
         "title": "Fragrance - Much More Like A Wave",
-        "position": 114,
+        "position": 109,
         "thumbnail": "https://i.ytimg.com/vi/2-T3jxXYRHM/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Fragrance - Much More Like A Wave"
       },
       {
-        "videoId": "vg3yG3rYe9c",
+        "videoId": "0EpPj7dVaRE",
         "title": "Fragrance - So Typical",
-        "position": 115,
-        "thumbnail": "https://i.ytimg.com/vi/vg3yG3rYe9c/mqdefault.jpg",
+        "position": 110,
+        "thumbnail": "https://i.ytimg.com/vi/0EpPj7dVaRE/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Fragrance - So Typical"
       },
       {
         "videoId": "tSglGS0VB4w",
         "title": "Fragrance - Tears",
-        "position": 116,
+        "position": 111,
         "thumbnail": "https://i.ytimg.com/vi/tSglGS0VB4w/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Fragrance - Tears"
@@ -9330,7 +9314,7 @@
       {
         "videoId": "KVso0_eCz9U",
         "title": "Fragrance - The Missing Part",
-        "position": 117,
+        "position": 112,
         "thumbnail": "https://i.ytimg.com/vi/KVso0_eCz9U/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Fragrance - The Missing Part"
@@ -9338,7 +9322,7 @@
       {
         "videoId": "N4dUngK4KrU",
         "title": "Fragrance - Twisted Way",
-        "position": 118,
+        "position": 113,
         "thumbnail": "https://i.ytimg.com/vi/N4dUngK4KrU/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Fragrance - Twisted Way"
@@ -9346,23 +9330,23 @@
       {
         "videoId": "P8GQycR6SIc",
         "title": "Fragrance;Julia Bondar - So Typical - Julia Bondar Remix",
-        "position": 119,
+        "position": 114,
         "thumbnail": "https://i.ytimg.com/vi/P8GQycR6SIc/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Fragrance;Julia Bondar - So Typical - Julia Bondar Remix"
       },
       {
-        "videoId": "3LJKC232XwQ",
+        "videoId": "WrrfvjIm0E0",
         "title": "Fragrance;Lulannie - The Cure",
-        "position": 120,
-        "thumbnail": "https://i.ytimg.com/vi/3LJKC232XwQ/mqdefault.jpg",
+        "position": 115,
+        "thumbnail": "https://i.ytimg.com/vi/WrrfvjIm0E0/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Fragrance;Lulannie - The Cure"
       },
       {
         "videoId": "akrtMjGDuRc",
         "title": "Fragrance;Mareux - Tears - Mareux Remix",
-        "position": 121,
+        "position": 116,
         "thumbnail": "https://i.ytimg.com/vi/akrtMjGDuRc/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Fragrance;Mareux - Tears - Mareux Remix"
@@ -9370,7 +9354,7 @@
       {
         "videoId": "StkNeigYuCI",
         "title": "Fragrance;Maya Postepski;Opale - At Last - Opale Sad Mix",
-        "position": 122,
+        "position": 117,
         "thumbnail": "https://i.ytimg.com/vi/StkNeigYuCI/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Fragrance;Maya Postepski;Opale - At Last - Opale Sad Mix"
@@ -9378,7 +9362,7 @@
       {
         "videoId": "Fl03qdtDa6A",
         "title": "framed - drowning",
-        "position": 123,
+        "position": 118,
         "thumbnail": "https://i.ytimg.com/vi/Fl03qdtDa6A/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "framed - drowning"
@@ -9386,15 +9370,7 @@
       {
         "videoId": "NEBT7MH6na0",
         "title": "French Police - Club De Vampiros",
-        "position": 124,
-        "thumbnail": "https://i.ytimg.com/vi/NEBT7MH6na0/mqdefault.jpg",
-        "channelTitle": "",
-        "userTitle": "French Police - Club De Vampiros"
-      },
-      {
-        "videoId": "NEBT7MH6na0",
-        "title": "French Police - Club De Vampiros",
-        "position": 125,
+        "position": 119,
         "thumbnail": "https://i.ytimg.com/vi/NEBT7MH6na0/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "French Police - Club De Vampiros"
@@ -9402,7 +9378,7 @@
       {
         "videoId": "RKYWORBZO3U",
         "title": "Galatée - Le Miroir Fantastique",
-        "position": 126,
+        "position": 120,
         "thumbnail": "https://i.ytimg.com/vi/RKYWORBZO3U/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Galatée - Le Miroir Fantastique"
@@ -9410,7 +9386,7 @@
       {
         "videoId": "XR6YfPIaSrg",
         "title": "Galatée - Ne sois pas triste",
-        "position": 127,
+        "position": 121,
         "thumbnail": "https://i.ytimg.com/vi/XR6YfPIaSrg/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Galatée - Ne sois pas triste"
@@ -9418,23 +9394,15 @@
       {
         "videoId": "UF2q-scCG9Y",
         "title": "Galatée - Tapis Rouge",
-        "position": 128,
+        "position": 122,
         "thumbnail": "https://i.ytimg.com/vi/UF2q-scCG9Y/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Galatée - Tapis Rouge"
       },
       {
-        "videoId": "SPVWoxbGUt4",
-        "title": "Garrick Stout - Transfer",
-        "position": 129,
-        "thumbnail": "https://i.ytimg.com/vi/SPVWoxbGUt4/mqdefault.jpg",
-        "channelTitle": "",
-        "userTitle": "Garrick Stout - Transfer"
-      },
-      {
         "videoId": "3IycLCSEk6A",
         "title": "Geometric Vision - Jelly Dream",
-        "position": 130,
+        "position": 124,
         "thumbnail": "https://i.ytimg.com/vi/3IycLCSEk6A/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Geometric Vision - Jelly Dream"
@@ -9442,7 +9410,7 @@
       {
         "videoId": "Bm1xADTZUzk",
         "title": "Ghost Cop - A Shot in the Dark",
-        "position": 131,
+        "position": 125,
         "thumbnail": "https://i.ytimg.com/vi/Bm1xADTZUzk/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Ghost Cop - A Shot in the Dark"
@@ -9450,7 +9418,7 @@
       {
         "videoId": "FHSooCWZbwA",
         "title": "Ghost Cop - All Souls Day",
-        "position": 132,
+        "position": 126,
         "thumbnail": "https://i.ytimg.com/vi/FHSooCWZbwA/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Ghost Cop - All Souls Day"
@@ -9458,7 +9426,7 @@
       {
         "videoId": "VJHv041iVGY",
         "title": "Ghost Cop - Problems",
-        "position": 133,
+        "position": 127,
         "thumbnail": "https://i.ytimg.com/vi/VJHv041iVGY/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Ghost Cop - Problems"
@@ -9466,7 +9434,7 @@
       {
         "videoId": "W7fSO5BzOH8",
         "title": "Girl As Wave - Amnesia",
-        "position": 134,
+        "position": 128,
         "thumbnail": "https://i.ytimg.com/vi/W7fSO5BzOH8/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Girl As Wave - Amnesia"
@@ -9474,7 +9442,7 @@
       {
         "videoId": "fsNRy8hEicc",
         "title": "Girl As Wave - Asteroids",
-        "position": 135,
+        "position": 129,
         "thumbnail": "https://i.ytimg.com/vi/fsNRy8hEicc/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Girl As Wave - Asteroids"
@@ -9482,7 +9450,7 @@
       {
         "videoId": "t-vgjm0PuTU",
         "title": "Girl As Wave - From The Blue",
-        "position": 136,
+        "position": 130,
         "thumbnail": "https://i.ytimg.com/vi/t-vgjm0PuTU/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Girl As Wave - From The Blue"
@@ -9490,7 +9458,7 @@
       {
         "videoId": "TcTDtUUO5Hg",
         "title": "Girl As Wave - Future Version",
-        "position": 137,
+        "position": 131,
         "thumbnail": "https://i.ytimg.com/vi/TcTDtUUO5Hg/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Girl As Wave - Future Version"
@@ -9498,7 +9466,7 @@
       {
         "videoId": "hOj60i4qe5g",
         "title": "Girl As Wave - Other Side",
-        "position": 138,
+        "position": 132,
         "thumbnail": "https://i.ytimg.com/vi/hOj60i4qe5g/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Girl As Wave - Other Side"
@@ -9506,7 +9474,7 @@
       {
         "videoId": "NU9H8tysfUI",
         "title": "Girl As Wave - Sparks",
-        "position": 139,
+        "position": 133,
         "thumbnail": "https://i.ytimg.com/vi/NU9H8tysfUI/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Girl As Wave - Sparks"
@@ -9514,7 +9482,7 @@
       {
         "videoId": "jIJoFczHKrY",
         "title": "Girl As Wave - Superstition",
-        "position": 140,
+        "position": 134,
         "thumbnail": "https://i.ytimg.com/vi/jIJoFczHKrY/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Girl As Wave - Superstition"
@@ -9522,7 +9490,7 @@
       {
         "videoId": "QJ8OELcJwjY",
         "title": "Glaare - First Rain",
-        "position": 141,
+        "position": 135,
         "thumbnail": "https://i.ytimg.com/vi/QJ8OELcJwjY/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Glaare - First Rain"
@@ -9530,7 +9498,7 @@
       {
         "videoId": "-vdz88NK0Sg",
         "title": "Glaring - Consciousness",
-        "position": 142,
+        "position": 136,
         "thumbnail": "https://i.ytimg.com/vi/-vdz88NK0Sg/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Glaring - Consciousness"
@@ -9538,7 +9506,7 @@
       {
         "videoId": "qjbRYcI4tMc",
         "title": "Glaring - Insanity Among Penguins",
-        "position": 143,
+        "position": 137,
         "thumbnail": "https://i.ytimg.com/vi/qjbRYcI4tMc/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Glaring - Insanity Among Penguins"
@@ -9546,7 +9514,7 @@
       {
         "videoId": "bQnJhDqXVMQ",
         "title": "Glaring - Paralyzed",
-        "position": 144,
+        "position": 138,
         "thumbnail": "https://i.ytimg.com/vi/bQnJhDqXVMQ/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Glaring - Paralyzed"
@@ -9554,7 +9522,7 @@
       {
         "videoId": "PInisytHV94",
         "title": "Glaring - Wie Lange Noch",
-        "position": 145,
+        "position": 139,
         "thumbnail": "https://i.ytimg.com/vi/PInisytHV94/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Glaring - Wie Lange Noch"
@@ -9562,7 +9530,7 @@
       {
         "videoId": "mDKGeWmN2L4",
         "title": "Glass Spells - Thrills",
-        "position": 146,
+        "position": 140,
         "thumbnail": "https://i.ytimg.com/vi/mDKGeWmN2L4/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Glass Spells - Thrills"
@@ -9570,7 +9538,7 @@
       {
         "videoId": "OSuoiKUSOAY",
         "title": "Glass Spells - Venom",
-        "position": 147,
+        "position": 141,
         "thumbnail": "https://i.ytimg.com/vi/OSuoiKUSOAY/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Glass Spells - Venom"
@@ -9578,7 +9546,7 @@
       {
         "videoId": "eUv5MTfByq0",
         "title": "Gloria de Oliveira;The Wide Eye - The Only Witness - The Wide Eye Remix",
-        "position": 148,
+        "position": 142,
         "thumbnail": "https://i.ytimg.com/vi/eUv5MTfByq0/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Gloria de Oliveira;The Wide Eye - The Only Witness - The Wide Eye Remix"
@@ -9586,7 +9554,7 @@
       {
         "videoId": "LieVkjt5lgw",
         "title": "glwzbll - Untitled #13",
-        "position": 149,
+        "position": 143,
         "thumbnail": "https://i.ytimg.com/vi/LieVkjt5lgw/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "glwzbll - Untitled #13"
@@ -9594,7 +9562,7 @@
       {
         "videoId": "AWzAJ_8L-9c",
         "title": "GOLD ZEBRA - Leaving the City",
-        "position": 150,
+        "position": 144,
         "thumbnail": "https://i.ytimg.com/vi/AWzAJ_8L-9c/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "GOLD ZEBRA - Leaving the City"
@@ -9602,7 +9570,7 @@
       {
         "videoId": "aVjoI5CGEdE",
         "title": "Goo Munday - Blackjack",
-        "position": 151,
+        "position": 145,
         "thumbnail": "https://i.ytimg.com/vi/aVjoI5CGEdE/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Goo Munday - Blackjack"
@@ -9610,7 +9578,7 @@
       {
         "videoId": "GM044cX-xmQ",
         "title": "Hallows - Things That Hurt",
-        "position": 152,
+        "position": 146,
         "thumbnail": "https://i.ytimg.com/vi/GM044cX-xmQ/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Hallows - Things That Hurt"
@@ -9618,7 +9586,7 @@
       {
         "videoId": "dx5ZqkHzFPM",
         "title": "Hante. - Beyond The Waves",
-        "position": 153,
+        "position": 147,
         "thumbnail": "https://i.ytimg.com/vi/dx5ZqkHzFPM/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Hante. - Beyond The Waves"
@@ -9626,7 +9594,7 @@
       {
         "videoId": "_6ZczHGT2wQ",
         "title": "Hante. - In Raptures",
-        "position": 154,
+        "position": 148,
         "thumbnail": "https://i.ytimg.com/vi/_6ZczHGT2wQ/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Hante. - In Raptures"
@@ -9634,7 +9602,7 @@
       {
         "videoId": "2lYJ4gP-wh4",
         "title": "Hante. - Live to Die Another Day",
-        "position": 155,
+        "position": 149,
         "thumbnail": "https://i.ytimg.com/vi/2lYJ4gP-wh4/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Hante. - Live to Die Another Day"
@@ -9642,7 +9610,7 @@
       {
         "videoId": "fChnyDYyGEM",
         "title": "Hante. - Living in a French Movie",
-        "position": 156,
+        "position": 150,
         "thumbnail": "https://i.ytimg.com/vi/fChnyDYyGEM/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Hante. - Living in a French Movie"
@@ -9650,7 +9618,7 @@
       {
         "videoId": "ezUvjjr_cmo",
         "title": "Hante. - My Destruction",
-        "position": 157,
+        "position": 151,
         "thumbnail": "https://i.ytimg.com/vi/ezUvjjr_cmo/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Hante. - My Destruction"
@@ -9658,7 +9626,7 @@
       {
         "videoId": "7Jynvbz4B64",
         "title": "Hante. - Noir",
-        "position": 158,
+        "position": 152,
         "thumbnail": "https://i.ytimg.com/vi/7Jynvbz4B64/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Hante. - Noir"
@@ -9666,7 +9634,7 @@
       {
         "videoId": "8-p5qkKy-CQ",
         "title": "Hante. - Que Reste-t-il de Notre Amour ?",
-        "position": 159,
+        "position": 153,
         "thumbnail": "https://i.ytimg.com/vi/8-p5qkKy-CQ/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Hante. - Que Reste-t-il de Notre Amour ?"
@@ -9674,7 +9642,7 @@
       {
         "videoId": "0rc_8GcIuWc",
         "title": "Hante. - Une Nuit Avec Mon Ennemi",
-        "position": 160,
+        "position": 154,
         "thumbnail": "https://i.ytimg.com/vi/0rc_8GcIuWc/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Hante. - Une Nuit Avec Mon Ennemi"
@@ -9682,7 +9650,7 @@
       {
         "videoId": "PPuDBcMscL0",
         "title": "Hante. - À Contrecoeur",
-        "position": 161,
+        "position": 155,
         "thumbnail": "https://i.ytimg.com/vi/PPuDBcMscL0/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Hante. - À Contrecoeur"
@@ -9690,7 +9658,7 @@
       {
         "videoId": "sFOpqXj8N3U",
         "title": "Hante. - Éternité",
-        "position": 162,
+        "position": 156,
         "thumbnail": "https://i.ytimg.com/vi/sFOpqXj8N3U/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Hante. - Éternité"
@@ -9698,7 +9666,7 @@
       {
         "videoId": "oUdsm8xUhZg",
         "title": "Hante.;Fragrance;Marble Slave - Nobody's Watching",
-        "position": 163,
+        "position": 157,
         "thumbnail": "https://i.ytimg.com/vi/oUdsm8xUhZg/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Hante.;Fragrance;Marble Slave - Nobody's Watching"
@@ -9706,7 +9674,7 @@
       {
         "videoId": "RiP0FBj9AUQ",
         "title": "Hante.;Milliken Chamber - RESPECT - Milliken Chamber Remix",
-        "position": 164,
+        "position": 158,
         "thumbnail": "https://i.ytimg.com/vi/RiP0FBj9AUQ/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Hante.;Milliken Chamber - RESPECT - Milliken Chamber Remix"
@@ -9714,7 +9682,7 @@
       {
         "videoId": "a3fh4RUt49s",
         "title": "Harsh Symmetry - Crystal Smile",
-        "position": 165,
+        "position": 159,
         "thumbnail": "https://i.ytimg.com/vi/a3fh4RUt49s/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Harsh Symmetry - Crystal Smile"
@@ -9722,7 +9690,7 @@
       {
         "videoId": "Nl7fbwmqXhc",
         "title": "Harsh Symmetry - Mirror Twin",
-        "position": 166,
+        "position": 160,
         "thumbnail": "https://i.ytimg.com/vi/Nl7fbwmqXhc/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Harsh Symmetry - Mirror Twin"
@@ -9730,7 +9698,7 @@
       {
         "videoId": "Xbu5yYFN-V8",
         "title": "Harsh Symmetry - Pugilist",
-        "position": 167,
+        "position": 161,
         "thumbnail": "https://i.ytimg.com/vi/Xbu5yYFN-V8/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Harsh Symmetry - Pugilist"
@@ -9738,7 +9706,7 @@
       {
         "videoId": "SJJWHI_0vCk",
         "title": "Harsh Symmetry - Skin",
-        "position": 168,
+        "position": 162,
         "thumbnail": "https://i.ytimg.com/vi/SJJWHI_0vCk/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Harsh Symmetry - Skin"
@@ -9746,7 +9714,7 @@
       {
         "videoId": "D75lNcnQlWQ",
         "title": "Haunt Me - Watch You Bleed",
-        "position": 169,
+        "position": 163,
         "thumbnail": "https://i.ytimg.com/vi/D75lNcnQlWQ/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Haunt Me - Watch You Bleed"
@@ -9754,7 +9722,7 @@
       {
         "videoId": "cz_MLwDT3AE",
         "title": "hazy waters - deep waters",
-        "position": 170,
+        "position": 164,
         "thumbnail": "https://i.ytimg.com/vi/cz_MLwDT3AE/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "hazy waters - deep waters"
@@ -9762,7 +9730,7 @@
       {
         "videoId": "YTTsAnAy-a0",
         "title": "Hendriek Bleik - Thriftstore",
-        "position": 171,
+        "position": 165,
         "thumbnail": "https://i.ytimg.com/vi/YTTsAnAy-a0/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Hendriek Bleik - Thriftstore"
@@ -9770,7 +9738,7 @@
       {
         "videoId": "lt0bB9JbnH4",
         "title": "HUIR - Arch",
-        "position": 172,
+        "position": 166,
         "thumbnail": "https://i.ytimg.com/vi/lt0bB9JbnH4/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "HUIR - Arch"
@@ -9778,7 +9746,7 @@
       {
         "videoId": "fCiV5-Lm8dU",
         "title": "Hørd - #02",
-        "position": 173,
+        "position": 167,
         "thumbnail": "https://i.ytimg.com/vi/fCiV5-Lm8dU/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Hørd - #02"
@@ -9786,7 +9754,7 @@
       {
         "videoId": "Q9inXwDEojE",
         "title": "IAMTHESHADOW - As The Infinite Drowns",
-        "position": 174,
+        "position": 168,
         "thumbnail": "https://i.ytimg.com/vi/Q9inXwDEojE/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "IAMTHESHADOW - As The Infinite Drowns"
@@ -9794,7 +9762,7 @@
       {
         "videoId": "9HQWH3l5xyI",
         "title": "IAMTHESHADOW - This Violence",
-        "position": 175,
+        "position": 169,
         "thumbnail": "https://i.ytimg.com/vi/9HQWH3l5xyI/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "IAMTHESHADOW - This Violence"
@@ -9802,7 +9770,7 @@
       {
         "videoId": "_VXOzx14aUw",
         "title": "Indie Anthony - dance away tonight",
-        "position": 176,
+        "position": 170,
         "thumbnail": "https://i.ytimg.com/vi/_VXOzx14aUw/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Indie Anthony - dance away tonight"
@@ -9810,7 +9778,7 @@
       {
         "videoId": "qjTdcQsac3s",
         "title": "Inhalt - Occupations",
-        "position": 177,
+        "position": 171,
         "thumbnail": "https://i.ytimg.com/vi/qjTdcQsac3s/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Inhalt - Occupations"
@@ -9818,7 +9786,7 @@
       {
         "videoId": "KCr_ev49mNs",
         "title": "ionnalee;TR/ST - NOT HUMAN - TR/ST Remix",
-        "position": 178,
+        "position": 172,
         "thumbnail": "https://i.ytimg.com/vi/KCr_ev49mNs/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "ionnalee;TR/ST - NOT HUMAN - TR/ST Remix"
@@ -9826,7 +9794,7 @@
       {
         "videoId": "Vbb9Mfogwfg",
         "title": "Iron Years - Lucid",
-        "position": 179,
+        "position": 173,
         "thumbnail": "https://i.ytimg.com/vi/Vbb9Mfogwfg/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Iron Years - Lucid"
@@ -9834,7 +9802,7 @@
       {
         "videoId": "Lo6fIMU9AZ4",
         "title": "Iron Years - Nostalgia",
-        "position": 180,
+        "position": 174,
         "thumbnail": "https://i.ytimg.com/vi/Lo6fIMU9AZ4/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Iron Years - Nostalgia"
@@ -9842,15 +9810,7 @@
       {
         "videoId": "ryvHj2z-0BM",
         "title": "John Maus - Bennington (2007)",
-        "position": 181,
-        "thumbnail": "https://i.ytimg.com/vi/ryvHj2z-0BM/mqdefault.jpg",
-        "channelTitle": "",
-        "userTitle": "John Maus - Bennington (2007)"
-      },
-      {
-        "videoId": "ryvHj2z-0BM",
-        "title": "John Maus - Bennington (2007)",
-        "position": 182,
+        "position": 175,
         "thumbnail": "https://i.ytimg.com/vi/ryvHj2z-0BM/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "John Maus - Bennington (2007)"
@@ -9858,7 +9818,7 @@
       {
         "videoId": "3sQFZmca_C0",
         "title": "juhvahn;Perpetualll - Sapphire",
-        "position": 183,
+        "position": 176,
         "thumbnail": "https://i.ytimg.com/vi/3sQFZmca_C0/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "juhvahn;Perpetualll - Sapphire"
@@ -9866,7 +9826,7 @@
       {
         "videoId": "5ee51c95F0Y",
         "title": "Julia Bondar - Lust",
-        "position": 184,
+        "position": 177,
         "thumbnail": "https://i.ytimg.com/vi/5ee51c95F0Y/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Julia Bondar - Lust"
@@ -9874,7 +9834,7 @@
       {
         "videoId": "BXiwuPd9vbE",
         "title": "Julia Bondar;Fragrance - Fleurs Du Mal - Fragrance Remix",
-        "position": 185,
+        "position": 178,
         "thumbnail": "https://i.ytimg.com/vi/BXiwuPd9vbE/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Julia Bondar;Fragrance - Fleurs Du Mal - Fragrance Remix"
@@ -9882,7 +9842,7 @@
       {
         "videoId": "MV_3Dpw-BRY",
         "title": "Kavinsky - Nightcall",
-        "position": 186,
+        "position": 179,
         "thumbnail": "https://i.ytimg.com/vi/MV_3Dpw-BRY/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Kavinsky - Nightcall"
@@ -9890,7 +9850,7 @@
       {
         "videoId": "WuTztTsj7Sg",
         "title": "keelse - только не плачь",
-        "position": 187,
+        "position": 180,
         "thumbnail": "https://i.ytimg.com/vi/WuTztTsj7Sg/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "keelse - только не плачь"
@@ -9898,7 +9858,7 @@
       {
         "videoId": "_AYwZe0A2rg",
         "title": "Keep Shelly In Athens - Silent Rain",
-        "position": 188,
+        "position": 181,
         "thumbnail": "https://i.ytimg.com/vi/_AYwZe0A2rg/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Keep Shelly In Athens - Silent Rain"
@@ -9906,7 +9866,7 @@
       {
         "videoId": "0MUE3AXIiXc",
         "title": "Killing Joke - Love Like Blood",
-        "position": 189,
+        "position": 182,
         "thumbnail": "https://i.ytimg.com/vi/0MUE3AXIiXc/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Killing Joke - Love Like Blood"
@@ -9914,7 +9874,7 @@
       {
         "videoId": "HTgqZeTyU_k",
         "title": "KOMPROMAT;Vitalic;Rebeka Warrior - Niemand",
-        "position": 190,
+        "position": 183,
         "thumbnail": "https://i.ytimg.com/vi/HTgqZeTyU_k/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "KOMPROMAT;Vitalic;Rebeka Warrior - Niemand"
@@ -9922,7 +9882,7 @@
       {
         "videoId": "-s4zRw16tMA",
         "title": "Kraftwerk - The Model - 2009 Remaster",
-        "position": 191,
+        "position": 184,
         "thumbnail": "https://i.ytimg.com/vi/-s4zRw16tMA/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Kraftwerk - The Model - 2009 Remaster"
@@ -9930,23 +9890,23 @@
       {
         "videoId": "91pP3ZxhAc4",
         "title": "Kælan Mikla - Draumadís",
-        "position": 192,
+        "position": 185,
         "thumbnail": "https://i.ytimg.com/vi/91pP3ZxhAc4/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Kælan Mikla - Draumadís"
       },
       {
-        "videoId": "uHMA6as7z1g",
+        "videoId": "CjzO9V8D5r4",
         "title": "Kælan Mikla - Ósýnileg",
-        "position": 193,
-        "thumbnail": "https://i.ytimg.com/vi/uHMA6as7z1g/mqdefault.jpg",
+        "position": 186,
+        "thumbnail": "https://i.ytimg.com/vi/CjzO9V8D5r4/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Kælan Mikla - Ósýnileg"
       },
       {
         "videoId": "oI3GBdXxXE0",
         "title": "Labyrinth Ear - Lithium",
-        "position": 194,
+        "position": 187,
         "thumbnail": "https://i.ytimg.com/vi/oI3GBdXxXE0/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Labyrinth Ear - Lithium"
@@ -9954,7 +9914,7 @@
       {
         "videoId": "3qstLNJTOEw",
         "title": "Labyrinth Ear - Lorna",
-        "position": 195,
+        "position": 188,
         "thumbnail": "https://i.ytimg.com/vi/3qstLNJTOEw/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Labyrinth Ear - Lorna"
@@ -9962,7 +9922,7 @@
       {
         "videoId": "ucJ5879j91k",
         "title": "Labyrinth Ear - Navy Light - 4am Mix",
-        "position": 196,
+        "position": 189,
         "thumbnail": "https://i.ytimg.com/vi/ucJ5879j91k/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Labyrinth Ear - Navy Light - 4am Mix"
@@ -9970,7 +9930,7 @@
       {
         "videoId": "yyhNdkYOPKA",
         "title": "Labyrinth Ear - Wild Flowers",
-        "position": 197,
+        "position": 190,
         "thumbnail": "https://i.ytimg.com/vi/yyhNdkYOPKA/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Labyrinth Ear - Wild Flowers"
@@ -9978,7 +9938,7 @@
       {
         "videoId": "NYDwcbaexHw",
         "title": "LAUREL - Best I Ever Had",
-        "position": 198,
+        "position": 191,
         "thumbnail": "https://i.ytimg.com/vi/NYDwcbaexHw/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "LAUREL - Best I Ever Had"
@@ -9986,7 +9946,7 @@
       {
         "videoId": "GpVKJBL181Q",
         "title": "Le Blonde - The Voices",
-        "position": 199,
+        "position": 192,
         "thumbnail": "https://i.ytimg.com/vi/GpVKJBL181Q/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Le Blonde - The Voices"
@@ -9994,7 +9954,7 @@
       {
         "videoId": "PnFTkwAU2FE",
         "title": "LEATHERS - Highrise",
-        "position": 200,
+        "position": 193,
         "thumbnail": "https://i.ytimg.com/vi/PnFTkwAU2FE/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "LEATHERS - Highrise"
@@ -10002,15 +9962,7 @@
       {
         "videoId": "Dk19wxtcEHQ",
         "title": "LEATHERS - Phantom Heart",
-        "position": 201,
-        "thumbnail": "https://i.ytimg.com/vi/Dk19wxtcEHQ/mqdefault.jpg",
-        "channelTitle": "",
-        "userTitle": "LEATHERS - Phantom Heart"
-      },
-      {
-        "videoId": "Dk19wxtcEHQ",
-        "title": "LEATHERS - Phantom Heart",
-        "position": 202,
+        "position": 194,
         "thumbnail": "https://i.ytimg.com/vi/Dk19wxtcEHQ/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "LEATHERS - Phantom Heart"
@@ -10018,7 +9970,7 @@
       {
         "videoId": "8kXFnLI1bzc",
         "title": "Lebanon Hanover - Babes of the 80s",
-        "position": 203,
+        "position": 195,
         "thumbnail": "https://i.ytimg.com/vi/8kXFnLI1bzc/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Lebanon Hanover - Babes of the 80s"
@@ -10026,7 +9978,7 @@
       {
         "videoId": "gEQHhMNxr3Q",
         "title": "Lebanon Hanover - Gallowdance",
-        "position": 204,
+        "position": 196,
         "thumbnail": "https://i.ytimg.com/vi/gEQHhMNxr3Q/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Lebanon Hanover - Gallowdance"
@@ -10034,7 +9986,7 @@
       {
         "videoId": "ATUssAv-diY",
         "title": "Lebanon Hanover - Stahlwerk",
-        "position": 205,
+        "position": 197,
         "thumbnail": "https://i.ytimg.com/vi/ATUssAv-diY/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Lebanon Hanover - Stahlwerk"
@@ -10042,7 +9994,7 @@
       {
         "videoId": "LQ-kEp-qoz8",
         "title": "Lebanon Hanover - The Last Thing",
-        "position": 206,
+        "position": 198,
         "thumbnail": "https://i.ytimg.com/vi/LQ-kEp-qoz8/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Lebanon Hanover - The Last Thing"
@@ -10050,7 +10002,7 @@
       {
         "videoId": "jVYTZ79stv8",
         "title": "Lebanon Hanover;Tobias Bernstrup - Babes of the 80s (Tobias Bernstrup)",
-        "position": 207,
+        "position": 199,
         "thumbnail": "https://i.ytimg.com/vi/jVYTZ79stv8/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Lebanon Hanover;Tobias Bernstrup - Babes of the 80s (Tobias Bernstrup)"
@@ -10058,7 +10010,7 @@
       {
         "videoId": "NnlLdJjsuNE",
         "title": "Lecomte De Brégeot;Elle Valenci - Paris 1985",
-        "position": 208,
+        "position": 200,
         "thumbnail": "https://i.ytimg.com/vi/NnlLdJjsuNE/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Lecomte De Brégeot;Elle Valenci - Paris 1985"
@@ -10066,7 +10018,7 @@
       {
         "videoId": "eB1QjMauNbE",
         "title": "Linea Aspera - Attica",
-        "position": 209,
+        "position": 201,
         "thumbnail": "https://i.ytimg.com/vi/eB1QjMauNbE/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Linea Aspera - Attica"
@@ -10074,7 +10026,7 @@
       {
         "videoId": "n3qLc4gOnMI",
         "title": "Linea Aspera - Entanglement",
-        "position": 210,
+        "position": 202,
         "thumbnail": "https://i.ytimg.com/vi/n3qLc4gOnMI/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Linea Aspera - Entanglement"
@@ -10082,7 +10034,7 @@
       {
         "videoId": "tsAx9mgbXgc",
         "title": "Linea Aspera - Eviction",
-        "position": 211,
+        "position": 203,
         "thumbnail": "https://i.ytimg.com/vi/tsAx9mgbXgc/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Linea Aspera - Eviction"
@@ -10090,7 +10042,7 @@
       {
         "videoId": "RkGU-YuYk3k",
         "title": "Linea Aspera - Fer-De-Lance",
-        "position": 212,
+        "position": 204,
         "thumbnail": "https://i.ytimg.com/vi/RkGU-YuYk3k/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Linea Aspera - Fer-De-Lance"
@@ -10098,7 +10050,7 @@
       {
         "videoId": "n2hiGpGH-k8",
         "title": "Linea Aspera - Lamanai",
-        "position": 213,
+        "position": 205,
         "thumbnail": "https://i.ytimg.com/vi/n2hiGpGH-k8/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Linea Aspera - Lamanai"
@@ -10106,7 +10058,7 @@
       {
         "videoId": "s1oUk5X2ajY",
         "title": "Linea Aspera - Malarone",
-        "position": 214,
+        "position": 206,
         "thumbnail": "https://i.ytimg.com/vi/s1oUk5X2ajY/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Linea Aspera - Malarone"
@@ -10114,7 +10066,7 @@
       {
         "videoId": "b_dVbrCxn5U",
         "title": "Linea Aspera - Redshift",
-        "position": 215,
+        "position": 207,
         "thumbnail": "https://i.ytimg.com/vi/b_dVbrCxn5U/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Linea Aspera - Redshift"
@@ -10122,7 +10074,7 @@
       {
         "videoId": "6YZ5jw9v5nM",
         "title": "Lllyric? - Looking For The Answer",
-        "position": 216,
+        "position": 208,
         "thumbnail": "https://i.ytimg.com/vi/6YZ5jw9v5nM/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Lllyric? - Looking For The Answer"
@@ -10130,7 +10082,7 @@
       {
         "videoId": "RWzVTIziB8I",
         "title": "Lone Assembly - Seven Souls - Remastered",
-        "position": 217,
+        "position": 209,
         "thumbnail": "https://i.ytimg.com/vi/RWzVTIziB8I/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Lone Assembly - Seven Souls - Remastered"
@@ -10138,7 +10090,7 @@
       {
         "videoId": "CZ8_pMgd2Iw",
         "title": "Luna - Спящая красавица",
-        "position": 218,
+        "position": 210,
         "thumbnail": "https://i.ytimg.com/vi/CZ8_pMgd2Iw/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Luna - Спящая красавица"
@@ -10146,7 +10098,7 @@
       {
         "videoId": "niuOChyPM50",
         "title": "Léonie Pernet - Butterfly",
-        "position": 219,
+        "position": 211,
         "thumbnail": "https://i.ytimg.com/vi/niuOChyPM50/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Léonie Pernet - Butterfly"
@@ -10154,7 +10106,7 @@
       {
         "videoId": "ha78lhJq1ZQ",
         "title": "M!R!M - At Night",
-        "position": 220,
+        "position": 212,
         "thumbnail": "https://i.ytimg.com/vi/ha78lhJq1ZQ/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "M!R!M - At Night"
@@ -10162,7 +10114,7 @@
       {
         "videoId": "RTlDnPjWEdI",
         "title": "M!R!M - Survive",
-        "position": 221,
+        "position": 213,
         "thumbnail": "https://i.ytimg.com/vi/RTlDnPjWEdI/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "M!R!M - Survive"
@@ -10170,7 +10122,7 @@
       {
         "videoId": "yu5lXRVDWZc",
         "title": "M!R!M - Testament",
-        "position": 222,
+        "position": 214,
         "thumbnail": "https://i.ytimg.com/vi/yu5lXRVDWZc/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "M!R!M - Testament"
@@ -10178,7 +10130,7 @@
       {
         "videoId": "5ZOL7tYgVZE",
         "title": "Madeline Goldstein - 1996 Expectations",
-        "position": 223,
+        "position": 215,
         "thumbnail": "https://i.ytimg.com/vi/5ZOL7tYgVZE/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Madeline Goldstein - 1996 Expectations"
@@ -10186,7 +10138,7 @@
       {
         "videoId": "sXnnvPXCbks",
         "title": "Madeline Goldstein - Death's Door",
-        "position": 224,
+        "position": 216,
         "thumbnail": "https://i.ytimg.com/vi/sXnnvPXCbks/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Madeline Goldstein - Death's Door"
@@ -10194,7 +10146,7 @@
       {
         "videoId": "pMREKTSejCw",
         "title": "Madeline Goldstein - One More Day",
-        "position": 225,
+        "position": 217,
         "thumbnail": "https://i.ytimg.com/vi/pMREKTSejCw/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Madeline Goldstein - One More Day"
@@ -10202,7 +10154,7 @@
       {
         "videoId": "MNrEGUkOrB8",
         "title": "Madeline Goldstein;Some Ember - One More Day - Club Mix (Some Ember Remix)",
-        "position": 226,
+        "position": 218,
         "thumbnail": "https://i.ytimg.com/vi/MNrEGUkOrB8/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Madeline Goldstein;Some Ember - One More Day - Club Mix (Some Ember Remix)"
@@ -10210,7 +10162,7 @@
       {
         "videoId": "DNLrtN7lLHo",
         "title": "Magic Wands - Cyan Blue",
-        "position": 227,
+        "position": 219,
         "thumbnail": "https://i.ytimg.com/vi/DNLrtN7lLHo/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Magic Wands - Cyan Blue"
@@ -10218,23 +10170,23 @@
       {
         "videoId": "5eWjlnhLSmg",
         "title": "Magic Wands - Loveline",
-        "position": 228,
+        "position": 220,
         "thumbnail": "https://i.ytimg.com/vi/5eWjlnhLSmg/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Magic Wands - Loveline"
       },
       {
-        "videoId": "TslBkIAQyJY",
+        "videoId": "E3m2qcYR1C0",
         "title": "Magnified Desire - Dead Flowers",
-        "position": 229,
-        "thumbnail": "https://i.ytimg.com/vi/TslBkIAQyJY/mqdefault.jpg",
+        "position": 221,
+        "thumbnail": "https://i.ytimg.com/vi/E3m2qcYR1C0/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Magnified Desire - Dead Flowers"
       },
       {
         "videoId": "ACOlQet6k-o",
         "title": "Magnified Desire - Last Night",
-        "position": 230,
+        "position": 222,
         "thumbnail": "https://i.ytimg.com/vi/ACOlQet6k-o/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Magnified Desire - Last Night"
@@ -10242,7 +10194,7 @@
       {
         "videoId": "RUUNvMkNeTY",
         "title": "Magnified Desire - Virginity",
-        "position": 231,
+        "position": 223,
         "thumbnail": "https://i.ytimg.com/vi/RUUNvMkNeTY/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Magnified Desire - Virginity"
@@ -10250,7 +10202,7 @@
       {
         "videoId": "u7ORHWvjkLE",
         "title": "Male Tears - Hit Me",
-        "position": 232,
+        "position": 224,
         "thumbnail": "https://i.ytimg.com/vi/u7ORHWvjkLE/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Male Tears - Hit Me"
@@ -10258,7 +10210,7 @@
       {
         "videoId": "bf7_BKYIGjU",
         "title": "Mannequin - Limits",
-        "position": 233,
+        "position": 225,
         "thumbnail": "https://i.ytimg.com/vi/bf7_BKYIGjU/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Mannequin - Limits"
@@ -10266,7 +10218,7 @@
       {
         "videoId": "ngMf2WAMCPA",
         "title": "Mareux - Blackout",
-        "position": 234,
+        "position": 226,
         "thumbnail": "https://i.ytimg.com/vi/ngMf2WAMCPA/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Mareux - Blackout"
@@ -10274,7 +10226,7 @@
       {
         "videoId": "Z6vsWr5sY-4",
         "title": "Mareux - Choke",
-        "position": 235,
+        "position": 227,
         "thumbnail": "https://i.ytimg.com/vi/Z6vsWr5sY-4/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Mareux - Choke"
@@ -10282,7 +10234,7 @@
       {
         "videoId": "vuinaI63JiM",
         "title": "Mareux - Dance Floor Dolor",
-        "position": 236,
+        "position": 228,
         "thumbnail": "https://i.ytimg.com/vi/vuinaI63JiM/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Mareux - Dance Floor Dolor"
@@ -10290,7 +10242,7 @@
       {
         "videoId": "VUFDdVrJuvg",
         "title": "Mareux - Dark Paradise",
-        "position": 237,
+        "position": 229,
         "thumbnail": "https://i.ytimg.com/vi/VUFDdVrJuvg/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Mareux - Dark Paradise"
@@ -10298,7 +10250,7 @@
       {
         "videoId": "gi2Agz516zI",
         "title": "Mareux - Gopnik",
-        "position": 238,
+        "position": 230,
         "thumbnail": "https://i.ytimg.com/vi/gi2Agz516zI/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Mareux - Gopnik"
@@ -10306,7 +10258,7 @@
       {
         "videoId": "XGH-3voxcVk",
         "title": "Mareux - Killer",
-        "position": 239,
+        "position": 231,
         "thumbnail": "https://i.ytimg.com/vi/XGH-3voxcVk/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Mareux - Killer"
@@ -10314,7 +10266,7 @@
       {
         "videoId": "yU3w2AcUqx0",
         "title": "Mareux - Leech",
-        "position": 240,
+        "position": 232,
         "thumbnail": "https://i.ytimg.com/vi/yU3w2AcUqx0/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Mareux - Leech"
@@ -10322,7 +10274,7 @@
       {
         "videoId": "lTAmtMTl8TY",
         "title": "Mareux - Sail",
-        "position": 241,
+        "position": 233,
         "thumbnail": "https://i.ytimg.com/vi/lTAmtMTl8TY/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Mareux - Sail"
@@ -10330,7 +10282,7 @@
       {
         "videoId": "WLIieUdezOA",
         "title": "Mareux - Spectral Tease",
-        "position": 242,
+        "position": 234,
         "thumbnail": "https://i.ytimg.com/vi/WLIieUdezOA/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Mareux - Spectral Tease"
@@ -10338,7 +10290,7 @@
       {
         "videoId": "oBJt2SU39MI",
         "title": "Mareux - Summertime",
-        "position": 243,
+        "position": 235,
         "thumbnail": "https://i.ytimg.com/vi/oBJt2SU39MI/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Mareux - Summertime"
@@ -10346,7 +10298,7 @@
       {
         "videoId": "zM5ZTpYl8Co",
         "title": "Mareux - The Perfect Girl",
-        "position": 244,
+        "position": 236,
         "thumbnail": "https://i.ytimg.com/vi/zM5ZTpYl8Co/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Mareux - The Perfect Girl"
@@ -10354,7 +10306,7 @@
       {
         "videoId": "aMVlWMfI8KU",
         "title": "Mareux;Dj Fn1 - Spectral Tease (Dj Fn1 Edit)",
-        "position": 245,
+        "position": 237,
         "thumbnail": "https://i.ytimg.com/vi/aMVlWMfI8KU/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Mareux;Dj Fn1 - Spectral Tease (Dj Fn1 Edit)"
@@ -10362,7 +10314,7 @@
       {
         "videoId": "tknC6t15geY",
         "title": "Mareux;King Woman - Glass (feat. King Woman)",
-        "position": 246,
+        "position": 238,
         "thumbnail": "https://i.ytimg.com/vi/tknC6t15geY/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Mareux;King Woman - Glass (feat. King Woman)"
@@ -10370,7 +10322,7 @@
       {
         "videoId": "oHqyqdVnR0M",
         "title": "mary in the junkyard - ghost",
-        "position": 247,
+        "position": 239,
         "thumbnail": "https://i.ytimg.com/vi/oHqyqdVnR0M/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "mary in the junkyard - ghost"
@@ -10378,7 +10330,7 @@
       {
         "videoId": "sh_n4vVM5Ds",
         "title": "Mercy Girl - Heaven",
-        "position": 248,
+        "position": 240,
         "thumbnail": "https://i.ytimg.com/vi/sh_n4vVM5Ds/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Mercy Girl - Heaven"
@@ -10386,7 +10338,7 @@
       {
         "videoId": "8LoJOWWMn2k",
         "title": "Mercy Girl - I'm In Love",
-        "position": 249,
+        "position": 241,
         "thumbnail": "https://i.ytimg.com/vi/8LoJOWWMn2k/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Mercy Girl - I'm In Love"
@@ -10394,7 +10346,7 @@
       {
         "videoId": "cYIkbUoSV2Q",
         "title": "Mercy Girl - No Sound",
-        "position": 250,
+        "position": 242,
         "thumbnail": "https://i.ytimg.com/vi/cYIkbUoSV2Q/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Mercy Girl - No Sound"
@@ -10402,7 +10354,7 @@
       {
         "videoId": "aWG4pwYoinE",
         "title": "Midi Memory - Anywhere, Anytime",
-        "position": 251,
+        "position": 243,
         "thumbnail": "https://i.ytimg.com/vi/aWG4pwYoinE/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Midi Memory - Anywhere, Anytime"
@@ -10410,7 +10362,7 @@
       {
         "videoId": "2utC7soBhRg",
         "title": "Minimal Schlager - FMB",
-        "position": 252,
+        "position": 244,
         "thumbnail": "https://i.ytimg.com/vi/2utC7soBhRg/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Minimal Schlager - FMB"
@@ -10418,7 +10370,7 @@
       {
         "videoId": "g6KMu8ojNxE",
         "title": "Minimal Schlager - Forbidden Fruit",
-        "position": 253,
+        "position": 245,
         "thumbnail": "https://i.ytimg.com/vi/g6KMu8ojNxE/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Minimal Schlager - Forbidden Fruit"
@@ -10426,15 +10378,15 @@
       {
         "videoId": "0pSPp2QeY7Y",
         "title": "Minuit Machine - 98",
-        "position": 254,
+        "position": 246,
         "thumbnail": "https://i.ytimg.com/vi/0pSPp2QeY7Y/mqdefault.jpg",
         "channelTitle": "",
-        "userTitle": "Minuit Machine - 98"
+        "userTitle": "Minuit Machine - 98\""
       },
       {
         "videoId": "O5I94MFmbdU",
         "title": "Minuit Machine - Basic Needs",
-        "position": 255,
+        "position": 247,
         "thumbnail": "https://i.ytimg.com/vi/O5I94MFmbdU/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Minuit Machine - Basic Needs"
@@ -10442,7 +10394,7 @@
       {
         "videoId": "_rYyhMPqQf0",
         "title": "Minuit Machine - Black Is My Anger",
-        "position": 256,
+        "position": 248,
         "thumbnail": "https://i.ytimg.com/vi/_rYyhMPqQf0/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Minuit Machine - Black Is My Anger"
@@ -10450,7 +10402,7 @@
       {
         "videoId": "OgjV1aoFVCc",
         "title": "Minuit Machine - Cent fois",
-        "position": 257,
+        "position": 249,
         "thumbnail": "https://i.ytimg.com/vi/OgjV1aoFVCc/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Minuit Machine - Cent fois"
@@ -10458,7 +10410,7 @@
       {
         "videoId": "xlsjuff4NH8",
         "title": "Minuit Machine - Chaos",
-        "position": 258,
+        "position": 250,
         "thumbnail": "https://i.ytimg.com/vi/xlsjuff4NH8/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Minuit Machine - Chaos"
@@ -10466,7 +10418,7 @@
       {
         "videoId": "7hTFFw6tlME",
         "title": "Minuit Machine - DRGS",
-        "position": 259,
+        "position": 251,
         "thumbnail": "https://i.ytimg.com/vi/7hTFFw6tlME/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Minuit Machine - DRGS"
@@ -10474,7 +10426,7 @@
       {
         "videoId": "s7MUU3ZKnfI",
         "title": "Minuit Machine - Empty Shell",
-        "position": 260,
+        "position": 252,
         "thumbnail": "https://i.ytimg.com/vi/s7MUU3ZKnfI/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Minuit Machine - Empty Shell"
@@ -10482,7 +10434,7 @@
       {
         "videoId": "ePDFM7HJvgw",
         "title": "Minuit Machine - Everlasting",
-        "position": 261,
+        "position": 253,
         "thumbnail": "https://i.ytimg.com/vi/ePDFM7HJvgw/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Minuit Machine - Everlasting"
@@ -10490,7 +10442,7 @@
       {
         "videoId": "rIza0Bw-Mdk",
         "title": "Minuit Machine - Famous or Dead",
-        "position": 262,
+        "position": 254,
         "thumbnail": "https://i.ytimg.com/vi/rIza0Bw-Mdk/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Minuit Machine - Famous or Dead"
@@ -10498,7 +10450,7 @@
       {
         "videoId": "t56GBykeZQE",
         "title": "Minuit Machine - Fear Of Missing Out",
-        "position": 263,
+        "position": 255,
         "thumbnail": "https://i.ytimg.com/vi/t56GBykeZQE/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Minuit Machine - Fear Of Missing Out"
@@ -10506,7 +10458,7 @@
       {
         "videoId": "kAIW3yOru28",
         "title": "Minuit Machine - Hold Me",
-        "position": 264,
+        "position": 256,
         "thumbnail": "https://i.ytimg.com/vi/kAIW3yOru28/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Minuit Machine - Hold Me"
@@ -10514,23 +10466,31 @@
       {
         "videoId": "-bggR8DPwUc",
         "title": "Minuit Machine - Honey",
-        "position": 265,
+        "position": 257,
         "thumbnail": "https://i.ytimg.com/vi/-bggR8DPwUc/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Minuit Machine - Honey"
       },
       {
-        "videoId": "Minuit Machine - Lovers Of The Night",
-        "title": "Minuit Machine",
-        "position": 266,
-        "thumbnail": "https://i.ytimg.com/vi/Minuit Machine - Lovers Of The Night/mqdefault.jpg",
+        "videoId": "72kSMt2CkZ8",
+        "title": "Minuit Machine - Lovers Of The Night",
+        "position": 258,
+        "thumbnail": "https://i.ytimg.com/vi/72kSMt2CkZ8/mqdefault.jpg",
         "channelTitle": "",
-        "userTitle": "Minuit Machine"
+        "userTitle": "Minuit Machine - Lovers Of The Night"
+      },
+            {
+        "videoId": "VukYXWfC-9Y",
+        "title": "Minuit Machine - Lovers Of The Night",
+        "position": 258,
+        "thumbnail": "https://i.ytimg.com/vi/VukYXWfC-9Y/mqdefault.jpg",
+        "channelTitle": "",
+        "userTitle": "Minuit Machine - Lovers Of The Night"
       },
       {
         "videoId": "11am80OH06o",
         "title": "Minuit Machine - Party People",
-        "position": 267,
+        "position": 259,
         "thumbnail": "https://i.ytimg.com/vi/11am80OH06o/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Minuit Machine - Party People"
@@ -10538,7 +10498,7 @@
       {
         "videoId": "kWuLvvSowX0",
         "title": "Minuit Machine - Prey/Hunter",
-        "position": 268,
+        "position": 260,
         "thumbnail": "https://i.ytimg.com/vi/kWuLvvSowX0/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Minuit Machine - Prey/Hunter"
@@ -10546,7 +10506,7 @@
       {
         "videoId": "kTOFZEWsnpE",
         "title": "Minuit Machine - Sabotage",
-        "position": 269,
+        "position": 261,
         "thumbnail": "https://i.ytimg.com/vi/kTOFZEWsnpE/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Minuit Machine - Sabotage"
@@ -10554,7 +10514,7 @@
       {
         "videoId": "RD_eGBaIaXA",
         "title": "Minuit Machine - Sacrifice",
-        "position": 270,
+        "position": 262,
         "thumbnail": "https://i.ytimg.com/vi/RD_eGBaIaXA/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Minuit Machine - Sacrifice"
@@ -10562,7 +10522,7 @@
       {
         "videoId": "lrqp8ZeFWVU",
         "title": "Minuit Machine - Shifting",
-        "position": 271,
+        "position": 263,
         "thumbnail": "https://i.ytimg.com/vi/lrqp8ZeFWVU/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Minuit Machine - Shifting"
@@ -10570,7 +10530,7 @@
       {
         "videoId": "cptkCZs4wZw",
         "title": "Minuit Machine - Sisters",
-        "position": 272,
+        "position": 264,
         "thumbnail": "https://i.ytimg.com/vi/cptkCZs4wZw/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Minuit Machine - Sisters"
@@ -10578,7 +10538,7 @@
       {
         "videoId": "U_LfXTdBHt4",
         "title": "Minuit Machine - The Earth",
-        "position": 273,
+        "position": 265,
         "thumbnail": "https://i.ytimg.com/vi/U_LfXTdBHt4/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Minuit Machine - The Earth"
@@ -10586,7 +10546,7 @@
       {
         "videoId": "n7NgD9CzF-o",
         "title": "Minuit Machine - Vanity",
-        "position": 274,
+        "position": 266,
         "thumbnail": "https://i.ytimg.com/vi/n7NgD9CzF-o/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Minuit Machine - Vanity"
@@ -10594,7 +10554,7 @@
       {
         "videoId": "lHlxlCgymek",
         "title": "Minuit Machine;Maud Geffray - Don't Run From The Fire - Maud Geffray Remix",
-        "position": 275,
+        "position": 267,
         "thumbnail": "https://i.ytimg.com/vi/lHlxlCgymek/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Minuit Machine;Maud Geffray - Don't Run From The Fire - Maud Geffray Remix"
@@ -10602,15 +10562,23 @@
       {
         "videoId": "MncaHsN7T4M",
         "title": "Minuit Machine;RAUMM - Honey - RAUMM Remix",
-        "position": 276,
+        "position": 268,
         "thumbnail": "https://i.ytimg.com/vi/MncaHsN7T4M/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Minuit Machine;RAUMM - Honey - RAUMM Remix"
       },
       {
+        "videoId": "lC2osSNqE2g",
+        "title": "МИРТЛ - Догорает",
+        "position": 269,
+        "thumbnail": "https://i.ytimg.com/vi/lC2osSNqE2g/mqdefault.jpg",
+        "channelTitle": "",
+        "userTitle": "МИРТЛ - Догорает"
+      },
+      {
         "videoId": "I_o1LPTMSdw",
         "title": "MitroWave;leah julia - Curses",
-        "position": 277,
+        "position": 270,
         "thumbnail": "https://i.ytimg.com/vi/I_o1LPTMSdw/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "MitroWave;leah julia - Curses"
@@ -10618,7 +10586,7 @@
       {
         "videoId": "haBeRluizqI",
         "title": "Molchat Doma - На Дне",
-        "position": 278,
+        "position": 271,
         "thumbnail": "https://i.ytimg.com/vi/haBeRluizqI/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Molchat Doma - На Дне"
@@ -10626,7 +10594,7 @@
       {
         "videoId": "Fg2CvKG39Rc",
         "title": "Molchat Doma - Тоска",
-        "position": 279,
+        "position": 272,
         "thumbnail": "https://i.ytimg.com/vi/Fg2CvKG39Rc/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Molchat Doma - Тоска"
@@ -10634,7 +10602,7 @@
       {
         "videoId": "kPshx-3AFKo",
         "title": "Molly Nilsson - I Hope You Die",
-        "position": 280,
+        "position": 273,
         "thumbnail": "https://i.ytimg.com/vi/kPshx-3AFKo/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Molly Nilsson - I Hope You Die"
@@ -10642,7 +10610,7 @@
       {
         "videoId": "fXXWSGoXh5w",
         "title": "moonvampire - shadows",
-        "position": 281,
+        "position": 274,
         "thumbnail": "https://i.ytimg.com/vi/fXXWSGoXh5w/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "moonvampire - shadows"
@@ -10650,7 +10618,7 @@
       {
         "videoId": "6k-00J19hJI",
         "title": "moonvampire;Staarz - cigarette burns - remix (slowed)",
-        "position": 282,
+        "position": 275,
         "thumbnail": "https://i.ytimg.com/vi/6k-00J19hJI/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "moonvampire;Staarz - cigarette burns - remix (slowed)"
@@ -10658,7 +10626,7 @@
       {
         "videoId": "HzTmUHOz1a8",
         "title": "Motorama - Up",
-        "position": 283,
+        "position": 276,
         "thumbnail": "https://i.ytimg.com/vi/HzTmUHOz1a8/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Motorama - Up"
@@ -10666,7 +10634,7 @@
       {
         "videoId": "gxtfODHUsUc",
         "title": "Mr.Kitty - Shadow Dancer",
-        "position": 284,
+        "position": 277,
         "thumbnail": "https://i.ytimg.com/vi/gxtfODHUsUc/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Mr.Kitty - Shadow Dancer"
@@ -10674,7 +10642,7 @@
       {
         "videoId": "2C5xXMhPF7M",
         "title": "My Manifesto - Bleach",
-        "position": 285,
+        "position": 278,
         "thumbnail": "https://i.ytimg.com/vi/2C5xXMhPF7M/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "My Manifesto - Bleach"
@@ -10682,7 +10650,7 @@
       {
         "videoId": "7VwnXPNsagg",
         "title": "My Manifesto;Carrellee - Autopilot",
-        "position": 286,
+        "position": 279,
         "thumbnail": "https://i.ytimg.com/vi/7VwnXPNsagg/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "My Manifesto;Carrellee - Autopilot"
@@ -10690,7 +10658,7 @@
       {
         "videoId": "VHtJG5F6R38",
         "title": "Neu-Romancer - Blindsight",
-        "position": 287,
+        "position": 280,
         "thumbnail": "https://i.ytimg.com/vi/VHtJG5F6R38/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Neu-Romancer - Blindsight"
@@ -10698,7 +10666,7 @@
       {
         "videoId": "IOUcev427vI",
         "title": "New Today - Suicidal",
-        "position": 288,
+        "position": 281,
         "thumbnail": "https://i.ytimg.com/vi/IOUcev427vI/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "New Today - Suicidal"
@@ -10706,7 +10674,7 @@
       {
         "videoId": "cz2oHFE0QV0",
         "title": "Night Haze - Misbehave",
-        "position": 289,
+        "position": 282,
         "thumbnail": "https://i.ytimg.com/vi/cz2oHFE0QV0/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Night Haze - Misbehave"
@@ -10714,7 +10682,7 @@
       {
         "videoId": "npA6Q2cA3As",
         "title": "Night in Athens - Frozen Landscape",
-        "position": 290,
+        "position": 283,
         "thumbnail": "https://i.ytimg.com/vi/npA6Q2cA3As/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Night in Athens - Frozen Landscape"
@@ -10722,7 +10690,7 @@
       {
         "videoId": "h2y7Fkrzuqg",
         "title": "Night in Athens - I Search For A Sign",
-        "position": 291,
+        "position": 284,
         "thumbnail": "https://i.ytimg.com/vi/h2y7Fkrzuqg/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Night in Athens - I Search For A Sign"
@@ -10730,7 +10698,7 @@
       {
         "videoId": "gGxLM0N6GjI",
         "title": "Night in Athens - Pressure",
-        "position": 292,
+        "position": 285,
         "thumbnail": "https://i.ytimg.com/vi/gGxLM0N6GjI/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Night in Athens - Pressure"
@@ -10738,7 +10706,7 @@
       {
         "videoId": "0C5ERltif4U",
         "title": "Night in Athens - Words Unspoken",
-        "position": 293,
+        "position": 286,
         "thumbnail": "https://i.ytimg.com/vi/0C5ERltif4U/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Night in Athens - Words Unspoken"
@@ -10746,7 +10714,7 @@
       {
         "videoId": "PZhlV5jxM00",
         "title": "Nightbus - Way Past Three",
-        "position": 294,
+        "position": 287,
         "thumbnail": "https://i.ytimg.com/vi/PZhlV5jxM00/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Nightbus - Way Past Three"
@@ -10754,7 +10722,7 @@
       {
         "videoId": "Vgyf1aBxt_o",
         "title": "niteboi - u.",
-        "position": 295,
+        "position": 288,
         "thumbnail": "https://i.ytimg.com/vi/Vgyf1aBxt_o/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "niteboi - u."
@@ -10762,7 +10730,7 @@
       {
         "videoId": "vDFDdMyIAbQ",
         "title": "NNHMN - Black Palms",
-        "position": 296,
+        "position": 289,
         "thumbnail": "https://i.ytimg.com/vi/vDFDdMyIAbQ/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "NNHMN - Black Palms"
@@ -10770,47 +10738,39 @@
       {
         "videoId": "nx7_58zviwo",
         "title": "NNHMN - Bring it on",
-        "position": 297,
+        "position": 290,
         "thumbnail": "https://i.ytimg.com/vi/nx7_58zviwo/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "NNHMN - Bring it on"
       },
       {
-        "videoId": "3gzqM_Jqe_s",
+        "videoId": "8UJ7uN-bhPQ",
         "title": "NNHMN - Gloomy Heart",
-        "position": 298,
-        "thumbnail": "https://i.ytimg.com/vi/3gzqM_Jqe_s/mqdefault.jpg",
+        "position": 291,
+        "thumbnail": "https://i.ytimg.com/vi/8UJ7uN-bhPQ/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "NNHMN - Gloomy Heart"
       },
       {
         "videoId": "npY57ejO3c4",
         "title": "NNHMN - In Darkness",
-        "position": 299,
+        "position": 292,
         "thumbnail": "https://i.ytimg.com/vi/npY57ejO3c4/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "NNHMN - In Darkness"
       },
       {
-        "videoId": "-bKC6hZHWko",
+        "videoId": "ZlLQ1Lg18FM",
         "title": "NNHMN - Magic Man",
-        "position": 300,
-        "thumbnail": "https://i.ytimg.com/vi/-bKC6hZHWko/mqdefault.jpg",
+        "position": 293,
+        "thumbnail": "https://i.ytimg.com/vi/ZlLQ1Lg18FM/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "NNHMN - Magic Man"
       },
       {
         "videoId": "cYW1gFkxaDQ",
         "title": "NNHMN - Nrl",
-        "position": 301,
-        "thumbnail": "https://i.ytimg.com/vi/cYW1gFkxaDQ/mqdefault.jpg",
-        "channelTitle": "",
-        "userTitle": "NNHMN - Nrl"
-      },
-      {
-        "videoId": "cYW1gFkxaDQ",
-        "title": "NNHMN - Nrl",
-        "position": 302,
+        "position": 294,
         "thumbnail": "https://i.ytimg.com/vi/cYW1gFkxaDQ/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "NNHMN - Nrl"
@@ -10818,7 +10778,7 @@
       {
         "videoId": "kkRVMgQbxTg",
         "title": "NNHMN - Shadow in the Dark",
-        "position": 303,
+        "position": 295,
         "thumbnail": "https://i.ytimg.com/vi/kkRVMgQbxTg/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "NNHMN - Shadow in the Dark"
@@ -10826,7 +10786,7 @@
       {
         "videoId": "tQbnnTZzZ0M",
         "title": "NNHMN - Soldier of Beauty",
-        "position": 304,
+        "position": 296,
         "thumbnail": "https://i.ytimg.com/vi/tQbnnTZzZ0M/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "NNHMN - Soldier of Beauty"
@@ -10834,31 +10794,23 @@
       {
         "videoId": "2epgBGJVJ2Q",
         "title": "NNHMN - Special",
-        "position": 305,
+        "position": 297,
         "thumbnail": "https://i.ytimg.com/vi/2epgBGJVJ2Q/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "NNHMN - Special"
       },
       {
-        "videoId": "IRkFCy-p1Uw",
+        "videoId": "uHQ8yMc9FLk",
         "title": "NNHMN - The River of Fire",
-        "position": 306,
-        "thumbnail": "https://i.ytimg.com/vi/IRkFCy-p1Uw/mqdefault.jpg",
+        "position": 298,
+        "thumbnail": "https://i.ytimg.com/vi/uHQ8yMc9FLk/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "NNHMN - The River of Fire"
       },
       {
         "videoId": "u-yFSghtrSo",
         "title": "NNHMN - Tomorrow's Heroine",
-        "position": 307,
-        "thumbnail": "https://i.ytimg.com/vi/u-yFSghtrSo/mqdefault.jpg",
-        "channelTitle": "",
-        "userTitle": "NNHMN - Tomorrow's Heroine"
-      },
-      {
-        "videoId": "u-yFSghtrSo",
-        "title": "NNHMN - Tomorrow's Heroine",
-        "position": 308,
+        "position": 299,
         "thumbnail": "https://i.ytimg.com/vi/u-yFSghtrSo/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "NNHMN - Tomorrow's Heroine"
@@ -10866,7 +10818,7 @@
       {
         "videoId": "ChWbfRzH9SI",
         "title": "NNHMN - Unreal",
-        "position": 309,
+        "position": 300,
         "thumbnail": "https://i.ytimg.com/vi/ChWbfRzH9SI/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "NNHMN - Unreal"
@@ -10874,7 +10826,7 @@
       {
         "videoId": "Cps1TWpWesk",
         "title": "NNHMN - Your Demon",
-        "position": 310,
+        "position": 301,
         "thumbnail": "https://i.ytimg.com/vi/Cps1TWpWesk/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "NNHMN - Your Demon"
@@ -10882,7 +10834,7 @@
       {
         "videoId": "odh2le5sTmI",
         "title": "noturgf - Suffocation - Slowed",
-        "position": 311,
+        "position": 302,
         "thumbnail": "https://i.ytimg.com/vi/odh2le5sTmI/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "noturgf - Suffocation - Slowed"
@@ -10890,7 +10842,7 @@
       {
         "videoId": "yYlWR1uD5qw",
         "title": "noturgf - Suffocation - Sped Up",
-        "position": 312,
+        "position": 303,
         "thumbnail": "https://i.ytimg.com/vi/yYlWR1uD5qw/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "noturgf - Suffocation - Sped Up"
@@ -10898,7 +10850,7 @@
       {
         "videoId": "IFT7gaGbt20",
         "title": "Nouvelle Phénomène - All Away",
-        "position": 313,
+        "position": 304,
         "thumbnail": "https://i.ytimg.com/vi/IFT7gaGbt20/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Nouvelle Phénomène - All Away"
@@ -10906,7 +10858,7 @@
       {
         "videoId": "l2dZ-v026ZQ",
         "title": "Nouvelle Phénomène - Caresse",
-        "position": 314,
+        "position": 305,
         "thumbnail": "https://i.ytimg.com/vi/l2dZ-v026ZQ/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Nouvelle Phénomène - Caresse"
@@ -10914,7 +10866,7 @@
       {
         "videoId": "eoD_GKCWFI4",
         "title": "Nouvelle Phénomène - Not a sin",
-        "position": 315,
+        "position": 306,
         "thumbnail": "https://i.ytimg.com/vi/eoD_GKCWFI4/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Nouvelle Phénomène - Not a sin"
@@ -10922,7 +10874,7 @@
       {
         "videoId": "Tv6VuCD4amY",
         "title": "Nouvelle Phénomène - Talk to Me",
-        "position": 316,
+        "position": 307,
         "thumbnail": "https://i.ytimg.com/vi/Tv6VuCD4amY/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Nouvelle Phénomène - Talk to Me"
@@ -10930,7 +10882,7 @@
       {
         "videoId": "mRduG_RQSK0",
         "title": "Nuovo Testamento - Exposure",
-        "position": 317,
+        "position": 308,
         "thumbnail": "https://i.ytimg.com/vi/mRduG_RQSK0/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Nuovo Testamento - Exposure"
@@ -10938,7 +10890,7 @@
       {
         "videoId": "ncWpA1bd2B0",
         "title": "Nuovo Testamento - Prayers",
-        "position": 318,
+        "position": 309,
         "thumbnail": "https://i.ytimg.com/vi/ncWpA1bd2B0/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Nuovo Testamento - Prayers"
@@ -10946,7 +10898,7 @@
       {
         "videoId": "oTq8IPAdpWY",
         "title": "Nürnberg - Biessensoŭnasć",
-        "position": 319,
+        "position": 310,
         "thumbnail": "https://i.ytimg.com/vi/oTq8IPAdpWY/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Nürnberg - Biessensoŭnasć"
@@ -10954,7 +10906,7 @@
       {
         "videoId": "V8QQMlzyzKA",
         "title": "Opale - Alejandro's Theme",
-        "position": 320,
+        "position": 311,
         "thumbnail": "https://i.ytimg.com/vi/V8QQMlzyzKA/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Opale - Alejandro's Theme"
@@ -10962,7 +10914,7 @@
       {
         "videoId": "ZJpFwqmz5VA",
         "title": "Opale - Eternelle Nostalgie",
-        "position": 321,
+        "position": 312,
         "thumbnail": "https://i.ytimg.com/vi/ZJpFwqmz5VA/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Opale - Eternelle Nostalgie"
@@ -10970,7 +10922,7 @@
       {
         "videoId": "gYwlhIM4sMg",
         "title": "Opale - Hédoniste",
-        "position": 322,
+        "position": 313,
         "thumbnail": "https://i.ytimg.com/vi/gYwlhIM4sMg/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Opale - Hédoniste"
@@ -10978,7 +10930,7 @@
       {
         "videoId": "rZHGKN4uoJ0",
         "title": "Opale - Les Champs Magnetiques - Luminous Version",
-        "position": 323,
+        "position": 314,
         "thumbnail": "https://i.ytimg.com/vi/rZHGKN4uoJ0/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Opale - Les Champs Magnetiques - Luminous Version"
@@ -10986,7 +10938,7 @@
       {
         "videoId": "24TyS3rhL4k",
         "title": "Opale - Sleepless",
-        "position": 324,
+        "position": 315,
         "thumbnail": "https://i.ytimg.com/vi/24TyS3rhL4k/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Opale - Sleepless"
@@ -10994,7 +10946,7 @@
       {
         "videoId": "FUH05FUZsh8",
         "title": "Opale - Sparkles and Wine",
-        "position": 325,
+        "position": 316,
         "thumbnail": "https://i.ytimg.com/vi/FUH05FUZsh8/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Opale - Sparkles and Wine"
@@ -11002,7 +10954,7 @@
       {
         "videoId": "Ks1vE9vxVBw",
         "title": "Orion - Higher",
-        "position": 326,
+        "position": 317,
         "thumbnail": "https://i.ytimg.com/vi/Ks1vE9vxVBw/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Orion - Higher"
@@ -11010,7 +10962,7 @@
       {
         "videoId": "K0T4Gekz7Zo",
         "title": "Otha - I'm on Top",
-        "position": 327,
+        "position": 318,
         "thumbnail": "https://i.ytimg.com/vi/K0T4Gekz7Zo/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Otha - I'm on Top"
@@ -11018,7 +10970,7 @@
       {
         "videoId": "l-ojSUqpM7Q",
         "title": "Paradox Obscur - Universe",
-        "position": 328,
+        "position": 319,
         "thumbnail": "https://i.ytimg.com/vi/l-ojSUqpM7Q/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Paradox Obscur - Universe"
@@ -11026,7 +10978,7 @@
       {
         "videoId": "kPVb3AlBj7c",
         "title": "Paradox Obscur - X-Spell",
-        "position": 329,
+        "position": 320,
         "thumbnail": "https://i.ytimg.com/vi/kPVb3AlBj7c/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Paradox Obscur - X-Spell"
@@ -11034,7 +10986,7 @@
       {
         "videoId": "W0vJ6Yd2wcE",
         "title": "Pastel Ghost - 3NDL3SS",
-        "position": 330,
+        "position": 321,
         "thumbnail": "https://i.ytimg.com/vi/W0vJ6Yd2wcE/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Pastel Ghost - 3NDL3SS"
@@ -11042,7 +10994,7 @@
       {
         "videoId": "guDJvZp5Bqk",
         "title": "Pastel Ghost - Dark Beach",
-        "position": 331,
+        "position": 322,
         "thumbnail": "https://i.ytimg.com/vi/guDJvZp5Bqk/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Pastel Ghost - Dark Beach"
@@ -11050,7 +11002,7 @@
       {
         "videoId": "azrZoMh_iMQ",
         "title": "Pastel Ghost - Embrace",
-        "position": 332,
+        "position": 323,
         "thumbnail": "https://i.ytimg.com/vi/azrZoMh_iMQ/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Pastel Ghost - Embrace"
@@ -11058,7 +11010,7 @@
       {
         "videoId": "EXvTIeUz2fI",
         "title": "Pastel Ghost - Iris",
-        "position": 333,
+        "position": 324,
         "thumbnail": "https://i.ytimg.com/vi/EXvTIeUz2fI/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Pastel Ghost - Iris"
@@ -11066,7 +11018,7 @@
       {
         "videoId": "MIwKsY3ESKA",
         "title": "Pastel Ghost - Mercury",
-        "position": 334,
+        "position": 325,
         "thumbnail": "https://i.ytimg.com/vi/MIwKsY3ESKA/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Pastel Ghost - Mercury"
@@ -11074,7 +11026,7 @@
       {
         "videoId": "toPCldm8fcc",
         "title": "Pastel Ghost - Possession",
-        "position": 335,
+        "position": 326,
         "thumbnail": "https://i.ytimg.com/vi/toPCldm8fcc/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Pastel Ghost - Possession"
@@ -11082,7 +11034,7 @@
       {
         "videoId": "BXHY8eZ1u08",
         "title": "Pastel Ghost - Pulse",
-        "position": 336,
+        "position": 327,
         "thumbnail": "https://i.ytimg.com/vi/BXHY8eZ1u08/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Pastel Ghost - Pulse"
@@ -11090,7 +11042,7 @@
       {
         "videoId": "T4vg5iaDVfk",
         "title": "Pastel Ghost - Sakura",
-        "position": 337,
+        "position": 328,
         "thumbnail": "https://i.ytimg.com/vi/T4vg5iaDVfk/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Pastel Ghost - Sakura"
@@ -11098,7 +11050,7 @@
       {
         "videoId": "33FCLPLnogQ",
         "title": "Pastel Ghost - Shadows",
-        "position": 338,
+        "position": 329,
         "thumbnail": "https://i.ytimg.com/vi/33FCLPLnogQ/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Pastel Ghost - Shadows"
@@ -11106,7 +11058,7 @@
       {
         "videoId": "hRnz2SddPGQ",
         "title": "Pastel Ghost - Translucid",
-        "position": 339,
+        "position": 330,
         "thumbnail": "https://i.ytimg.com/vi/hRnz2SddPGQ/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Pastel Ghost - Translucid"
@@ -11114,7 +11066,7 @@
       {
         "videoId": "I2vI3YcQ-VQ",
         "title": "Pastel Ghost - Underwater",
-        "position": 340,
+        "position": 331,
         "thumbnail": "https://i.ytimg.com/vi/I2vI3YcQ-VQ/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Pastel Ghost - Underwater"
@@ -11122,7 +11074,7 @@
       {
         "videoId": "2OmlNZM_kDE",
         "title": "Pastel Ghost;Sidewalks and Skeletons - Shadows - Sidewalks and Skeletons Remix",
-        "position": 341,
+        "position": 332,
         "thumbnail": "https://i.ytimg.com/vi/2OmlNZM_kDE/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Pastel Ghost;Sidewalks and Skeletons - Shadows - Sidewalks and Skeletons Remix"
@@ -11130,7 +11082,7 @@
       {
         "videoId": "gpxdTVJKyQ0",
         "title": "Pearly Drops - Bloom For Me",
-        "position": 342,
+        "position": 333,
         "thumbnail": "https://i.ytimg.com/vi/gpxdTVJKyQ0/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Pearly Drops - Bloom For Me"
@@ -11138,7 +11090,7 @@
       {
         "videoId": "EYL3mzmYn0w",
         "title": "PERMSKY KRAY - Дорогой Человек",
-        "position": 343,
+        "position": 334,
         "thumbnail": "https://i.ytimg.com/vi/EYL3mzmYn0w/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "PERMSKY KRAY - Дорогой Человек"
@@ -11146,7 +11098,7 @@
       {
         "videoId": "xcKPdYqaYmA",
         "title": "PERMSKY KRAY - Лавандовый Город",
-        "position": 344,
+        "position": 335,
         "thumbnail": "https://i.ytimg.com/vi/xcKPdYqaYmA/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "PERMSKY KRAY - Лавандовый Город"
@@ -11154,7 +11106,7 @@
       {
         "videoId": "RuZn_bLBRKY",
         "title": "PERMSKY KRAY - Самый Худший День",
-        "position": 345,
+        "position": 336,
         "thumbnail": "https://i.ytimg.com/vi/RuZn_bLBRKY/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "PERMSKY KRAY - Самый Худший День"
@@ -11162,7 +11114,7 @@
       {
         "videoId": "0kSlv_ptazE",
         "title": "Perverse State - Haunted",
-        "position": 346,
+        "position": 337,
         "thumbnail": "https://i.ytimg.com/vi/0kSlv_ptazE/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Perverse State - Haunted"
@@ -11170,7 +11122,7 @@
       {
         "videoId": "Q-qgMT1QrwQ",
         "title": "Phantogram;Future Islands - Black Out Days - Future Islands Remix",
-        "position": 347,
+        "position": 338,
         "thumbnail": "https://i.ytimg.com/vi/Q-qgMT1QrwQ/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Phantogram;Future Islands - Black Out Days - Future Islands Remix"
@@ -11178,7 +11130,7 @@
       {
         "videoId": "jkDE1_ZBbsU",
         "title": "Pixel Grip - Reason to Stay",
-        "position": 348,
+        "position": 339,
         "thumbnail": "https://i.ytimg.com/vi/jkDE1_ZBbsU/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Pixel Grip - Reason to Stay"
@@ -11186,7 +11138,7 @@
       {
         "videoId": "4MHSFbvBiR0",
         "title": "Pixel Grip - Split",
-        "position": 349,
+        "position": 340,
         "thumbnail": "https://i.ytimg.com/vi/4MHSFbvBiR0/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Pixel Grip - Split"
@@ -11194,7 +11146,7 @@
       {
         "videoId": "-jUsNfaQLJ4",
         "title": "plenka - Call Me",
-        "position": 350,
+        "position": 341,
         "thumbnail": "https://i.ytimg.com/vi/-jUsNfaQLJ4/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "plenka - Call Me"
@@ -11202,7 +11154,7 @@
       {
         "videoId": "fSJ8ZZBPbOk",
         "title": "plenka - Closed",
-        "position": 351,
+        "position": 342,
         "thumbnail": "https://i.ytimg.com/vi/fSJ8ZZBPbOk/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "plenka - Closed"
@@ -11210,7 +11162,7 @@
       {
         "videoId": "MnrGj0jyNRE",
         "title": "Potochkine - Possédée",
-        "position": 352,
+        "position": 343,
         "thumbnail": "https://i.ytimg.com/vi/MnrGj0jyNRE/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Potochkine - Possédée"
@@ -11218,7 +11170,7 @@
       {
         "videoId": "ED126A69t7Y",
         "title": "Prince Innocence - Blue Star",
-        "position": 353,
+        "position": 344,
         "thumbnail": "https://i.ytimg.com/vi/ED126A69t7Y/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Prince Innocence - Blue Star"
@@ -11226,7 +11178,7 @@
       {
         "videoId": "0hilyfyf8mI",
         "title": "Psyche - Unveiling the Secret",
-        "position": 354,
+        "position": 345,
         "thumbnail": "https://i.ytimg.com/vi/0hilyfyf8mI/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Psyche - Unveiling the Secret"
@@ -11234,7 +11186,7 @@
       {
         "videoId": "MQQv_MOhwRg",
         "title": "Pulp - Countdown",
-        "position": 355,
+        "position": 346,
         "thumbnail": "https://i.ytimg.com/vi/MQQv_MOhwRg/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Pulp - Countdown"
@@ -11242,7 +11194,7 @@
       {
         "videoId": "ycXQPQ6MYAk",
         "title": "Pulsations - Delusional Paragon",
-        "position": 356,
+        "position": 347,
         "thumbnail": "https://i.ytimg.com/vi/ycXQPQ6MYAk/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Pulsations - Delusional Paragon"
@@ -11250,7 +11202,7 @@
       {
         "videoId": "EbIXRTfhyvA",
         "title": "R. Missing - All Alone With Seas",
-        "position": 357,
+        "position": 348,
         "thumbnail": "https://i.ytimg.com/vi/EbIXRTfhyvA/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "R. Missing - All Alone With Seas"
@@ -11258,7 +11210,7 @@
       {
         "videoId": "guZU0oCjXJ8",
         "title": "R. Missing - Anomie by the Lake",
-        "position": 358,
+        "position": 349,
         "thumbnail": "https://i.ytimg.com/vi/guZU0oCjXJ8/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "R. Missing - Anomie by the Lake"
@@ -11266,7 +11218,7 @@
       {
         "videoId": "hcA326jxx3s",
         "title": "R. Missing - Birthright",
-        "position": 359,
+        "position": 350,
         "thumbnail": "https://i.ytimg.com/vi/hcA326jxx3s/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "R. Missing - Birthright"
@@ -11274,7 +11226,7 @@
       {
         "videoId": "1CF7F0k_hJk",
         "title": "R. Missing - Cloud Without Tear",
-        "position": 360,
+        "position": 351,
         "thumbnail": "https://i.ytimg.com/vi/1CF7F0k_hJk/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "R. Missing - Cloud Without Tear"
@@ -11282,7 +11234,7 @@
       {
         "videoId": "FX6XiYXs1Kk",
         "title": "R. Missing - Crimeless",
-        "position": 361,
+        "position": 352,
         "thumbnail": "https://i.ytimg.com/vi/FX6XiYXs1Kk/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "R. Missing - Crimeless"
@@ -11290,7 +11242,7 @@
       {
         "videoId": "4tuFN5HQJVQ",
         "title": "R. Missing - Cry Quicker",
-        "position": 362,
+        "position": 353,
         "thumbnail": "https://i.ytimg.com/vi/4tuFN5HQJVQ/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "R. Missing - Cry Quicker"
@@ -11298,7 +11250,7 @@
       {
         "videoId": "VKmkDP3b9Eg",
         "title": "R. Missing - Dear Contests",
-        "position": 363,
+        "position": 354,
         "thumbnail": "https://i.ytimg.com/vi/VKmkDP3b9Eg/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "R. Missing - Dear Contests"
@@ -11306,15 +11258,23 @@
       {
         "videoId": "4RfjSKLnRTY",
         "title": "R. Missing - Deeper Holes",
-        "position": 364,
+        "position": 355,
         "thumbnail": "https://i.ytimg.com/vi/4RfjSKLnRTY/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "R. Missing - Deeper Holes"
       },
+        {
+        "videoId": "QCD8Tv3PdKU",
+        "title": "R. Missing - Dreamletting",
+        "position": 355,
+        "thumbnail": "https://i.ytimg.com/vi/QCD8Tv3PdKU/mqdefault.jpg",
+        "channelTitle": "",
+        "userTitle": "R. Missing - Dreamletting"
+      },
       {
         "videoId": "VdQmCgCj1Yo",
         "title": "R. Missing - Falling Girl",
-        "position": 365,
+        "position": 356,
         "thumbnail": "https://i.ytimg.com/vi/VdQmCgCj1Yo/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "R. Missing - Falling Girl"
@@ -11322,7 +11282,7 @@
       {
         "videoId": "AzjVQbOi0BQ",
         "title": "R. Missing - Get Careful Darker",
-        "position": 366,
+        "position": 357,
         "thumbnail": "https://i.ytimg.com/vi/AzjVQbOi0BQ/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "R. Missing - Get Careful Darker"
@@ -11330,7 +11290,7 @@
       {
         "videoId": "xuVmNlPXGZ4",
         "title": "R. Missing - Heavens Lower",
-        "position": 367,
+        "position": 358,
         "thumbnail": "https://i.ytimg.com/vi/xuVmNlPXGZ4/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "R. Missing - Heavens Lower"
@@ -11338,23 +11298,31 @@
       {
         "videoId": "VpcdSpAovO4",
         "title": "R. Missing - How to Slow a Dream",
-        "position": 368,
+        "position": 359,
         "thumbnail": "https://i.ytimg.com/vi/VpcdSpAovO4/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "R. Missing - How to Slow a Dream"
       },
       {
-        "videoId": "ljI7vtKrMOI",
-        "title": "R. Missing - Jane Four",
-        "position": 369,
-        "thumbnail": "https://i.ytimg.com/vi/ljI7vtKrMOI/mqdefault.jpg",
+        "videoId": "P6kNoZmPUdI",
+        "title": "R. Missing - infinifalls",
+        "position": 360,
+        "thumbnail": "https://i.ytimg.com/vi/P6kNoZmPUdI/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "R. Missing - Jane Four"
       },
       {
+        "videoId": "ljI7vtKrMOI",
+        "title": "R. Missing - infinifalls",
+        "position": 360,
+        "thumbnail": "https://i.ytimg.com/vi/ljI7vtKrMOI/mqdefault.jpg",
+        "channelTitle": "",
+        "userTitle": "R. Missing - infinifalls"
+      },
+      {
         "videoId": "587plY7XEwE",
         "title": "R. Missing - Kelly Was a Philistine",
-        "position": 370,
+        "position": 361,
         "thumbnail": "https://i.ytimg.com/vi/587plY7XEwE/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "R. Missing - Kelly Was a Philistine"
@@ -11362,7 +11330,7 @@
       {
         "videoId": "GieE_dd5hyw",
         "title": "R. Missing - Maryhead",
-        "position": 371,
+        "position": 362,
         "thumbnail": "https://i.ytimg.com/vi/GieE_dd5hyw/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "R. Missing - Maryhead"
@@ -11370,7 +11338,7 @@
       {
         "videoId": "zR-WTWujrOg",
         "title": "R. Missing - Mostly Back",
-        "position": 372,
+        "position": 363,
         "thumbnail": "https://i.ytimg.com/vi/zR-WTWujrOg/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "R. Missing - Mostly Back"
@@ -11378,7 +11346,7 @@
       {
         "videoId": "h6QTwjm-cQ8",
         "title": "R. Missing - My Time As a Ghostly Someone Else",
-        "position": 373,
+        "position": 364,
         "thumbnail": "https://i.ytimg.com/vi/h6QTwjm-cQ8/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "R. Missing - My Time As a Ghostly Someone Else"
@@ -11386,7 +11354,7 @@
       {
         "videoId": "EHtXQgiVsns",
         "title": "R. Missing - New Present City",
-        "position": 374,
+        "position": 365,
         "thumbnail": "https://i.ytimg.com/vi/EHtXQgiVsns/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "R. Missing - New Present City"
@@ -11394,7 +11362,7 @@
       {
         "videoId": "RZyzYOzM1EQ",
         "title": "R. Missing - Nitelike",
-        "position": 375,
+        "position": 366,
         "thumbnail": "https://i.ytimg.com/vi/RZyzYOzM1EQ/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "R. Missing - Nitelike"
@@ -11402,7 +11370,7 @@
       {
         "videoId": "aczhWqGgaRs",
         "title": "R. Missing - Ola Tremble",
-        "position": 376,
+        "position": 367,
         "thumbnail": "https://i.ytimg.com/vi/aczhWqGgaRs/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "R. Missing - Ola Tremble"
@@ -11410,7 +11378,7 @@
       {
         "videoId": "Klsyp2Mzwko",
         "title": "R. Missing - Placeholder for the Night",
-        "position": 377,
+        "position": 368,
         "thumbnail": "https://i.ytimg.com/vi/Klsyp2Mzwko/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "R. Missing - Placeholder for the Night"
@@ -11418,7 +11386,7 @@
       {
         "videoId": "cJ9bzBsi8HE",
         "title": "R. Missing - Placelessness",
-        "position": 378,
+        "position": 369,
         "thumbnail": "https://i.ytimg.com/vi/cJ9bzBsi8HE/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "R. Missing - Placelessness"
@@ -11426,7 +11394,7 @@
       {
         "videoId": "pNHgCfjJ3Kk",
         "title": "R. Missing - Saturnining",
-        "position": 379,
+        "position": 370,
         "thumbnail": "https://i.ytimg.com/vi/pNHgCfjJ3Kk/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "R. Missing - Saturnining"
@@ -11434,7 +11402,7 @@
       {
         "videoId": "bfYbj3rRVt8",
         "title": "R. Missing - Sleep Will Darken It",
-        "position": 380,
+        "position": 371,
         "thumbnail": "https://i.ytimg.com/vi/bfYbj3rRVt8/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "R. Missing - Sleep Will Darken It"
@@ -11442,7 +11410,7 @@
       {
         "videoId": "2BkdHZRoB4s",
         "title": "R. Missing - Snow Club International - nightskippingmix",
-        "position": 381,
+        "position": 372,
         "thumbnail": "https://i.ytimg.com/vi/2BkdHZRoB4s/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "R. Missing - Snow Club International - nightskippingmix"
@@ -11450,7 +11418,7 @@
       {
         "videoId": "oMo0aDq9DTM",
         "title": "R. Missing - Supermuted",
-        "position": 382,
+        "position": 373,
         "thumbnail": "https://i.ytimg.com/vi/oMo0aDq9DTM/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "R. Missing - Supermuted"
@@ -11458,7 +11426,7 @@
       {
         "videoId": "LLJIrywkdBg",
         "title": "R. Missing - Take Your Pleasure Sadly",
-        "position": 383,
+        "position": 374,
         "thumbnail": "https://i.ytimg.com/vi/LLJIrywkdBg/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "R. Missing - Take Your Pleasure Sadly"
@@ -11466,7 +11434,7 @@
       {
         "videoId": "dvJONCWudlg",
         "title": "R. Missing - Take Your Pleasure Sadly v2",
-        "position": 384,
+        "position": 375,
         "thumbnail": "https://i.ytimg.com/vi/dvJONCWudlg/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "R. Missing - Take Your Pleasure Sadly v2"
@@ -11474,15 +11442,7 @@
       {
         "videoId": "Izv3qBDAFrQ",
         "title": "R. Missing - The Down That Creeps",
-        "position": 385,
-        "thumbnail": "https://i.ytimg.com/vi/Izv3qBDAFrQ/mqdefault.jpg",
-        "channelTitle": "",
-        "userTitle": "R. Missing - The Down That Creeps"
-      },
-      {
-        "videoId": "Izv3qBDAFrQ",
-        "title": "R. Missing - The Down That Creeps",
-        "position": 386,
+        "position": 376,
         "thumbnail": "https://i.ytimg.com/vi/Izv3qBDAFrQ/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "R. Missing - The Down That Creeps"
@@ -11490,7 +11450,7 @@
       {
         "videoId": "l5JwWcfHuGg",
         "title": "R. Missing - Unsummering",
-        "position": 387,
+        "position": 377,
         "thumbnail": "https://i.ytimg.com/vi/l5JwWcfHuGg/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "R. Missing - Unsummering"
@@ -11498,7 +11458,7 @@
       {
         "videoId": "RUkzzQXx_x4",
         "title": "R. Missing;Johan Agebjörn - Fakesnow",
-        "position": 388,
+        "position": 378,
         "thumbnail": "https://i.ytimg.com/vi/RUkzzQXx_x4/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "R. Missing;Johan Agebjörn - Fakesnow"
@@ -11506,7 +11466,7 @@
       {
         "videoId": "zBjFhrZwt_w",
         "title": "R. Missing;Levingtquatre - Eveningpol",
-        "position": 389,
+        "position": 379,
         "thumbnail": "https://i.ytimg.com/vi/zBjFhrZwt_w/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "R. Missing;Levingtquatre - Eveningpol"
@@ -11514,7 +11474,7 @@
       {
         "videoId": "cChR8RrQBZo",
         "title": "R. Missing;Sally Shapiro - Verónica Pass - Sally Shapiro Mix",
-        "position": 390,
+        "position": 380,
         "thumbnail": "https://i.ytimg.com/vi/cChR8RrQBZo/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "R. Missing;Sally Shapiro - Verónica Pass - Sally Shapiro Mix"
@@ -11522,7 +11482,7 @@
       {
         "videoId": "kGQi4TfyfOw",
         "title": "Rare DM - send nudes",
-        "position": 391,
+        "position": 381,
         "thumbnail": "https://i.ytimg.com/vi/kGQi4TfyfOw/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Rare DM - send nudes"
@@ -11530,7 +11490,7 @@
       {
         "videoId": "S9WqHQVZs5Y",
         "title": "Rare DM - Skater Hits Me Harder",
-        "position": 392,
+        "position": 382,
         "thumbnail": "https://i.ytimg.com/vi/S9WqHQVZs5Y/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Rare DM - Skater Hits Me Harder"
@@ -11538,7 +11498,7 @@
       {
         "videoId": "T_e0t80EOBA",
         "title": "Rendez Vous - Plasticity",
-        "position": 393,
+        "position": 383,
         "thumbnail": "https://i.ytimg.com/vi/T_e0t80EOBA/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Rendez Vous - Plasticity"
@@ -11546,15 +11506,7 @@
       {
         "videoId": "-y8rcuOC94s",
         "title": "Rendez Vous - Youth",
-        "position": 394,
-        "thumbnail": "https://i.ytimg.com/vi/-y8rcuOC94s/mqdefault.jpg",
-        "channelTitle": "",
-        "userTitle": "Rendez Vous - Youth"
-      },
-      {
-        "videoId": "-y8rcuOC94s",
-        "title": "Rendez Vous - Youth",
-        "position": 395,
+        "position": 384,
         "thumbnail": "https://i.ytimg.com/vi/-y8rcuOC94s/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Rendez Vous - Youth"
@@ -11562,7 +11514,7 @@
       {
         "videoId": "3JvPBr5j9ZI",
         "title": "Riki - Marigold",
-        "position": 396,
+        "position": 385,
         "thumbnail": "https://i.ytimg.com/vi/3JvPBr5j9ZI/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Riki - Marigold"
@@ -11570,7 +11522,7 @@
       {
         "videoId": "L0nfajkP1aI",
         "title": "Riki - Napoleon",
-        "position": 397,
+        "position": 386,
         "thumbnail": "https://i.ytimg.com/vi/L0nfajkP1aI/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Riki - Napoleon"
@@ -11578,31 +11530,31 @@
       {
         "videoId": "JpCLDoQv1uw",
         "title": "Rude 66 - The 1000 Year Storm",
-        "position": 398,
+        "position": 387,
         "thumbnail": "https://i.ytimg.com/vi/JpCLDoQv1uw/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Rude 66 - The 1000 Year Storm"
       },
       {
-        "videoId": "GfC4NTdj9RY",
+        "videoId": "1MJMTzh301Y",
         "title": "Rue Oberkampf - 89 degrees",
-        "position": 399,
-        "thumbnail": "https://i.ytimg.com/vi/GfC4NTdj9RY/mqdefault.jpg",
+        "position": 388,
+        "thumbnail": "https://i.ytimg.com/vi/1MJMTzh301Y/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Rue Oberkampf - 89 degrees"
       },
       {
-        "videoId": "Q6UFbec7h54",
+        "videoId": "OuFz8nP6278",
         "title": "Rue Oberkampf - Glycine",
-        "position": 400,
-        "thumbnail": "https://i.ytimg.com/vi/Q6UFbec7h54/mqdefault.jpg",
+        "position": 389,
+        "thumbnail": "https://i.ytimg.com/vi/OuFz8nP6278/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Rue Oberkampf - Glycine"
       },
       {
         "videoId": "2IAesjv-yJ4",
         "title": "Rue Oberkampf - Happiness",
-        "position": 401,
+        "position": 390,
         "thumbnail": "https://i.ytimg.com/vi/2IAesjv-yJ4/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Rue Oberkampf - Happiness"
@@ -11610,7 +11562,7 @@
       {
         "videoId": "gXPptLNUDnI",
         "title": "Rue Oberkampf - I Won't Surrender",
-        "position": 402,
+        "position": 391,
         "thumbnail": "https://i.ytimg.com/vi/gXPptLNUDnI/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Rue Oberkampf - I Won't Surrender"
@@ -11618,7 +11570,7 @@
       {
         "videoId": "kNCDHyK2DsE",
         "title": "Rue Oberkampf - Somebody Else",
-        "position": 403,
+        "position": 392,
         "thumbnail": "https://i.ytimg.com/vi/kNCDHyK2DsE/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Rue Oberkampf - Somebody Else"
@@ -11626,7 +11578,7 @@
       {
         "videoId": "YWpI5jOetrY",
         "title": "Rue Oberkampf - Tokyo",
-        "position": 404,
+        "position": 393,
         "thumbnail": "https://i.ytimg.com/vi/YWpI5jOetrY/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Rue Oberkampf - Tokyo"
@@ -11634,7 +11586,7 @@
       {
         "videoId": "-Au1vswKetE",
         "title": "Rupert Falsch;Der Energieberater - Moose und Farne - Energieberater Remix",
-        "position": 405,
+        "position": 394,
         "thumbnail": "https://i.ytimg.com/vi/-Au1vswKetE/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Rupert Falsch;Der Energieberater - Moose und Farne - Energieberater Remix"
@@ -11642,39 +11594,47 @@
       {
         "videoId": "GdPlqKebLZA",
         "title": "Rusty Egan;Boy George - Turn to Dust",
-        "position": 406,
+        "position": 395,
         "thumbnail": "https://i.ytimg.com/vi/GdPlqKebLZA/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Rusty Egan;Boy George - Turn to Dust"
       },
       {
-        "videoId": "fDWfqZI_B3M",
+        "videoId": "UDsSr_KOJik",
         "title": "S Y Z Y G Y X - Gimme Chaos",
-        "position": 407,
-        "thumbnail": "https://i.ytimg.com/vi/fDWfqZI_B3M/mqdefault.jpg",
+        "position": 396,
+        "thumbnail": "https://i.ytimg.com/vi/UDsSr_KOJik/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "S Y Z Y G Y X - Gimme Chaos"
       },
       {
         "videoId": "y7HeCokH1-g",
         "title": "S Y Z Y G Y X - In Pieces",
-        "position": 408,
+        "position": 397,
         "thumbnail": "https://i.ytimg.com/vi/y7HeCokH1-g/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "S Y Z Y G Y X - In Pieces"
       },
       {
-        "videoId": "5XuvMhHZorw",
+        "videoId": "MbSL7zD-c5Q",
         "title": "S Y Z Y G Y X - Kill the Pain",
-        "position": 409,
-        "thumbnail": "https://i.ytimg.com/vi/5XuvMhHZorw/mqdefault.jpg",
+        "position": 398,
+        "thumbnail": "https://i.ytimg.com/vi/MbSL7zD-c5Q/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "S Y Z Y G Y X - Kill the Pain"
       },
       {
+        "videoId": "dpz4Hv0cx8Y",
+        "title": "Sad Madona - Blush",
+        "position": 399,
+        "thumbnail": "https://i.ytimg.com/vi/dpz4Hv0cx8Y/mqdefault.jpg",
+        "channelTitle": "",
+        "userTitle": "Sad Madona - Blush"
+      },
+      {
         "videoId": "p9Tn_lKchG8",
         "title": "Sad Madona - Cemetery",
-        "position": 410,
+        "position": 399,
         "thumbnail": "https://i.ytimg.com/vi/p9Tn_lKchG8/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Sad Madona - Cemetery"
@@ -11682,7 +11642,7 @@
       {
         "videoId": "k9JHfN1x9jo",
         "title": "Sad Madona - Crimes",
-        "position": 411,
+        "position": 400,
         "thumbnail": "https://i.ytimg.com/vi/k9JHfN1x9jo/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Sad Madona - Crimes"
@@ -11690,7 +11650,7 @@
       {
         "videoId": "XIicN5-kN-k",
         "title": "Sad Madona - Love balmain",
-        "position": 412,
+        "position": 401,
         "thumbnail": "https://i.ytimg.com/vi/XIicN5-kN-k/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Sad Madona - Love balmain"
@@ -11698,7 +11658,7 @@
       {
         "videoId": "mLipOWyZllw",
         "title": "Sad Madona - Vampire weekend",
-        "position": 413,
+        "position": 402,
         "thumbnail": "https://i.ytimg.com/vi/mLipOWyZllw/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Sad Madona - Vampire weekend"
@@ -11706,7 +11666,7 @@
       {
         "videoId": "rMr0N0Eqr4k",
         "title": "Sad Madona;Mega Sega Drive Club - Idole",
-        "position": 414,
+        "position": 403,
         "thumbnail": "https://i.ytimg.com/vi/rMr0N0Eqr4k/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Sad Madona;Mega Sega Drive Club - Idole"
@@ -11714,7 +11674,7 @@
       {
         "videoId": "UNZdQXhVqm8",
         "title": "Sally Dige - Forget Me",
-        "position": 415,
+        "position": 404,
         "thumbnail": "https://i.ytimg.com/vi/UNZdQXhVqm8/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Sally Dige - Forget Me"
@@ -11722,7 +11682,7 @@
       {
         "videoId": "8lcMcLDj2L4",
         "title": "Sally Dige - It's You I'm Thinking Of",
-        "position": 416,
+        "position": 405,
         "thumbnail": "https://i.ytimg.com/vi/8lcMcLDj2L4/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Sally Dige - It's You I'm Thinking Of"
@@ -11730,7 +11690,7 @@
       {
         "videoId": "igKt_MIAepk",
         "title": "Scarlett Scarlett;Velvet Lion - I Want To Be Pure (Bonus Track)",
-        "position": 417,
+        "position": 406,
         "thumbnail": "https://i.ytimg.com/vi/igKt_MIAepk/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Scarlett Scarlett;Velvet Lion - I Want To Be Pure (Bonus Track)"
@@ -11738,7 +11698,7 @@
       {
         "videoId": "mRQnYTqDwaY",
         "title": "Scratch Massive - Over Again",
-        "position": 418,
+        "position": 407,
         "thumbnail": "https://i.ytimg.com/vi/mRQnYTqDwaY/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Scratch Massive - Over Again"
@@ -11746,7 +11706,7 @@
       {
         "videoId": "eB6jN9guwXE",
         "title": "Scratch Massive - Paris - Radio Edit",
-        "position": 419,
+        "position": 408,
         "thumbnail": "https://i.ytimg.com/vi/eB6jN9guwXE/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Scratch Massive - Paris - Radio Edit"
@@ -11754,7 +11714,7 @@
       {
         "videoId": "44YLuCRYUFM",
         "title": "SDH (Semiotics Department of Heteronyms) - Balance",
-        "position": 420,
+        "position": 409,
         "thumbnail": "https://i.ytimg.com/vi/44YLuCRYUFM/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "SDH (Semiotics Department of Heteronyms) - Balance"
@@ -11762,7 +11722,7 @@
       {
         "videoId": "DzeK5rSxEDg",
         "title": "SDH (Semiotics Department of Heteronyms) - Cellular Sky",
-        "position": 421,
+        "position": 410,
         "thumbnail": "https://i.ytimg.com/vi/DzeK5rSxEDg/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "SDH (Semiotics Department of Heteronyms) - Cellular Sky"
@@ -11770,7 +11730,7 @@
       {
         "videoId": "e_6zezkujqk",
         "title": "SDH (Semiotics Department of Heteronyms) - Four Arms",
-        "position": 422,
+        "position": 411,
         "thumbnail": "https://i.ytimg.com/vi/e_6zezkujqk/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "SDH (Semiotics Department of Heteronyms) - Four Arms"
@@ -11778,7 +11738,7 @@
       {
         "videoId": "he8rbWCkMKE",
         "title": "SDH (Semiotics Department of Heteronyms) - Hectic",
-        "position": 423,
+        "position": 412,
         "thumbnail": "https://i.ytimg.com/vi/he8rbWCkMKE/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "SDH (Semiotics Department of Heteronyms) - Hectic"
@@ -11786,7 +11746,7 @@
       {
         "videoId": "SDJArlaTDgU",
         "title": "SDH (Semiotics Department of Heteronyms) - Hollowed Out",
-        "position": 424,
+        "position": 413,
         "thumbnail": "https://i.ytimg.com/vi/SDJArlaTDgU/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "SDH (Semiotics Department of Heteronyms) - Hollowed Out"
@@ -11794,7 +11754,7 @@
       {
         "videoId": "PaLTnyPhn0Q",
         "title": "SDH (Semiotics Department of Heteronyms) - Our Fear",
-        "position": 425,
+        "position": 414,
         "thumbnail": "https://i.ytimg.com/vi/PaLTnyPhn0Q/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "SDH (Semiotics Department of Heteronyms) - Our Fear"
@@ -11802,7 +11762,7 @@
       {
         "videoId": "-YN9vTOqGcQ",
         "title": "SDH (Semiotics Department of Heteronyms) - Poem Against Strong Thinking",
-        "position": 426,
+        "position": 415,
         "thumbnail": "https://i.ytimg.com/vi/-YN9vTOqGcQ/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "SDH (Semiotics Department of Heteronyms) - Poem Against Strong Thinking"
@@ -11810,7 +11770,7 @@
       {
         "videoId": "LACNNvnKw6I",
         "title": "SDH (Semiotics Department of Heteronyms) - Suffer",
-        "position": 427,
+        "position": 416,
         "thumbnail": "https://i.ytimg.com/vi/LACNNvnKw6I/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "SDH (Semiotics Department of Heteronyms) - Suffer"
@@ -11818,7 +11778,7 @@
       {
         "videoId": "evVNGTS4lmg",
         "title": "SDH (Semiotics Department of Heteronyms) - Talk In Dreams",
-        "position": 428,
+        "position": 417,
         "thumbnail": "https://i.ytimg.com/vi/evVNGTS4lmg/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "SDH (Semiotics Department of Heteronyms) - Talk In Dreams"
@@ -11826,7 +11786,7 @@
       {
         "videoId": "LDoO5oxjYes",
         "title": "SDH (Semiotics Department of Heteronyms) - You Pt. 12",
-        "position": 429,
+        "position": 418,
         "thumbnail": "https://i.ytimg.com/vi/LDoO5oxjYes/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "SDH (Semiotics Department of Heteronyms) - You Pt. 12"
@@ -11834,7 +11794,7 @@
       {
         "videoId": "L2eFBd3ZBcg",
         "title": "Second Still - The Future",
-        "position": 430,
+        "position": 419,
         "thumbnail": "https://i.ytimg.com/vi/L2eFBd3ZBcg/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Second Still - The Future"
@@ -11842,7 +11802,7 @@
       {
         "videoId": "_h5zBN6qi9s",
         "title": "Sexual Purity - Chains",
-        "position": 431,
+        "position": 420,
         "thumbnail": "https://i.ytimg.com/vi/_h5zBN6qi9s/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Sexual Purity - Chains"
@@ -11850,7 +11810,7 @@
       {
         "videoId": "KaosB1EkbKI",
         "title": "Sexual Purity - Convulsion",
-        "position": 432,
+        "position": 421,
         "thumbnail": "https://i.ytimg.com/vi/KaosB1EkbKI/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Sexual Purity - Convulsion"
@@ -11858,7 +11818,7 @@
       {
         "videoId": "MNKLIrpsDcg",
         "title": "Sexual Purity - Forever",
-        "position": 433,
+        "position": 422,
         "thumbnail": "https://i.ytimg.com/vi/MNKLIrpsDcg/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Sexual Purity - Forever"
@@ -11866,7 +11826,7 @@
       {
         "videoId": "dNNY_N32TWA",
         "title": "Sexual Purity - Heart",
-        "position": 434,
+        "position": 423,
         "thumbnail": "https://i.ytimg.com/vi/dNNY_N32TWA/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Sexual Purity - Heart"
@@ -11874,7 +11834,7 @@
       {
         "videoId": "SLPU9eM7rWs",
         "title": "Sexual Purity - Never",
-        "position": 435,
+        "position": 424,
         "thumbnail": "https://i.ytimg.com/vi/SLPU9eM7rWs/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Sexual Purity - Never"
@@ -11882,7 +11842,7 @@
       {
         "videoId": "J4k_eh86xAI",
         "title": "Sexual Purity - Runaway",
-        "position": 436,
+        "position": 425,
         "thumbnail": "https://i.ytimg.com/vi/J4k_eh86xAI/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Sexual Purity - Runaway"
@@ -11890,7 +11850,7 @@
       {
         "videoId": "HLo2T2WzXvM",
         "title": "Sexual Purity - The Path",
-        "position": 437,
+        "position": 426,
         "thumbnail": "https://i.ytimg.com/vi/HLo2T2WzXvM/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Sexual Purity - The Path"
@@ -11898,7 +11858,7 @@
       {
         "videoId": "7cQmnLaTVHM",
         "title": "Shad Shadows - Nocturnal",
-        "position": 438,
+        "position": 427,
         "thumbnail": "https://i.ytimg.com/vi/7cQmnLaTVHM/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Shad Shadows - Nocturnal"
@@ -11906,7 +11866,7 @@
       {
         "videoId": "bdl6umkfbx4",
         "title": "Shad Shadows - Sad Bodies",
-        "position": 439,
+        "position": 428,
         "thumbnail": "https://i.ytimg.com/vi/bdl6umkfbx4/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Shad Shadows - Sad Bodies"
@@ -11914,7 +11874,7 @@
       {
         "videoId": "6DM_MnNgZkc",
         "title": "She Past Away - Durdu Dunya",
-        "position": 440,
+        "position": 429,
         "thumbnail": "https://i.ytimg.com/vi/6DM_MnNgZkc/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "She Past Away - Durdu Dunya"
@@ -11922,7 +11882,7 @@
       {
         "videoId": "H5Kkw-Puhho",
         "title": "She Past Away - Rituel",
-        "position": 441,
+        "position": 430,
         "thumbnail": "https://i.ytimg.com/vi/H5Kkw-Puhho/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "She Past Away - Rituel"
@@ -11930,7 +11890,7 @@
       {
         "videoId": "JVFPuSXUtTY",
         "title": "She Past Away;Bragolin - Ruh (Bragolin Remix)",
-        "position": 442,
+        "position": 431,
         "thumbnail": "https://i.ytimg.com/vi/JVFPuSXUtTY/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "She Past Away;Bragolin - Ruh (Bragolin Remix)"
@@ -11938,7 +11898,7 @@
       {
         "videoId": "ieKo7XzRZEM",
         "title": "Shortwire;Shikimo - Reconfig - Shikimo Remix",
-        "position": 443,
+        "position": 432,
         "thumbnail": "https://i.ytimg.com/vi/ieKo7XzRZEM/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Shortwire;Shikimo - Reconfig - Shikimo Remix"
@@ -11946,7 +11906,7 @@
       {
         "videoId": "bAfxqcGQvdQ",
         "title": "Sidewalks and Skeletons - Euthanasia Daze",
-        "position": 444,
+        "position": 433,
         "thumbnail": "https://i.ytimg.com/vi/bAfxqcGQvdQ/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Sidewalks and Skeletons - Euthanasia Daze"
@@ -11954,7 +11914,7 @@
       {
         "videoId": "EVLaJtg8xIU",
         "title": "Sidewalks and Skeletons - Goth",
-        "position": 445,
+        "position": 434,
         "thumbnail": "https://i.ytimg.com/vi/EVLaJtg8xIU/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Sidewalks and Skeletons - Goth"
@@ -11962,7 +11922,7 @@
       {
         "videoId": "QAmvQeyTAOI",
         "title": "Sidewalks and Skeletons - White Light",
-        "position": 446,
+        "position": 435,
         "thumbnail": "https://i.ytimg.com/vi/QAmvQeyTAOI/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Sidewalks and Skeletons - White Light"
@@ -11970,7 +11930,7 @@
       {
         "videoId": "7SaClbf6l1E",
         "title": "Sidewalks and Skeletons;CASHFORGOLD - Eternal Rest",
-        "position": 447,
+        "position": 436,
         "thumbnail": "https://i.ytimg.com/vi/7SaClbf6l1E/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Sidewalks and Skeletons;CASHFORGOLD - Eternal Rest"
@@ -11978,23 +11938,7 @@
       {
         "videoId": "qLcqj6FsB-0",
         "title": "Sidewalks and Skeletons;Goo Munday - Shadow",
-        "position": 448,
-        "thumbnail": "https://i.ytimg.com/vi/qLcqj6FsB-0/mqdefault.jpg",
-        "channelTitle": "",
-        "userTitle": "Sidewalks and Skeletons;Goo Munday - Shadow"
-      },
-      {
-        "videoId": "qLcqj6FsB-0",
-        "title": "Sidewalks and Skeletons;Goo Munday - Shadow",
-        "position": 449,
-        "thumbnail": "https://i.ytimg.com/vi/qLcqj6FsB-0/mqdefault.jpg",
-        "channelTitle": "",
-        "userTitle": "Sidewalks and Skeletons;Goo Munday - Shadow"
-      },
-      {
-        "videoId": "qLcqj6FsB-0",
-        "title": "Sidewalks and Skeletons;Goo Munday - Shadow",
-        "position": 450,
+        "position": 437,
         "thumbnail": "https://i.ytimg.com/vi/qLcqj6FsB-0/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Sidewalks and Skeletons;Goo Munday - Shadow"
@@ -12002,7 +11946,7 @@
       {
         "videoId": "TMyCQBnh3tk",
         "title": "Silent Runners - Make It Right",
-        "position": 451,
+        "position": 438,
         "thumbnail": "https://i.ytimg.com/vi/TMyCQBnh3tk/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Silent Runners - Make It Right"
@@ -12010,7 +11954,7 @@
       {
         "videoId": "cRm1TuvQZtM",
         "title": "Silverbullit - Orion 2 - Bonus Track",
-        "position": 452,
+        "position": 439,
         "thumbnail": "https://i.ytimg.com/vi/cRm1TuvQZtM/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Silverbullit - Orion 2 - Bonus Track"
@@ -12018,7 +11962,7 @@
       {
         "videoId": "jKmGoG4_rDM",
         "title": "SINE;AwareNess - Dark Matters",
-        "position": 453,
+        "position": 440,
         "thumbnail": "https://i.ytimg.com/vi/jKmGoG4_rDM/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "SINE;AwareNess - Dark Matters"
@@ -12026,7 +11970,7 @@
       {
         "videoId": "TSG0c9gWzho",
         "title": "Sinnerella - Eyes Without A Face",
-        "position": 454,
+        "position": 441,
         "thumbnail": "https://i.ytimg.com/vi/TSG0c9gWzho/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Sinnerella - Eyes Without A Face"
@@ -12034,7 +11978,7 @@
       {
         "videoId": "hNLA5mQqBTU",
         "title": "Sixth June - Back for a Day",
-        "position": 455,
+        "position": 442,
         "thumbnail": "https://i.ytimg.com/vi/hNLA5mQqBTU/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Sixth June - Back for a Day"
@@ -12042,7 +11986,7 @@
       {
         "videoId": "9tjGMQnI61I",
         "title": "Sixth June - Dance With Me - Single Mix",
-        "position": 456,
+        "position": 443,
         "thumbnail": "https://i.ytimg.com/vi/9tjGMQnI61I/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Sixth June - Dance With Me - Single Mix"
@@ -12050,7 +11994,7 @@
       {
         "videoId": "rFqOYuyX7Ug",
         "title": "Sixth June - Oh Boy",
-        "position": 457,
+        "position": 444,
         "thumbnail": "https://i.ytimg.com/vi/rFqOYuyX7Ug/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Sixth June - Oh Boy"
@@ -12058,7 +12002,7 @@
       {
         "videoId": "VggLy8Vi7ro",
         "title": "Skeleton Hands - Ravage",
-        "position": 458,
+        "position": 445,
         "thumbnail": "https://i.ytimg.com/vi/VggLy8Vi7ro/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Skeleton Hands - Ravage"
@@ -12066,7 +12010,7 @@
       {
         "videoId": "eONivflChFg",
         "title": "Skeleton Hands;The Librarian - Oxygen",
-        "position": 459,
+        "position": 446,
         "thumbnail": "https://i.ytimg.com/vi/eONivflChFg/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Skeleton Hands;The Librarian - Oxygen"
@@ -12074,7 +12018,7 @@
       {
         "videoId": "324UfKXIkQs",
         "title": "Slove;Leo Hellden;Plaisir de France;Sarah Rebecca - Flash",
-        "position": 460,
+        "position": 447,
         "thumbnail": "https://i.ytimg.com/vi/324UfKXIkQs/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Slove;Leo Hellden;Plaisir de France;Sarah Rebecca - Flash"
@@ -12082,7 +12026,7 @@
       {
         "videoId": "aYmcmQuj36s",
         "title": "Soft Kill - Whirl",
-        "position": 461,
+        "position": 448,
         "thumbnail": "https://i.ytimg.com/vi/aYmcmQuj36s/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Soft Kill - Whirl"
@@ -12090,7 +12034,7 @@
       {
         "videoId": "hiL-kMPo5zo",
         "title": "soft siren;Ravenscoon - 4am (dub mix)",
-        "position": 462,
+        "position": 449,
         "thumbnail": "https://i.ytimg.com/vi/hiL-kMPo5zo/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "soft siren;Ravenscoon - 4am (dub mix)"
@@ -12098,7 +12042,7 @@
       {
         "videoId": "L_kwumqzt4c",
         "title": "SOFT VEIN;Twin Tribes - FALLING - Twin Tribes Remix",
-        "position": 463,
+        "position": 450,
         "thumbnail": "https://i.ytimg.com/vi/L_kwumqzt4c/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "SOFT VEIN;Twin Tribes - FALLING - Twin Tribes Remix"
@@ -12106,7 +12050,7 @@
       {
         "videoId": "fEUffc1r97E",
         "title": "Ssleeping Desiress - Interior Lives",
-        "position": 464,
+        "position": 451,
         "thumbnail": "https://i.ytimg.com/vi/fEUffc1r97E/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Ssleeping Desiress - Interior Lives"
@@ -12114,7 +12058,7 @@
       {
         "videoId": "NFj9CoIJDbg",
         "title": "Ssleeping Desiress - We Need",
-        "position": 465,
+        "position": 452,
         "thumbnail": "https://i.ytimg.com/vi/NFj9CoIJDbg/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Ssleeping Desiress - We Need"
@@ -12122,7 +12066,7 @@
       {
         "videoId": "sgIfkqSF0Co",
         "title": "Still Corners - Lost Boys",
-        "position": 466,
+        "position": 453,
         "thumbnail": "https://i.ytimg.com/vi/sgIfkqSF0Co/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Still Corners - Lost Boys"
@@ -12130,23 +12074,23 @@
       {
         "videoId": "DhmqhQwYUUo",
         "title": "Sydney Valette - Hold On",
-        "position": 467,
+        "position": 454,
         "thumbnail": "https://i.ytimg.com/vi/DhmqhQwYUUo/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Sydney Valette - Hold On"
       },
       {
-        "videoId": "Sydney Valette - Please",
-        "title": "Sydney Valette",
-        "position": 468,
-        "thumbnail": "https://i.ytimg.com/vi/Sydney Valette - Please/mqdefault.jpg",
+        "videoId": "mXkxZjvkYX4",
+        "title": "Sydney Valette - Please",
+        "position": 455,
+        "thumbnail": "https://i.ytimg.com/vi/mXkxZjvkYX4/mqdefault.jpg",
         "channelTitle": "",
-        "userTitle": "Sydney Valette"
+        "userTitle": "Sydney Valette - Please"
       },
       {
         "videoId": "8MxT91KfLQQ",
         "title": "Sydney Valette - So Long",
-        "position": 469,
+        "position": 456,
         "thumbnail": "https://i.ytimg.com/vi/8MxT91KfLQQ/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Sydney Valette - So Long"
@@ -12154,7 +12098,7 @@
       {
         "videoId": "AqePYO4QRwY",
         "title": "Sydney Valette - So Lost",
-        "position": 470,
+        "position": 457,
         "thumbnail": "https://i.ytimg.com/vi/AqePYO4QRwY/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Sydney Valette - So Lost"
@@ -12162,7 +12106,7 @@
       {
         "videoId": "pjg-uUQ3xHw",
         "title": "Tame Impala - Feels Like We Only Go Backwards",
-        "position": 471,
+        "position": 458,
         "thumbnail": "https://i.ytimg.com/vi/pjg-uUQ3xHw/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Tame Impala - Feels Like We Only Go Backwards"
@@ -12170,7 +12114,7 @@
       {
         "videoId": "86EFrrV4a24",
         "title": "Tempers - Capital Pains",
-        "position": 472,
+        "position": 459,
         "thumbnail": "https://i.ytimg.com/vi/86EFrrV4a24/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Tempers - Capital Pains"
@@ -12178,7 +12122,7 @@
       {
         "videoId": "JK2XyYVbNmo",
         "title": "Tempers - Daydreams",
-        "position": 473,
+        "position": 460,
         "thumbnail": "https://i.ytimg.com/vi/JK2XyYVbNmo/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Tempers - Daydreams"
@@ -12186,7 +12130,7 @@
       {
         "videoId": "h_LQRd61Ghc",
         "title": "Tempers - Hell Hotline",
-        "position": 474,
+        "position": 461,
         "thumbnail": "https://i.ytimg.com/vi/h_LQRd61Ghc/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Tempers - Hell Hotline"
@@ -12194,7 +12138,7 @@
       {
         "videoId": "x9w6XJbQXRY",
         "title": "Tempers - Leonard Cohen Afterworld",
-        "position": 475,
+        "position": 462,
         "thumbnail": "https://i.ytimg.com/vi/x9w6XJbQXRY/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Tempers - Leonard Cohen Afterworld"
@@ -12202,7 +12146,7 @@
       {
         "videoId": "eFtuBwaOX0Q",
         "title": "Tempers - Strange Harvest",
-        "position": 476,
+        "position": 463,
         "thumbnail": "https://i.ytimg.com/vi/eFtuBwaOX0Q/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Tempers - Strange Harvest"
@@ -12210,7 +12154,7 @@
       {
         "videoId": "_KFjE6OOuUk",
         "title": "Tempers - Unfamiliar",
-        "position": 477,
+        "position": 464,
         "thumbnail": "https://i.ytimg.com/vi/_KFjE6OOuUk/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Tempers - Unfamiliar"
@@ -12218,7 +12162,7 @@
       {
         "videoId": "fqFCOOvpgCA",
         "title": "Terror Forms - Opaque",
-        "position": 478,
+        "position": 465,
         "thumbnail": "https://i.ytimg.com/vi/fqFCOOvpgCA/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Terror Forms - Opaque"
@@ -12226,7 +12170,7 @@
       {
         "videoId": "phzToTc5MrU",
         "title": "Terror Forms - Vril",
-        "position": 479,
+        "position": 466,
         "thumbnail": "https://i.ytimg.com/vi/phzToTc5MrU/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Terror Forms - Vril"
@@ -12234,7 +12178,7 @@
       {
         "videoId": "h-78y7TONgg",
         "title": "The Agnes Circle - Porcelain",
-        "position": 480,
+        "position": 467,
         "thumbnail": "https://i.ytimg.com/vi/h-78y7TONgg/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "The Agnes Circle - Porcelain"
@@ -12242,7 +12186,7 @@
       {
         "videoId": "KxBpw5_BopA",
         "title": "The Agnes Circle - White Gate",
-        "position": 481,
+        "position": 468,
         "thumbnail": "https://i.ytimg.com/vi/KxBpw5_BopA/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "The Agnes Circle - White Gate"
@@ -12250,7 +12194,7 @@
       {
         "videoId": "GjIjwNXVNjE",
         "title": "The frozen Autumn - Is Everything Real?",
-        "position": 482,
+        "position": 469,
         "thumbnail": "https://i.ytimg.com/vi/GjIjwNXVNjE/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "The frozen Autumn - Is Everything Real?"
@@ -12258,7 +12202,7 @@
       {
         "videoId": "mMi1VfgwHto",
         "title": "The KVB - Always Then - 2017 Version",
-        "position": 483,
+        "position": 470,
         "thumbnail": "https://i.ytimg.com/vi/mMi1VfgwHto/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "The KVB - Always Then - 2017 Version"
@@ -12266,7 +12210,7 @@
       {
         "videoId": "sWGqw0Pznto",
         "title": "The KVB - Hands - 2017 Version",
-        "position": 484,
+        "position": 471,
         "thumbnail": "https://i.ytimg.com/vi/sWGqw0Pznto/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "The KVB - Hands - 2017 Version"
@@ -12274,7 +12218,7 @@
       {
         "videoId": "ILmKnW5LaWI",
         "title": "The Masqs - the noise",
-        "position": 485,
+        "position": 472,
         "thumbnail": "https://i.ytimg.com/vi/ILmKnW5LaWI/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "The Masqs - the noise"
@@ -12282,7 +12226,7 @@
       {
         "videoId": "uKwvs_jH9Yk",
         "title": "The Masqs;Sad Madona - EXTRANA",
-        "position": 486,
+        "position": 473,
         "thumbnail": "https://i.ytimg.com/vi/uKwvs_jH9Yk/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "The Masqs;Sad Madona - EXTRANA"
@@ -12290,7 +12234,7 @@
       {
         "videoId": "jKIK__j1Nno",
         "title": "The Neighbourhood - Daddy Issues",
-        "position": 487,
+        "position": 474,
         "thumbnail": "https://i.ytimg.com/vi/jKIK__j1Nno/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "The Neighbourhood - Daddy Issues"
@@ -12298,7 +12242,7 @@
       {
         "videoId": "GJNdR_MKuDM",
         "title": "The Neighbourhood - Reflections",
-        "position": 488,
+        "position": 475,
         "thumbnail": "https://i.ytimg.com/vi/GJNdR_MKuDM/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "The Neighbourhood - Reflections"
@@ -12306,7 +12250,7 @@
       {
         "videoId": "QkSROKFtIhw",
         "title": "The Neighbourhood - Softcore",
-        "position": 489,
+        "position": 476,
         "thumbnail": "https://i.ytimg.com/vi/QkSROKFtIhw/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "The Neighbourhood - Softcore"
@@ -12314,7 +12258,7 @@
       {
         "videoId": "0S_VUaJb_IY",
         "title": "The Spoiled - Love Is Pain",
-        "position": 490,
+        "position": 477,
         "thumbnail": "https://i.ytimg.com/vi/0S_VUaJb_IY/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "The Spoiled - Love Is Pain"
@@ -12322,7 +12266,7 @@
       {
         "videoId": "yRQmePjY4r0",
         "title": "The Toxic Avenger - Sorcery",
-        "position": 491,
+        "position": 478,
         "thumbnail": "https://i.ytimg.com/vi/yRQmePjY4r0/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "The Toxic Avenger - Sorcery"
@@ -12330,7 +12274,7 @@
       {
         "videoId": "gXXySBAyZVo",
         "title": "The Weeknd;Ariana Grande - Save Your Tears (with Ariana Grande) (Remix)",
-        "position": 492,
+        "position": 479,
         "thumbnail": "https://i.ytimg.com/vi/gXXySBAyZVo/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "The Weeknd;Ariana Grande - Save Your Tears (with Ariana Grande) (Remix)"
@@ -12338,7 +12282,7 @@
       {
         "videoId": "qoD8uDWToJU",
         "title": "Them Are Us Too - Amends",
-        "position": 493,
+        "position": 480,
         "thumbnail": "https://i.ytimg.com/vi/qoD8uDWToJU/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Them Are Us Too - Amends"
@@ -12346,7 +12290,7 @@
       {
         "videoId": "rNILGsoV9Ko",
         "title": "This Cold Night - A Letter To Myself",
-        "position": 494,
+        "position": 481,
         "thumbnail": "https://i.ytimg.com/vi/rNILGsoV9Ko/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "This Cold Night - A Letter To Myself"
@@ -12354,7 +12298,7 @@
       {
         "videoId": "tT4kHeWTtU8",
         "title": "Tone Ranger;Evelyn Drach - Dark Horse",
-        "position": 495,
+        "position": 482,
         "thumbnail": "https://i.ytimg.com/vi/tT4kHeWTtU8/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Tone Ranger;Evelyn Drach - Dark Horse"
@@ -12362,7 +12306,7 @@
       {
         "videoId": "zn8Nje2N5w8",
         "title": "topographies - Tied",
-        "position": 496,
+        "position": 483,
         "thumbnail": "https://i.ytimg.com/vi/zn8Nje2N5w8/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "topographies - Tied"
@@ -12370,7 +12314,7 @@
       {
         "videoId": "kuRuh4PRB-4",
         "title": "TR/ST - Are We Arc?",
-        "position": 497,
+        "position": 484,
         "thumbnail": "https://i.ytimg.com/vi/kuRuh4PRB-4/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "TR/ST - Are We Arc?"
@@ -12378,23 +12322,39 @@
       {
         "videoId": "wUcKgzE0Ghk",
         "title": "TR/ST - Bicep",
-        "position": 498,
+        "position": 485,
         "thumbnail": "https://i.ytimg.com/vi/wUcKgzE0Ghk/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "TR/ST - Bicep"
       },
       {
-        "videoId": "-tD30gBEFik",
+        "videoId": "lwa_AfbanmY",
         "title": "TR/ST - Bulbform",
-        "position": 499,
-        "thumbnail": "https://i.ytimg.com/vi/-tD30gBEFik/mqdefault.jpg",
+        "position": 486,
+        "thumbnail": "https://i.ytimg.com/vi/lwa_AfbanmY/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "TR/ST - Bulbform"
       },
       {
+        "videoId": "FaLVYK8xYWg",
+        "title": "TR/ST - Candy Walls",
+        "position": 487,
+        "thumbnail": "https://i.ytimg.com/vi/FaLVYK8xYWg/mqdefault.jpg",
+        "channelTitle": "",
+        "userTitle": "TR/ST - Candy Walls"
+      },
+      {
+        "videoId": "cu438gwa4uE",
+        "title": "TR/ST - Capitol",
+        "position": 487,
+        "thumbnail": "https://i.ytimg.com/vi/cu438gwa4uE/mqdefault.jpg",
+        "channelTitle": "",
+        "userTitle": "TR/ST - Capitol"
+      },
+      {
         "videoId": "tit9-75NBnw",
         "title": "TR/ST - Chrissy E",
-        "position": 500,
+        "position": 487,
         "thumbnail": "https://i.ytimg.com/vi/tit9-75NBnw/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "TR/ST - Chrissy E"
@@ -12402,7 +12362,7 @@
       {
         "videoId": "SU-37W2TKtE",
         "title": "TR/ST - Colossal",
-        "position": 501,
+        "position": 488,
         "thumbnail": "https://i.ytimg.com/vi/SU-37W2TKtE/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "TR/ST - Colossal"
@@ -12410,23 +12370,23 @@
       {
         "videoId": "jvS5qVge2h0",
         "title": "TR/ST - Divine",
-        "position": 502,
+        "position": 489,
         "thumbnail": "https://i.ytimg.com/vi/jvS5qVge2h0/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "TR/ST - Divine"
       },
       {
-        "videoId": "jJBYJiKepr4",
+        "videoId": "mjwM0eIQ6Rc",
         "title": "TR/ST - Dressed For Space",
-        "position": 503,
-        "thumbnail": "https://i.ytimg.com/vi/jJBYJiKepr4/mqdefault.jpg",
+        "position": 490,
+        "thumbnail": "https://i.ytimg.com/vi/mjwM0eIQ6Rc/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "TR/ST - Dressed For Space"
       },
       {
         "videoId": "04HVq4SsRuY",
         "title": "TR/ST - F.T.F.",
-        "position": 504,
+        "position": 491,
         "thumbnail": "https://i.ytimg.com/vi/04HVq4SsRuY/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "TR/ST - F.T.F."
@@ -12434,7 +12394,7 @@
       {
         "videoId": "SLHhWp7qE3s",
         "title": "TR/ST - Four Gut",
-        "position": 505,
+        "position": 492,
         "thumbnail": "https://i.ytimg.com/vi/SLHhWp7qE3s/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "TR/ST - Four Gut"
@@ -12442,7 +12402,7 @@
       {
         "videoId": "WBhLnpfgxHM",
         "title": "TR/ST - Gloryhole",
-        "position": 506,
+        "position": 493,
         "thumbnail": "https://i.ytimg.com/vi/WBhLnpfgxHM/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "TR/ST - Gloryhole"
@@ -12450,7 +12410,7 @@
       {
         "videoId": "exON7u-eSBE",
         "title": "TR/ST - Grouch",
-        "position": 507,
+        "position": 494,
         "thumbnail": "https://i.ytimg.com/vi/exON7u-eSBE/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "TR/ST - Grouch"
@@ -12458,15 +12418,7 @@
       {
         "videoId": "NMu5A0PCC9Y",
         "title": "TR/ST - Icabod",
-        "position": 508,
-        "thumbnail": "https://i.ytimg.com/vi/NMu5A0PCC9Y/mqdefault.jpg",
-        "channelTitle": "",
-        "userTitle": "TR/ST - Icabod"
-      },
-      {
-        "videoId": "NMu5A0PCC9Y",
-        "title": "TR/ST - Icabod",
-        "position": 509,
+        "position": 495,
         "thumbnail": "https://i.ytimg.com/vi/NMu5A0PCC9Y/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "TR/ST - Icabod"
@@ -12474,7 +12426,7 @@
       {
         "videoId": "bfURIs7iXw0",
         "title": "TR/ST - Joyland",
-        "position": 510,
+        "position": 496,
         "thumbnail": "https://i.ytimg.com/vi/bfURIs7iXw0/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "TR/ST - Joyland"
@@ -12482,7 +12434,7 @@
       {
         "videoId": "gQfzD5OjLCo",
         "title": "TR/ST - Lost Souls/Eelings",
-        "position": 511,
+        "position": 497,
         "thumbnail": "https://i.ytimg.com/vi/gQfzD5OjLCo/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "TR/ST - Lost Souls/Eelings"
@@ -12490,7 +12442,7 @@
       {
         "videoId": "lZja9Az8ZIM",
         "title": "TR/ST - Peer Pressure",
-        "position": 512,
+        "position": 498,
         "thumbnail": "https://i.ytimg.com/vi/lZja9Az8ZIM/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "TR/ST - Peer Pressure"
@@ -12498,31 +12450,31 @@
       {
         "videoId": "qAU6otqcVxE",
         "title": "TR/ST - Robrash - Instrumental",
-        "position": 513,
+        "position": 499,
         "thumbnail": "https://i.ytimg.com/vi/qAU6otqcVxE/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "TR/ST - Robrash - Instrumental"
       },
       {
-        "videoId": "TR/ST - Shoom",
-        "title": "TR/ST",
-        "position": 514,
-        "thumbnail": "https://i.ytimg.com/vi/TR/ST - Shoom/mqdefault.jpg",
+        "videoId": "aQs3h6SRdIA",
+        "title": "TR/ST - Shoom",
+        "position": 500,
+        "thumbnail": "https://i.ytimg.com/vi/aQs3h6SRdIA/mqdefault.jpg",
         "channelTitle": "",
-        "userTitle": "TR/ST"
+        "userTitle": "TR/ST - Shoom"
       },
       {
-        "videoId": "8tc1xj7Nblc",
+        "videoId": "CuiKeaqERTU",
         "title": "TR/ST - Sulk",
-        "position": 515,
-        "thumbnail": "https://i.ytimg.com/vi/8tc1xj7Nblc/mqdefault.jpg",
+        "position": 501,
+        "thumbnail": "https://i.ytimg.com/vi/CuiKeaqERTU/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "TR/ST - Sulk"
       },
       {
         "videoId": "dluHzQhLcME",
         "title": "TR/ST - Sulk - Sir Stephen Hips Mix",
-        "position": 516,
+        "position": 502,
         "thumbnail": "https://i.ytimg.com/vi/dluHzQhLcME/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "TR/ST - Sulk - Sir Stephen Hips Mix"
@@ -12530,7 +12482,7 @@
       {
         "videoId": "p5HJAX2jYr0",
         "title": "TR/ST - The Dazzle",
-        "position": 517,
+        "position": 503,
         "thumbnail": "https://i.ytimg.com/vi/p5HJAX2jYr0/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "TR/ST - The Dazzle"
@@ -12538,7 +12490,7 @@
       {
         "videoId": "zBd-fMCvzwI",
         "title": "TR/ST - The Last Dregs",
-        "position": 518,
+        "position": 504,
         "thumbnail": "https://i.ytimg.com/vi/zBd-fMCvzwI/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "TR/ST - The Last Dregs"
@@ -12546,7 +12498,7 @@
       {
         "videoId": "A34JJoeacjI",
         "title": "TRAITRS - The Lovely Wounded",
-        "position": 519,
+        "position": 505,
         "thumbnail": "https://i.ytimg.com/vi/A34JJoeacjI/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "TRAITRS - The Lovely Wounded"
@@ -12554,7 +12506,7 @@
       {
         "videoId": "jD-bbSE8pVI",
         "title": "TRAITRS - The Suffering of Spiders",
-        "position": 520,
+        "position": 506,
         "thumbnail": "https://i.ytimg.com/vi/jD-bbSE8pVI/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "TRAITRS - The Suffering of Spiders"
@@ -12562,7 +12514,7 @@
       {
         "videoId": "AFmeuYl3VC4",
         "title": "TRAITRS - Thin Flesh",
-        "position": 521,
+        "position": 507,
         "thumbnail": "https://i.ytimg.com/vi/AFmeuYl3VC4/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "TRAITRS - Thin Flesh"
@@ -12570,7 +12522,7 @@
       {
         "videoId": "_B4RcGLksaI",
         "title": "Trevor Something - Confessions of an Addict",
-        "position": 522,
+        "position": 508,
         "thumbnail": "https://i.ytimg.com/vi/_B4RcGLksaI/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Trevor Something - Confessions of an Addict"
@@ -12578,7 +12530,7 @@
       {
         "videoId": "zqdOpz4R7BA",
         "title": "Trevor Something - The Ghost",
-        "position": 523,
+        "position": 509,
         "thumbnail": "https://i.ytimg.com/vi/zqdOpz4R7BA/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Trevor Something - The Ghost"
@@ -12586,7 +12538,7 @@
       {
         "videoId": "Ub-ekCVWBFA",
         "title": "Trit95 - Wine",
-        "position": 524,
+        "position": 510,
         "thumbnail": "https://i.ytimg.com/vi/Ub-ekCVWBFA/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Trit95 - Wine"
@@ -12594,7 +12546,7 @@
       {
         "videoId": "cL-zclGiIZQ",
         "title": "Turbo Knight;Edictum - Eleos",
-        "position": 525,
+        "position": 511,
         "thumbnail": "https://i.ytimg.com/vi/cL-zclGiIZQ/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Turbo Knight;Edictum - Eleos"
@@ -12602,39 +12554,39 @@
       {
         "videoId": "UGKRB_QHSlw",
         "title": "TWIN ION ENGINE - Feelings",
-        "position": 526,
+        "position": 512,
         "thumbnail": "https://i.ytimg.com/vi/UGKRB_QHSlw/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "TWIN ION ENGINE - Feelings"
       },
       {
-        "videoId": "dRCI9oAxeNg",
+        "videoId": "yZmBBo8R3xE",
         "title": "Twin Tribes - Fantasmas",
-        "position": 527,
-        "thumbnail": "https://i.ytimg.com/vi/dRCI9oAxeNg/mqdefault.jpg",
+        "position": 513,
+        "thumbnail": "https://i.ytimg.com/vi/yZmBBo8R3xE/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Twin Tribes - Fantasmas"
       },
       {
-        "videoId": "u8Q1qzx7xm0",
+        "videoId": "-XEavwcHU78",
         "title": "Twin Tribes - Monolith",
-        "position": 528,
-        "thumbnail": "https://i.ytimg.com/vi/u8Q1qzx7xm0/mqdefault.jpg",
+        "position": 514,
+        "thumbnail": "https://i.ytimg.com/vi/-XEavwcHU78/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Twin Tribes - Monolith"
       },
       {
-        "videoId": "T5vw84IkxzQ",
+        "videoId": "s-9ccADum88",
         "title": "Twin Tribes - Shadows",
-        "position": 529,
-        "thumbnail": "https://i.ytimg.com/vi/T5vw84IkxzQ/mqdefault.jpg",
+        "position": 515,
+        "thumbnail": "https://i.ytimg.com/vi/s-9ccADum88/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Twin Tribes - Shadows"
       },
       {
         "videoId": "MxreRqHV-aE",
         "title": "Twin Tribes - The River",
-        "position": 530,
+        "position": 516,
         "thumbnail": "https://i.ytimg.com/vi/MxreRqHV-aE/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Twin Tribes - The River"
@@ -12642,7 +12594,7 @@
       {
         "videoId": "3hkIUos-oqQ",
         "title": "Tying Tiffany - A Lone Boy",
-        "position": 531,
+        "position": 517,
         "thumbnail": "https://i.ytimg.com/vi/3hkIUos-oqQ/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Tying Tiffany - A Lone Boy"
@@ -12650,7 +12602,7 @@
       {
         "videoId": "nvOvBdBS8V8",
         "title": "Tying Tiffany - One Second",
-        "position": 532,
+        "position": 518,
         "thumbnail": "https://i.ytimg.com/vi/nvOvBdBS8V8/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Tying Tiffany - One Second"
@@ -12658,7 +12610,7 @@
       {
         "videoId": "XluyXH-evFE",
         "title": "ULTRA SUNN - Can You Believe It",
-        "position": 533,
+        "position": 519,
         "thumbnail": "https://i.ytimg.com/vi/XluyXH-evFE/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "ULTRA SUNN - Can You Believe It"
@@ -12666,7 +12618,7 @@
       {
         "videoId": "xWCzpqSDwWg",
         "title": "ULTRA SUNN - Distress",
-        "position": 534,
+        "position": 520,
         "thumbnail": "https://i.ytimg.com/vi/xWCzpqSDwWg/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "ULTRA SUNN - Distress"
@@ -12674,7 +12626,7 @@
       {
         "videoId": "qLOf6HfVCbo",
         "title": "ULTRA SUNN - Hard Feeling",
-        "position": 535,
+        "position": 521,
         "thumbnail": "https://i.ytimg.com/vi/qLOf6HfVCbo/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "ULTRA SUNN - Hard Feeling"
@@ -12682,7 +12634,7 @@
       {
         "videoId": "DZc08Nqi4qY",
         "title": "ULTRA SUNN - Keep Your Eyes Peeled",
-        "position": 536,
+        "position": 522,
         "thumbnail": "https://i.ytimg.com/vi/DZc08Nqi4qY/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "ULTRA SUNN - Keep Your Eyes Peeled"
@@ -12690,7 +12642,7 @@
       {
         "videoId": "EdjF1mstQQ0",
         "title": "ULTRA SUNN - Night Is Mine",
-        "position": 537,
+        "position": 523,
         "thumbnail": "https://i.ytimg.com/vi/EdjF1mstQQ0/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "ULTRA SUNN - Night Is Mine"
@@ -12698,7 +12650,7 @@
       {
         "videoId": "azFcV1vcyH4",
         "title": "ULTRA SUNN - Out of the Cage",
-        "position": 538,
+        "position": 524,
         "thumbnail": "https://i.ytimg.com/vi/azFcV1vcyH4/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "ULTRA SUNN - Out of the Cage"
@@ -12706,7 +12658,7 @@
       {
         "videoId": "BFZhGHTovnE",
         "title": "ULTRA SUNN - The Eye",
-        "position": 539,
+        "position": 525,
         "thumbnail": "https://i.ytimg.com/vi/BFZhGHTovnE/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "ULTRA SUNN - The Eye"
@@ -12714,23 +12666,23 @@
       {
         "videoId": "XP5U1--Sq0k",
         "title": "ULTRA SUNN - The Speed",
-        "position": 540,
+        "position": 526,
         "thumbnail": "https://i.ytimg.com/vi/XP5U1--Sq0k/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "ULTRA SUNN - The Speed"
       },
       {
-        "videoId": "DZc08Nqi4qY",
+        "videoId": "FqDJVY2x7ec",
         "title": "ULTRA SUNN - Young Foxes",
-        "position": 541,
-        "thumbnail": "https://i.ytimg.com/vi/DZc08Nqi4qY/mqdefault.jpg",
+        "position": 527,
+        "thumbnail": "https://i.ytimg.com/vi/FqDJVY2x7ec/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "ULTRA SUNN - Young Foxes"
       },
       {
         "videoId": "0u5XRnjWsBc",
         "title": "Vandal Moon - Hurt",
-        "position": 542,
+        "position": 528,
         "thumbnail": "https://i.ytimg.com/vi/0u5XRnjWsBc/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Vandal Moon - Hurt"
@@ -12738,7 +12690,7 @@
       {
         "videoId": "BOxKnvB9tdw",
         "title": "Velvet Condom - Collapse In Slow Motion",
-        "position": 543,
+        "position": 529,
         "thumbnail": "https://i.ytimg.com/vi/BOxKnvB9tdw/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Velvet Condom - Collapse In Slow Motion"
@@ -12746,7 +12698,7 @@
       {
         "videoId": "S2c38TzDZoc",
         "title": "Vestron Vulture - Always Down",
-        "position": 544,
+        "position": 530,
         "thumbnail": "https://i.ytimg.com/vi/S2c38TzDZoc/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Vestron Vulture - Always Down"
@@ -12754,7 +12706,7 @@
       {
         "videoId": "3Q0jwFJ5IVA",
         "title": "Vestron Vulture - Judas Effect",
-        "position": 545,
+        "position": 531,
         "thumbnail": "https://i.ytimg.com/vi/3Q0jwFJ5IVA/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Vestron Vulture - Judas Effect"
@@ -12762,7 +12714,7 @@
       {
         "videoId": "an81k22gMxM",
         "title": "Vestron Vulture - Motion Sickness",
-        "position": 546,
+        "position": 532,
         "thumbnail": "https://i.ytimg.com/vi/an81k22gMxM/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Vestron Vulture - Motion Sickness"
@@ -12770,7 +12722,7 @@
       {
         "videoId": "P0uzELbI9UE",
         "title": "Vestron Vulture - Phantom",
-        "position": 547,
+        "position": 533,
         "thumbnail": "https://i.ytimg.com/vi/P0uzELbI9UE/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Vestron Vulture - Phantom"
@@ -12778,7 +12730,7 @@
       {
         "videoId": "Hk4p-uKiXRE",
         "title": "Vestron Vulture - Sadistic Glee",
-        "position": 548,
+        "position": 534,
         "thumbnail": "https://i.ytimg.com/vi/Hk4p-uKiXRE/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Vestron Vulture - Sadistic Glee"
@@ -12786,7 +12738,7 @@
       {
         "videoId": "Yj4XzzrLTl8",
         "title": "Vestron Vulture - TELL ME WHEN I'M TELLING LIES",
-        "position": 549,
+        "position": 535,
         "thumbnail": "https://i.ytimg.com/vi/Yj4XzzrLTl8/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Vestron Vulture - TELL ME WHEN I'M TELLING LIES"
@@ -12794,7 +12746,7 @@
       {
         "videoId": "abMGfnO3m2c",
         "title": "VH X RR - Heavenly Outline",
-        "position": 550,
+        "position": 536,
         "thumbnail": "https://i.ytimg.com/vi/abMGfnO3m2c/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "VH X RR - Heavenly Outline"
@@ -12802,7 +12754,7 @@
       {
         "videoId": "MTDOcSb-rNo",
         "title": "Vick Vapors - Only Human",
-        "position": 551,
+        "position": 537,
         "thumbnail": "https://i.ytimg.com/vi/MTDOcSb-rNo/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Vick Vapors - Only Human"
@@ -12810,23 +12762,23 @@
       {
         "videoId": "GVMSm_3t3Cs",
         "title": "Vick Vapors;Fevr - Kiss Me",
-        "position": 552,
+        "position": 538,
         "thumbnail": "https://i.ytimg.com/vi/GVMSm_3t3Cs/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Vick Vapors;Fevr - Kiss Me"
       },
       {
-        "videoId": "MUXv995aXqg",
+        "videoId": "w7RePXgbJfg",
         "title": "Vioflesh - Always",
-        "position": 553,
-        "thumbnail": "https://i.ytimg.com/vi/MUXv995aXqg/mqdefault.jpg",
+        "position": 539,
+        "thumbnail": "https://i.ytimg.com/vi/w7RePXgbJfg/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Vioflesh - Always"
       },
       {
         "videoId": "vQHdDiFVmqA",
         "title": "Vioflesh - Ashes",
-        "position": 554,
+        "position": 540,
         "thumbnail": "https://i.ytimg.com/vi/vQHdDiFVmqA/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Vioflesh - Ashes"
@@ -12834,7 +12786,7 @@
       {
         "videoId": "bUpwGv6VtEQ",
         "title": "Vioflesh - Midnight",
-        "position": 555,
+        "position": 541,
         "thumbnail": "https://i.ytimg.com/vi/bUpwGv6VtEQ/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Vioflesh - Midnight"
@@ -12842,7 +12794,7 @@
       {
         "videoId": "Dna9pU1eTkU",
         "title": "Vioflesh - Naked",
-        "position": 556,
+        "position": 542,
         "thumbnail": "https://i.ytimg.com/vi/Dna9pU1eTkU/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Vioflesh - Naked"
@@ -12850,7 +12802,7 @@
       {
         "videoId": "CwB63Wic2BQ",
         "title": "Vioflesh - Spring Nostalgia",
-        "position": 557,
+        "position": 543,
         "thumbnail": "https://i.ytimg.com/vi/CwB63Wic2BQ/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Vioflesh - Spring Nostalgia"
@@ -12858,7 +12810,7 @@
       {
         "videoId": "1O1tE2rRk_Y",
         "title": "Vioflesh - Waves",
-        "position": 558,
+        "position": 544,
         "thumbnail": "https://i.ytimg.com/vi/1O1tE2rRk_Y/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Vioflesh - Waves"
@@ -12866,7 +12818,7 @@
       {
         "videoId": "VJFdASoBuCo",
         "title": "Vioflesh;Flesh - On My Skin",
-        "position": 559,
+        "position": 545,
         "thumbnail": "https://i.ytimg.com/vi/VJFdASoBuCo/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Vioflesh;Flesh - On My Skin"
@@ -12874,7 +12826,7 @@
       {
         "videoId": "lYAB9w-rK9s",
         "title": "Vogue.Noir - A Reflex",
-        "position": 560,
+        "position": 546,
         "thumbnail": "https://i.ytimg.com/vi/lYAB9w-rK9s/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Vogue.Noir - A Reflex"
@@ -12882,7 +12834,7 @@
       {
         "videoId": "jJII2bjbYRE",
         "title": "Vogue.Noir - Belief",
-        "position": 561,
+        "position": 547,
         "thumbnail": "https://i.ytimg.com/vi/jJII2bjbYRE/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Vogue.Noir - Belief"
@@ -12890,7 +12842,7 @@
       {
         "videoId": "cwTWYswRnbU",
         "title": "Vogue.Noir - Love Like Vampire",
-        "position": 562,
+        "position": 548,
         "thumbnail": "https://i.ytimg.com/vi/cwTWYswRnbU/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Vogue.Noir - Love Like Vampire"
@@ -12898,7 +12850,7 @@
       {
         "videoId": "P_Wf-XtI6is",
         "title": "Vogue.Noir - Memento",
-        "position": 563,
+        "position": 549,
         "thumbnail": "https://i.ytimg.com/vi/P_Wf-XtI6is/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Vogue.Noir - Memento"
@@ -12906,7 +12858,7 @@
       {
         "videoId": "c92i3L-xCdU",
         "title": "Vogue.Noir - Resolution",
-        "position": 564,
+        "position": 550,
         "thumbnail": "https://i.ytimg.com/vi/c92i3L-xCdU/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Vogue.Noir - Resolution"
@@ -12914,7 +12866,7 @@
       {
         "videoId": "VOz4J0GWo2Y",
         "title": "Vogue.Noir - She Is Frail",
-        "position": 565,
+        "position": 551,
         "thumbnail": "https://i.ytimg.com/vi/VOz4J0GWo2Y/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Vogue.Noir - She Is Frail"
@@ -12922,15 +12874,23 @@
       {
         "videoId": "C56XxZ81KvU",
         "title": "Vogue.Noir - Strange Days, Pt. 2",
-        "position": 566,
+        "position": 552,
         "thumbnail": "https://i.ytimg.com/vi/C56XxZ81KvU/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Vogue.Noir - Strange Days, Pt. 2"
       },
       {
+        "videoId": "nviGzZ4iGsg",
+        "title": "Vogue.Noir - Stratosphere",
+        "position": 552,
+        "thumbnail": "https://i.ytimg.com/vi/nviGzZ4iGsg/mqdefault.jpg",
+        "channelTitle": "",
+        "userTitle": "Vogue.Noir - Stratosphere"
+      },
+      {
         "videoId": "7fBcHDxBlpc",
         "title": "Vogue.Noir - Void",
-        "position": 567,
+        "position": 553,
         "thumbnail": "https://i.ytimg.com/vi/7fBcHDxBlpc/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Vogue.Noir - Void"
@@ -12938,7 +12898,7 @@
       {
         "videoId": "4rx7U0WO1Wk",
         "title": "Vogue.Noir;DRIFT. - Segments",
-        "position": 568,
+        "position": 554,
         "thumbnail": "https://i.ytimg.com/vi/4rx7U0WO1Wk/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Vogue.Noir;DRIFT. - Segments"
@@ -12946,7 +12906,7 @@
       {
         "videoId": "XXTsDTjKvG8",
         "title": "Void Vision - Sour",
-        "position": 569,
+        "position": 555,
         "thumbnail": "https://i.ytimg.com/vi/XXTsDTjKvG8/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Void Vision - Sour"
@@ -12954,7 +12914,7 @@
       {
         "videoId": "vHS_PB7Uyyw",
         "title": "Void Vision - The Source",
-        "position": 570,
+        "position": 556,
         "thumbnail": "https://i.ytimg.com/vi/vHS_PB7Uyyw/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Void Vision - The Source"
@@ -12962,7 +12922,7 @@
       {
         "videoId": "aOuTEgA0gkM",
         "title": "VOITH - Falling In Love With You",
-        "position": 571,
+        "position": 557,
         "thumbnail": "https://i.ytimg.com/vi/aOuTEgA0gkM/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "VOITH - Falling In Love With You"
@@ -12970,7 +12930,7 @@
       {
         "videoId": "9m8XOXP2XP8",
         "title": "VOITH - Forever Dead To Me",
-        "position": 572,
+        "position": 558,
         "thumbnail": "https://i.ytimg.com/vi/9m8XOXP2XP8/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "VOITH - Forever Dead To Me"
@@ -12978,23 +12938,23 @@
       {
         "videoId": "Xi69MrN9mH4",
         "title": "VOITH - Kraftwerk (Roboterkönige)",
-        "position": 573,
+        "position": 559,
         "thumbnail": "https://i.ytimg.com/vi/Xi69MrN9mH4/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "VOITH - Kraftwerk (Roboterkönige)"
       },
       {
-        "videoId": "aU5XtCD_18w",
+        "videoId": "1Y0l8XjujMs",
         "title": "VOITH - My Shadowblade",
-        "position": 574,
-        "thumbnail": "https://i.ytimg.com/vi/aU5XtCD_18w/mqdefault.jpg",
+        "position": 560,
+        "thumbnail": "https://i.ytimg.com/vi/1Y0l8XjujMs/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "VOITH - My Shadowblade"
       },
       {
         "videoId": "5_dLP-Ju1lg",
         "title": "VOITH - On The Night Of Halloween",
-        "position": 575,
+        "position": 561,
         "thumbnail": "https://i.ytimg.com/vi/5_dLP-Ju1lg/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "VOITH - On The Night Of Halloween"
@@ -13002,7 +12962,7 @@
       {
         "videoId": "Wl52jIVV5Wk",
         "title": "Waveshaper - Exabot",
-        "position": 576,
+        "position": 562,
         "thumbnail": "https://i.ytimg.com/vi/Wl52jIVV5Wk/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Waveshaper - Exabot"
@@ -13010,7 +12970,7 @@
       {
         "videoId": "say8WTwVmJ8",
         "title": "Whispering Sons - Alone",
-        "position": 577,
+        "position": 563,
         "thumbnail": "https://i.ytimg.com/vi/say8WTwVmJ8/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Whispering Sons - Alone"
@@ -13018,7 +12978,7 @@
       {
         "videoId": "u1aryJBHL7Y",
         "title": "Winter Severity Index - Golden Age / Labyrinth of Memories",
-        "position": 578,
+        "position": 564,
         "thumbnail": "https://i.ytimg.com/vi/u1aryJBHL7Y/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Winter Severity Index - Golden Age / Labyrinth of Memories"
@@ -13026,7 +12986,7 @@
       {
         "videoId": "yKcFqSUBSNo",
         "title": "Wisteria - Never Waved",
-        "position": 579,
+        "position": 565,
         "thumbnail": "https://i.ytimg.com/vi/yKcFqSUBSNo/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Wisteria - Never Waved"
@@ -13034,7 +12994,7 @@
       {
         "videoId": "Pe9UHS2CH_M",
         "title": "WYDROB;gothcandy - TAKE UR CIGARETTE",
-        "position": 580,
+        "position": 566,
         "thumbnail": "https://i.ytimg.com/vi/Pe9UHS2CH_M/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "WYDROB;gothcandy - TAKE UR CIGARETTE"
@@ -13042,7 +13002,7 @@
       {
         "videoId": "VwGzElvMcQo",
         "title": "xójira - TLAOCOYANI",
-        "position": 581,
+        "position": 567,
         "thumbnail": "https://i.ytimg.com/vi/VwGzElvMcQo/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "xójira - TLAOCOYANI"
@@ -13050,7 +13010,7 @@
       {
         "videoId": "3paIrADjLSE",
         "title": "xójira;pluto's ashtray - palinopsia ilusoria",
-        "position": 582,
+        "position": 568,
         "thumbnail": "https://i.ytimg.com/vi/3paIrADjLSE/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "xójira;pluto's ashtray - palinopsia ilusoria"
@@ -13058,7 +13018,7 @@
       {
         "videoId": "Sc2D26ZLqZ8",
         "title": "Youryoungbody - January",
-        "position": 583,
+        "position": 569,
         "thumbnail": "https://i.ytimg.com/vi/Sc2D26ZLqZ8/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Youryoungbody - January"
@@ -13066,7 +13026,7 @@
       {
         "videoId": "WLjj7kDB0hY",
         "title": "Zanias - Tryptamine Palace",
-        "position": 584,
+        "position": 570,
         "thumbnail": "https://i.ytimg.com/vi/WLjj7kDB0hY/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Zanias - Tryptamine Palace"
@@ -13074,7 +13034,7 @@
       {
         "videoId": "5wcOc3kOv58",
         "title": "Zanias - Unsaid",
-        "position": 585,
+        "position": 571,
         "thumbnail": "https://i.ytimg.com/vi/5wcOc3kOv58/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Zanias - Unsaid"
@@ -13082,18 +13042,10 @@
       {
         "videoId": "G5tHsCao1JU",
         "title": "Zanias;Serpentskin - Basking In the Light at Heaven's Gate",
-        "position": 586,
+        "position": 572,
         "thumbnail": "https://i.ytimg.com/vi/G5tHsCao1JU/mqdefault.jpg",
         "channelTitle": "",
         "userTitle": "Zanias;Serpentskin - Basking In the Light at Heaven's Gate"
-      },
-      {
-        "videoId": "lC2osSNqE2g",
-        "title": "МИРТЛ - Догорает",
-        "position": 587,
-        "thumbnail": "https://i.ytimg.com/vi/lC2osSNqE2g/mqdefault.jpg",
-        "channelTitle": "",
-        "userTitle": "МИРТЛ - Догорает"
       }
     ]
   }
