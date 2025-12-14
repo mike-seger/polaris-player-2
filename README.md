@@ -150,3 +150,8 @@ node ./create-playlist.mjs youtube-delete-tsv \
 ```
 
 
+# Sorting csv, tsv
+
+```
+mlr --tsv sort -c title then uniq -g yt_video_id,title yt-darkwave,coldwave.tsv
+```
