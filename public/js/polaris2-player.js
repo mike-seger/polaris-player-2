@@ -23,6 +23,7 @@
     let playlistIOInstance = null;
     let playerReady = false;
     let pendingPlayIndex = null;
+    let ytInitStarted = false;
 
     const STORAGE_KEY = 'ytAudioPlayer.settings';
     let settings = loadSettings();
@@ -249,6 +250,7 @@
     // Payload: frameCount * bins u8
 
     const SPECTRUM_CACHE_DIR = './spectrum-cache';
+    let spectrumCacheEnabled = true;
     const spectrumState = {
       bins: 16,
       fps: 20,
@@ -260,6 +262,24 @@
       lastVideoId: '',
       dpr: 1,
     };
+
+    function clearSpectrumCanvas() {
+      if (!spectrumCanvas) return;
+      const ctx = spectrumCanvas.getContext('2d');
+      if (!ctx) return;
+      ctx.clearRect(0, 0, spectrumCanvas.width, spectrumCanvas.height);
+    }
+
+    function disableSpectrumCache() {
+      spectrumCacheEnabled = false;
+      stopSpectrumAnimation();
+      spectrumState.frames = null;
+      spectrumState.frameCount = 0;
+      spectrumState.durationMs = 0;
+      spectrumState.lastVideoId = '';
+      document.body.classList.add('spectrum-missing');
+      clearSpectrumCanvas();
+    }
 
     function ensureSpectrumPeaks(binCount) {
       if (spectrumState.peaks && spectrumState.peaks.length === binCount) return;
@@ -366,6 +386,7 @@
 
     function startSpectrumAnimation() {
       stopSpectrumAnimation();
+      if (!spectrumCacheEnabled) return;
       if (!spectrumCanvas || !spectrumState.frames || !player || typeof player.getCurrentTime !== 'function') return;
 
       const tick = () => {
@@ -385,6 +406,7 @@
     }
 
     async function loadSpectrumForVideoId(videoId) {
+      if (!spectrumCacheEnabled) return false;
       if (!videoId) return false;
       if (videoId === spectrumState.lastVideoId && spectrumState.frames) return true;
 
@@ -782,11 +804,16 @@
       }
     }
 
-    // IFrame API ready
-    function onYouTubeIframeAPIReady() {
+    function initYouTubePlayer() {
+      if (ytInitStarted) return;
+      if (player) return;
+      if (!window.YT || typeof window.YT.Player !== 'function') return;
+
       const playerOrigin = (window.location && window.location.origin)
         ? window.location.origin
         : `${window.location.protocol}//${window.location.host}`;
+
+      ytInitStarted = true;
       playerReady = false;
       player = new YT.Player('player', {
         height: '200',
@@ -803,7 +830,32 @@
         }
       });
     }
+
+    // IFrame API ready
+    function onYouTubeIframeAPIReady() {
+      initYouTubePlayer();
+    }
     window.onYouTubeIframeAPIReady = onYouTubeIframeAPIReady;
+
+    // Fallback: if the IFrame API loaded before we assigned the callback,
+    // initialize immediately.
+    if (window.YT && typeof window.YT.Player === 'function') {
+      if (typeof queueMicrotask === 'function') {
+        queueMicrotask(initYouTubePlayer);
+      } else {
+        setTimeout(initYouTubePlayer, 0);
+      }
+    }
+
+    // Diagnostics: warn if the IFrame API never appears.
+    setTimeout(() => {
+      if (player || ytInitStarted) return;
+      if (!window.YT || typeof window.YT.Player !== 'function') {
+        console.warn(
+          'YouTube IFrame API did not load. Possible causes: network blocks, CSP, ad-blockers, or mixed-content. Check DevTools Network/Console for https://www.youtube.com/iframe_api.'
+        );
+      }
+    }, 10000);
 
     async function onPlayerReady() {
       playerReady = true;
@@ -859,7 +911,9 @@
         isPlaying = true;
         updatePlayPauseButton();
         focusActiveTrack({ scroll: false });
-        startSpectrumAnimation();
+        if (spectrumCacheEnabled) {
+          startSpectrumAnimation();
+        }
       } else if (event.data === YT.PlayerState.PAUSED) {
         isPlaying = false;
         updatePlayPauseButton();
@@ -1119,18 +1173,21 @@
       isPlaying = false;
       updateNowPlaying();
 
-      // Load offline spectrum cache for this video (non-blocking).
-      loadSpectrumForVideoId(videoId).then((ok) => {
-        if (!ok) {
-          stopSpectrumAnimation();
-          if (spectrumCanvas) {
-            const ctx = spectrumCanvas.getContext('2d');
-            if (ctx) ctx.clearRect(0, 0, spectrumCanvas.width, spectrumCanvas.height);
+      if (!spectrumCacheEnabled) {
+        stopSpectrumAnimation();
+        document.body.classList.add('spectrum-missing');
+        clearSpectrumCanvas();
+      } else {
+        // Load offline spectrum cache for this video (non-blocking).
+        loadSpectrumForVideoId(videoId).then((ok) => {
+          if (!ok) {
+            stopSpectrumAnimation();
+            clearSpectrumCanvas();
+          } else if (isPlaying) {
+            startSpectrumAnimation();
           }
-        } else if (isPlaying) {
-          startSpectrumAnimation();
-        }
-      });
+        });
+      }
 
       if (!trackRowElements.size || !trackRowElements.has(currentIndex)) {
         renderTrackList();
@@ -1402,6 +1459,15 @@
         }
         try {
           const body = await resp.json();
+          if (body && typeof body === 'object' && !Array.isArray(body)) {
+            if (Object.prototype.hasOwnProperty.call(body, 'spectrum-cache')) {
+              if (body['spectrum-cache'] === false) {
+                disableSpectrumCache();
+              } else if (body['spectrum-cache'] === true) {
+                spectrumCacheEnabled = true;
+              }
+            }
+          }
           if (body && body.ok === false) {
             return false;
           }
