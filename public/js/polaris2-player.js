@@ -26,7 +26,7 @@
 
     const STORAGE_KEY = 'ytAudioPlayer.settings';
     let settings = loadSettings();
-    const API_BASE_PATH = window.location.hostname.endsWith('polaris.net128.com') ? '/u2b' : '';
+    const API_BASE_PATH = window.location.hostname.endsWith('polaris.net128.com') ? '/u2b' : '.';
     const STATUS_ENDPOINT = `${API_BASE_PATH}/api/status`;
     const PLAYLIST_ENDPOINT = `${API_BASE_PATH}/api/playlist`;
     const LOCAL_PLAYLIST_PATH = './local-playlist.json';
