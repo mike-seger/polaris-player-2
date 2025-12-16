@@ -48,7 +48,7 @@ Denuit	FRA
 Denuit ft Emmon	
 Deus Ex Lumina;Antipole	DEU
 Dionnysuss	UZB
-Dionnysuss;Sad Madona	
+Dionnysuss;Sad Madona	UZB;FRA
 Dlina Volny	BLR
 Dream Affair	USA
 Ductape	TUR
@@ -61,7 +61,7 @@ Foie Gras	USA
 Forever Grey	USA
 Fragrance	FRA
 Fragrance;Lulannie	FRA
-Fragrance;Maya Postepski	
+Fragrance;Maya Postepski	FRA;CAN
 French Police	USA
 GOLD ZEBRA	CAN
 Galatée	RUS
@@ -150,8 +150,8 @@ Psyche	CAN
 Pulp	GBR
 Pulsations	DNK
 R. Missing	USA
-R. Missing;Johan Agebjörn	
-R. Missing;Levingtquatre	
+R. Missing;Johan Agebjörn	USA;SWE
+R. Missing;Levingtquatre	USA;NLD
 Rare DM	USA
 Rendez Vous	FRA
 Riki	USA
@@ -179,7 +179,7 @@ She Past Away	TUR
 Shortwire	HRV
 Sidewalks and Skeletons	GBR
 Sidewalks and Skeletons;CASHFORGOLD	GBR
-Sidewalks and Skeletons;Goo Munday	
+Sidewalks and Skeletons;Goo Munday	GBR;AUS
 Silent Runners	NLD
 Silverbullit	SWE
 Sinnerella	USA
@@ -208,10 +208,10 @@ The Weeknd	CAN
 The frozen Autumn	ITA
 Them Are Us Too	USA
 This Cold Night	USA
-Tone Ranger;Evelyn Drach	USA
+Tone Ranger;Evelyn Drach	USA;GBR
 Trevor Something	USA
 Trit95	USA
-Turbo Knight;Edictum	
+Turbo Knight;Edictum	FIN;AUT
 Twin Tribes	USA
 Tying Tiffany	ITA
 ULTRA SUNN	BEL
@@ -224,7 +224,7 @@ Vestron Vulture	MEX
 Vick Vapors	USA
 Vick Vapors;Fevr	USA
 Vioflesh	CHL
-Vioflesh;Flesh	
+Vioflesh;Flesh	CHL
 Vogue.Noir	GBR
 Vogue.Noir;DRIFT.	GBR
 Void Vision	USA
@@ -238,7 +238,6 @@ Youryoungbody	USA
 Zanias	DEU
 Zanias;Serpentskin	DEU
 akiaura	RUS
-akiaura	
 framed	AUS
 glwzbll	RUS
 hazy waters	GBR
