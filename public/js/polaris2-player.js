@@ -14,6 +14,7 @@
     let trackDetailsOverlayVisible = false;
 
     let filterText = '';
+    let countryFilter = '';
     let filteredIndices = [];
     let trackRowElements = new Map();
     let visibleIndices = [];
@@ -206,6 +207,7 @@
     const filterInputEl = document.getElementById('filterInput');
     const filterWrapper = document.getElementById('filterWrapper');
     const clearFilterBtn = document.getElementById('clearFilterBtn');
+    const countryFilterSelect = document.getElementById('countryFilterSelect');
     const thumbToggleBtn = document.getElementById('thumbToggleBtn');
     const thumbToggleIcon = document.getElementById('thumbToggleIcon');
     const trackDetailsWrapper = document.getElementById('trackDetailsWrapper');
@@ -660,6 +662,12 @@
         filterInputEl.value = '';
       }
 
+      countryFilter = '';
+      if (countryFilterSelect) {
+        countryFilterSelect.value = '';
+      }
+      updateCountryFilterOptions();
+
       trackDetailSettings = { ...DEFAULT_TRACK_DETAILS };
       applyTrackDetailPreferences();
       syncTrackDetailsControls();
@@ -727,10 +735,82 @@
       filterText = settings.filterText;
       filterInputEl.value = filterText;
     }
+    if (typeof settings.countryFilter === 'string') {
+      countryFilter = settings.countryFilter.trim().toUpperCase();
+    }
     updateFilterWrapperClass();
     applyTrackDetailPreferences();
     syncTrackDetailsControls();
     updateTrackDetailsButtonState();
+
+    function normalizeIso3(code) {
+      return (code || '').trim().toUpperCase();
+    }
+
+    function splitCountryCodes(value) {
+      if (typeof value !== 'string') return [];
+      return value
+        .split(';')
+        .map((part) => normalizeIso3(part))
+        .filter(Boolean);
+    }
+
+    function collectAvailableCountries() {
+      const set = new Set();
+      (playlistItems || []).forEach((item) => {
+        splitCountryCodes(item && typeof item === 'object' ? item.country : '').forEach((code) => set.add(code));
+      });
+      return Array.from(set).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+    }
+
+    function formatCountryOptionLabel(iso3) {
+      const flag = typeof window.getFlagEmojiForIso3 === 'function'
+        ? window.getFlagEmojiForIso3(iso3)
+        : '';
+      return flag ? `${flag} ${iso3}` : iso3;
+    }
+
+    function updateCountryFilterOptions() {
+      if (!countryFilterSelect) return;
+
+      const codes = collectAvailableCountries();
+      countryFilterSelect.innerHTML = '';
+
+      const allOpt = document.createElement('option');
+      allOpt.value = '';
+      allOpt.textContent = 'All';
+      countryFilterSelect.appendChild(allOpt);
+
+      if (!codes.length) {
+        countryFilterSelect.disabled = true;
+        countryFilterSelect.title = 'No country tags available';
+        countryFilterSelect.value = '';
+        return;
+      }
+
+      countryFilterSelect.disabled = false;
+      countryFilterSelect.title = 'Filter by country';
+
+      codes.forEach((code) => {
+        const opt = document.createElement('option');
+        opt.value = code;
+        opt.textContent = formatCountryOptionLabel(code);
+        countryFilterSelect.appendChild(opt);
+      });
+
+      const normalized = normalizeIso3(countryFilter);
+      if (normalized && codes.includes(normalized)) {
+        countryFilterSelect.value = normalized;
+      } else {
+        countryFilterSelect.value = '';
+        if (normalized) {
+          countryFilter = '';
+          saveSettings({ countryFilter: '' });
+        }
+      }
+    }
+
+    updateCountryFilterOptions();
 
     function applyTrackDetailPreferences(options = {}) {
       const { refreshThumbnails = false, preserveScroll = true } = options || {};
@@ -941,9 +1021,18 @@
     function computeFilteredIndices() {
       filteredIndices = [];
       const f = (filterText || '').trim().toLowerCase();
+      const wantCountry = normalizeIso3(countryFilter);
       playlistItems.forEach((item, idx) => {
         const title = (item.title || '').toLowerCase();
         const customTitle = (typeof item.userTitle === 'string' ? item.userTitle : '').toLowerCase();
+
+        if (wantCountry) {
+          const codes = splitCountryCodes(item && typeof item === 'object' ? item.country : '');
+          if (!codes.includes(wantCountry)) {
+            return;
+          }
+        }
+
         if (!f || title.includes(f) || customTitle.includes(f)) {
           filteredIndices.push(idx);
         }
@@ -981,7 +1070,7 @@
       ul.innerHTML = '';
       trackRowElements = new Map();
 
-      const hasFilter = (filterText || '').trim().length > 0;
+      const hasFilter = (filterText || '').trim().length > 0 || (countryFilter || '').trim().length > 0;
       let indices = hasFilter ? filteredIndices.slice() : playlistItems.map((_, i) => i);
       if (sortAlphabetically) {
         indices = getSortedIndices(indices);
@@ -1314,6 +1403,8 @@
       }
       const data = await resp.json();
       playlistItems = data.items || [];
+
+      updateCountryFilterOptions();
       const resolvedPlaylistId =
         (typeof data.playlistId === 'string' && data.playlistId.trim().length
           ? data.playlistId.trim()
@@ -1536,6 +1627,8 @@
         : targetId;
 
       playlistItems = Array.isArray(entry.items) ? entry.items.slice() : [];
+
+      updateCountryFilterOptions();
       saveSettings({ playlistId: targetId });
 
       const savedMap = getCurrentVideoMap();
@@ -1643,6 +1736,15 @@
       renderTrackList();
       saveSettings({ filterText });
     });
+
+    if (countryFilterSelect) {
+      countryFilterSelect.addEventListener('change', () => {
+        countryFilter = normalizeIso3(countryFilterSelect.value);
+        saveSettings({ countryFilter });
+        computeFilteredIndices();
+        renderTrackList();
+      });
+    }
 
     function updateFilterWrapperClass() {
       if ((filterInputEl.value || '').length > 0) {

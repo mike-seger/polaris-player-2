@@ -382,6 +382,28 @@ input[type="checkbox"] {
     flex: 1;
 }
 
+#countryFilterSelect {
+    flex: 0 0 auto;
+    min-width: 5.2rem;
+    max-width: 7.5rem;
+    padding: 0.3rem 0.55rem;
+    margin-top: 0.375rem;
+    font-size: 18px;
+    background: #202633;
+    border: 1px solid var(--color-border);
+    color: var(--color-text);
+    border-radius: 6px;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    cursor: pointer;
+}
+
+#countryFilterSelect:disabled {
+    opacity: 0.6;
+    cursor: default;
+}
+
 #clearFilterBtn {
     position: absolute;
     right: 0.5rem;
