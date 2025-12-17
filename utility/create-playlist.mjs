@@ -22,6 +22,124 @@ await loadEnvFiles();
 
 const terminalWidth = Math.min(100, process.stdout?.columns ?? 100);
 
+function stripDiacritics(input) {
+  const s = String(input ?? '');
+  try {
+    // NFKD splits accents into combining marks; removing them improves cross-locale stability.
+    return s.normalize('NFKD').replace(/\p{M}+/gu, '');
+  } catch {
+    // Fallback for environments without Unicode property escapes.
+    return s.normalize('NFKD').replace(/[\u0300-\u036f]+/g, '');
+  }
+}
+
+const CYRILLIC_TO_LATIN = Object.freeze({
+  А: 'A',
+  а: 'a',
+  Б: 'B',
+  б: 'b',
+  В: 'V',
+  в: 'v',
+  Г: 'G',
+  г: 'g',
+  Д: 'D',
+  д: 'd',
+  Е: 'E',
+  е: 'e',
+  Ё: 'E',
+  ё: 'e',
+  Ж: 'Zh',
+  ж: 'zh',
+  З: 'Z',
+  з: 'z',
+  И: 'I',
+  и: 'i',
+  Й: 'I',
+  й: 'i',
+  К: 'K',
+  к: 'k',
+  Л: 'L',
+  л: 'l',
+  М: 'M',
+  м: 'm',
+  Н: 'N',
+  н: 'n',
+  О: 'O',
+  о: 'o',
+  П: 'P',
+  п: 'p',
+  Р: 'R',
+  р: 'r',
+  С: 'S',
+  с: 's',
+  Т: 'T',
+  т: 't',
+  У: 'U',
+  у: 'u',
+  Ф: 'F',
+  ф: 'f',
+  Х: 'Kh',
+  х: 'kh',
+  Ц: 'Ts',
+  ц: 'ts',
+  Ч: 'Ch',
+  ч: 'ch',
+  Ш: 'Sh',
+  ш: 'sh',
+  Щ: 'Shch',
+  щ: 'shch',
+  Ы: 'Y',
+  ы: 'y',
+  Э: 'E',
+  э: 'e',
+  Ю: 'Yu',
+  ю: 'yu',
+  Я: 'Ya',
+  я: 'ya',
+  Ь: '',
+  ь: '',
+  Ъ: '',
+  ъ: '',
+
+  // Common non-Russian Cyrillic letters (Ukrainian/Belarusian).
+  І: 'I',
+  і: 'i',
+  Ї: 'Yi',
+  ї: 'yi',
+  Є: 'Ye',
+  є: 'ye',
+  Ґ: 'G',
+  ґ: 'g',
+  Ў: 'U',
+  ў: 'u'
+});
+
+function transliterateCyrillicToLatin(input) {
+  const s = String(input ?? '');
+  // Replace only mapped characters; leave the rest as-is.
+  return s.replace(/[\u0400-\u04FF]/g, (ch) => CYRILLIC_TO_LATIN[ch] ?? ch);
+}
+
+function normalizeTitleForSort(title, { transliterateCyrillic } = {}) {
+  let s = String(title ?? '');
+  s = stripDiacritics(s);
+  if (transliterateCyrillic) {
+    s = transliterateCyrillicToLatin(s);
+  }
+  return s.toLocaleLowerCase();
+}
+
+function makeComparePlaylistItemsByTitle({ transliterateCyrillic } = {}) {
+  return function comparePlaylistItemsByTitle(a, b) {
+    const aTitleKey = normalizeTitleForSort(a.userTitle || a.title || '', { transliterateCyrillic });
+    const bTitleKey = normalizeTitleForSort(b.userTitle || b.title || '', { transliterateCyrillic });
+    if (aTitleKey === bTitleKey) {
+      return (a.__position ?? 0) - (b.__position ?? 0);
+    }
+    return aTitleKey.localeCompare(bTitleKey);
+  };
+}
+
 await yargs(hideBin(process.argv))
   .command(
     'insert-tsv',
@@ -175,6 +293,12 @@ await yargs(hideBin(process.argv))
           default: false,
           describe: 'Preserve order from the JSON file instead of sorting by userTitle'
         })
+        .option('transliterate-sort', {
+          type: 'boolean',
+          default: false,
+          describe:
+            'When sorting, transliterate Cyrillic characters to Latin for a more natural A-Z order in mixed-script titles'
+        })
         .option('dry-run', {
           type: 'boolean',
           default: false,
@@ -205,19 +329,6 @@ await yargs(hideBin(process.argv))
   .wrap(terminalWidth)
   .strict()
   .parse();
-
-function normalizeTitleForSort(title) {
-  return String(title ?? '').toLocaleLowerCase();
-}
-
-function comparePlaylistItemsByTitle(a, b) {
-  const aTitleKey = normalizeTitleForSort(a.userTitle || a.title || '');
-  const bTitleKey = normalizeTitleForSort(b.userTitle || b.title || '');
-  if (aTitleKey === bTitleKey) {
-    return (a.__position ?? 0) - (b.__position ?? 0);
-  }
-  return aTitleKey.localeCompare(bTitleKey);
-}
 
 async function readTsvVideoIdTitles(tsvPath) {
   const raw = await fs.readFile(tsvPath, 'utf8');
@@ -527,7 +638,7 @@ async function runYouTubePlaylistCreate(args) {
   const resolvedInputPath = path.resolve(process.cwd(), args.input);
   const tokenPath = path.resolve(process.cwd(), args['token-path'] || DEFAULT_TOKEN_PATH);
 
-  const playlistData = await loadPlaylist(resolvedInputPath, args['no-sort']);
+  const playlistData = await loadPlaylist(resolvedInputPath, args['no-sort'], args['transliterate-sort']);
 
   const authClient = await getAuthenticatedClient({
     clientId: CLIENT_ID,
@@ -719,7 +830,7 @@ async function loadEnvFiles() {
   }
 }
 
-async function loadPlaylist(filePath, noSort) {
+async function loadPlaylist(filePath, noSort, transliterateSort) {
   let json;
   try {
     const raw = await fs.readFile(filePath, 'utf8');
@@ -737,7 +848,8 @@ async function loadPlaylist(filePath, noSort) {
   let items = json.items.map((item, idx) => ({ ...item, __position: idx }));
 
   if (!noSort) {
-    items = items.slice().sort(comparePlaylistItemsByTitle);
+    const compare = makeComparePlaylistItemsByTitle({ transliterateCyrillic: !!transliterateSort });
+    items = items.slice().sort(compare);
   }
 
   console.log(`Loaded ${items.length} tracks from ${filePath}.`);

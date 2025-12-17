@@ -56,6 +56,7 @@ Alternatively, after `npm install -g` inside this folder, you can run `yt-playli
 - `--title` / `-t`: name for the new YouTube playlist (required).
 - `--privacy` / `-p`: playlist visibility (`private`, `public`, or `unlisted`, default `private`).
 - `--no-sort`: disable alphabetical sorting by `userTitle`; the JSON order will be preserved.
+- `--transliterate-sort`: when sorting, transliterate Cyrillic to Latin so mixed-script titles sort more naturally.
 - `--dry-run`: print the actions that would be taken without calling the YouTube API.
 - `--token-path`: override where OAuth tokens are cached (default `utility/.oauth-token.json`).
 - `--replace`: delete any of your existing playlists with the same title before creating the new one.
