@@ -14,7 +14,8 @@
     let trackDetailsOverlayVisible = false;
 
     let filterText = '';
-    let countryFilter = '';
+    let countryFilters = [];
+    let countryFilterOverlayVisible = false;
     let filteredIndices = [];
     let trackRowElements = new Map();
     let visibleIndices = [];
@@ -207,7 +208,10 @@
     const filterInputEl = document.getElementById('filterInput');
     const filterWrapper = document.getElementById('filterWrapper');
     const clearFilterBtn = document.getElementById('clearFilterBtn');
-    const countryFilterSelect = document.getElementById('countryFilterSelect');
+    const countryFilterWrapper = document.getElementById('countryFilterWrapper');
+    const countryFilterBtn = document.getElementById('countryFilterBtn');
+    const countryFilterOverlay = document.getElementById('countryFilterOverlay');
+    const countryFilterOptions = document.getElementById('countryFilterOptions');
     const thumbToggleBtn = document.getElementById('thumbToggleBtn');
     const thumbToggleIcon = document.getElementById('thumbToggleIcon');
     const trackDetailsWrapper = document.getElementById('trackDetailsWrapper');
@@ -520,6 +524,10 @@
           closeTrackDetailsOverlay({ focusButton: !handled });
           handled = true;
         }
+        if (countryFilterOverlayVisible) {
+          closeCountryFilterOverlay({ focusButton: !handled });
+          handled = true;
+        }
         if (handled) {
           event.preventDefault();
         }
@@ -662,11 +670,9 @@
         filterInputEl.value = '';
       }
 
-      countryFilter = '';
-      if (countryFilterSelect) {
-        countryFilterSelect.value = '';
-      }
+      countryFilters = [];
       updateCountryFilterOptions();
+      closeCountryFilterOverlay();
 
       trackDetailSettings = { ...DEFAULT_TRACK_DETAILS };
       applyTrackDetailPreferences();
@@ -735,8 +741,11 @@
       filterText = settings.filterText;
       filterInputEl.value = filterText;
     }
-    if (typeof settings.countryFilter === 'string') {
-      countryFilter = settings.countryFilter.trim().toUpperCase();
+    if (Array.isArray(settings.countryFilters)) {
+      countryFilters = normalizeCountryFilterList(settings.countryFilters);
+    } else if (typeof settings.countryFilter === 'string') {
+      const legacy = normalizeIso3(settings.countryFilter);
+      countryFilters = legacy ? [legacy] : [];
     }
     updateFilterWrapperClass();
     applyTrackDetailPreferences();
@@ -745,6 +754,20 @@
 
     function normalizeIso3(code) {
       return (code || '').trim().toUpperCase();
+    }
+
+    function normalizeCountryFilterList(value) {
+      if (!Array.isArray(value)) return [];
+      const out = [];
+      const seen = new Set();
+      value.forEach((entry) => {
+        const code = normalizeIso3(entry);
+        if (!code) return;
+        if (seen.has(code)) return;
+        seen.add(code);
+        out.push(code);
+      });
+      return out;
     }
 
     function splitCountryCodes(value) {
@@ -782,59 +805,148 @@
       return { codes, counts };
     }
 
-    function formatCountryOptionLabel(iso3, count) {
-      if (iso3 === '?') {
-        const flag = '🏳️';
-        return `${flag} ? (${count})`;
-      }
-
-      const flag = typeof window.getFlagEmojiForIso3 === 'function'
+    function getCountryFlagEmoji(iso3) {
+      if (iso3 === '?') return '🏳️';
+      return typeof window.getFlagEmojiForIso3 === 'function'
         ? window.getFlagEmojiForIso3(iso3)
         : '';
-      return flag ? `${flag} ${iso3} (${count})` : `${iso3} (${count})`;
+    }
+
+    function formatCountryOptionText(iso3, count) {
+      if (iso3 === '?') return `? (${count})`;
+      return `${iso3} (${count})`;
+    }
+
+    function updateCountryFilterButtonState() {
+      if (!countryFilterBtn) return;
+      const active = Array.isArray(countryFilters) && countryFilters.length > 0;
+      countryFilterBtn.classList.toggle('active', active);
+      countryFilterBtn.setAttribute('aria-expanded', String(countryFilterOverlayVisible));
+      countryFilterBtn.setAttribute('aria-pressed', String(countryFilterOverlayVisible));
+    }
+
+    function openCountryFilterOverlay() {
+      if (!countryFilterOverlay) return;
+      updateCountryFilterOptions();
+      countryFilterOverlay.classList.add('visible');
+      countryFilterOverlay.setAttribute('aria-hidden', 'false');
+      countryFilterOverlayVisible = true;
+      updateCountryFilterButtonState();
+    }
+
+    function closeCountryFilterOverlay(options = {}) {
+      if (!countryFilterOverlay) return;
+      countryFilterOverlay.classList.remove('visible');
+      countryFilterOverlay.setAttribute('aria-hidden', 'true');
+      countryFilterOverlayVisible = false;
+      updateCountryFilterButtonState();
+      if (options.focusButton && countryFilterBtn && typeof countryFilterBtn.focus === 'function') {
+        countryFilterBtn.focus({ preventScroll: true });
+      }
+    }
+
+    function toggleCountryFilterOverlay() {
+      if (countryFilterOverlayVisible) {
+        closeCountryFilterOverlay();
+      } else {
+        openCountryFilterOverlay();
+      }
+    }
+
+    function persistCountryFilters() {
+      const normalized = normalizeCountryFilterList(countryFilters);
+      countryFilters = normalized;
+      // Keep legacy single-value for older builds; first selection wins.
+      saveSettings({ countryFilters: normalized, countryFilter: normalized[0] || '' });
+      updateCountryFilterButtonState();
     }
 
     function updateCountryFilterOptions() {
-      if (!countryFilterSelect) return;
+      if (!countryFilterBtn || !countryFilterOptions) return;
 
       const { codes, counts } = collectCountryCounts();
-      countryFilterSelect.innerHTML = '';
-
-      const allOpt = document.createElement('option');
-      allOpt.value = '';
-      allOpt.textContent = 'All';
-      countryFilterSelect.appendChild(allOpt);
+      countryFilterOptions.innerHTML = '';
 
       if (!codes.length) {
-        countryFilterSelect.disabled = true;
-        countryFilterSelect.title = 'No country tags available';
-        countryFilterSelect.value = '';
+        countryFilterBtn.disabled = true;
+        countryFilterBtn.title = 'No country tags available';
+        countryFilters = [];
+        persistCountryFilters();
         return;
       }
 
-      countryFilterSelect.disabled = false;
-      countryFilterSelect.title = 'Filter by country';
+      countryFilterBtn.disabled = false;
+      countryFilterBtn.title = 'Filter by country';
 
-      codes.forEach((code) => {
-        const opt = document.createElement('option');
-        opt.value = code;
-        opt.textContent = formatCountryOptionLabel(code, counts.get(code) || 0);
-        countryFilterSelect.appendChild(opt);
+      const selected = new Set(normalizeCountryFilterList(countryFilters));
+
+      const allLabel = document.createElement('label');
+      allLabel.className = 'track-details-option';
+      const allInput = document.createElement('input');
+      allInput.type = 'checkbox';
+      allInput.checked = selected.size === 0;
+      allInput.setAttribute('aria-label', 'All countries');
+      const allText = document.createElement('span');
+      allText.textContent = 'All';
+      allLabel.appendChild(allInput);
+      allLabel.appendChild(allText);
+      countryFilterOptions.appendChild(allLabel);
+
+      allInput.addEventListener('change', () => {
+        if (allInput.checked) {
+          countryFilters = [];
+          persistCountryFilters();
+          computeFilteredIndices();
+          renderTrackList();
+          updateCountryFilterOptions();
+        }
       });
 
-      const normalized = normalizeIso3(countryFilter);
-      if (normalized && codes.includes(normalized)) {
-        countryFilterSelect.value = normalized;
-      } else {
-        countryFilterSelect.value = '';
-        if (normalized) {
-          countryFilter = '';
-          saveSettings({ countryFilter: '' });
+      codes.forEach((code) => {
+        const optLabel = document.createElement('label');
+        optLabel.className = 'track-details-option';
+
+        const input = document.createElement('input');
+        input.type = 'checkbox';
+        input.checked = selected.has(code);
+        input.value = code;
+
+        const flag = getCountryFlagEmoji(code);
+        if (flag) {
+          const flagSpan = document.createElement('span');
+          flagSpan.className = 'country-flag-emoji';
+          flagSpan.textContent = flag;
+          optLabel.appendChild(input);
+          optLabel.appendChild(flagSpan);
+        } else {
+          optLabel.appendChild(input);
         }
-      }
+
+        const text = document.createElement('span');
+        text.textContent = formatCountryOptionText(code, counts.get(code) || 0);
+        optLabel.appendChild(text);
+        countryFilterOptions.appendChild(optLabel);
+
+        input.addEventListener('change', () => {
+          const next = new Set(normalizeCountryFilterList(countryFilters));
+          const normalizedCode = normalizeIso3(code);
+          if (input.checked) {
+            next.add(normalizedCode);
+          } else {
+            next.delete(normalizedCode);
+          }
+
+          countryFilters = Array.from(next);
+          persistCountryFilters();
+          computeFilteredIndices();
+          renderTrackList();
+          updateCountryFilterOptions();
+        });
+      });
     }
 
     updateCountryFilterOptions();
+    updateCountryFilterButtonState();
 
     function applyTrackDetailPreferences(options = {}) {
       const { refreshThumbnails = false, preserveScroll = true } = options || {};
@@ -1045,17 +1157,24 @@
     function computeFilteredIndices() {
       filteredIndices = [];
       const f = (filterText || '').trim().toLowerCase();
-      const wantCountry = normalizeIso3(countryFilter);
+      const selected = new Set(normalizeCountryFilterList(countryFilters));
       playlistItems.forEach((item, idx) => {
         const title = (item.title || '').toLowerCase();
         const customTitle = (typeof item.userTitle === 'string' ? item.userTitle : '').toLowerCase();
 
-        if (wantCountry) {
+        if (selected.size) {
           const codes = splitCountryCodes(item && typeof item === 'object' ? item.country : '');
-          if (wantCountry === '?') {
-            if (codes.length) return;
-          } else if (!codes.includes(wantCountry)) {
-            return;
+          if (!codes.length) {
+            if (!selected.has('?')) return;
+          } else {
+            let match = false;
+            for (const code of codes) {
+              if (selected.has(code)) {
+                match = true;
+                break;
+              }
+            }
+            if (!match) return;
           }
         }
 
@@ -1096,7 +1215,7 @@
       ul.innerHTML = '';
       trackRowElements = new Map();
 
-      const hasFilter = (filterText || '').trim().length > 0 || (countryFilter || '').trim().length > 0;
+      const hasFilter = (filterText || '').trim().length > 0 || (Array.isArray(countryFilters) && countryFilters.length > 0);
       let indices = hasFilter ? filteredIndices.slice() : playlistItems.map((_, i) => i);
       if (sortAlphabetically) {
         indices = getSortedIndices(indices);
@@ -1763,14 +1882,24 @@
       saveSettings({ filterText });
     });
 
-    if (countryFilterSelect) {
-      countryFilterSelect.addEventListener('change', () => {
-        countryFilter = normalizeIso3(countryFilterSelect.value);
-        saveSettings({ countryFilter });
-        computeFilteredIndices();
-        renderTrackList();
+    if (countryFilterBtn) {
+      countryFilterBtn.addEventListener('click', (event) => {
+        event.stopPropagation();
+        toggleCountryFilterOverlay();
       });
     }
+
+    if (countryFilterOverlay) {
+      countryFilterOverlay.addEventListener('click', (event) => {
+        event.stopPropagation();
+      });
+    }
+
+    document.addEventListener('click', (event) => {
+      if (!countryFilterOverlayVisible) return;
+      if (countryFilterWrapper && countryFilterWrapper.contains(event.target)) return;
+      closeCountryFilterOverlay();
+    });
 
     function updateFilterWrapperClass() {
       if ((filterInputEl.value || '').length > 0) {

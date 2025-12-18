@@ -382,26 +382,72 @@ input[type="checkbox"] {
     flex: 1;
 }
 
-#countryFilterSelect {
+#countryFilterBtn {
     flex: 0 0 auto;
-    min-width: 5.2rem;
-    max-width: 7.5rem;
-    padding: 0.3rem 0.55rem;
-    margin-top: 0.375rem;
-    font-size: 18px;
-    background: #202633;
-    border: 1px solid var(--color-border);
-    color: var(--color-text);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     border-radius: 6px;
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    appearance: none;
+    border: 1px solid var(--color-border);
+    background: #202633;
+    color: var(--color-text);
     cursor: pointer;
+    padding: 0;
+    height: 34px;
+    width: 34px;
 }
 
-#countryFilterSelect:disabled {
+#countryFilterBtn:hover,
+#countryFilterBtn:focus {
+    border-color: var(--color-border-strong);
+}
+
+#countryFilterBtn:disabled {
     opacity: 0.6;
     cursor: default;
+}
+
+#countryFilterBtn .icon {
+    font-size: 20px;
+    width: auto;
+    height: auto;
+    line-height: 1;
+    margin: 0;
+}
+
+#countryFilterBtn.active {
+    color: var(--color-accent);
+}
+
+#countryFilterOptions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    max-height: min(60vh, 420px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-border-strong) rgba(32, 38, 51, 0.75);
+}
+
+#countryFilterOptions::-webkit-scrollbar {
+    width: 10px;
+}
+
+#countryFilterOptions::-webkit-scrollbar-track {
+    background: rgba(15, 17, 21, 0.95);
+    border-radius: 999px;
+}
+
+#countryFilterOptions::-webkit-scrollbar-thumb {
+    background: var(--color-border-strong);
+    border-radius: 999px;
+    border: 2px solid rgba(15, 17, 21, 0.95);
+}
+
+#countryFilterOptions::-webkit-scrollbar-thumb:hover {
+    background: var(--color-hover);
 }
 
 #clearFilterBtn {
@@ -740,6 +786,31 @@ body.spectrum-hidden #spectrumCanvas {
     margin: 0;
     width: 1rem;
     height: 1rem;
+    appearance: none;
+    -webkit-appearance: none;
+    border-radius: 3px;
+    border: 1px solid var(--color-border-strong);
+    background: #838383;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.track-details-option input[type="checkbox"]:checked {
+    background: var(--color-accent);
+    border-color: var(--color-accent);
+}
+
+.track-details-option input[type="checkbox"]:checked::after {
+    content: '✓';
+    font-size: 0.8rem;
+    line-height: 1;
+    color: #fff;
+}
+
+.country-flag-emoji {
+    font-size: 1.5em;
+    line-height: 1;
 }
 
 body.hide-track-number .track-number {

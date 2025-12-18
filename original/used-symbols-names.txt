@@ -3,6 +3,7 @@ arrow_left
 arrow_outward
 arrow_right
 arrow_up
+artist
 cancel
 cast
 cast_connected
@@ -13,6 +14,7 @@ connected_tv
 delete
 download
 fast_forward
+flag
 folder
 folder_open
 forward_30

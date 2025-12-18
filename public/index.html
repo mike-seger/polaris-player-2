@@ -63,7 +63,30 @@
                   <span class="icon cancel" aria-hidden="true">cancel</span>
                 </button>
               </div>
-              <select id="countryFilterSelect" aria-label="Country filter" disabled></select>
+              <div class="details-toggle-wrapper" id="countryFilterWrapper">
+                <button
+                  id="countryFilterBtn"
+                  type="button"
+                  aria-label="Country filter"
+                  title="Filter by country"
+                  aria-haspopup="true"
+                  aria-expanded="false"
+                  aria-controls="countryFilterOverlay"
+                >
+                  <span class="icon flag" id="countryFilterIcon" aria-hidden="true">flag</span>
+                </button>
+                <div
+                  id="countryFilterOverlay"
+                  class="track-details-overlay"
+                  role="dialog"
+                  aria-modal="false"
+                  aria-hidden="true"
+                  aria-labelledby="countryFilterHeading"
+                >
+                  <div class="track-details-header" id="countryFilterHeading">Countries</div>
+                  <div id="countryFilterOptions"></div>
+                </div>
+              </div>
             </div>
           </div>
 
