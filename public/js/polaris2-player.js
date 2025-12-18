@@ -755,25 +755,49 @@
         .filter(Boolean);
     }
 
-    function collectAvailableCountries() {
-      const set = new Set();
+    function collectCountryCounts() {
+      const counts = new Map();
       (playlistItems || []).forEach((item) => {
-        splitCountryCodes(item && typeof item === 'object' ? item.country : '').forEach((code) => set.add(code));
+        const codes = splitCountryCodes(item && typeof item === 'object' ? item.country : '');
+        if (!codes.length) {
+          counts.set('?', (counts.get('?') || 0) + 1);
+          return;
+        }
+
+        // Count each track once per country code.
+        const uniq = new Set(codes);
+        uniq.forEach((code) => {
+          counts.set(code, (counts.get(code) || 0) + 1);
+        });
       });
-      return Array.from(set).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+
+      const codes = Array.from(counts.keys())
+        .filter((c) => c !== '?')
+        .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+
+      if (counts.has('?')) {
+        codes.unshift('?');
+      }
+
+      return { codes, counts };
     }
 
-    function formatCountryOptionLabel(iso3) {
+    function formatCountryOptionLabel(iso3, count) {
+      if (iso3 === '?') {
+        const flag = '🏳️';
+        return `${flag} ? (${count})`;
+      }
+
       const flag = typeof window.getFlagEmojiForIso3 === 'function'
         ? window.getFlagEmojiForIso3(iso3)
         : '';
-      return flag ? `${flag} ${iso3}` : iso3;
+      return flag ? `${flag} ${iso3} (${count})` : `${iso3} (${count})`;
     }
 
     function updateCountryFilterOptions() {
       if (!countryFilterSelect) return;
 
-      const codes = collectAvailableCountries();
+      const { codes, counts } = collectCountryCounts();
       countryFilterSelect.innerHTML = '';
 
       const allOpt = document.createElement('option');
@@ -794,7 +818,7 @@
       codes.forEach((code) => {
         const opt = document.createElement('option');
         opt.value = code;
-        opt.textContent = formatCountryOptionLabel(code);
+        opt.textContent = formatCountryOptionLabel(code, counts.get(code) || 0);
         countryFilterSelect.appendChild(opt);
       });
 
@@ -1028,7 +1052,9 @@
 
         if (wantCountry) {
           const codes = splitCountryCodes(item && typeof item === 'object' ? item.country : '');
-          if (!codes.includes(wantCountry)) {
+          if (wantCountry === '?') {
+            if (codes.length) return;
+          } else if (!codes.includes(wantCountry)) {
             return;
           }
         }
