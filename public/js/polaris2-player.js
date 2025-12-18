@@ -14,6 +14,8 @@
     let trackDetailsOverlayVisible = false;
 
     let filterText = '';
+  let artistFilters = [];
+  let artistFilterOverlayVisible = false;
     let countryFilters = [];
     let countryFilterOverlayVisible = false;
     let filteredIndices = [];
@@ -208,6 +210,10 @@
     const filterInputEl = document.getElementById('filterInput');
     const filterWrapper = document.getElementById('filterWrapper');
     const clearFilterBtn = document.getElementById('clearFilterBtn');
+    const artistFilterWrapper = document.getElementById('artistFilterWrapper');
+    const artistFilterBtn = document.getElementById('artistFilterBtn');
+    const artistFilterOverlay = document.getElementById('artistFilterOverlay');
+    const artistFilterOptions = document.getElementById('artistFilterOptions');
     const countryFilterWrapper = document.getElementById('countryFilterWrapper');
     const countryFilterBtn = document.getElementById('countryFilterBtn');
     const countryFilterOverlay = document.getElementById('countryFilterOverlay');
@@ -524,6 +530,10 @@
           closeTrackDetailsOverlay({ focusButton: !handled });
           handled = true;
         }
+        if (artistFilterOverlayVisible) {
+          closeArtistFilterOverlay({ focusButton: !handled });
+          handled = true;
+        }
         if (countryFilterOverlayVisible) {
           closeCountryFilterOverlay({ focusButton: !handled });
           handled = true;
@@ -674,6 +684,10 @@
       updateCountryFilterOptions();
       closeCountryFilterOverlay();
 
+      artistFilters = [];
+      updateArtistFilterOptions();
+      closeArtistFilterOverlay();
+
       trackDetailSettings = { ...DEFAULT_TRACK_DETAILS };
       applyTrackDetailPreferences();
       syncTrackDetailsControls();
@@ -741,6 +755,9 @@
       filterText = settings.filterText;
       filterInputEl.value = filterText;
     }
+    if (Array.isArray(settings.artistFilters)) {
+      artistFilters = normalizeArtistFilterList(settings.artistFilters);
+    }
     if (Array.isArray(settings.countryFilters)) {
       countryFilters = normalizeCountryFilterList(settings.countryFilters);
     } else if (typeof settings.countryFilter === 'string') {
@@ -754,6 +771,30 @@
 
     function normalizeIso3(code) {
       return (code || '').trim().toUpperCase();
+    }
+
+    function normalizeArtistName(name) {
+      return (name || '').trim();
+    }
+
+    function normalizeArtistKey(name) {
+      return normalizeArtistName(name).toLowerCase();
+    }
+
+    function normalizeArtistFilterList(value) {
+      if (!Array.isArray(value)) return [];
+      const out = [];
+      const seen = new Set();
+      value.forEach((entry) => {
+        const cleaned = normalizeArtistName(entry);
+        if (!cleaned) return;
+        const key = normalizeArtistKey(cleaned);
+        if (!key) return;
+        if (seen.has(key)) return;
+        seen.add(key);
+        out.push(cleaned);
+      });
+      return out;
     }
 
     function normalizeCountryFilterList(value) {
@@ -776,6 +817,43 @@
         .split(';')
         .map((part) => normalizeIso3(part))
         .filter(Boolean);
+    }
+
+    function getArtistSourceText(item) {
+      if (!item || typeof item !== 'object') return '';
+      if (typeof item.userTitle === 'string' && item.userTitle.trim().length) {
+        return item.userTitle;
+      }
+      if (typeof item.title === 'string') return item.title;
+      return '';
+    }
+
+    function splitArtists(value) {
+      if (typeof value !== 'string') return [];
+      const raw = value.trim();
+      if (!raw) return [];
+      const dashIndex = raw.indexOf(' - ');
+      const artistPart = dashIndex >= 0 ? raw.slice(0, dashIndex) : raw;
+      return artistPart
+        .split(';')
+        .map((part) => normalizeArtistName(part))
+        .filter(Boolean);
+    }
+
+    function collectAvailableArtists() {
+      const map = new Map();
+      (playlistItems || []).forEach((item) => {
+        const artists = splitArtists(getArtistSourceText(item));
+        artists.forEach((artist) => {
+          const key = normalizeArtistKey(artist);
+          if (!key) return;
+          if (!map.has(key)) map.set(key, artist);
+        });
+      });
+
+      const list = Array.from(map.values());
+      list.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+      return list;
     }
 
     function collectCountryCounts() {
@@ -945,8 +1023,136 @@
       });
     }
 
+    function updateArtistFilterButtonState() {
+      if (!artistFilterBtn) return;
+      const active = Array.isArray(artistFilters) && artistFilters.length > 0;
+      artistFilterBtn.classList.toggle('active', active);
+      artistFilterBtn.setAttribute('aria-expanded', String(artistFilterOverlayVisible));
+      artistFilterBtn.setAttribute('aria-pressed', String(artistFilterOverlayVisible));
+    }
+
+    function openArtistFilterOverlay() {
+      if (!artistFilterOverlay) return;
+      updateArtistFilterOptions();
+      artistFilterOverlay.classList.add('visible');
+      artistFilterOverlay.setAttribute('aria-hidden', 'false');
+      artistFilterOverlayVisible = true;
+      updateArtistFilterButtonState();
+    }
+
+    function closeArtistFilterOverlay(options = {}) {
+      if (!artistFilterOverlay) return;
+      artistFilterOverlay.classList.remove('visible');
+      artistFilterOverlay.setAttribute('aria-hidden', 'true');
+      artistFilterOverlayVisible = false;
+      updateArtistFilterButtonState();
+      if (options.focusButton && artistFilterBtn && typeof artistFilterBtn.focus === 'function') {
+        artistFilterBtn.focus({ preventScroll: true });
+      }
+    }
+
+    function toggleArtistFilterOverlay() {
+      if (artistFilterOverlayVisible) {
+        closeArtistFilterOverlay();
+      } else {
+        openArtistFilterOverlay();
+      }
+    }
+
+    function persistArtistFilters() {
+      const normalized = normalizeArtistFilterList(artistFilters);
+      artistFilters = normalized;
+      saveSettings({ artistFilters: normalized });
+      updateArtistFilterButtonState();
+    }
+
+    function updateArtistFilterOptions() {
+      if (!artistFilterBtn || !artistFilterOptions) return;
+
+      const artists = collectAvailableArtists();
+      artistFilterOptions.innerHTML = '';
+
+      if (!artists.length) {
+        artistFilterBtn.disabled = true;
+        artistFilterBtn.title = 'No artists detected';
+        artistFilters = [];
+        persistArtistFilters();
+        return;
+      }
+
+      artistFilterBtn.disabled = false;
+      artistFilterBtn.title = 'Filter by artist';
+
+      const selectedKeys = new Set(artistFilters.map(normalizeArtistKey).filter(Boolean));
+
+      const allLabel = document.createElement('label');
+      allLabel.className = 'track-details-option';
+      const allInput = document.createElement('input');
+      allInput.type = 'checkbox';
+      allInput.checked = selectedKeys.size === 0;
+      allInput.setAttribute('aria-label', 'All artists');
+      const allText = document.createElement('span');
+      allText.textContent = 'All';
+      allLabel.appendChild(allInput);
+      allLabel.appendChild(allText);
+      artistFilterOptions.appendChild(allLabel);
+
+      allInput.addEventListener('change', () => {
+        if (allInput.checked) {
+          artistFilters = [];
+          persistArtistFilters();
+          computeFilteredIndices();
+          renderTrackList();
+          updateArtistFilterOptions();
+        }
+      });
+
+      artists.forEach((artist) => {
+        const key = normalizeArtistKey(artist);
+        if (!key) return;
+
+        const optLabel = document.createElement('label');
+        optLabel.className = 'track-details-option';
+
+        const input = document.createElement('input');
+        input.type = 'checkbox';
+        input.checked = selectedKeys.has(key);
+        input.value = artist;
+
+        const text = document.createElement('span');
+        text.textContent = artist;
+
+        optLabel.appendChild(input);
+        optLabel.appendChild(text);
+        artistFilterOptions.appendChild(optLabel);
+
+        input.addEventListener('change', () => {
+          const next = new Map();
+          artistFilters.forEach((entry) => {
+            const entryKey = normalizeArtistKey(entry);
+            if (entryKey) next.set(entryKey, normalizeArtistName(entry));
+          });
+
+          if (input.checked) {
+            next.set(key, artist);
+          } else {
+            next.delete(key);
+          }
+
+          artistFilters = Array.from(next.values());
+          persistArtistFilters();
+          computeFilteredIndices();
+          renderTrackList();
+          updateArtistFilterOptions();
+        });
+      });
+    }
+
     updateCountryFilterOptions();
     updateCountryFilterButtonState();
+
+    updateArtistFilterOptions();
+    updateArtistFilterButtonState();
 
     function applyTrackDetailPreferences(options = {}) {
       const { refreshThumbnails = false, preserveScroll = true } = options || {};
@@ -1157,10 +1363,24 @@
     function computeFilteredIndices() {
       filteredIndices = [];
       const f = (filterText || '').trim().toLowerCase();
+      const selectedArtists = new Set(artistFilters.map(normalizeArtistKey).filter(Boolean));
       const selected = new Set(normalizeCountryFilterList(countryFilters));
       playlistItems.forEach((item, idx) => {
         const title = (item.title || '').toLowerCase();
         const customTitle = (typeof item.userTitle === 'string' ? item.userTitle : '').toLowerCase();
+
+        if (selectedArtists.size) {
+          const artists = splitArtists(getArtistSourceText(item));
+          if (!artists.length) return;
+          let artistMatch = false;
+          for (const artist of artists) {
+            if (selectedArtists.has(normalizeArtistKey(artist))) {
+              artistMatch = true;
+              break;
+            }
+          }
+          if (!artistMatch) return;
+        }
 
         if (selected.size) {
           const codes = splitCountryCodes(item && typeof item === 'object' ? item.country : '');
@@ -1215,7 +1435,9 @@
       ul.innerHTML = '';
       trackRowElements = new Map();
 
-      const hasFilter = (filterText || '').trim().length > 0 || (Array.isArray(countryFilters) && countryFilters.length > 0);
+      const hasFilter = (filterText || '').trim().length > 0
+        || (Array.isArray(artistFilters) && artistFilters.length > 0)
+        || (Array.isArray(countryFilters) && countryFilters.length > 0);
       let indices = hasFilter ? filteredIndices.slice() : playlistItems.map((_, i) => i);
       if (sortAlphabetically) {
         indices = getSortedIndices(indices);
@@ -1550,6 +1772,7 @@
       playlistItems = data.items || [];
 
       updateCountryFilterOptions();
+      updateArtistFilterOptions();
       const resolvedPlaylistId =
         (typeof data.playlistId === 'string' && data.playlistId.trim().length
           ? data.playlistId.trim()
@@ -1774,6 +1997,7 @@
       playlistItems = Array.isArray(entry.items) ? entry.items.slice() : [];
 
       updateCountryFilterOptions();
+      updateArtistFilterOptions();
       saveSettings({ playlistId: targetId });
 
       const savedMap = getCurrentVideoMap();
@@ -1888,6 +2112,25 @@
         toggleCountryFilterOverlay();
       });
     }
+
+    if (artistFilterBtn) {
+      artistFilterBtn.addEventListener('click', (event) => {
+        event.stopPropagation();
+        toggleArtistFilterOverlay();
+      });
+    }
+
+    if (artistFilterOverlay) {
+      artistFilterOverlay.addEventListener('click', (event) => {
+        event.stopPropagation();
+      });
+    }
+
+    document.addEventListener('click', (event) => {
+      if (!artistFilterOverlayVisible) return;
+      if (artistFilterWrapper && artistFilterWrapper.contains(event.target)) return;
+      closeArtistFilterOverlay();
+    });
 
     if (countryFilterOverlay) {
       countryFilterOverlay.addEventListener('click', (event) => {
