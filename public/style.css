@@ -439,6 +439,18 @@ input[type="checkbox"] {
     scrollbar-color: var(--color-border-strong) rgba(32, 38, 51, 0.75);
 }
 
+#artistFilterOptions .track-details-option[data-role="all"],
+#countryFilterOptions .track-details-option[data-role="all"] {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: var(--color-panel);
+    padding-top: 0.25rem;
+    padding-bottom: 0.25rem;
+    margin-top: -0.25rem;
+    border-bottom: 1px solid var(--color-border);
+}
+
 #artistFilterOptions::-webkit-scrollbar,
 #countryFilterOptions::-webkit-scrollbar {
     width: 10px;

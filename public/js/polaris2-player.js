@@ -544,6 +544,129 @@
       }
     });
 
+    const TYPEAHEAD_TIMEOUT_MS = 700;
+    let countryTypeahead = { buffer: '', lastTs: 0 };
+    let artistTypeahead = { buffer: '', lastTs: 0 };
+
+    function isTextInputActive() {
+      const el = document.activeElement;
+      if (!el) return false;
+      const tag = (el.tagName || '').toLowerCase();
+      if (tag === 'textarea' || tag === 'select') return true;
+      if (tag === 'input') {
+        const type = (el.getAttribute('type') || '').toLowerCase();
+        return type === '' || type === 'text' || type === 'search' || type === 'email' || type === 'number'
+          || type === 'password' || type === 'url' || type === 'tel';
+      }
+      return !!el.isContentEditable;
+    }
+
+    function scrollFirstSelectedOptionIntoView(optionsEl) {
+      if (!optionsEl) return;
+      const labels = Array.from(optionsEl.querySelectorAll('label.track-details-option'));
+      for (const label of labels) {
+        if (label.dataset && label.dataset.role === 'all') continue;
+        const input = label.querySelector('input[type="checkbox"]');
+        if (input && input.checked) {
+          // Prefer manual container scroll to avoid browser quirks when overlays flip
+          // from display:none -> display:flex.
+          try {
+            const containerRect = optionsEl.getBoundingClientRect();
+            const labelRect = label.getBoundingClientRect();
+            const sticky = optionsEl.querySelector('label.track-details-option[data-role="all"]');
+            const stickyHeight = sticky ? sticky.getBoundingClientRect().height : 0;
+            const desiredTop = labelRect.top - containerRect.top - stickyHeight - 6;
+            optionsEl.scrollTop += desiredTop;
+          } catch (e) {
+            label.scrollIntoView({ block: 'nearest' });
+          }
+          return;
+        }
+      }
+      optionsEl.scrollTop = 0;
+    }
+
+    function scheduleScrollFirstSelectedOptionIntoView(optionsEl) {
+      if (!optionsEl) return;
+      // Two RAFs ensures the overlay has been displayed and laid out.
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          scrollFirstSelectedOptionIntoView(optionsEl);
+        });
+      });
+    }
+
+    function handleOverlayTypeahead(state, optionsEl, rawChar) {
+      if (!optionsEl) return;
+      const now = Date.now();
+      if (now - state.lastTs > TYPEAHEAD_TIMEOUT_MS) {
+        state.buffer = '';
+      }
+      state.lastTs = now;
+      state.buffer += rawChar;
+
+      const query = makeSortKey(state.buffer);
+      if (!query) return;
+
+      const labels = Array.from(optionsEl.querySelectorAll('label.track-details-option'));
+      for (const label of labels) {
+        if (label.dataset && label.dataset.role === 'all') continue;
+        const key = (label.dataset && typeof label.dataset.searchKey === 'string')
+          ? label.dataset.searchKey
+          : makeSortKey(label.textContent || '');
+        if (key.startsWith(query)) {
+          label.scrollIntoView({ block: 'nearest' });
+          break;
+        }
+      }
+    }
+
+    document.addEventListener('keydown', (event) => {
+      if (event.defaultPrevented) return;
+      if (event.metaKey || event.ctrlKey || event.altKey) return;
+      if (!artistFilterOverlayVisible && !countryFilterOverlayVisible) return;
+
+      // Don't hijack typing in the main filter input.
+      if (document.activeElement === filterInputEl) return;
+
+      const optionsEl = countryFilterOverlayVisible ? countryFilterOptions : artistFilterOptions;
+      if (!optionsEl) return;
+
+      if (event.key === 'ArrowDown') {
+        event.preventDefault();
+        optionsEl.scrollBy({ top: 32, behavior: 'auto' });
+        return;
+      }
+      if (event.key === 'ArrowUp') {
+        event.preventDefault();
+        optionsEl.scrollBy({ top: -32, behavior: 'auto' });
+        return;
+      }
+      if (event.key === 'PageDown') {
+        event.preventDefault();
+        optionsEl.scrollBy({ top: Math.max(64, Math.floor(optionsEl.clientHeight * 0.9)), behavior: 'auto' });
+        return;
+      }
+      if (event.key === 'PageUp') {
+        event.preventDefault();
+        optionsEl.scrollBy({ top: -Math.max(64, Math.floor(optionsEl.clientHeight * 0.9)), behavior: 'auto' });
+        return;
+      }
+
+      const key = event.key;
+      if (!key || key.length !== 1) return;
+      if (isTextInputActive()) return;
+
+      // Allow latin/cyrillic letters, digits, and a few separators.
+      if (!/[a-zA-Z0-9\u0400-\u04FF\s\-_.]/.test(key)) return;
+
+      if (countryFilterOverlayVisible) {
+        handleOverlayTypeahead(countryTypeahead, optionsEl, key);
+      } else if (artistFilterOverlayVisible) {
+        handleOverlayTypeahead(artistTypeahead, optionsEl, key);
+      }
+    });
+
     function persistPlaylistHistory() {
       settings.playlistHistory = playlistHistory;
       saveSettings({ playlistHistory });
@@ -773,6 +896,30 @@
       return (code || '').trim().toUpperCase();
     }
 
+    const CYRILLIC_TO_LATIN = Object.freeze({
+      А: 'A', а: 'a', Б: 'B', б: 'b', В: 'V', в: 'v', Г: 'G', г: 'g', Д: 'D', д: 'd',
+      Е: 'E', е: 'e', Ё: 'Yo', ё: 'yo', Ж: 'Zh', ж: 'zh', З: 'Z', з: 'z', И: 'I', и: 'i',
+      Й: 'Y', й: 'y', К: 'K', к: 'k', Л: 'L', л: 'l', М: 'M', м: 'm', Н: 'N', н: 'n',
+      О: 'O', о: 'o', П: 'P', п: 'p', Р: 'R', р: 'r', С: 'S', с: 's', Т: 'T', т: 't',
+      У: 'U', у: 'u', Ф: 'F', ф: 'f', Х: 'Kh', х: 'kh', Ц: 'Ts', ц: 'ts', Ч: 'Ch', ч: 'ch',
+      Ш: 'Sh', ш: 'sh', Щ: 'Shch', щ: 'shch', Ъ: '', ъ: '', Ы: 'Y', ы: 'y', Ь: '', ь: '',
+      Э: 'E', э: 'e', Ю: 'Yu', ю: 'yu', Я: 'Ya', я: 'ya',
+      І: 'I', і: 'i', Ї: 'Yi', ї: 'yi', Є: 'Ye', є: 'ye', Ґ: 'G', ґ: 'g'
+    });
+
+    function transliterateCyrillicToLatin(value) {
+      if (typeof value !== 'string' || !value) return '';
+      let out = '';
+      for (const ch of value) {
+        out += (ch in CYRILLIC_TO_LATIN) ? CYRILLIC_TO_LATIN[ch] : ch;
+      }
+      return out;
+    }
+
+    function makeSortKey(value) {
+      return transliterateCyrillicToLatin((value || '')).toLowerCase();
+    }
+
     function normalizeArtistName(name) {
       return (name || '').trim();
     }
@@ -840,20 +987,43 @@
         .filter(Boolean);
     }
 
-    function collectAvailableArtists() {
-      const map = new Map();
+    function collectArtistCounts() {
+      const displayByKey = new Map();
+      const counts = new Map();
+
       (playlistItems || []).forEach((item) => {
         const artists = splitArtists(getArtistSourceText(item));
+        if (!artists.length) return;
+
+        // Count each track once per artist key.
+        const uniq = new Map();
         artists.forEach((artist) => {
           const key = normalizeArtistKey(artist);
           if (!key) return;
-          if (!map.has(key)) map.set(key, artist);
+          if (!uniq.has(key)) {
+            uniq.set(key, artist);
+          }
+        });
+
+        uniq.forEach((artist, key) => {
+          if (!displayByKey.has(key)) {
+            displayByKey.set(key, artist);
+          }
+          counts.set(key, (counts.get(key) || 0) + 1);
         });
       });
 
-      const list = Array.from(map.values());
-      list.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
-      return list;
+      const artists = Array.from(displayByKey.entries())
+        .sort((a, b) => {
+          const keyA = makeSortKey(a[1]);
+          const keyB = makeSortKey(b[1]);
+          if (keyA < keyB) return -1;
+          if (keyA > keyB) return 1;
+          return a[1].localeCompare(b[1], undefined, { sensitivity: 'base' });
+        })
+        .map(([, display]) => display);
+
+      return { artists, counts };
     }
 
     function collectCountryCounts() {
@@ -905,11 +1075,20 @@
 
     function openCountryFilterOverlay() {
       if (!countryFilterOverlay) return;
+      if (trackDetailsOverlayVisible) {
+        closeTrackDetailsOverlay();
+      }
+      if (artistFilterOverlayVisible) {
+        closeArtistFilterOverlay();
+      }
       updateCountryFilterOptions();
       countryFilterOverlay.classList.add('visible');
       countryFilterOverlay.setAttribute('aria-hidden', 'false');
       countryFilterOverlayVisible = true;
       updateCountryFilterButtonState();
+      if (countryFilterOptions) {
+        scheduleScrollFirstSelectedOptionIntoView(countryFilterOptions);
+      }
     }
 
     function closeCountryFilterOverlay(options = {}) {
@@ -960,6 +1139,7 @@
 
       const allLabel = document.createElement('label');
       allLabel.className = 'track-details-option';
+      allLabel.dataset.role = 'all';
       const allInput = document.createElement('input');
       allInput.type = 'checkbox';
       allInput.checked = selected.size === 0;
@@ -983,6 +1163,7 @@
       codes.forEach((code) => {
         const optLabel = document.createElement('label');
         optLabel.className = 'track-details-option';
+        optLabel.dataset.searchKey = makeSortKey(code);
 
         const input = document.createElement('input');
         input.type = 'checkbox';
@@ -1033,11 +1214,20 @@
 
     function openArtistFilterOverlay() {
       if (!artistFilterOverlay) return;
+      if (trackDetailsOverlayVisible) {
+        closeTrackDetailsOverlay();
+      }
+      if (countryFilterOverlayVisible) {
+        closeCountryFilterOverlay();
+      }
       updateArtistFilterOptions();
       artistFilterOverlay.classList.add('visible');
       artistFilterOverlay.setAttribute('aria-hidden', 'false');
       artistFilterOverlayVisible = true;
       updateArtistFilterButtonState();
+      if (artistFilterOptions) {
+        scheduleScrollFirstSelectedOptionIntoView(artistFilterOptions);
+      }
     }
 
     function closeArtistFilterOverlay(options = {}) {
@@ -1069,7 +1259,7 @@
     function updateArtistFilterOptions() {
       if (!artistFilterBtn || !artistFilterOptions) return;
 
-      const artists = collectAvailableArtists();
+      const { artists, counts } = collectArtistCounts();
       artistFilterOptions.innerHTML = '';
 
       if (!artists.length) {
@@ -1087,6 +1277,7 @@
 
       const allLabel = document.createElement('label');
       allLabel.className = 'track-details-option';
+      allLabel.dataset.role = 'all';
       const allInput = document.createElement('input');
       allInput.type = 'checkbox';
       allInput.checked = selectedKeys.size === 0;
@@ -1113,6 +1304,7 @@
 
         const optLabel = document.createElement('label');
         optLabel.className = 'track-details-option';
+        optLabel.dataset.searchKey = makeSortKey(artist);
 
         const input = document.createElement('input');
         input.type = 'checkbox';
@@ -1120,7 +1312,7 @@
         input.value = artist;
 
         const text = document.createElement('span');
-        text.textContent = artist;
+        text.textContent = `${artist} (${counts.get(key) || 0})`;
 
         optLabel.appendChild(input);
         optLabel.appendChild(text);
@@ -1200,6 +1392,12 @@
 
     function openTrackDetailsOverlay() {
       if (!trackDetailsOverlay) return;
+      if (artistFilterOverlayVisible) {
+        closeArtistFilterOverlay();
+      }
+      if (countryFilterOverlayVisible) {
+        closeCountryFilterOverlay();
+      }
       syncTrackDetailsControls();
       trackDetailsOverlay.classList.add('visible');
       trackDetailsOverlay.setAttribute('aria-hidden', 'false');
@@ -1410,7 +1608,7 @@
       const title = typeof item.userTitle === 'string' && item.userTitle.trim().length
         ? item.userTitle
         : item.title || '';
-      return title.toLowerCase();
+      return makeSortKey(title);
     }
 
     function getSortedIndices(indices) {
