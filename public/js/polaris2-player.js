@@ -921,11 +921,11 @@
     }
 
     function normalizeArtistName(name) {
-      return (name || '').trim();
+      return (name || '').trim().toLowerCase();
     }
 
     function normalizeArtistKey(name) {
-      return normalizeArtistName(name).toLowerCase();
+      return normalizeArtistName(name);
     }
 
     function normalizeArtistFilterList(value) {
