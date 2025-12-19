@@ -16,6 +16,7 @@
     let filterText = '';
   let artistFilters = [];
   let artistFilterOverlayVisible = false;
+  let artistTopN = '';
     let countryFilters = [];
     let countryFilterOverlayVisible = false;
     let filteredIndices = [];
@@ -1275,9 +1276,12 @@
 
       const selectedKeys = new Set(artistFilters.map(normalizeArtistKey).filter(Boolean));
 
+      const headerRow = document.createElement('div');
+      headerRow.className = 'track-details-option';
+      headerRow.dataset.role = 'all';
+
       const allLabel = document.createElement('label');
-      allLabel.className = 'track-details-option';
-      allLabel.dataset.role = 'all';
+      allLabel.className = 'track-details-inline';
       const allInput = document.createElement('input');
       allInput.type = 'checkbox';
       allInput.checked = selectedKeys.size === 0;
@@ -1286,16 +1290,68 @@
       allText.textContent = 'All';
       allLabel.appendChild(allInput);
       allLabel.appendChild(allText);
-      artistFilterOptions.appendChild(allLabel);
+
+      const topLabel = document.createElement('span');
+      topLabel.className = 'track-details-inline-label';
+      topLabel.textContent = 'top';
+
+      const topSelect = document.createElement('select');
+      topSelect.className = 'track-details-select';
+      topSelect.setAttribute('aria-label', 'Top artists');
+      ['','5','10','20','50'].forEach((val) => {
+        const opt = document.createElement('option');
+        opt.value = val;
+        opt.textContent = val;
+        topSelect.appendChild(opt);
+      });
+      topSelect.value = artistTopN;
+
+      headerRow.appendChild(allLabel);
+      headerRow.appendChild(topLabel);
+      headerRow.appendChild(topSelect);
+      artistFilterOptions.appendChild(headerRow);
 
       allInput.addEventListener('change', () => {
-        if (allInput.checked) {
+        if (!allInput.checked) return;
+        artistTopN = '';
+        artistFilters = [];
+        persistArtistFilters();
+        computeFilteredIndices();
+        renderTrackList();
+        updateArtistFilterOptions();
+      });
+
+      topSelect.addEventListener('change', () => {
+        const raw = topSelect.value;
+        artistTopN = raw;
+
+        const n = parseInt(raw, 10);
+        if (!n) {
           artistFilters = [];
-          persistArtistFilters();
-          computeFilteredIndices();
-          renderTrackList();
-          updateArtistFilterOptions();
+        } else {
+          const ranked = artists
+            .map((artist) => {
+              const key = normalizeArtistKey(artist);
+              return { artist, key, count: counts.get(key) || 0 };
+            })
+            .filter((entry) => entry.key)
+            .sort((a, b) => {
+              if (b.count !== a.count) return b.count - a.count;
+              const keyA = makeSortKey(a.artist);
+              const keyB = makeSortKey(b.artist);
+              if (keyA < keyB) return -1;
+              if (keyA > keyB) return 1;
+              return a.artist.localeCompare(b.artist, undefined, { sensitivity: 'base' });
+            })
+            .slice(0, Math.max(0, n));
+
+          artistFilters = ranked.map((entry) => entry.artist);
         }
+
+        persistArtistFilters();
+        computeFilteredIndices();
+        renderTrackList();
+        updateArtistFilterOptions();
       });
 
       artists.forEach((artist) => {
@@ -1319,6 +1375,7 @@
         artistFilterOptions.appendChild(optLabel);
 
         input.addEventListener('change', () => {
+          artistTopN = '';
           const next = new Map();
           artistFilters.forEach((entry) => {
             const entryKey = normalizeArtistKey(entry);

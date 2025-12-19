@@ -806,6 +806,33 @@ body.spectrum-hidden #spectrumCanvas {
     border-radius: 6px;
 }
 
+.track-details-inline {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    cursor: pointer;
+}
+
+.track-details-inline-label {
+    color: var(--color-text-muted);
+    cursor: default;
+}
+
+.track-details-select {
+    padding: 0.15rem 0.35rem;
+    font-size: 0.85rem;
+    background: var(--color-panel);
+    border: 1px solid var(--color-border);
+    color: var(--color-text);
+    border-radius: 6px;
+    height: 1.6rem;
+}
+
+.track-details-select:focus {
+    outline: none;
+    border-color: var(--color-border-strong);
+}
+
 .track-details-option input[type="checkbox"] {
     margin: 0;
     width: 1rem;

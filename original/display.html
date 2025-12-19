@@ -16,8 +16,21 @@
       --fs: 14.4px;
       --fw: 600;
 
+      /* tuned to match the LEFT screenshot */
+      --title-size: 30px;     /* smaller than before */
+      --title-weight: 400;
+
+      --row-text-size: 26px;  /* “All” size */
+      --row-gap: 12px;
+
+      --cb-size: 38px;        /* checkbox square */
+      --cb-radius: 8px;
+      --check-size: 20px;     /* svg size */
+      --check-stroke: 3.2;
+
       --radius: 14px;
       --shadow: 0 6px 18px rgba(0,0,0,.35);
+      --pad: 18px;
     }
 
     * { box-sizing: border-box; }
@@ -39,21 +52,22 @@
       width: min(420px, 92vw);
       background: var(--card-bg);
       border-radius: var(--radius);
-      padding: 18px;
+      padding: var(--pad);
       box-shadow: var(--shadow);
     }
 
     .title{
-      margin: 0 0 18px;
-      font-size: 34px;
-      line-height: 1.1;
+      margin: 0 0 16px;
+      font-size: var(--title-size);
+      font-weight: var(--title-weight);
+      line-height: 1.12;
       letter-spacing: .2px;
     }
 
     label.row{
       display: flex;
       align-items: center;
-      gap: 14px;
+      gap: var(--row-gap);
       cursor: pointer;
     }
 
@@ -64,17 +78,19 @@
     }
 
     .cb{
-      width: 34px;
-      height: 34px;
-      border-radius: 7px;
+      width: var(--cb-size);
+      height: var(--cb-size);
+      border-radius: var(--cb-radius);
       background: var(--accent);
       display: grid;
       place-items: center;
+      flex: 0 0 auto;
     }
 
     .cb svg{
-      width: 20px;
-      height: 20px;
+      width: var(--check-size);
+      height: var(--check-size);
+      display: block;
     }
 
     input:not(:checked) + .cb{
@@ -91,7 +107,8 @@
     }
 
     .label-text{
-      font-size: 24px;
+      font-size: var(--row-text-size);
+      font-weight: var(--fw);
       line-height: 1;
       user-select: none;
     }
@@ -104,8 +121,8 @@
 
     <label class="row">
       <input type="checkbox" checked />
-      <span class="cb">
-        <svg viewBox="0 0 24 24" fill="none">
+      <span class="cb" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
           <path d="M20 6L9 17l-5-5"
                 stroke="white"
                 stroke-width="3.2"
@@ -113,7 +130,39 @@
                 stroke-linejoin="round"/>
         </svg>
       </span>
-      <span class="label-text">All</span>
+      <span class="label-text">all</span>
+      <span class="label-text">   </span>
+      <span class="label-text">top</span>
+      <span class="cb" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M20 6L9 17l-5-5"
+                stroke="white"
+                stroke-width="3.2"
+                stroke-linecap="round"
+                stroke-linejoin="round"/>
+        </svg>
+      </span>
+      <span class="label-text">5 </span>
+      <span class="cb" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M20 6L9 17l-5-5"
+                stroke="white"
+                stroke-width="3.2"
+                stroke-linecap="round"
+                stroke-linejoin="round"/>
+        </svg>
+      </span>
+      <span class="label-text">10 </span>
+            <span class="cb" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M20 6L9 17l-5-5"
+                stroke="white"
+                stroke-width="3.2"
+                stroke-linecap="round"
+                stroke-linejoin="round"/>
+        </svg>
+      </span>
+      <span class="label-text">20 </span>
     </label>
   </div>
 </body>
