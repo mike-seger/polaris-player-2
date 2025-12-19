@@ -2112,6 +2112,7 @@
       try {
         const resp = await fetch(STATUS_ENDPOINT, { cache: 'no-store' });
         if (!resp || !resp.ok) {
+          disableSpectrumCache();
           return false;
         }
         try {
@@ -2126,6 +2127,7 @@
             }
           }
           if (body && body.ok === false) {
+            disableSpectrumCache();
             return false;
           }
         } catch (error) {
@@ -2134,6 +2136,7 @@
         return true;
       } catch (error) {
         console.warn('Server status check failed:', error);
+        disableSpectrumCache();
         return false;
       }
     }
