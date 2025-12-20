@@ -16,7 +16,7 @@
     let filterText = '';
   let artistFilters = [];
   let artistFilterOverlayVisible = false;
-  let artistTopN = '';
+  let artistSortMode = 'az';
     let countryFilters = [];
     let countryFilterOverlayVisible = false;
     let filteredIndices = [];
@@ -1276,6 +1276,21 @@
 
       const selectedKeys = new Set(artistFilters.map(normalizeArtistKey).filter(Boolean));
 
+      const sortedArtists = (artistSortMode === 'count')
+        ? [...artists].sort((a, b) => {
+          const keyA = normalizeArtistKey(a);
+          const keyB = normalizeArtistKey(b);
+          const countA = counts.get(keyA) || 0;
+          const countB = counts.get(keyB) || 0;
+          if (countB !== countA) return countB - countA;
+          const sortA = makeSortKey(a);
+          const sortB = makeSortKey(b);
+          if (sortA < sortB) return -1;
+          if (sortA > sortB) return 1;
+          return a.localeCompare(b, undefined, { sensitivity: 'base' });
+        })
+        : artists;
+
       const headerRow = document.createElement('div');
       headerRow.className = 'track-details-option';
       headerRow.dataset.role = 'all';
@@ -1291,29 +1306,32 @@
       allLabel.appendChild(allInput);
       allLabel.appendChild(allText);
 
-      const topLabel = document.createElement('span');
-      topLabel.className = 'track-details-inline-label';
-      topLabel.textContent = 'top';
+      const sortLabel = document.createElement('span');
+      sortLabel.className = 'track-details-inline-label';
+      sortLabel.textContent = 'sort';
 
-      const topSelect = document.createElement('select');
-      topSelect.className = 'track-details-select';
-      topSelect.setAttribute('aria-label', 'Top artists');
-      ['','5','10','20','50'].forEach((val) => {
+      const sortSelect = document.createElement('select');
+      sortSelect.className = 'track-details-select';
+      sortSelect.setAttribute('aria-label', 'Sort artists');
+      const sortOptions = [
+        { value: 'az', label: 'a-z' },
+        { value: 'count', label: 'count' }
+      ];
+      sortOptions.forEach(({ value, label }) => {
         const opt = document.createElement('option');
-        opt.value = val;
-        opt.textContent = val;
-        topSelect.appendChild(opt);
+        opt.value = value;
+        opt.textContent = label;
+        sortSelect.appendChild(opt);
       });
-      topSelect.value = artistTopN;
+      sortSelect.value = artistSortMode;
 
       headerRow.appendChild(allLabel);
-      headerRow.appendChild(topLabel);
-      headerRow.appendChild(topSelect);
+      headerRow.appendChild(sortLabel);
+      headerRow.appendChild(sortSelect);
       artistFilterOptions.appendChild(headerRow);
 
       allInput.addEventListener('change', () => {
         if (!allInput.checked) return;
-        artistTopN = '';
         artistFilters = [];
         persistArtistFilters();
         computeFilteredIndices();
@@ -1321,40 +1339,12 @@
         updateArtistFilterOptions();
       });
 
-      topSelect.addEventListener('change', () => {
-        const raw = topSelect.value;
-        artistTopN = raw;
-
-        const n = parseInt(raw, 10);
-        if (!n) {
-          artistFilters = [];
-        } else {
-          const ranked = artists
-            .map((artist) => {
-              const key = normalizeArtistKey(artist);
-              return { artist, key, count: counts.get(key) || 0 };
-            })
-            .filter((entry) => entry.key)
-            .sort((a, b) => {
-              if (b.count !== a.count) return b.count - a.count;
-              const keyA = makeSortKey(a.artist);
-              const keyB = makeSortKey(b.artist);
-              if (keyA < keyB) return -1;
-              if (keyA > keyB) return 1;
-              return a.artist.localeCompare(b.artist, undefined, { sensitivity: 'base' });
-            })
-            .slice(0, Math.max(0, n));
-
-          artistFilters = ranked.map((entry) => entry.artist);
-        }
-
-        persistArtistFilters();
-        computeFilteredIndices();
-        renderTrackList();
+      sortSelect.addEventListener('change', () => {
+        artistSortMode = sortSelect.value === 'count' ? 'count' : 'az';
         updateArtistFilterOptions();
       });
 
-      artists.forEach((artist) => {
+      sortedArtists.forEach((artist) => {
         const key = normalizeArtistKey(artist);
         if (!key) return;
 
@@ -1375,7 +1365,6 @@
         artistFilterOptions.appendChild(optLabel);
 
         input.addEventListener('change', () => {
-          artistTopN = '';
           const next = new Map();
           artistFilters.forEach((entry) => {
             const entryKey = normalizeArtistKey(entry);

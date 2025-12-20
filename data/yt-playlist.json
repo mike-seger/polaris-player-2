@@ -1,7 +1,7 @@
 {
   "playlistId": "user:1b3f8510-29cf-433b-9d9e-830810028645",
-  "fetchedAt": "2025-12-17T22:34:45.657Z",
-  "itemCount": 644,
+  "fetchedAt": "2025-12-20T01:04:23.653Z",
+  "itemCount": 637,
   "items": [
     {
       "videoId": "OjkZr57hPdM",
@@ -83,49 +83,14 @@
       "title": "Antipole;Paris Alexander - Perceptions",
       "thumbnail": "https://i.ytimg.com/vi/JSXf_wLT7cQ/mqdefault.jpg",
       "userTitle": "Antipole;Paris Alexander - Perceptions",
-      "country": "NOR"
+      "country": "NOR;GBR"
     },
     {
       "videoId": "BWObMFJAo0c",
       "title": "Antipole;Paris Alexander - Syndrome",
       "thumbnail": "https://i.ytimg.com/vi/BWObMFJAo0c/mqdefault.jpg",
       "userTitle": "Antipole;Paris Alexander - Syndrome",
-      "country": "NOR"
-    },
-    {
-      "videoId": "evny_w98PjI",
-      "title": "Ari Abdul - BABYDOLL",
-      "thumbnail": "https://i.ytimg.com/vi/evny_w98PjI/mqdefault.jpg",
-      "userTitle": "Ari Abdul - BABYDOLL",
-      "country": "USA"
-    },
-    {
-      "videoId": "OLQnOAalYag",
-      "title": "Ari Abdul - BABYDOLL (Speed)",
-      "thumbnail": "https://i.ytimg.com/vi/OLQnOAalYag/mqdefault.jpg",
-      "userTitle": "Ari Abdul - BABYDOLL (Speed)",
-      "country": "USA"
-    },
-    {
-      "videoId": "PCghiKjfJb8",
-      "title": "Ari Abdul - Hush",
-      "thumbnail": "https://i.ytimg.com/vi/PCghiKjfJb8/mqdefault.jpg",
-      "userTitle": "Ari Abdul - Hush",
-      "country": "USA"
-    },
-    {
-      "videoId": "YBphrqtiRjA",
-      "title": "Ari Abdul - Stay",
-      "thumbnail": "https://i.ytimg.com/vi/YBphrqtiRjA/mqdefault.jpg",
-      "userTitle": "Ari Abdul - Stay",
-      "country": "USA"
-    },
-    {
-      "videoId": "MJLBczzLMfI",
-      "title": "Ari Abdul - Taste",
-      "thumbnail": "https://i.ytimg.com/vi/MJLBczzLMfI/mqdefault.jpg",
-      "userTitle": "Ari Abdul - Taste",
-      "country": "USA"
+      "country": "NOR;GBR"
     },
     {
       "videoId": "ODDRRXMi22E",
@@ -528,9 +493,9 @@
     },
     {
       "videoId": "AuIKNIA1inc",
-      "title": "Dark - Gothic Love",
+      "title": "DARK - SKELETON DANCE (Official Music Video)",
       "thumbnail": "https://i.ytimg.com/vi/AuIKNIA1inc/mqdefault.jpg",
-      "userTitle": "Dark - Gothic Love",
+      "userTitle": "DARK - SKELETON DANCE (Official Music Video)",
       "country": "DEU"
     },
     {
@@ -622,7 +587,7 @@
       "title": "Deus Ex Lumina;Antipole - Destroy",
       "thumbnail": "https://i.ytimg.com/vi/xH4q1sxrggw/mqdefault.jpg",
       "userTitle": "Deus Ex Lumina;Antipole - Destroy",
-      "country": "DEU"
+      "country": "DEU;NOR"
     },
     {
       "videoId": "DnQSdrQGhrA",
@@ -664,7 +629,7 @@
       "title": "Dlina Volny - Dance Me (Minuit Machine Remix)",
       "thumbnail": "https://i.ytimg.com/vi/WjRNvaD6fF4/mqdefault.jpg",
       "userTitle": "Dlina Volny - Dance Me Away (Minuit Machine Remix)",
-      "country": "FRA"
+      "country": "BLR;FRA"
     },
     {
       "videoId": "6AP8HXU17pQ",
@@ -755,14 +720,7 @@
       "title": "Echoberyl;Gloria de Oliveira - The Siren and the Ghost",
       "thumbnail": "https://i.ytimg.com/vi/uySPP5ukTAE/mqdefault.jpg",
       "userTitle": "Echoberyl;Gloria de Oliveira - The Siren and the Ghost",
-      "country": "FRA"
-    },
-    {
-      "videoId": "oSHzUD-uqKY",
-      "title": "Elley Duhé - MIDDLE OF THE NIGHT",
-      "thumbnail": "https://i.ytimg.com/vi/oSHzUD-uqKY/mqdefault.jpg",
-      "userTitle": "Elley Duhé - MIDDLE OF THE NIGHT",
-      "country": "USA"
+      "country": "FRA;DEU"
     },
     {
       "videoId": "dNTjVsdjam4",
@@ -2990,8 +2948,7 @@
       "title": "Rare DM - Skater Hits Me Harder",
       "thumbnail": "https://i.ytimg.com/vi/S9WqHQVZs5Y/mqdefault.jpg",
       "userTitle": "Rare DM - Skater Hits Me Harder",
-      "country": "USA",
-      "checked": true
+      "country": "USA"
     },
     {
       "videoId": "T_e0t80EOBA",
@@ -3020,13 +2977,6 @@
       "thumbnail": "https://i.ytimg.com/vi/L0nfajkP1aI/mqdefault.jpg",
       "userTitle": "Riki - Napoleon",
       "country": "USA"
-    },
-    {
-      "videoId": "s_6LjSmZqo",
-      "title": "Röyksopp - 'Oh, Lover' ft. Susanne Sundfør",
-      "thumbnail": "https://i.ytimg.com/vi/s_6LjSmZqo/mqdefault.jpg",
-      "userTitle": "Röyksopp - 'Oh, Lover' ft. Susanne Sundfør",
-      "country": "NOR"
     },
     {
       "videoId": "eaGpdhienMk",
