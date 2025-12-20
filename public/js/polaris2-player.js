@@ -1696,7 +1696,7 @@
 
         const numSpan = document.createElement('span');
         numSpan.className = 'track-number';
-        numSpan.textContent = (displayIdx + 1) + '.';
+        numSpan.textContent = (displayIdx + 1);
         li.appendChild(numSpan);
 
         if (trackDetailSettings.thumbnail && item.thumbnail) {
