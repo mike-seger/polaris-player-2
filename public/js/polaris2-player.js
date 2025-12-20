@@ -7,6 +7,7 @@
       trackNumber: true,
       thumbnail: true,
       wrapLines: true,
+      country: true,
       checkTrack: true,
       sortAZ: false
     });
@@ -19,6 +20,7 @@
   let artistSortMode = 'az';
     let countryFilters = [];
     let countryFilterOverlayVisible = false;
+    let countrySortMode = 'az';
     let filteredIndices = [];
     let trackRowElements = new Map();
     let visibleIndices = [];
@@ -226,12 +228,14 @@
     const detailTrackNumberCheckbox = document.getElementById('detailTrackNumber');
     const detailThumbnailCheckbox = document.getElementById('detailThumbnail');
     const detailWrapLinesCheckbox = document.getElementById('detailWrapLines');
+    const detailCountryCheckbox = document.getElementById('detailCountry');
     const detailCheckTrackCheckbox = document.getElementById('detailCheckTrack');
     const detailSortAZCheckbox = document.getElementById('detailSortAZ');
     const detailCheckboxMap = {
       trackNumber: detailTrackNumberCheckbox,
       thumbnail: detailThumbnailCheckbox,
       wrapLines: detailWrapLinesCheckbox,
+      country: detailCountryCheckbox,
       checkTrack: detailCheckTrackCheckbox,
       sortAZ: detailSortAZCheckbox
     };
@@ -1138,9 +1142,28 @@
 
       const selected = new Set(normalizeCountryFilterList(countryFilters));
 
+      const sortedCodes = (() => {
+        const hasUnknown = codes.length > 0 && codes[0] === '?';
+        const rest = hasUnknown ? codes.slice(1) : codes.slice();
+        if (countrySortMode === 'count') {
+          rest.sort((a, b) => {
+            const countA = counts.get(a) || 0;
+            const countB = counts.get(b) || 0;
+            if (countB !== countA) return countB - countA;
+            return a.localeCompare(b, undefined, { sensitivity: 'base' });
+          });
+        } else {
+          rest.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+        }
+        return hasUnknown ? ['?'].concat(rest) : rest;
+      })();
+
+      const headerRow = document.createElement('div');
+      headerRow.className = 'track-details-option';
+      headerRow.dataset.role = 'all';
+
       const allLabel = document.createElement('label');
-      allLabel.className = 'track-details-option';
-      allLabel.dataset.role = 'all';
+      allLabel.className = 'track-details-inline';
       const allInput = document.createElement('input');
       allInput.type = 'checkbox';
       allInput.checked = selected.size === 0;
@@ -1149,7 +1172,30 @@
       allText.textContent = 'All';
       allLabel.appendChild(allInput);
       allLabel.appendChild(allText);
-      countryFilterOptions.appendChild(allLabel);
+
+      const sortLabel = document.createElement('span');
+      sortLabel.className = 'track-details-inline-label';
+      sortLabel.textContent = 'sort';
+
+      const sortSelect = document.createElement('select');
+      sortSelect.className = 'track-details-select';
+      sortSelect.setAttribute('aria-label', 'Sort countries');
+      const sortOptions = [
+        { value: 'az', label: 'a-z' },
+        { value: 'count', label: 'count' }
+      ];
+      sortOptions.forEach(({ value, label }) => {
+        const opt = document.createElement('option');
+        opt.value = value;
+        opt.textContent = label;
+        sortSelect.appendChild(opt);
+      });
+      sortSelect.value = countrySortMode;
+
+      headerRow.appendChild(allLabel);
+      headerRow.appendChild(sortLabel);
+      headerRow.appendChild(sortSelect);
+      countryFilterOptions.appendChild(headerRow);
 
       allInput.addEventListener('change', () => {
         if (allInput.checked) {
@@ -1161,7 +1207,12 @@
         }
       });
 
-      codes.forEach((code) => {
+      sortSelect.addEventListener('change', () => {
+        countrySortMode = sortSelect.value === 'count' ? 'count' : 'az';
+        updateCountryFilterOptions();
+      });
+
+      sortedCodes.forEach((code) => {
         const optLabel = document.createElement('label');
         optLabel.className = 'track-details-option';
         optLabel.dataset.searchKey = makeSortKey(code);
@@ -1398,6 +1449,7 @@
       document.body.classList.toggle('hide-track-number', !prefs.trackNumber);
       document.body.classList.toggle('no-thumbs', !prefs.thumbnail);
       document.body.classList.toggle('no-wrap-lines', !prefs.wrapLines);
+      document.body.classList.toggle('show-track-country', !!prefs.country);
       document.body.classList.toggle('hide-track-check', !prefs.checkTrack);
 
       const nextSort = !!prefs.sortAZ;
@@ -1667,6 +1719,28 @@
       });
     }
 
+    function splitTrackDisplayText(raw) {
+      const text = typeof raw === 'string' ? raw : '';
+      const idx = text.indexOf(' - ');
+      if (idx < 0) {
+        return { artist: '', title: text.trim() };
+      }
+      const artistPart = text.slice(0, idx).trim();
+      const titlePart = text.slice(idx + 3).trim();
+
+      const artistPieces = artistPart
+        .split(';')
+        .map((p) => (p || '').trim())
+        .filter(Boolean);
+
+      if (!artistPieces.length) {
+        return { artist: '', title: titlePart || '' };
+      }
+
+      const artist = artistPieces.length > 1 ? `${artistPieces[0]} ...` : artistPieces[0];
+      return { artist, title: titlePart || '' };
+    }
+
     function renderTrackList(options = {}) {
       const { preserveScroll = false, skipActiveScroll } = options || {};
       const container = document.getElementById('trackListContainer');
@@ -1705,10 +1779,46 @@
           li.appendChild(img);
         }
 
-        const span = document.createElement('span');
-        span.className = 'title';
-        span.textContent = item.userTitle ? item.userTitle : item.title;
-        li.appendChild(span);
+        const rawTitle = item.userTitle ? item.userTitle : item.title;
+        const parts = splitTrackDisplayText(rawTitle);
+
+        const textWrap = document.createElement('span');
+        textWrap.className = 'title';
+
+        const titleSpan = document.createElement('span');
+        titleSpan.className = 'track-title';
+        titleSpan.textContent = parts.title || rawTitle || '';
+
+        const artistLine = document.createElement('span');
+        artistLine.className = 'track-artist-line';
+
+        const artistSpan = document.createElement('span');
+        artistSpan.className = 'track-artist';
+        artistSpan.textContent = parts.artist || '';
+        artistLine.appendChild(artistSpan);
+
+        const sepSpan = document.createElement('span');
+        sepSpan.className = 'track-sep';
+        sepSpan.textContent = ' - ';
+
+        const codes = splitCountryCodes(item && typeof item === 'object' ? item.country : '');
+        const iso3 = codes.length ? codes[0] : '';
+        const flag = iso3 ? getCountryFlagEmoji(iso3) : '';
+        if (flag) {
+          const flagSpan = document.createElement('span');
+          flagSpan.className = 'track-country-flag';
+          flagSpan.textContent = flag;
+          artistLine.classList.add('has-flag');
+          artistLine.appendChild(flagSpan);
+        }
+
+        if (parts.artist) {
+          textWrap.appendChild(artistLine);
+          textWrap.appendChild(sepSpan);
+        }
+        textWrap.appendChild(titleSpan);
+
+        li.appendChild(textWrap);
 
         const stateBtn = createTrackStateButton(item.videoId, activePlaylistId);
         li.appendChild(stateBtn);
