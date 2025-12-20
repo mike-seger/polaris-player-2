@@ -1703,10 +1703,29 @@
     function getSortKeyForIndex(idx) {
       const item = playlistItems[idx];
       if (!item) return '';
-      const title = typeof item.userTitle === 'string' && item.userTitle.trim().length
+      const rawTitle = typeof item.userTitle === 'string' && item.userTitle.trim().length
         ? item.userTitle
         : item.title || '';
-      return makeSortKey(title);
+
+      // If multiple artists are present (e.g. "A;B - Title"), ignore everything from
+      // the first ';' onward *in the artist portion* for track A–Z sorting.
+      const dashIdx = rawTitle.indexOf(' - ');
+      if (dashIdx >= 0) {
+        const artistPart = rawTitle.slice(0, dashIdx);
+        const semiIdx = artistPart.indexOf(';');
+        if (semiIdx >= 0) {
+          const firstArtist = artistPart.slice(0, semiIdx).trim();
+          const rest = rawTitle.slice(dashIdx);
+          return makeSortKey(`${firstArtist}${rest}`);
+        }
+      } else {
+        const semiIdx = rawTitle.indexOf(';');
+        if (semiIdx >= 0) {
+          return makeSortKey(rawTitle.slice(0, semiIdx));
+        }
+      }
+
+      return makeSortKey(rawTitle);
     }
 
     function getSortedIndices(indices) {
@@ -1737,7 +1756,7 @@
         return { artist: '', title: titlePart || '' };
       }
 
-      const artist = artistPieces.length > 1 ? `${artistPieces[0]} ...` : artistPieces[0];
+      const artist = artistPieces.join(', ');
       return { artist, title: titlePart || '' };
     }
 
