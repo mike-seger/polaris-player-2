@@ -1821,14 +1821,28 @@
         sepSpan.textContent = ' - ';
 
         const codes = splitCountryCodes(item && typeof item === 'object' ? item.country : '');
-        const iso3 = codes.length ? codes[0] : '';
-        const flag = iso3 ? getCountryFlagEmoji(iso3) : '';
-        if (flag) {
-          const flagSpan = document.createElement('span');
-          flagSpan.className = 'track-country-flag';
-          flagSpan.textContent = flag;
-          artistLine.classList.add('has-flag');
-          artistLine.appendChild(flagSpan);
+        const flags = codes
+          .map((iso3) => (iso3 ? getCountryFlagEmoji(iso3) : ''))
+          .filter(Boolean);
+
+        if (flags.length) {
+          const flagsWrap = document.createElement('span');
+          flagsWrap.className = 'track-country-flags';
+
+          flags.forEach((flag) => {
+            const flagSpan = document.createElement('span');
+            flagSpan.className = 'track-country-flag';
+            flagSpan.textContent = flag;
+            flagsWrap.appendChild(flagSpan);
+          });
+
+          // Reserve enough space so the flags don't overlay the artist text.
+          // 18px font-size + ~2px gap per extra flag + a little breathing room.
+          const spacePx = flags.length * 18 + Math.max(0, flags.length - 1) * 2 + 6;
+          artistLine.style.setProperty('--track-country-flags-space', `${spacePx}px`);
+
+          artistLine.classList.add('has-flags');
+          artistLine.appendChild(flagsWrap);
         }
 
         if (parts.artist) {
