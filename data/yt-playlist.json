@@ -1,7 +1,7 @@
 {
   "playlistId": "user:1b3f8510-29cf-433b-9d9e-830810028645",
-  "fetchedAt": "2025-12-20T01:04:23.653Z",
-  "itemCount": 637,
+  "fetchedAt": "2025-12-20T15:54:49.117Z",
+  "itemCount": 641,
   "items": [
     {
       "videoId": "OjkZr57hPdM",
@@ -341,7 +341,7 @@
       "videoId": "9GtVhzJbRu0",
       "title": "Cabaret Nocturne - Blind Trust - Original Mix",
       "thumbnail": "https://i.ytimg.com/vi/9GtVhzJbRu0/mqdefault.jpg",
-      "userTitle": "Cabaret Nocturne - Blind Trust - Original Mix",
+      "userTitle": "Cabaret Nocturne - Blind Trust",
       "country": "DEU"
     },
     {
@@ -628,7 +628,7 @@
       "videoId": "WjRNvaD6fF4",
       "title": "Dlina Volny - Dance Me (Minuit Machine Remix)",
       "thumbnail": "https://i.ytimg.com/vi/WjRNvaD6fF4/mqdefault.jpg",
-      "userTitle": "Dlina Volny - Dance Me Away (Minuit Machine Remix)",
+      "userTitle": "Dlina Volny;Minuit Machine - Dance Me Away (Minuit Machine Remix)",
       "country": "BLR;FRA"
     },
     {
@@ -1437,10 +1437,38 @@
       "country": "FRA"
     },
     {
+      "videoId": "F1WKIh3iYEs",
+      "title": "keelse;HXVRMXN - CHASE ME",
+      "thumbnail": "https://i.ytimg.com/vi/F1WKIh3iYEs/mqdefault.jpg",
+      "userTitle": "keelse;HXVRMXN - CHASE ME",
+      "country": "BLR"
+    },
+    {
+      "videoId": "c1yXbTg1TDg",
+      "title": "keelse - Не Помнишь",
+      "thumbnail": "https://i.ytimg.com/vi/c1yXbTg1TDg/mqdefault.jpg",
+      "userTitle": "keelse - Не Помнишь",
+      "country": "BLR"
+    },
+    {
       "videoId": "TO7RW0XyGnI",
       "title": "keelse – is it matter?",
       "thumbnail": "https://i.ytimg.com/vi/TO7RW0XyGnI/mqdefault.jpg",
-      "userTitle": "keelse – is it matter?",
+      "userTitle": "keelse - is it matter?",
+      "country": "BLR"
+    },
+    {
+      "videoId": "LJqCI6BvKhs",
+      "title": "keelse - море любви",
+      "thumbnail": "https://i.ytimg.com/vi/LJqCI6BvKhs/mqdefault.jpg",
+      "userTitle": "keelse - море любви",
+      "country": "BLR"
+    },
+    {
+      "videoId": "B-5ZsHHQEPQ",
+      "title": "keelse - Танцуем",
+      "thumbnail": "https://i.ytimg.com/vi/B-5ZsHHQEPQ/mqdefault.jpg",
+      "userTitle": "keelse - Танцуем",
       "country": "BLR"
     },
     {
@@ -1502,7 +1530,7 @@
     {
       "videoId": "CU0J3bIQD6w",
       "title": "Labyrinth Ear - Lorna (kauf remix)",
-      "thumbnail": "https://i.ytimg.com/vi/3qstLNJTOEw/mqdefault.jpg",
+      "thumbnail": "https://i.ytimg.com/vi/CU0J3bIQD6w/mqdefault.jpg",
       "userTitle": "Labyrinth Ear - Lorna (kauf remix)",
       "country": "GBR"
     },
@@ -1672,13 +1700,6 @@
       "thumbnail": "https://i.ytimg.com/vi/CZ8_pMgd2Iw/mqdefault.jpg",
       "userTitle": "Luna - Спящая красавица",
       "country": "RUS"
-    },
-    {
-      "videoId": "niuOChyPM50",
-      "title": "Léonie Pernet - Butterfly",
-      "thumbnail": "https://i.ytimg.com/vi/niuOChyPM50/mqdefault.jpg",
-      "userTitle": "Léonie Pernet - Butterfly",
-      "country": "FRA"
     },
     {
       "videoId": "ha78lhJq1ZQ",
@@ -2248,7 +2269,8 @@
       "videoId": "EKkiXTcNOso",
       "title": "Nightcrawler feat. Celine - Enfer (Old Coroner Remix)",
       "thumbnail": "https://i.ytimg.com/vi/EKkiXTcNOso/mqdefault.jpg",
-      "userTitle": "Nightcrawler feat. Celine - Enfer (Old Coroner Remix)"
+      "userTitle": "Nightcrawler feat. Celine - Enfer (Old Coroner Remix)",
+      "country": "ESP;FRA"
     },
     {
       "videoId": "Vgyf1aBxt_o",
@@ -2948,7 +2970,8 @@
       "title": "Rare DM - Skater Hits Me Harder",
       "thumbnail": "https://i.ytimg.com/vi/S9WqHQVZs5Y/mqdefault.jpg",
       "userTitle": "Rare DM - Skater Hits Me Harder",
-      "country": "USA"
+      "country": "USA",
+      "checked": true
     },
     {
       "videoId": "T_e0t80EOBA",
@@ -4232,6 +4255,13 @@
       "country": "CHL"
     },
     {
+      "videoId": "VJFdASoBuCo",
+      "title": "Vioflesh;Flesh - On My Skin",
+      "thumbnail": "https://i.ytimg.com/vi/VJFdASoBuCo/mqdefault.jpg",
+      "userTitle": "Vioflesh;Flesh - On My Skin",
+      "country": "CHL"
+    },
+    {
       "videoId": "1O1tE2rRk_Y",
       "title": "Vioflesh - Waves",
       "thumbnail": "https://i.ytimg.com/vi/1O1tE2rRk_Y/mqdefault.jpg",
@@ -4239,10 +4269,10 @@
       "country": "CHL"
     },
     {
-      "videoId": "VJFdASoBuCo",
-      "title": "Vioflesh;Flesh - On My Skin",
-      "thumbnail": "https://i.ytimg.com/vi/VJFdASoBuCo/mqdefault.jpg",
-      "userTitle": "Vioflesh;Flesh - On My Skin",
+      "videoId": "IMLt9DZ0WpU",
+      "title": "Vioflesh - Within the veil",
+      "thumbnail": "https://i.ytimg.com/vi/IMLt9DZ0WpU/mqdefault.jpg",
+      "userTitle": "Vioflesh - Within the veil",
       "country": "CHL"
     },
     {

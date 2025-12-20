@@ -694,7 +694,7 @@ body.no-thumbs .track-title {
     right: 0;
     bottom: 0;
     z-index: 3;
-    pointer-events: none;
+    pointer-events: auto;
     font-size: 18px;
     line-height: 1;
     display: none;
@@ -705,6 +705,8 @@ body.no-thumbs .track-title {
 .track-country-flag {
     display: inline-block;
     line-height: 1;
+    cursor: pointer;
+    user-select: none;
 }
 
 body.show-track-country:not(.no-wrap-lines) .track-artist-line.has-flags {

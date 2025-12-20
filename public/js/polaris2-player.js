@@ -1123,6 +1123,24 @@
       updateCountryFilterButtonState();
     }
 
+    function toggleCountryFilterCode(code) {
+      const normalizedCode = normalizeIso3(code);
+      if (!normalizedCode) return;
+      const next = new Set(normalizeCountryFilterList(countryFilters));
+      if (next.has(normalizedCode)) {
+        next.delete(normalizedCode);
+      } else {
+        next.add(normalizedCode);
+      }
+      countryFilters = Array.from(next);
+      persistCountryFilters();
+      computeFilteredIndices();
+      renderTrackList();
+      if (countryFilterOverlayVisible) {
+        updateCountryFilterOptions();
+      }
+    }
+
     function updateCountryFilterOptions() {
       if (!countryFilterBtn || !countryFilterOptions) return;
 
@@ -1821,24 +1839,47 @@
         sepSpan.textContent = ' - ';
 
         const codes = splitCountryCodes(item && typeof item === 'object' ? item.country : '');
-        const flags = codes
-          .map((iso3) => (iso3 ? getCountryFlagEmoji(iso3) : ''))
-          .filter(Boolean);
+        const flagEntries = codes
+          .map((iso3) => ({
+            iso3,
+            flag: iso3 ? getCountryFlagEmoji(iso3) : ''
+          }))
+          .filter((entry) => !!entry.flag);
 
-        if (flags.length) {
+        if (flagEntries.length) {
           const flagsWrap = document.createElement('span');
           flagsWrap.className = 'track-country-flags';
 
-          flags.forEach((flag) => {
+          flagEntries.forEach(({ iso3, flag }) => {
             const flagSpan = document.createElement('span');
             flagSpan.className = 'track-country-flag';
             flagSpan.textContent = flag;
+            if (iso3) {
+              flagSpan.setAttribute('role', 'button');
+              flagSpan.tabIndex = 0;
+              flagSpan.title = `Filter: ${iso3}`;
+              flagSpan.dataset.iso3 = iso3;
+
+              flagSpan.addEventListener('click', (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                toggleCountryFilterCode(iso3);
+              });
+
+              flagSpan.addEventListener('keydown', (event) => {
+                if (event.key !== 'Enter' && event.key !== ' ' && event.key !== 'Spacebar') return;
+                event.preventDefault();
+                event.stopPropagation();
+                toggleCountryFilterCode(iso3);
+              });
+            }
+
             flagsWrap.appendChild(flagSpan);
           });
 
           // Reserve enough space so the flags don't overlay the artist text.
           // 18px font-size + ~2px gap per extra flag + a little breathing room.
-          const spacePx = flags.length * 18 + Math.max(0, flags.length - 1) * 2 + 6;
+          const spacePx = flagEntries.length * 18 + Math.max(0, flagEntries.length - 1) * 2 + 6;
           artistLine.style.setProperty('--track-country-flags-space', `${spacePx}px`);
 
           artistLine.classList.add('has-flags');

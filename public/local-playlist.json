@@ -8434,7 +8434,8 @@
         "videoId": "EKkiXTcNOso",
         "title": "Nightcrawler feat. Celine - Enfer (Old Coroner Remix)",
         "thumbnail": "https://i.ytimg.com/vi/EKkiXTcNOso/mqdefault.jpg",
-        "userTitle": "Nightcrawler feat. Celine - Enfer (Old Coroner Remix)"
+        "userTitle": "Nightcrawler feat. Celine - Enfer (Old Coroner Remix)",
+        "country": "ESP;FRA"
       },
       {
         "videoId": "Vgyf1aBxt_o",
@@ -9134,7 +9135,8 @@
         "title": "Rare DM - Skater Hits Me Harder",
         "thumbnail": "https://i.ytimg.com/vi/S9WqHQVZs5Y/mqdefault.jpg",
         "userTitle": "Rare DM - Skater Hits Me Harder",
-        "country": "USA"
+        "country": "USA",
+        "checked": true
       },
       {
         "videoId": "T_e0t80EOBA",
