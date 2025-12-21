@@ -2426,11 +2426,25 @@
       }
 
       const activePlaylistId = getActivePlaylistId();
+      const indices = (Array.isArray(visibleIndices) && visibleIndices.length)
+        ? visibleIndices
+        : (() => {
+          const hasFilter = (filterText || '').trim().length > 0
+            || (Array.isArray(artistFilters) && artistFilters.length > 0)
+            || (Array.isArray(countryFilters) && countryFilters.length > 0);
+          let out = hasFilter ? filteredIndices.slice() : playlistItems.map((_, i) => i);
+          if (sortAlphabetically) {
+            out = getSortedIndices(out);
+          }
+          return out;
+        })();
+
       const payload = {
         playlistId: activePlaylistId,
         fetchedAt: new Date().toISOString(),
-        itemCount: playlistItems.length,
-        items: playlistItems.map((item) => {
+        itemCount: indices.length,
+        items: indices.map((idx) => {
+          const item = playlistItems[idx];
           const entry = {
             ...item,
             userTitle: item.userTitle ?? item.title
