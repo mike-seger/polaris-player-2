@@ -24,6 +24,8 @@
     let filteredIndices = [];
     let trackRowElements = new Map();
     let visibleIndices = [];
+    let visibleIndicesHash = 0;
+    let visibleIndicesVersion = 0;
     let useLocalMode = false;
     let localPlaylistLibrary = null;
     let localFallbackNotified = false;
@@ -36,7 +38,7 @@
     let settings = loadSettings();
 
     // Shuffle mode: persisted on/off, in-memory non-repeating history.
-    let shuffleEnabled = typeof settings.shuffleEnabled === 'boolean' ? settings.shuffleEnabled : false;
+    let shuffleEnabled = typeof settings.shuffleEnabled === 'boolean' ? settings.shuffleEnabled : true;
     let shuffleBag = [];
     let shuffleBagVersion = -1;
     let playlistVersion = 0;
@@ -811,7 +813,7 @@
       playlistHistory = [];
       updatePlaylistHistorySelect('');
 
-      shuffleEnabled = false;
+      shuffleEnabled = true;
       shuffleBag = [];
       shuffleBagVersion = -1;
       updateShuffleButtonState();
@@ -938,6 +940,17 @@
       return transliterateCyrillicToLatin((value || '')).toLowerCase();
     }
 
+    function hashIndexList(indices) {
+      if (!Array.isArray(indices) || indices.length === 0) return 0;
+      let h = 2166136261;
+      for (let i = 0; i < indices.length; i += 1) {
+        h ^= (indices[i] | 0);
+        h = Math.imul(h, 16777619);
+      }
+      h ^= indices.length;
+      return h | 0;
+    }
+
     function shuffleArrayInPlace(arr) {
       for (let i = arr.length - 1; i > 0; i -= 1) {
         const j = Math.floor(Math.random() * (i + 1));
@@ -959,7 +972,9 @@
     }
 
     function getShuffleQueueIndices() {
-      return playlistItems.map((_, idx) => idx);
+      return (Array.isArray(visibleIndices) && visibleIndices.length)
+        ? visibleIndices
+        : playlistItems.map((_, idx) => idx);
     }
 
     function resetShuffleBag() {
@@ -967,12 +982,12 @@
       const remaining = queue.filter((idx) => idx !== currentIndex);
       shuffleArrayInPlace(remaining);
       shuffleBag = remaining;
-      shuffleBagVersion = playlistVersion;
+      shuffleBagVersion = visibleIndicesVersion;
     }
 
     function noteShufflePlayed(idx) {
       if (!shuffleEnabled) return;
-      if (shuffleBagVersion !== playlistVersion) return;
+      if (shuffleBagVersion !== visibleIndicesVersion) return;
       const pos = shuffleBag.indexOf(idx);
       if (pos >= 0) {
         shuffleBag.splice(pos, 1);
@@ -982,7 +997,7 @@
     function getNextShuffleIndex() {
       const queue = getShuffleQueueIndices();
       if (!queue.length) return -1;
-      if (shuffleBagVersion !== playlistVersion) {
+      if (shuffleBagVersion !== visibleIndicesVersion) {
         resetShuffleBag();
       }
       if (!shuffleBag.length) {
@@ -1873,6 +1888,13 @@
         indices = getSortedIndices(indices);
       }
       visibleIndices = indices.slice();
+
+      const nextHash = hashIndexList(visibleIndices);
+      if (nextHash !== visibleIndicesHash) {
+        visibleIndicesHash = nextHash;
+        visibleIndicesVersion += 1;
+        // Shuffle bag resets lazily via version mismatch.
+      }
       const activePlaylistId = getActivePlaylistId();
 
       indices.forEach((realIdx, displayIdx) => {
@@ -2284,6 +2306,8 @@
       playlistVersion += 1;
       shuffleBag = [];
       shuffleBagVersion = -1;
+      visibleIndicesHash = 0;
+      visibleIndicesVersion += 1;
 
       updateCountryFilterOptions();
       updateArtistFilterOptions();
@@ -2515,6 +2539,8 @@
       playlistVersion += 1;
       shuffleBag = [];
       shuffleBagVersion = -1;
+      visibleIndicesHash = 0;
+      visibleIndicesVersion += 1;
 
       updateCountryFilterOptions();
       updateArtistFilterOptions();
