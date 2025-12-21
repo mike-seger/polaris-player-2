@@ -153,19 +153,50 @@ def load_videoids_from_json(path: str, json_path: str) -> List[str]:
     return out
 
 
-def load_credentials(client_secrets: str, token_path: str) -> Credentials:
+def load_credentials(client_secrets: Optional[str], token_path: str) -> Credentials:
     creds: Optional[Credentials] = None
+
     if os.path.exists(token_path):
         creds = Credentials.from_authorized_user_file(token_path, SCOPES)
+
     if creds and creds.expired and creds.refresh_token:
         creds.refresh(Request())
-    if not creds or not creds.valid:
+        with open(token_path, "w", encoding="utf-8") as f:
+            f.write(creds.to_json())
+        return creds
+
+    # Prefer env vars if present
+    env_client_id = os.getenv("GOOGLE_CLIENT_ID")
+    env_client_secret = os.getenv("GOOGLE_CLIENT_SECRET")
+
+    if env_client_id and env_client_secret:
+        client_config = {
+            "installed": {
+                "client_id": env_client_id,
+                "client_secret": env_client_secret,
+                "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+                "token_uri": "https://oauth2.googleapis.com/token",
+                "redirect_uris": ["http://localhost"],
+            }
+        }
+        flow = InstalledAppFlow.from_client_config(client_config, SCOPES)
+
+    elif client_secrets:
         flow = InstalledAppFlow.from_client_secrets_file(client_secrets, SCOPES)
-        creds = flow.run_local_server(port=0)
-    # Persist token
+
+    else:
+        raise RuntimeError(
+            "No OAuth credentials available. "
+            "Set GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET or provide --client-secrets."
+        )
+
+    creds = flow.run_local_server(port=0)
+
     with open(token_path, "w", encoding="utf-8") as f:
         f.write(creds.to_json())
+
     return creds
+
 
 
 def fetch_playlist_items(youtube, playlist_id: str) -> List[PlItem]:
@@ -325,7 +356,7 @@ def apply_plan(youtube, playlist_id: str, plan: List[Tuple[PlItem, int, int]], d
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--playlist-id", required=True, help="Target playlist ID (e.g., PLxxxx)")
-    ap.add_argument("--client-secrets", default="client_secret.json", help="OAuth client secrets JSON")
+    ap.add_argument("--client-secrets", default=None, help="OAuth client secrets JSON (ignored if env vars are set)")
     ap.add_argument("--token", default="token.json", help="Path to store OAuth token")
     ap.add_argument("--dry-run", action="store_true", help="Print planned moves, do not update playlist")
 

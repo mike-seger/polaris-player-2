@@ -6197,12 +6197,6 @@
         "country": "SWE"
       },
       {
-        "videoId": "S30XdiTDINc",
-        "title": "AGTHA - K3Pt (AGTHA Remix)",
-        "thumbnail": "https://i.ytimg.com/vi/S30XdiTDINc/mqdefault.jpg",
-        "userTitle": "AGTHA - K3Pt (AGTHA Remix)"
-      },
-      {
         "videoId": "XhiEPmd2J0I",
         "title": "akiaura - Deathwish",
         "thumbnail": "https://i.ytimg.com/vi/XhiEPmd2J0I/mqdefault.jpg",
@@ -6220,7 +6214,8 @@
         "videoId": "E8SnW0Ldb3I",
         "title": "Amaur - drowning in the night",
         "thumbnail": "https://i.ytimg.com/vi/E8SnW0Ldb3I/mqdefault.jpg",
-        "userTitle": "Amaur - drowning in the night"
+        "userTitle": "Amaur - drowning in the night",
+        "country": "USA"
       },
       {
         "videoId": "Bm3srnQBRAU",
@@ -6633,6 +6628,13 @@
         "title": "Crystal Castles - Celestica",
         "thumbnail": "https://i.ytimg.com/vi/IsxNUl1IHnE/mqdefault.jpg",
         "userTitle": "Crystal Castles - Celestica",
+        "country": "CAN"
+      },
+      {
+        "videoId": "S30XdiTDINc",
+        "title": "AGTHA - K3Pt (AGTHA Remix)",
+        "thumbnail": "https://i.ytimg.com/vi/S30XdiTDINc/mqdefault.jpg",
+        "userTitle": "Crystal Castles;Agtha - K3Pt (AGTHA Remix)",
         "country": "CAN"
       },
       {
@@ -7850,7 +7852,8 @@
         "videoId": "6YZ5jw9v5nM",
         "title": "Lllyric? - Looking For The Answer",
         "thumbnail": "https://i.ytimg.com/vi/6YZ5jw9v5nM/mqdefault.jpg",
-        "userTitle": "Lllyric? - Looking For The Answer"
+        "userTitle": "Lllyric? - Looking For The Answer",
+        "country": "GBR"
       },
       {
         "videoId": "RWzVTIziB8I",
@@ -8108,13 +8111,15 @@
         "videoId": "2utC7soBhRg",
         "title": "Minimal Schlager - FMB",
         "thumbnail": "https://i.ytimg.com/vi/2utC7soBhRg/mqdefault.jpg",
-        "userTitle": "Minimal Schlager - FMB"
+        "userTitle": "Minimal Schlager - FMB",
+        "country": "DEU"
       },
       {
         "videoId": "g6KMu8ojNxE",
         "title": "Minimal Schlager - Forbidden Fruit",
         "thumbnail": "https://i.ytimg.com/vi/g6KMu8ojNxE/mqdefault.jpg",
-        "userTitle": "Minimal Schlager - Forbidden Fruit"
+        "userTitle": "Minimal Schlager - Forbidden Fruit",
+        "country": "DEU"
       },
       {
         "videoId": "0pSPp2QeY7Y",
@@ -8316,7 +8321,8 @@
         "videoId": "kPshx-3AFKo",
         "title": "Molly Nilsson - I Hope You Die",
         "thumbnail": "https://i.ytimg.com/vi/kPshx-3AFKo/mqdefault.jpg",
-        "userTitle": "Molly Nilsson - I Hope You Die"
+        "userTitle": "Molly Nilsson - I Hope You Die",
+        "country": "SWE"
       },
       {
         "videoId": "fXXWSGoXh5w",
@@ -8973,14 +8979,14 @@
         "videoId": "P6kNoZmPUdI",
         "title": "R. Missing - infinifalls",
         "thumbnail": "https://i.ytimg.com/vi/P6kNoZmPUdI/mqdefault.jpg",
-        "userTitle": "R. Missing - Jane Four",
+        "userTitle": "R. Missing - infinifalls",
         "country": "USA"
       },
       {
         "videoId": "ljI7vtKrMOI",
-        "title": "R. Missing - infinifalls",
+        "title": "R. Missing - Jane Four",
         "thumbnail": "https://i.ytimg.com/vi/ljI7vtKrMOI/mqdefault.jpg",
-        "userTitle": "R. Missing - infinifalls",
+        "userTitle": "R. Missing - Jane Four",
         "country": "USA"
       },
       {
