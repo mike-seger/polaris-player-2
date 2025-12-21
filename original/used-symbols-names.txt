@@ -46,6 +46,7 @@ table_eye
 thumb_down
 thumb_up
 tune
+shuffle
 unfold_less
 unfold_more
 upload

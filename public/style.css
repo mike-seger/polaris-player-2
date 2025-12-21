@@ -829,7 +829,18 @@ body.spectrum-hidden #spectrumCanvas {
     line-height: 1;
 }
 
+#shuffleBtn .icon {
+    font-size: 30px;
+    width: 30px;
+    height: 30px;
+    line-height: 1;
+}
+
 #thumbToggleBtn.active {
+    color: var(--color-accent);
+}
+
+#shuffleBtn.active {
     color: var(--color-accent);
 }
 

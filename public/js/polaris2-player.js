@@ -34,6 +34,12 @@
 
     const STORAGE_KEY = 'ytAudioPlayer.settings';
     let settings = loadSettings();
+
+    // Shuffle mode: persisted on/off, in-memory non-repeating history.
+    let shuffleEnabled = typeof settings.shuffleEnabled === 'boolean' ? settings.shuffleEnabled : false;
+    let shuffleBag = [];
+    let shuffleBagVersion = -1;
+    let playlistVersion = 0;
     const API_BASE_PATH = window.location.hostname.endsWith('polaris.net128.com') ? '/u2b' : '.';
     const STATUS_ENDPOINT = `${API_BASE_PATH}/api/status`;
     const PLAYLIST_ENDPOINT = `${API_BASE_PATH}/api/playlist`;
@@ -221,6 +227,8 @@
     const countryFilterBtn = document.getElementById('countryFilterBtn');
     const countryFilterOverlay = document.getElementById('countryFilterOverlay');
     const countryFilterOptions = document.getElementById('countryFilterOptions');
+    const shuffleBtn = document.getElementById('shuffleBtn');
+    const shuffleIcon = document.getElementById('shuffleIcon');
     const thumbToggleBtn = document.getElementById('thumbToggleBtn');
     const thumbToggleIcon = document.getElementById('thumbToggleIcon');
     const trackDetailsWrapper = document.getElementById('trackDetailsWrapper');
@@ -803,6 +811,11 @@
       playlistHistory = [];
       updatePlaylistHistorySelect('');
 
+      shuffleEnabled = false;
+      shuffleBag = [];
+      shuffleBagVersion = -1;
+      updateShuffleButtonState();
+
       filterText = '';
       if (filterInputEl) {
         filterInputEl.value = '';
@@ -923,6 +936,68 @@
 
     function makeSortKey(value) {
       return transliterateCyrillicToLatin((value || '')).toLowerCase();
+    }
+
+    function shuffleArrayInPlace(arr) {
+      for (let i = arr.length - 1; i > 0; i -= 1) {
+        const j = Math.floor(Math.random() * (i + 1));
+        const tmp = arr[i];
+        arr[i] = arr[j];
+        arr[j] = tmp;
+      }
+      return arr;
+    }
+
+    function updateShuffleButtonState() {
+      if (!shuffleBtn) return;
+      shuffleBtn.classList.toggle('active', !!shuffleEnabled);
+      shuffleBtn.setAttribute('aria-pressed', String(!!shuffleEnabled));
+      if (shuffleIcon) {
+        shuffleIcon.className = 'icon shuffle';
+        shuffleIcon.textContent = 'shuffle';
+      }
+    }
+
+    function getShuffleQueueIndices() {
+      return playlistItems.map((_, idx) => idx);
+    }
+
+    function resetShuffleBag() {
+      const queue = getShuffleQueueIndices();
+      const remaining = queue.filter((idx) => idx !== currentIndex);
+      shuffleArrayInPlace(remaining);
+      shuffleBag = remaining;
+      shuffleBagVersion = playlistVersion;
+    }
+
+    function noteShufflePlayed(idx) {
+      if (!shuffleEnabled) return;
+      if (shuffleBagVersion !== playlistVersion) return;
+      const pos = shuffleBag.indexOf(idx);
+      if (pos >= 0) {
+        shuffleBag.splice(pos, 1);
+      }
+    }
+
+    function getNextShuffleIndex() {
+      const queue = getShuffleQueueIndices();
+      if (!queue.length) return -1;
+      if (shuffleBagVersion !== playlistVersion) {
+        resetShuffleBag();
+      }
+      if (!shuffleBag.length) {
+        resetShuffleBag();
+      }
+      if (!shuffleBag.length) return -1;
+      return shuffleBag.pop();
+    }
+
+    function toggleShuffleMode() {
+      shuffleEnabled = !shuffleEnabled;
+      saveSettings({ shuffleEnabled: !!shuffleEnabled });
+      shuffleBag = [];
+      shuffleBagVersion = -1;
+      updateShuffleButtonState();
     }
 
     function normalizeArtistName(name) {
@@ -2053,6 +2128,7 @@
       }
 
       currentIndex = idx;
+      noteShufflePlayed(idx);
       const videoId = targetVideoId;
       isPlaying = false;
       updateNowPlaying();
@@ -2122,7 +2198,7 @@
     }
 
     function playNext() {
-      const nextIdx = getRelativeVisibleIndex(1);
+      const nextIdx = shuffleEnabled ? getNextShuffleIndex() : getRelativeVisibleIndex(1);
       if (nextIdx >= 0) {
         playIndex(nextIdx);
       }
@@ -2163,6 +2239,13 @@
     document.getElementById('nextBtn').addEventListener('click', playNext);
     document.getElementById('prevBtn').addEventListener('click', playPrev);
 
+    if (shuffleBtn) {
+      shuffleBtn.addEventListener('click', () => {
+        toggleShuffleMode();
+      });
+      updateShuffleButtonState();
+    }
+
     async function loadPlaylistFromServer(forceRefresh = false, playlistIdOverride = '') {
       if (useLocalMode) {
         return loadPlaylistFromLocal(playlistIdOverride);
@@ -2198,6 +2281,9 @@
       }
       const data = await resp.json();
       playlistItems = data.items || [];
+      playlistVersion += 1;
+      shuffleBag = [];
+      shuffleBagVersion = -1;
 
       updateCountryFilterOptions();
       updateArtistFilterOptions();
@@ -2426,6 +2512,9 @@
         : targetId;
 
       playlistItems = Array.isArray(entry.items) ? entry.items.slice() : [];
+      playlistVersion += 1;
+      shuffleBag = [];
+      shuffleBagVersion = -1;
 
       updateCountryFilterOptions();
       updateArtistFilterOptions();
