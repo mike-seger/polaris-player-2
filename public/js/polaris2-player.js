@@ -42,6 +42,9 @@
     let shuffleBag = [];
     let shuffleBagVersion = -1;
     let playlistVersion = 0;
+    let shuffleHistory = [];
+    let shuffleHistoryPos = -1;
+    let shuffleNavigatingHistory = false;
     const API_BASE_PATH = window.location.hostname.endsWith('polaris.net128.com') ? '/u2b' : '.';
     const STATUS_ENDPOINT = `${API_BASE_PATH}/api/status`;
     const PLAYLIST_ENDPOINT = `${API_BASE_PATH}/api/playlist`;
@@ -816,6 +819,7 @@
       shuffleEnabled = true;
       shuffleBag = [];
       shuffleBagVersion = -1;
+      resetShuffleHistory();
       updateShuffleButtonState();
 
       filterText = '';
@@ -985,6 +989,31 @@
       shuffleBagVersion = visibleIndicesVersion;
     }
 
+    function resetShuffleHistory() {
+      shuffleHistory = [];
+      shuffleHistoryPos = -1;
+    }
+
+    function recordShuffleHistory(idx) {
+      if (!shuffleEnabled) return;
+      if (shuffleNavigatingHistory) return;
+      if (typeof idx !== 'number' || idx < 0) return;
+
+      // If the user went back and then plays a new track, discard the "forward" part.
+      if (shuffleHistoryPos >= 0 && shuffleHistoryPos < shuffleHistory.length - 1) {
+        shuffleHistory = shuffleHistory.slice(0, shuffleHistoryPos + 1);
+      }
+
+      const last = shuffleHistory.length ? shuffleHistory[shuffleHistory.length - 1] : null;
+      if (last === idx) {
+        shuffleHistoryPos = shuffleHistory.length - 1;
+        return;
+      }
+
+      shuffleHistory.push(idx);
+      shuffleHistoryPos = shuffleHistory.length - 1;
+    }
+
     function noteShufflePlayed(idx) {
       if (!shuffleEnabled) return;
       if (shuffleBagVersion !== visibleIndicesVersion) return;
@@ -1012,6 +1041,7 @@
       saveSettings({ shuffleEnabled: !!shuffleEnabled });
       shuffleBag = [];
       shuffleBagVersion = -1;
+      resetShuffleHistory();
       updateShuffleButtonState();
     }
 
@@ -1894,6 +1924,7 @@
         visibleIndicesHash = nextHash;
         visibleIndicesVersion += 1;
         // Shuffle bag resets lazily via version mismatch.
+        resetShuffleHistory();
       }
       const activePlaylistId = getActivePlaylistId();
 
@@ -2151,6 +2182,7 @@
 
       currentIndex = idx;
       noteShufflePlayed(idx);
+      recordShuffleHistory(idx);
       const videoId = targetVideoId;
       isPlaying = false;
       updateNowPlaying();
@@ -2220,16 +2252,53 @@
     }
 
     function playNext() {
-      const nextIdx = shuffleEnabled ? getNextShuffleIndex() : getRelativeVisibleIndex(1);
+      let nextIdx = -1;
+      let fromHistory = false;
+      if (shuffleEnabled) {
+        // If user previously went back, go forward through history first.
+        if (shuffleHistoryPos >= 0 && shuffleHistoryPos < shuffleHistory.length - 1) {
+          shuffleHistoryPos += 1;
+          nextIdx = shuffleHistory[shuffleHistoryPos];
+          fromHistory = true;
+        } else {
+          nextIdx = getNextShuffleIndex();
+        }
+      } else {
+        nextIdx = getRelativeVisibleIndex(1);
+      }
       if (nextIdx >= 0) {
-        playIndex(nextIdx);
+        if (shuffleEnabled && fromHistory) {
+          shuffleNavigatingHistory = true;
+        }
+        try {
+          playIndex(nextIdx);
+        } finally {
+          if (shuffleEnabled && fromHistory) {
+            shuffleNavigatingHistory = false;
+          }
+        }
       }
     }
 
     function playPrev() {
-      const prevIdx = getRelativeVisibleIndex(-1);
+      let prevIdx = -1;
+      if (shuffleEnabled) {
+        if (shuffleHistoryPos > 0) {
+          shuffleHistoryPos -= 1;
+          prevIdx = shuffleHistory[shuffleHistoryPos];
+        }
+      } else {
+        prevIdx = getRelativeVisibleIndex(-1);
+      }
       if (prevIdx >= 0) {
-        playIndex(prevIdx);
+        if (shuffleEnabled) {
+          shuffleNavigatingHistory = true;
+        }
+        try {
+          playIndex(prevIdx);
+        } finally {
+          shuffleNavigatingHistory = false;
+        }
       }
     }
 
@@ -2306,6 +2375,7 @@
       playlistVersion += 1;
       shuffleBag = [];
       shuffleBagVersion = -1;
+      resetShuffleHistory();
       visibleIndicesHash = 0;
       visibleIndicesVersion += 1;
 
@@ -2539,6 +2609,7 @@
       playlistVersion += 1;
       shuffleBag = [];
       shuffleBagVersion = -1;
+      resetShuffleHistory();
       visibleIndicesHash = 0;
       visibleIndicesVersion += 1;
 
