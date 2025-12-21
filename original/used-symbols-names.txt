@@ -1,8 +1,6 @@
-arrow_down
 arrow_left
 arrow_outward
 arrow_right
-arrow_up
 artist
 cancel
 cast
@@ -38,6 +36,8 @@ search
 settings
 settings_applications
 settings_b_roll
+shuffle
+shuffle_on
 skip_next
 skip_previous
 slow_motion_video
