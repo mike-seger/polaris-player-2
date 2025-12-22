@@ -1175,7 +1175,8 @@ body.is-fullscreen.gesture-mode #trackControls {
     right: 0;
     bottom: 0;
     margin-bottom: 0;
-    z-index: 150;
+    /* Must be above the sidebar drawer so the control buttons remain visible. */
+    z-index: 260;
 }
 
 body.is-fullscreen.gesture-mode #playlistControls,
@@ -1237,13 +1238,13 @@ body.is-fullscreen.gesture-mode.sidebar-hidden #trackListContainer {
     }
 
     /* When the fullscreen sidebar is hidden, collapse the left column so the player fills the width. */
-    body.is-fullscreen.sidebar-hidden #sidebar {
+    body.is-fullscreen.sidebar-collapsed #sidebar {
         grid-template-columns: 0 minmax(0, 1fr);
     }
 
-    body.is-fullscreen.sidebar-hidden #playlistControls,
-    body.is-fullscreen.sidebar-hidden #trackControls,
-    body.is-fullscreen.sidebar-hidden #trackListContainer {
+    body.is-fullscreen.sidebar-collapsed #playlistControls,
+    body.is-fullscreen.sidebar-collapsed #trackControls,
+    body.is-fullscreen.sidebar-collapsed #trackListContainer {
         max-width: 0;
         overflow: hidden;
         pointer-events: none;

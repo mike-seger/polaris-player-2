@@ -1019,6 +1019,7 @@
 
     const SIDEBAR_AUTO_HIDE_MS = 7000;
     let sidebarAutoHideTimer = null;
+    let sidebarCollapseTimer = null;
 
     const LONG_PRESS_MS = 520;
     const TAP_MAX_MOVE_PX = 10;
@@ -1040,11 +1041,60 @@
     }
 
     function updateGestureModeClass() {
-      document.body.classList.toggle('gesture-mode', isMobileGestureMode());
+      const nextGesture = isMobileGestureMode();
+      const body = document.body;
+      body.classList.toggle('gesture-mode', nextGesture);
+      if (nextGesture) {
+        // Desktop-only optimization; don't keep it around in gesture mode.
+        body.classList.remove('sidebar-collapsed');
+      }
+      // If we're fullscreen + currently hidden, re-apply hiding so collapse behavior
+      // matches the current layout mode (desktop vs gesture).
+      if (getFullscreenElement() && body.classList.contains('sidebar-hidden')) {
+        setFullscreenSidebarHidden(true);
+      }
+    }
+
+    function clearSidebarCollapseTimer() {
+      if (sidebarCollapseTimer) {
+        clearTimeout(sidebarCollapseTimer);
+        sidebarCollapseTimer = null;
+      }
+    }
+
+    function isDesktopLayout() {
+      return !!(window.matchMedia && window.matchMedia('(min-width: 1024px)').matches);
     }
 
     function setFullscreenSidebarHidden(hidden) {
-      document.body.classList.toggle('sidebar-hidden', !!hidden);
+      const body = document.body;
+      const wantsHidden = !!hidden;
+
+      clearSidebarCollapseTimer();
+
+      if (!wantsHidden) {
+        // Show: expand the column first, then slide in.
+        body.classList.remove('sidebar-collapsed');
+        requestAnimationFrame(() => {
+          body.classList.remove('sidebar-hidden');
+        });
+        return;
+      }
+
+      // Hide: slide out immediately.
+      body.classList.add('sidebar-hidden');
+
+      // On desktop layout (non-gesture mode), collapse the column after the slide animation.
+      const shouldCollapse = isDesktopLayout() && !body.classList.contains('gesture-mode');
+      if (shouldCollapse) {
+        sidebarCollapseTimer = setTimeout(() => {
+          if (!getFullscreenElement()) return;
+          if (!body.classList.contains('sidebar-hidden')) return;
+          body.classList.add('sidebar-collapsed');
+        }, 260);
+      } else {
+        body.classList.remove('sidebar-collapsed');
+      }
     }
 
     function clearSidebarAutoHideTimer() {
@@ -1052,6 +1102,7 @@
         clearTimeout(sidebarAutoHideTimer);
         sidebarAutoHideTimer = null;
       }
+      clearSidebarCollapseTimer();
     }
 
     function scheduleFullscreenSidebarAutoHide() {
