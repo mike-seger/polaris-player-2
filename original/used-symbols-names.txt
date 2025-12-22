@@ -23,6 +23,7 @@ list
 list_alt
 list_alt_check
 markunread_mailbox
+menu
 more_horiz
 more_vert
 open_in_browser

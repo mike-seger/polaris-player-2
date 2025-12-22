@@ -220,6 +220,7 @@
     }
 
     // DOM refs
+    const sidebarMenuBtn = document.getElementById('sidebarMenuBtn');
     const playlistIOBtn = document.getElementById('playlistIOBtn');
     const filterInputEl = document.getElementById('filterInput');
     const filterWrapper = document.getElementById('filterWrapper');
@@ -1031,52 +1032,10 @@
       }
     }
 
-    const SIDEBAR_AUTO_HIDE_MS = 7000;
-    let sidebarAutoHideTimer = null;
-    let sidebarCollapseTimer = null;
+    // Sidebar: unified overlay drawer everywhere.
+    const SIDEBAR_AUTO_HIDE_MS = 80000;
     let sidebarInactivityInterval = null;
     let sidebarLastActivityTs = 0;
-
-    const LONG_PRESS_MS = 520;
-    const TAP_MAX_MOVE_PX = 10;
-    const SWIPE_MIN_X_PX = 60;
-    const SWIPE_MAX_Y_PX = 50;
-
-    function isMobileGestureMode() {
-      if (!isAppFullscreen()) return false;
-
-      const hasTouch = (navigator.maxTouchPoints || 0) > 0 || ('ontouchstart' in window);
-      if (!hasTouch) return false;
-
-      const coarse = !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
-      const noHover = !!(window.matchMedia && window.matchMedia('(hover: none)').matches);
-      const maxDim = Math.max(window.innerWidth || 0, window.innerHeight || 0);
-
-      // Covers phones + tablets (including iPad landscape @ 1024px and iPad Pro @ 1366px).
-      return coarse || noHover || maxDim <= 1366;
-    }
-
-    function updateGestureModeClass() {
-      const nextGesture = isMobileGestureMode();
-      const body = document.body;
-      body.classList.toggle('gesture-mode', nextGesture);
-      if (nextGesture) {
-        // Desktop-only optimization; don't keep it around in gesture mode.
-        body.classList.remove('sidebar-collapsed');
-      }
-      // If we're fullscreen + currently hidden, re-apply hiding so collapse behavior
-      // matches the current layout mode (desktop vs gesture).
-      if (isAppFullscreen() && body.classList.contains('sidebar-hidden')) {
-        setFullscreenSidebarHidden(true);
-      }
-    }
-
-    function clearSidebarCollapseTimer() {
-      if (sidebarCollapseTimer) {
-        clearTimeout(sidebarCollapseTimer);
-        sidebarCollapseTimer = null;
-      }
-    }
 
     function clearSidebarInactivityInterval() {
       if (sidebarInactivityInterval) {
@@ -1088,268 +1047,72 @@
     function ensureSidebarInactivityInterval() {
       if (sidebarInactivityInterval) return;
       sidebarInactivityInterval = setInterval(() => {
-        if (!isAppFullscreen()) {
-          clearSidebarInactivityInterval();
-          return;
-        }
         if (document.body.classList.contains('sidebar-hidden')) {
           clearSidebarInactivityInterval();
           return;
         }
         if (!sidebarLastActivityTs) sidebarLastActivityTs = Date.now();
         if (Date.now() - sidebarLastActivityTs >= SIDEBAR_AUTO_HIDE_MS) {
-          setFullscreenSidebarHidden(true);
+          setSidebarHidden(true);
         }
-      }, 250);
+      }, 500);
     }
 
-    function isDesktopLayout() {
-      return !!(window.matchMedia && window.matchMedia('(min-width: 1024px)').matches);
-    }
-
-    function setFullscreenSidebarHidden(hidden) {
-      const body = document.body;
-      const wantsHidden = !!hidden;
-
-      clearSidebarCollapseTimer();
-      if (wantsHidden) {
-        clearSidebarInactivityInterval();
-      }
-
-      if (!wantsHidden) {
-        // Show: expand the column first, then slide in.
-        body.classList.remove('sidebar-collapsed');
-        requestAnimationFrame(() => {
-          body.classList.remove('sidebar-hidden');
-          bumpFullscreenSidebarAutoHide();
-        });
-        return;
-      }
-
-      // Hide: slide out immediately.
-      body.classList.add('sidebar-hidden');
-
-      // On desktop layout (non-gesture mode), collapse the column after the slide animation.
-      const shouldCollapse = isDesktopLayout() && !body.classList.contains('gesture-mode');
-      if (shouldCollapse) {
-        sidebarCollapseTimer = setTimeout(() => {
-          if (!isAppFullscreen()) return;
-          if (!body.classList.contains('sidebar-hidden')) return;
-          body.classList.add('sidebar-collapsed');
-        }, 260);
-      } else {
-        body.classList.remove('sidebar-collapsed');
-      }
-    }
-
-    function clearSidebarAutoHideTimer() {
-      if (sidebarAutoHideTimer) {
-        clearTimeout(sidebarAutoHideTimer);
-        sidebarAutoHideTimer = null;
-      }
-      clearSidebarCollapseTimer();
-      clearSidebarInactivityInterval();
-    }
-
-    function bumpFullscreenSidebarAutoHide() {
-      if (!isAppFullscreen()) return;
+    function noteSidebarActivity() {
       if (document.body.classList.contains('sidebar-hidden')) return;
       sidebarLastActivityTs = Date.now();
       ensureSidebarInactivityInterval();
     }
 
-    function scheduleFullscreenSidebarAutoHide() {
-      const isFs = isAppFullscreen();
-      document.body.classList.toggle('is-fullscreen', isFs);
-
-      // Enable touch gesture handling when appropriate.
-      updateGestureModeClass();
-
-      clearSidebarAutoHideTimer();
-
-      if (!isFs) {
-        setFullscreenSidebarHidden(false);
-        sidebarLastActivityTs = 0;
+    function setSidebarHidden(hidden) {
+      const wantsHidden = !!hidden;
+      document.body.classList.toggle('sidebar-hidden', wantsHidden);
+      document.body.classList.remove('sidebar-collapsed');
+      if (wantsHidden) {
+        clearSidebarInactivityInterval();
         return;
       }
-
-      // Always show sidebar immediately, then slide it out after a delay.
-      setFullscreenSidebarHidden(false);
-      bumpFullscreenSidebarAutoHide();
+      sidebarLastActivityTs = Date.now();
+      ensureSidebarInactivityInterval();
     }
 
     function handleFullscreenChange() {
       updateFullscreenButtonState();
-      scheduleFullscreenSidebarAutoHide();
+      document.body.classList.toggle('is-fullscreen', isAppFullscreen());
     }
 
-    function toggleFullscreenSidebarFromGesture() {
-      if (!isAppFullscreen()) return;
-      const hidden = document.body.classList.contains('sidebar-hidden');
-      if (hidden) {
-        scheduleFullscreenSidebarAutoHide();
-      } else {
-        clearSidebarAutoHideTimer();
-        setFullscreenSidebarHidden(true);
+    function setupSidebarInteractions() {
+      // Menu button hides the sidebar.
+      if (sidebarMenuBtn) {
+        sidebarMenuBtn.addEventListener('click', (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          setSidebarHidden(true);
+        });
       }
-    }
 
-    function setupMobileGestureLayer() {
-      if (!playerGestureLayer) return;
-      let activePointerId = null;
-      let startX = 0;
-      let startY = 0;
-      let lastX = 0;
-      let lastY = 0;
-      let longPressTimer = null;
-      let longPressFired = false;
-
-      const clearLongPress = () => {
-        if (longPressTimer) {
-          clearTimeout(longPressTimer);
-          longPressTimer = null;
-        }
-      };
-
-      const onDown = (clientX, clientY, pointerId) => {
-        if (!isMobileGestureMode()) return false;
-        bumpFullscreenSidebarAutoHide();
-        activePointerId = pointerId;
-        startX = clientX;
-        startY = clientY;
-        lastX = clientX;
-        lastY = clientY;
-        longPressFired = false;
-
-        clearLongPress();
-        longPressTimer = setTimeout(() => {
-          if (!isMobileGestureMode()) return;
-          longPressFired = true;
-          togglePlayback();
-        }, LONG_PRESS_MS);
-        return true;
-      };
-
-      const onMove = (clientX, clientY, pointerId) => {
-        if (activePointerId == null || pointerId !== activePointerId) return;
-        lastX = clientX;
-        lastY = clientY;
-        const dx = Math.abs(lastX - startX);
-        const dy = Math.abs(lastY - startY);
-        if (dx > TAP_MAX_MOVE_PX || dy > TAP_MAX_MOVE_PX) {
-          // Moving cancels long-press.
-          clearLongPress();
-        }
-      };
-
-      const onUp = (pointerId) => {
-        if (activePointerId == null || pointerId !== activePointerId) return;
-        clearLongPress();
-
-        const dx = lastX - startX;
-        const dy = lastY - startY;
-        const absX = Math.abs(dx);
-        const absY = Math.abs(dy);
-
-        activePointerId = null;
-
-        if (!isMobileGestureMode()) return;
-        if (longPressFired) return;
-
-        // Horizontal swipe -> prev/next.
-        if (absX >= SWIPE_MIN_X_PX && absY <= SWIPE_MAX_Y_PX && absX > absY) {
-          if (dx < 0) {
-            playNext();
-          } else {
-            playPrev();
-          }
-          return;
-        }
-
-        // Tap -> toggle sidebar.
-        if (absX <= TAP_MAX_MOVE_PX && absY <= TAP_MAX_MOVE_PX) {
-          toggleFullscreenSidebarFromGesture();
-        }
-      };
-
-      if ('PointerEvent' in window) {
-        playerGestureLayer.addEventListener('pointerdown', (event) => {
-          const ok = onDown(event.clientX, event.clientY, event.pointerId);
-          if (!ok) return;
+      // When hidden, a tap/click on the video shows the sidebar.
+      if (playerGestureLayer) {
+        const showFromVideo = (event) => {
+          if (!document.body.classList.contains('sidebar-hidden')) return;
           event.preventDefault();
           event.stopPropagation();
-          try {
-            playerGestureLayer.setPointerCapture(event.pointerId);
-          } catch (_) {}
-        });
-        playerGestureLayer.addEventListener('pointermove', (event) => {
-          onMove(event.clientX, event.clientY, event.pointerId);
-          if (activePointerId === event.pointerId) {
-            event.preventDefault();
-            event.stopPropagation();
-          }
-        });
-        const end = (event) => {
-          onUp(event.pointerId);
-          event.preventDefault();
-          event.stopPropagation();
+          setSidebarHidden(false);
         };
-        playerGestureLayer.addEventListener('pointerup', end);
-        playerGestureLayer.addEventListener('pointercancel', end);
-      } else {
-        // Fallback for older mobile browsers.
-        let touchId = null;
-        playerGestureLayer.addEventListener('touchstart', (event) => {
-          if (!event.touches || !event.touches.length) return;
-          const t = event.touches[0];
-          touchId = t.identifier;
-          const ok = onDown(t.clientX, t.clientY, touchId);
-          if (!ok) return;
-          event.preventDefault();
-        }, { passive: false });
-        playerGestureLayer.addEventListener('touchmove', (event) => {
-          const t = Array.from(event.touches || []).find((x) => x.identifier === touchId);
-          if (!t) return;
-          onMove(t.clientX, t.clientY, touchId);
-          event.preventDefault();
-        }, { passive: false });
-        playerGestureLayer.addEventListener('touchend', (event) => {
-          onUp(touchId);
-          event.preventDefault();
-        }, { passive: false });
-        playerGestureLayer.addEventListener('touchcancel', (event) => {
-          onUp(touchId);
-          event.preventDefault();
-        }, { passive: false });
+        playerGestureLayer.addEventListener('pointerdown', showFromVideo, { passive: false });
+        playerGestureLayer.addEventListener('click', showFromVideo, { passive: false });
       }
-    }
 
-    // Fullscreen-only: hide sidebar after inactivity while visible.
-    // (Entering fullscreen or explicitly showing the sidebar resets the timer already.)
-    document.addEventListener(
-      'pointerdown',
-      () => {
-        if (!isAppFullscreen()) return;
-        bumpFullscreenSidebarAutoHide();
-      },
-      { capture: true, passive: true }
-    );
-    document.addEventListener(
-      'touchstart',
-      () => {
-        if (!isAppFullscreen()) return;
-        bumpFullscreenSidebarAutoHide();
-      },
-      { capture: true, passive: true }
-    );
-    document.addEventListener(
-      'keydown',
-      () => {
-        if (!isAppFullscreen()) return;
-        bumpFullscreenSidebarAutoHide();
-      },
-      { capture: true }
-    );
+      // Any interaction while visible resets the inactivity timer.
+      const bump = () => noteSidebarActivity();
+      document.addEventListener('pointerdown', bump, { capture: true, passive: true });
+      document.addEventListener('touchstart', bump, { capture: true, passive: true });
+      document.addEventListener('keydown', bump, { capture: true });
+      document.addEventListener('wheel', bump, { capture: true, passive: true });
+
+      // Start the timer if the sidebar begins visible.
+      noteSidebarActivity();
+    }
 
     function getShuffleQueueIndices() {
       return (Array.isArray(visibleIndices) && visibleIndices.length)
@@ -2805,26 +2568,10 @@
         }
       });
 
-      // Fullscreen-only: middle mouse click brings sidebar back for 7s.
-      document.addEventListener('auxclick', (event) => {
-        if (event.button !== 1) return;
-        if (!isAppFullscreen()) return;
-        scheduleFullscreenSidebarAutoHide();
-      });
-
       handleFullscreenChange();
     }
 
-    window.addEventListener('resize', () => {
-      if (!isAppFullscreen()) return;
-      updateGestureModeClass();
-    });
-    window.addEventListener('orientationchange', () => {
-      if (!isAppFullscreen()) return;
-      updateGestureModeClass();
-    });
-
-    setupMobileGestureLayer();
+    setupSidebarInteractions();
 
     if (shuffleBtn) {
       shuffleBtn.addEventListener('click', () => {
