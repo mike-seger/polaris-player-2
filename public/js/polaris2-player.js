@@ -1148,6 +1148,32 @@
       return out;
     }
 
+    function toggleArtistFilterName(name) {
+      const cleaned = normalizeArtistName(name);
+      if (!cleaned) return;
+      const key = normalizeArtistKey(cleaned);
+      if (!key) return;
+
+      const next = new Map();
+      artistFilters.forEach((entry) => {
+        const entryKey = normalizeArtistKey(entry);
+        if (!entryKey) return;
+        next.set(entryKey, normalizeArtistName(entry));
+      });
+
+      if (next.has(key)) {
+        next.delete(key);
+      } else {
+        next.set(key, cleaned);
+      }
+
+      artistFilters = Array.from(next.values());
+      persistArtistFilters();
+      computeFilteredIndices();
+      renderTrackList({ preserveScroll: true, skipActiveScroll: true });
+      updateArtistFilterOptions();
+    }
+
     function normalizeCountryFilterList(value) {
       if (!Array.isArray(value)) return [];
       const out = [];
@@ -2012,6 +2038,9 @@
         const li = document.createElement('li');
         if (realIdx === currentIndex) li.classList.add('active');
 
+        const rawTitle = item.userTitle ? item.userTitle : item.title;
+        const primaryArtist = splitArtists(rawTitle)[0] || '';
+
         const numSpan = document.createElement('span');
         numSpan.className = 'track-number';
         numSpan.textContent = (displayIdx + 1);
@@ -2020,10 +2049,28 @@
         if (trackDetailSettings.thumbnail && item.thumbnail) {
           const img = document.createElement('img');
           img.src = item.thumbnail;
+
+           if (primaryArtist) {
+             img.setAttribute('role', 'button');
+             img.tabIndex = 0;
+             img.title = `Filter artist: ${primaryArtist}`;
+
+             img.addEventListener('click', (event) => {
+               event.preventDefault();
+               event.stopPropagation();
+               toggleArtistFilterName(primaryArtist);
+             });
+
+             img.addEventListener('keydown', (event) => {
+               if (event.key !== 'Enter' && event.key !== ' ' && event.key !== 'Spacebar') return;
+               event.preventDefault();
+               event.stopPropagation();
+               toggleArtistFilterName(primaryArtist);
+             });
+           }
+
           li.appendChild(img);
         }
-
-        const rawTitle = item.userTitle ? item.userTitle : item.title;
         const parts = splitTrackDisplayText(rawTitle);
 
         const textWrap = document.createElement('span');
@@ -2408,6 +2455,13 @@
     });
     document.getElementById('nextBtn').addEventListener('click', playNext);
     document.getElementById('prevBtn').addEventListener('click', playPrev);
+
+    if (timeLabel) {
+      timeLabel.addEventListener('click', (event) => {
+        event.preventDefault();
+        focusActiveTrack({ scroll: true });
+      });
+    }
 
     if (fullscreenBtn) {
       fullscreenBtn.addEventListener('click', () => {

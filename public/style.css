@@ -159,6 +159,8 @@ input[type="text"]:focus-visible {
     flex: 0 0 auto;
     padding-bottom: 0;
     margin-bottom: 0;
+    position: relative;
+    z-index: 200;
 }
 
 .pc-body {
@@ -533,6 +535,8 @@ input[type="checkbox"] {
     scrollbar-width: thin;
     scrollbar-color: var(--color-border-strong) rgba(32, 38, 51, 0.75);
     color-scheme: dark;
+    position: relative;
+    z-index: 1;
 }
 
 #trackListContainer:focus {
@@ -770,6 +774,8 @@ body.show-track-country:not(.no-wrap-lines) .track-country-flags {
     padding: 0.35rem;
     margin-bottom: 0.5em;
     background: var(--color-panel);
+    position: relative;
+    z-index: 150;
 }
 
 
@@ -887,7 +893,7 @@ body.spectrum-hidden #spectrumCanvas {
     display: none;
     flex-direction: column;
     gap: 0.35rem;
-    z-index: 200;
+    z-index: 500;
 }
 
 .track-details-overlay.visible {
@@ -1095,6 +1101,7 @@ body.hide-track-check .track-state-btn {
     text-align: right;
     font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
         "Liberation Mono", "Courier New", monospace;
+    cursor: pointer;
 }
 
 /* Player between control groups */
