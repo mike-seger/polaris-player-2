@@ -22,7 +22,7 @@ command -v jq >/dev/null || { echo "Missing dependency: jq" >&2; exit 1; }
 command -v yt-dlp >/dev/null || { echo "Missing dependency: yt-dlp" >&2; exit 1; }
 command -v python3 >/dev/null || { echo "Missing dependency: python3" >&2; exit 1; }
 
-BASE_DIR="plex-downloads"
+BASE_DIR="yt-downloads"
 AUDIO_DIR="${BASE_DIR}/audio"
 VIDEO_DIR="${BASE_DIR}/video"
 STATE_DIR="${BASE_DIR}/state"
