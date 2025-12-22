@@ -1119,6 +1119,16 @@
       clearSidebarCollapseTimer();
     }
 
+    function bumpFullscreenSidebarAutoHide() {
+      if (!isAppFullscreen()) return;
+      if (document.body.classList.contains('sidebar-hidden')) return;
+      clearSidebarAutoHideTimer();
+      sidebarAutoHideTimer = setTimeout(() => {
+        if (!isAppFullscreen()) return;
+        setFullscreenSidebarHidden(true);
+      }, SIDEBAR_AUTO_HIDE_MS);
+    }
+
     function scheduleFullscreenSidebarAutoHide() {
       const isFs = isAppFullscreen();
       document.body.classList.toggle('is-fullscreen', isFs);
@@ -1135,10 +1145,7 @@
 
       // Always show sidebar immediately, then slide it out after a delay.
       setFullscreenSidebarHidden(false);
-      sidebarAutoHideTimer = setTimeout(() => {
-        if (!isAppFullscreen()) return;
-        setFullscreenSidebarHidden(true);
-      }, SIDEBAR_AUTO_HIDE_MS);
+      bumpFullscreenSidebarAutoHide();
     }
 
     function handleFullscreenChange() {
@@ -1176,6 +1183,7 @@
 
       const onDown = (clientX, clientY, pointerId) => {
         if (!isMobileGestureMode()) return false;
+        bumpFullscreenSidebarAutoHide();
         activePointerId = pointerId;
         startX = clientX;
         startY = clientY;
@@ -1285,6 +1293,33 @@
         }, { passive: false });
       }
     }
+
+    // Fullscreen-only: hide sidebar after inactivity while visible.
+    // (Entering fullscreen or explicitly showing the sidebar resets the timer already.)
+    document.addEventListener(
+      'pointerdown',
+      () => {
+        if (!isAppFullscreen()) return;
+        bumpFullscreenSidebarAutoHide();
+      },
+      { capture: true, passive: true }
+    );
+    document.addEventListener(
+      'touchstart',
+      () => {
+        if (!isAppFullscreen()) return;
+        bumpFullscreenSidebarAutoHide();
+      },
+      { capture: true, passive: true }
+    );
+    document.addEventListener(
+      'keydown',
+      () => {
+        if (!isAppFullscreen()) return;
+        bumpFullscreenSidebarAutoHide();
+      },
+      { capture: true }
+    );
 
     function getShuffleQueueIndices() {
       return (Array.isArray(visibleIndices) && visibleIndices.length)
