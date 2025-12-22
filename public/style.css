@@ -47,6 +47,7 @@ html:not(.icons-ready) .icon {
     --color-active: #28344d;
     --color-accent: #cc0000;
     --playlist-manager-button-size: 34px;
+    --sidebar-drawer-width: calc(var(--playlist-manager-button-size) * 3);
 }
 
 .playlist-overlay-content {
@@ -160,7 +161,7 @@ input[type="text"]:focus-visible {
     top: 0;
     bottom: 0;
     left: 0;
-    width: calc(var(--playlist-manager-button-size) * 3);
+    width: var(--sidebar-drawer-width);
     max-width: none;
     z-index: 200;
     display: flex;
@@ -1199,7 +1200,7 @@ body.sidebar-hidden #playerGestureLayer {
     top: 0;
     bottom: 0;
     right: auto;
-    width: calc(var(--playlist-manager-button-size) * 4);
+    width: var(--sidebar-drawer-width);
 }
 
 
