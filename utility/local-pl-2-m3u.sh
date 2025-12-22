@@ -50,6 +50,7 @@ YT_COMMON=(
   --progress
   # Strongly recommended for YouTube reliability:
   --cookies-from-browser chrome
+  --js-runtimes node
 )
 
 
