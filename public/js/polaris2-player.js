@@ -982,16 +982,25 @@
       return document.fullscreenElement || document.webkitFullscreenElement || null;
     }
 
+    function isPseudoFullscreen() {
+      return document.body.classList.contains('pseudo-fullscreen');
+    }
+
+    function isAppFullscreen() {
+      return !!getFullscreenElement() || isPseudoFullscreen();
+    }
+
     function requestFullscreenFor(el) {
-      if (!el) return;
+      if (!el) return null;
       const req = el.requestFullscreen || el.webkitRequestFullscreen;
       if (typeof req === 'function') {
         try {
-          req.call(el);
+          return req.call(el);
         } catch (e) {
           console.warn('Failed to request fullscreen:', e);
         }
       }
+      return null;
     }
 
     function exitFullscreen() {
@@ -1005,9 +1014,14 @@
       }
     }
 
+    function setPseudoFullscreen(enabled) {
+      document.body.classList.toggle('pseudo-fullscreen', !!enabled);
+      handleFullscreenChange();
+    }
+
     function updateFullscreenButtonState() {
       if (!fullscreenBtn) return;
-      const isFs = !!getFullscreenElement();
+      const isFs = isAppFullscreen();
       fullscreenBtn.classList.toggle('active', isFs);
       fullscreenBtn.setAttribute('aria-pressed', String(isFs));
       fullscreenBtn.setAttribute('aria-label', isFs ? 'Exit fullscreen' : 'Enter fullscreen');
@@ -1027,7 +1041,7 @@
     const SWIPE_MAX_Y_PX = 50;
 
     function isMobileGestureMode() {
-      if (!getFullscreenElement()) return false;
+      if (!isAppFullscreen()) return false;
 
       const hasTouch = (navigator.maxTouchPoints || 0) > 0 || ('ontouchstart' in window);
       if (!hasTouch) return false;
@@ -1050,7 +1064,7 @@
       }
       // If we're fullscreen + currently hidden, re-apply hiding so collapse behavior
       // matches the current layout mode (desktop vs gesture).
-      if (getFullscreenElement() && body.classList.contains('sidebar-hidden')) {
+      if (isAppFullscreen() && body.classList.contains('sidebar-hidden')) {
         setFullscreenSidebarHidden(true);
       }
     }
@@ -1088,7 +1102,7 @@
       const shouldCollapse = isDesktopLayout() && !body.classList.contains('gesture-mode');
       if (shouldCollapse) {
         sidebarCollapseTimer = setTimeout(() => {
-          if (!getFullscreenElement()) return;
+          if (!isAppFullscreen()) return;
           if (!body.classList.contains('sidebar-hidden')) return;
           body.classList.add('sidebar-collapsed');
         }, 260);
@@ -1106,7 +1120,7 @@
     }
 
     function scheduleFullscreenSidebarAutoHide() {
-      const isFs = !!getFullscreenElement();
+      const isFs = isAppFullscreen();
       document.body.classList.toggle('is-fullscreen', isFs);
 
       // Enable touch gesture handling when appropriate.
@@ -1122,7 +1136,7 @@
       // Always show sidebar immediately, then slide it out after a delay.
       setFullscreenSidebarHidden(false);
       sidebarAutoHideTimer = setTimeout(() => {
-        if (!getFullscreenElement()) return;
+        if (!isAppFullscreen()) return;
         setFullscreenSidebarHidden(true);
       }, SIDEBAR_AUTO_HIDE_MS);
     }
@@ -1133,7 +1147,7 @@
     }
 
     function toggleFullscreenSidebarFromGesture() {
-      if (!getFullscreenElement()) return;
+      if (!isAppFullscreen()) return;
       const hidden = document.body.classList.contains('sidebar-hidden');
       if (hidden) {
         scheduleFullscreenSidebarAutoHide();
@@ -2682,13 +2696,33 @@
     }
 
     if (fullscreenBtn) {
-      fullscreenBtn.addEventListener('click', () => {
-        const isFs = !!getFullscreenElement();
+      fullscreenBtn.addEventListener('click', async () => {
+        const isFs = isAppFullscreen();
         if (isFs) {
-          exitFullscreen();
-        } else {
-          // Fullscreen the entire app.
-          requestFullscreenFor(document.documentElement);
+          // Prefer exiting native fullscreen, but also clear pseudo fullscreen.
+          if (getFullscreenElement()) {
+            exitFullscreen();
+          }
+          if (isPseudoFullscreen()) {
+            setPseudoFullscreen(false);
+          }
+          return;
+        }
+
+        // Try native fullscreen first.
+        let enteredNative = false;
+        const ret = requestFullscreenFor(document.documentElement);
+        if (ret && typeof ret.then === 'function') {
+          try {
+            await ret;
+          } catch {
+            // ignore; we'll fall back to pseudo fullscreen
+          }
+        }
+        // Some browsers don't throw/reject but still don't enter.
+        enteredNative = !!getFullscreenElement();
+        if (!enteredNative) {
+          setPseudoFullscreen(true);
         }
       });
 
@@ -2696,15 +2730,20 @@
       document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
       document.addEventListener('keydown', (event) => {
         if (event.key !== 'Escape') return;
-        if (!getFullscreenElement()) return;
-        // Some browsers already exit fullscreen on ESC, but keep this as a guarantee.
-        exitFullscreen();
+        if (!isAppFullscreen()) return;
+        if (getFullscreenElement()) {
+          // Some browsers already exit fullscreen on ESC, but keep this as a guarantee.
+          exitFullscreen();
+        }
+        if (isPseudoFullscreen()) {
+          setPseudoFullscreen(false);
+        }
       });
 
       // Fullscreen-only: middle mouse click brings sidebar back for 7s.
       document.addEventListener('auxclick', (event) => {
         if (event.button !== 1) return;
-        if (!getFullscreenElement()) return;
+        if (!isAppFullscreen()) return;
         scheduleFullscreenSidebarAutoHide();
       });
 
@@ -2712,11 +2751,11 @@
     }
 
     window.addEventListener('resize', () => {
-      if (!getFullscreenElement()) return;
+      if (!isAppFullscreen()) return;
       updateGestureModeClass();
     });
     window.addEventListener('orientationchange', () => {
-      if (!getFullscreenElement()) return;
+      if (!isAppFullscreen()) return;
       updateGestureModeClass();
     });
 

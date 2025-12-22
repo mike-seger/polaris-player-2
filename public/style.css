@@ -1045,6 +1045,24 @@ body.hide-track-check .track-state-btn {
     color: var(--color-accent);
 }
 
+/* Touch devices: avoid sticky :hover leaving buttons "selected" after tap. */
+@media (hover: none) {
+    #trackControls-buttons button:hover {
+        color: var(--color-text);
+    }
+
+    #thumbToggleBtn:hover span {
+        color: inherit;
+    }
+}
+
+/* Indicate open overlays on their toggle buttons. */
+#artistFilterBtn[aria-expanded="true"],
+#countryFilterBtn[aria-expanded="true"],
+#thumbToggleBtn[aria-expanded="true"] {
+    color: var(--color-accent);
+}
+
 /* progress slider */
 #progressWrapper {
     display: flex;
