@@ -258,6 +258,7 @@
     const timeLabel = document.getElementById('timeLabel');
     const playPauseIcon = document.getElementById('playPauseIcon');
     const trackControlsEl = document.getElementById('trackControls');
+    const playerGestureLayer = document.getElementById('playerGestureLayer');
     const playlistHistorySelect = document.getElementById('playlistHistorySelect');
     const trackListContainerEl = document.getElementById('trackListContainer');
     const alertOverlay = document.getElementById('alertOverlay');
@@ -1019,6 +1020,17 @@
     const SIDEBAR_AUTO_HIDE_MS = 7000;
     let sidebarAutoHideTimer = null;
 
+    const LONG_PRESS_MS = 520;
+    const TAP_MAX_MOVE_PX = 10;
+    const SWIPE_MIN_X_PX = 60;
+    const SWIPE_MAX_Y_PX = 50;
+
+    function isMobileGestureMode() {
+      if (!getFullscreenElement()) return false;
+      const mq = window.matchMedia && window.matchMedia('(hover: none) and (pointer: coarse)');
+      return !!(mq && mq.matches);
+    }
+
     function setFullscreenSidebarHidden(hidden) {
       document.body.classList.toggle('sidebar-hidden', !!hidden);
     }
@@ -1052,6 +1064,146 @@
     function handleFullscreenChange() {
       updateFullscreenButtonState();
       scheduleFullscreenSidebarAutoHide();
+    }
+
+    function toggleFullscreenSidebarFromGesture() {
+      if (!getFullscreenElement()) return;
+      const hidden = document.body.classList.contains('sidebar-hidden');
+      if (hidden) {
+        scheduleFullscreenSidebarAutoHide();
+      } else {
+        clearSidebarAutoHideTimer();
+        setFullscreenSidebarHidden(true);
+      }
+    }
+
+    function setupMobileGestureLayer() {
+      if (!playerGestureLayer) return;
+      let activePointerId = null;
+      let startX = 0;
+      let startY = 0;
+      let lastX = 0;
+      let lastY = 0;
+      let longPressTimer = null;
+      let longPressFired = false;
+
+      const clearLongPress = () => {
+        if (longPressTimer) {
+          clearTimeout(longPressTimer);
+          longPressTimer = null;
+        }
+      };
+
+      const onDown = (clientX, clientY, pointerId) => {
+        if (!isMobileGestureMode()) return false;
+        activePointerId = pointerId;
+        startX = clientX;
+        startY = clientY;
+        lastX = clientX;
+        lastY = clientY;
+        longPressFired = false;
+
+        clearLongPress();
+        longPressTimer = setTimeout(() => {
+          if (!isMobileGestureMode()) return;
+          longPressFired = true;
+          togglePlayback();
+        }, LONG_PRESS_MS);
+        return true;
+      };
+
+      const onMove = (clientX, clientY, pointerId) => {
+        if (activePointerId == null || pointerId !== activePointerId) return;
+        lastX = clientX;
+        lastY = clientY;
+        const dx = Math.abs(lastX - startX);
+        const dy = Math.abs(lastY - startY);
+        if (dx > TAP_MAX_MOVE_PX || dy > TAP_MAX_MOVE_PX) {
+          // Moving cancels long-press.
+          clearLongPress();
+        }
+      };
+
+      const onUp = (pointerId) => {
+        if (activePointerId == null || pointerId !== activePointerId) return;
+        clearLongPress();
+
+        const dx = lastX - startX;
+        const dy = lastY - startY;
+        const absX = Math.abs(dx);
+        const absY = Math.abs(dy);
+
+        activePointerId = null;
+
+        if (!isMobileGestureMode()) return;
+        if (longPressFired) return;
+
+        // Horizontal swipe -> prev/next.
+        if (absX >= SWIPE_MIN_X_PX && absY <= SWIPE_MAX_Y_PX && absX > absY) {
+          if (dx < 0) {
+            playNext();
+          } else {
+            playPrev();
+          }
+          return;
+        }
+
+        // Tap -> toggle sidebar.
+        if (absX <= TAP_MAX_MOVE_PX && absY <= TAP_MAX_MOVE_PX) {
+          toggleFullscreenSidebarFromGesture();
+        }
+      };
+
+      if ('PointerEvent' in window) {
+        playerGestureLayer.addEventListener('pointerdown', (event) => {
+          const ok = onDown(event.clientX, event.clientY, event.pointerId);
+          if (!ok) return;
+          event.preventDefault();
+          event.stopPropagation();
+          try {
+            playerGestureLayer.setPointerCapture(event.pointerId);
+          } catch (_) {}
+        });
+        playerGestureLayer.addEventListener('pointermove', (event) => {
+          onMove(event.clientX, event.clientY, event.pointerId);
+          if (activePointerId === event.pointerId) {
+            event.preventDefault();
+            event.stopPropagation();
+          }
+        });
+        const end = (event) => {
+          onUp(event.pointerId);
+          event.preventDefault();
+          event.stopPropagation();
+        };
+        playerGestureLayer.addEventListener('pointerup', end);
+        playerGestureLayer.addEventListener('pointercancel', end);
+      } else {
+        // Fallback for older mobile browsers.
+        let touchId = null;
+        playerGestureLayer.addEventListener('touchstart', (event) => {
+          if (!event.touches || !event.touches.length) return;
+          const t = event.touches[0];
+          touchId = t.identifier;
+          const ok = onDown(t.clientX, t.clientY, touchId);
+          if (!ok) return;
+          event.preventDefault();
+        }, { passive: false });
+        playerGestureLayer.addEventListener('touchmove', (event) => {
+          const t = Array.from(event.touches || []).find((x) => x.identifier === touchId);
+          if (!t) return;
+          onMove(t.clientX, t.clientY, touchId);
+          event.preventDefault();
+        }, { passive: false });
+        playerGestureLayer.addEventListener('touchend', (event) => {
+          onUp(touchId);
+          event.preventDefault();
+        }, { passive: false });
+        playerGestureLayer.addEventListener('touchcancel', (event) => {
+          onUp(touchId);
+          event.preventDefault();
+        }, { passive: false });
+      }
     }
 
     function getShuffleQueueIndices() {
@@ -2492,6 +2644,8 @@
 
       handleFullscreenChange();
     }
+
+    setupMobileGestureLayer();
 
     if (shuffleBtn) {
       shuffleBtn.addEventListener('click', () => {
