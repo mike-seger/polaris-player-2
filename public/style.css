@@ -1169,47 +1169,50 @@ body.is-fullscreen.gesture-mode #player iframe {
     pointer-events: none;
 }
 
-body.is-fullscreen.gesture-mode #trackControls {
+/* In gesture-mode, treat the whole sidebar as a sliding drawer.
+   This preserves the natural vertical order: playlistControls -> trackControls -> trackListContainer. */
+body.is-fullscreen.gesture-mode #sidebar {
     position: fixed;
-    left: 0;
-    right: 0;
+    top: 0;
     bottom: 0;
-    margin-bottom: 0;
-    /* Must be above the sidebar drawer so the control buttons remain visible. */
-    z-index: 260;
-}
-
-body.is-fullscreen.gesture-mode #playlistControls,
-body.is-fullscreen.gesture-mode #trackListContainer {
-    position: fixed;
     left: 0;
     width: min(340px, 88vw);
+    max-width: none;
     z-index: 200;
+    background: var(--color-panel);
+    transform: translateX(0);
     transition: transform 220ms ease;
     will-change: transform;
-    transform: translateX(0);
-}
-
-body.is-fullscreen.gesture-mode #playlistControls {
-    top: 0;
-    /* leave room for the track controls bar */
-    bottom: calc(46px + 0.5rem);
-    overflow: auto;
-    background: var(--color-panel);
     padding-right: 0.4rem;
 }
 
-body.is-fullscreen.gesture-mode #trackListContainer {
-    top: 8.3rem;
-    bottom: calc(46px + 0.5rem);
-    border-top: none;
-    background: var(--color-panel);
-}
-
-body.is-fullscreen.gesture-mode.sidebar-hidden #playlistControls,
-body.is-fullscreen.gesture-mode.sidebar-hidden #trackListContainer {
+body.is-fullscreen.gesture-mode.sidebar-hidden #sidebar {
     transform: translateX(-100%);
     pointer-events: none;
+}
+
+body.is-fullscreen.gesture-mode #playlistControls,
+body.is-fullscreen.gesture-mode #trackControls,
+body.is-fullscreen.gesture-mode #trackListContainer {
+    position: relative;
+    left: auto;
+    right: auto;
+    top: auto;
+    bottom: auto;
+    width: auto;
+    transform: none;
+    transition: none;
+}
+
+body.is-fullscreen.gesture-mode #trackControls {
+    margin-bottom: 0;
+    z-index: 260;
+}
+
+body.is-fullscreen.gesture-mode #trackListContainer {
+    flex: 1 1 auto;
+    min-height: 0;
+    height: auto;
 }
 
 @media (min-width: 1024px) {
