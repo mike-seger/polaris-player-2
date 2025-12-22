@@ -1,8 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-cd "$(dirname "$0")"
-
 # local-pl-2-m3u.sh
 #
 # Usage:
@@ -19,6 +17,8 @@ cd "$(dirname "$0")"
 # Each object should contain at least: videoId
 # Optional: userTitle (preferred for filename), title (fallback)
 
+cd "$(dirname "$0")"
+
 if [[ $# -ne 2 ]]; then
   echo "Usage: $0 <json_file> <jq_path>" >&2
   exit 2
@@ -26,6 +26,16 @@ fi
 
 JSON_FILE="$1"
 JQ_PATH="$2"
+
+if [[ ! -f "$JSON_FILE" ]]; then
+  echo "Error: JSON file not found: $JSON_FILE" >&2
+  exit 1
+else
+  LOCAL_JSON_FILE=$(basename "$JSON_FILE")
+  if [[ "$LOCAL_JSON_FILE" != "$JSON_FILE" || ! -f "$LOCAL_JSON_FILE" ]]; then
+    cp "$JSON_FILE" "$LOCAL_JSON_FILE"
+  fi
+fi
 
 command -v jq >/dev/null || { echo "Missing dependency: jq" >&2; exit 1; }
 command -v yt-dlp >/dev/null || { echo "Missing dependency: yt-dlp" >&2; exit 1; }
