@@ -232,6 +232,8 @@
     const countryFilterBtn = document.getElementById('countryFilterBtn');
     const countryFilterOverlay = document.getElementById('countryFilterOverlay');
     const countryFilterOptions = document.getElementById('countryFilterOptions');
+    const fullscreenBtn = document.getElementById('fullscreenBtn');
+    const fullscreenIcon = document.getElementById('fullscreenIcon');
     const shuffleBtn = document.getElementById('shuffleBtn');
     const shuffleIcon = document.getElementById('shuffleIcon');
     const thumbToggleBtn = document.getElementById('thumbToggleBtn');
@@ -973,6 +975,83 @@
         shuffleIcon.className = 'icon shuffle';
         shuffleIcon.textContent = 'shuffle';
       }
+    }
+
+    function getFullscreenElement() {
+      return document.fullscreenElement || document.webkitFullscreenElement || null;
+    }
+
+    function requestFullscreenFor(el) {
+      if (!el) return;
+      const req = el.requestFullscreen || el.webkitRequestFullscreen;
+      if (typeof req === 'function') {
+        try {
+          req.call(el);
+        } catch (e) {
+          console.warn('Failed to request fullscreen:', e);
+        }
+      }
+    }
+
+    function exitFullscreen() {
+      const exit = document.exitFullscreen || document.webkitExitFullscreen;
+      if (typeof exit === 'function') {
+        try {
+          exit.call(document);
+        } catch (e) {
+          console.warn('Failed to exit fullscreen:', e);
+        }
+      }
+    }
+
+    function updateFullscreenButtonState() {
+      if (!fullscreenBtn) return;
+      const isFs = !!getFullscreenElement();
+      fullscreenBtn.classList.toggle('active', isFs);
+      fullscreenBtn.setAttribute('aria-pressed', String(isFs));
+      fullscreenBtn.setAttribute('aria-label', isFs ? 'Exit fullscreen' : 'Enter fullscreen');
+      if (fullscreenIcon) {
+        fullscreenIcon.className = 'icon fullscreen';
+        fullscreenIcon.textContent = isFs ? 'fullscreen_exit' : 'fullscreen';
+      }
+    }
+
+    const SIDEBAR_AUTO_HIDE_MS = 7000;
+    let sidebarAutoHideTimer = null;
+
+    function setFullscreenSidebarHidden(hidden) {
+      document.body.classList.toggle('sidebar-hidden', !!hidden);
+    }
+
+    function clearSidebarAutoHideTimer() {
+      if (sidebarAutoHideTimer) {
+        clearTimeout(sidebarAutoHideTimer);
+        sidebarAutoHideTimer = null;
+      }
+    }
+
+    function scheduleFullscreenSidebarAutoHide() {
+      const isFs = !!getFullscreenElement();
+      document.body.classList.toggle('is-fullscreen', isFs);
+
+      clearSidebarAutoHideTimer();
+
+      if (!isFs) {
+        setFullscreenSidebarHidden(false);
+        return;
+      }
+
+      // Always show sidebar immediately, then slide it out after a delay.
+      setFullscreenSidebarHidden(false);
+      sidebarAutoHideTimer = setTimeout(() => {
+        if (!getFullscreenElement()) return;
+        setFullscreenSidebarHidden(true);
+      }, SIDEBAR_AUTO_HIDE_MS);
+    }
+
+    function handleFullscreenChange() {
+      updateFullscreenButtonState();
+      scheduleFullscreenSidebarAutoHide();
     }
 
     function getShuffleQueueIndices() {
@@ -2329,6 +2408,36 @@
     });
     document.getElementById('nextBtn').addEventListener('click', playNext);
     document.getElementById('prevBtn').addEventListener('click', playPrev);
+
+    if (fullscreenBtn) {
+      fullscreenBtn.addEventListener('click', () => {
+        const isFs = !!getFullscreenElement();
+        if (isFs) {
+          exitFullscreen();
+        } else {
+          // Fullscreen the entire app.
+          requestFullscreenFor(document.documentElement);
+        }
+      });
+
+      document.addEventListener('fullscreenchange', handleFullscreenChange);
+      document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+      document.addEventListener('keydown', (event) => {
+        if (event.key !== 'Escape') return;
+        if (!getFullscreenElement()) return;
+        // Some browsers already exit fullscreen on ESC, but keep this as a guarantee.
+        exitFullscreen();
+      });
+
+      // Fullscreen-only: middle mouse click brings sidebar back for 7s.
+      document.addEventListener('auxclick', (event) => {
+        if (event.button !== 1) return;
+        if (!getFullscreenElement()) return;
+        scheduleFullscreenSidebarAutoHide();
+      });
+
+      handleFullscreenChange();
+    }
 
     if (shuffleBtn) {
       shuffleBtn.addEventListener('click', () => {

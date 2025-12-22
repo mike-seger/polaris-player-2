@@ -17,6 +17,8 @@ folder
 folder_open
 forward_30
 forward_5
+fullscreen
+fullscreen_exit
 list
 list_alt
 list_alt_check

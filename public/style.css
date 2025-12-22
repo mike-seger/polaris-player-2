@@ -785,17 +785,36 @@ body.show-track-country:not(.no-wrap-lines) .track-country-flags {
     align-items: center;
     gap: 0.2rem;
     width: 100%;
+    min-width: 0;
 }
 
 /* Offline spectrum display (between left buttons and right icons) */
 #spectrumCanvas {
-    flex: 1 1 auto;
+    /* Allow shrinking below the canvas's intrinsic width so the right-side icons never overflow. */
+    flex: 1 1 0;
     height: 46px;
     max-height: 46px;
-    min-width: 60px;
+    min-width: 0;
+    width: 0;
     border-radius: 6px;
     background: #0b0d12;
     border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Fullscreen: auto-hide the left column (keep the player visible) */
+@media (min-width: 1024px) {
+    #playlistControls,
+    #trackControls,
+    #trackListContainer {
+        transition: transform 220ms ease;
+        will-change: transform;
+    }
+
+    body.is-fullscreen.sidebar-hidden #playlistControls,
+    body.is-fullscreen.sidebar-hidden #trackControls,
+    body.is-fullscreen.sidebar-hidden #trackListContainer {
+        transform: translateX(calc(-100% - 12px));
+    }
 }
 
 body.spectrum-missing #spectrumCanvas {
@@ -836,11 +855,22 @@ body.spectrum-hidden #spectrumCanvas {
     line-height: 1;
 }
 
+#fullscreenBtn .icon {
+    font-size: 30px;
+    width: 30px;
+    height: 30px;
+    line-height: 1;
+}
+
 #thumbToggleBtn.active {
     color: var(--color-accent);
 }
 
 #shuffleBtn.active {
+    color: var(--color-accent);
+}
+
+#fullscreenBtn.active {
     color: var(--color-accent);
 }
 
@@ -1117,6 +1147,19 @@ body.hide-track-check .track-state-btn {
         height: calc(var(--app-vh, 1vh) * 100);
         min-height: 0;
         overflow: visible;
+    }
+
+    /* When the fullscreen sidebar is hidden, collapse the left column so the player fills the width. */
+    body.is-fullscreen.sidebar-hidden #sidebar {
+        grid-template-columns: 0 minmax(0, 1fr);
+    }
+
+    body.is-fullscreen.sidebar-hidden #playlistControls,
+    body.is-fullscreen.sidebar-hidden #trackControls,
+    body.is-fullscreen.sidebar-hidden #trackListContainer {
+        max-width: 0;
+        overflow: hidden;
+        pointer-events: none;
     }
 
     #playlistControls {
