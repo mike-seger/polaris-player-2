@@ -41,10 +41,18 @@ YT_COMMON=(
   --no-overwrites
   --continue
   --retries 20
-  --fragment-retries 20
-  --concurrent-fragments 8
+  --fragment-retries 50
+  --retry-sleep "fragment:exp=1:60"
+  --concurrent-fragments 2
+  --sleep-requests 1
+  --sleep-interval 1
+  --max-sleep-interval 5
   --progress
+  # Strongly recommended for YouTube reliability:
+  --cookies-from-browser chrome
 )
+
+
 
 json_objects_stream() {
   jq -c "$JQ_PATH
@@ -106,8 +114,8 @@ download_video() {
   local outbase="$2"
   yt-dlp "${YT_COMMON[@]}" "${JS_ARGS[@]}" "${EXTRACTOR_ARGS[@]}" \
     --download-archive "$VIDEO_ARCHIVE" \
-    -f "bestvideo*+bestaudio/best" \
-    --merge-output-format mkv \
+    -f "bv*[ext=mp4]+ba[ext=m4a]/b[ext=mp4]/best" \
+    --merge-output-format mp4 \
     --paths "$VIDEO_DIR" \
     -o "${outbase}.%(ext)s" \
     "$url"
