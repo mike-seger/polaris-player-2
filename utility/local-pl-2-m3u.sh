@@ -51,6 +51,7 @@ YT_COMMON=(
   # Strongly recommended for YouTube reliability:
   --cookies-from-browser chrome
   --js-runtimes node
+  --remote-components ejs:github
 )
 
 
