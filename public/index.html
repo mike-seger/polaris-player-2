@@ -20,10 +20,17 @@
 </head>
 <body>
   <div id="sidebar">
-    <!-- Top playlist controls -->
-    <div id="playlistControls">
-      <div class="pc-body">
-        <form id="playlistForm">
+    <!-- Video player -->
+    <div id="player-container">
+      <div id="player"></div>
+      <div id="playerGestureLayer" aria-hidden="true"></div>
+    </div>
+
+    <div id="sidebarDrawer">
+      <!-- Top playlist controls -->
+      <div id="playlistControls">
+        <div class="pc-body">
+          <form id="playlistForm">
           <!-- Saved playlist selector row -->
           <div class="pc-row">
             <div class="pc-input-wrapper playlist-history-wrapper">
@@ -114,18 +121,12 @@
             </div>
           </div>
 
-        </form>
+          </form>
+        </div>
       </div>
-    </div>
 
-    <!-- Video player -->
-    <div id="player-container">
-      <div id="player"></div>
-      <div id="playerGestureLayer" aria-hidden="true"></div>
-    </div>
-
-    <!-- Playback controls -->
-    <div id="trackControls">
+      <!-- Playback controls -->
+      <div id="trackControls">
       <div id="trackControls-top">
         <div id="trackControls-buttons">
           <div class="track-controls-group">
@@ -206,11 +207,12 @@
         />
         <div id="timeLabel">00:00 / 00:00</div>
       </div>
-    </div>
+      </div>
 
-    <!-- Scrollable list -->
-    <div id="trackListContainer" tabindex="0" aria-label="Playlist tracks">
-      <ul id="trackList"></ul>
+      <!-- Scrollable list -->
+      <div id="trackListContainer" tabindex="0" aria-label="Playlist tracks">
+        <ul id="trackList"></ul>
+      </div>
     </div>
   </div>
 

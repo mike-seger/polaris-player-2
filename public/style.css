@@ -154,6 +154,14 @@ input[type="text"]:focus-visible {
     position: relative;
 }
 
+/* Wrapper used for the sliding drawer in fullscreen gesture mode. */
+#sidebarDrawer {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    flex: 1 1 auto;
+}
+
 /* Playlist controls at top */
 #playlistControls {
     flex: 0 0 auto;
@@ -1187,9 +1195,9 @@ body.is-fullscreen.gesture-mode #player iframe {
     pointer-events: none;
 }
 
-/* In gesture-mode, treat the whole sidebar as a sliding drawer.
-   This preserves the natural vertical order: playlistControls -> trackControls -> trackListContainer. */
-body.is-fullscreen.gesture-mode #sidebar {
+/* In gesture-mode, slide the drawer wrapper (not the whole sidebar) so the fixed fullscreen player
+   is not affected by the drawer transform. */
+body.is-fullscreen.gesture-mode #sidebarDrawer {
     position: fixed;
     top: 0;
     bottom: 0;
@@ -1204,7 +1212,7 @@ body.is-fullscreen.gesture-mode #sidebar {
     padding-right: 0.4rem;
 }
 
-body.is-fullscreen.gesture-mode.sidebar-hidden #sidebar {
+body.is-fullscreen.gesture-mode.sidebar-hidden #sidebarDrawer {
     transform: translateX(-100%);
     pointer-events: none;
 }
@@ -1256,6 +1264,11 @@ body.is-fullscreen.gesture-mode #trackListContainer {
         height: calc(var(--app-vh, 1vh) * 100);
         min-height: 0;
         overflow: visible;
+    }
+
+    /* Keep existing grid layout unchanged when the drawer wrapper exists. */
+    #sidebarDrawer {
+        display: contents;
     }
 
     /* When the fullscreen sidebar is hidden, collapse the left column so the player fills the width. */
