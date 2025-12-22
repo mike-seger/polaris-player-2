@@ -86,7 +86,7 @@ build_archive_ids() {
 archive_has_id() {
   local ids_file="$1"
   local video_id="$2"
-  [[ -s "$ids_file" ]] && grep -Fqx "$video_id" "$ids_file"
+  [[ -s "$ids_file" ]] && grep -Fqx -- "$video_id" "$ids_file"
 }
 
 # Pick name: userTitle -> title -> videoId (trimmed, no heuristics)
