@@ -34,7 +34,9 @@ elif command -v node >/dev/null; then
   JS_ARGS+=( --js-runtimes node )
 fi
 
-EXTRACTOR_ARGS=( --extractor-args "youtube:player_client=default,-web_safari" )
+EXTRACTOR_ARGS=( --extractor-args "youtube:player_client=tv,android,-web" )
+
+#EXTRACTOR_ARGS=( --extractor-args "youtube:player_client=default,-web_safari" )
 
 YT_COMMON=(
   --ignore-errors
