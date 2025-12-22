@@ -17,8 +17,6 @@ set -euo pipefail
 # Each object should contain at least: videoId
 # Optional: userTitle (preferred for filename), title (fallback)
 
-cd "$(dirname "$0")"
-
 if [[ $# -ne 2 ]]; then
   echo "Usage: $0 <json_file> <jq_path>" >&2
   exit 2
