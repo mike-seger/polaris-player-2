@@ -1194,11 +1194,15 @@ body.hide-track-check .track-state-btn {
 body.sidebar-hidden #playerGestureLayer {
     display: block;
     pointer-events: auto;
+    /* Only a left-edge vertical stripe should unhide the sidebar. */
+    left: 0;
+    top: 0;
+    bottom: 0;
+    right: auto;
+    width: calc(var(--playlist-manager-button-size) * 4);
 }
 
-body.sidebar-hidden #player iframe {
-    pointer-events: none;
-}
+
 
 #player {
     width: 100%;

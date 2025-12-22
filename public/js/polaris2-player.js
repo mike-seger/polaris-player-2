@@ -260,6 +260,7 @@
     const playPauseIcon = document.getElementById('playPauseIcon');
     const trackControlsEl = document.getElementById('trackControls');
     const playerGestureLayer = document.getElementById('playerGestureLayer');
+    const sidebarDrawer = document.getElementById('sidebarDrawer');
     const playlistHistorySelect = document.getElementById('playlistHistorySelect');
     const trackListContainerEl = document.getElementById('trackListContainer');
     const alertOverlay = document.getElementById('alertOverlay');
@@ -1090,6 +1091,17 @@
           setSidebarHidden(true);
         });
       }
+
+      // Clicking outside the drawer hides it, but must NOT block or swallow the click,
+      // so the YouTube iframe still receives it.
+      const hideFromOutside = (event) => {
+        if (document.body.classList.contains('sidebar-hidden')) return;
+        if (!sidebarDrawer) return;
+        const target = event.target;
+        if (target instanceof Node && sidebarDrawer.contains(target)) return;
+        setSidebarHidden(true);
+      };
+      document.addEventListener('pointerdown', hideFromOutside, { capture: true, passive: true });
 
       // When hidden, a tap/click on the video shows the sidebar.
       if (playerGestureLayer) {
