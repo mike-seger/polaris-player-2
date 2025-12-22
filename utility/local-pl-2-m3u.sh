@@ -24,6 +24,10 @@ VIDEO_ARCHIVE="${STATE_DIR}/archive-video.txt"
 AUDIO_M3U="${BASE_DIR}/audio.m3u"
 VIDEO_M3U="${BASE_DIR}/video.m3u"
 
+# Precomputed ID lists for fast skip checks (avoid invoking yt-dlp if already archived)
+AUDIO_ARCHIVE_IDS="${STATE_DIR}/archive-audio.ids"
+VIDEO_ARCHIVE_IDS="${STATE_DIR}/archive-video.ids"
+
 # ---- JS runtime / EJS (optional: reduces yt-dlp warnings) ----
 JS_ARGS=()
 if command -v deno >/dev/null; then
@@ -63,6 +67,26 @@ json_objects_stream() {
     | (if type == \"array\" then .[] else . end)
     | select(type == \"object\")
   " "$JSON_FILE"
+}
+
+build_archive_ids() {
+  local archive_file="$1"
+  local out_ids_file="$2"
+
+  if [[ -f "$archive_file" ]]; then
+    # yt-dlp archive format is typically: "extractor videoId" per line.
+    # Keep this tolerant: if there's only one field, treat it as the ID.
+    awk 'NF { if (NF >= 2) print $2; else print $1 }' "$archive_file" \
+      | LC_ALL=C sort -u > "$out_ids_file"
+  else
+    : > "$out_ids_file"
+  fi
+}
+
+archive_has_id() {
+  local ids_file="$1"
+  local video_id="$2"
+  [[ -s "$ids_file" ]] && grep -Fqx "$video_id" "$ids_file"
 }
 
 # Pick name: userTitle -> title -> videoId (trimmed, no heuristics)
@@ -143,21 +167,45 @@ make_m3u() {
 
 echo "Reading items from: $JSON_FILE  (jq: $JQ_PATH)" >&2
 
+build_archive_ids "$AUDIO_ARCHIVE" "$AUDIO_ARCHIVE_IDS"
+build_archive_ids "$VIDEO_ARCHIVE" "$VIDEO_ARCHIVE_IDS"
+
 count=0
 json_objects_stream | while IFS= read -r obj; do
   videoId="$(jq -r '.videoId // empty' <<<"$obj")"
   [[ -n "$videoId" ]] || continue
 
-  raw_name="$(pick_name "$obj")"
-  safe_name="$(sanitize_filename "$raw_name")"
-
-  url="https://www.youtube.com/watch?v=${videoId}"
+  audio_archived=false
+  video_archived=false
+  if archive_has_id "$AUDIO_ARCHIVE_IDS" "$videoId"; then
+    audio_archived=true
+  fi
+  if archive_has_id "$VIDEO_ARCHIVE_IDS" "$videoId"; then
+    video_archived=true
+  fi
 
   ((count++)) || true
+  if $audio_archived && $video_archived; then
+    echo "[$count] $videoId  (skip: archived audio+video)" >&2
+    continue
+  fi
+
+  raw_name="$(pick_name "$obj")"
+  safe_name="$(sanitize_filename "$raw_name")"
+  url="https://www.youtube.com/watch?v=${videoId}"
   echo "[$count] $videoId  ->  $safe_name" >&2
 
-  download_audio "$url" "$safe_name"
-  download_video "$url" "$safe_name"
+  if ! $audio_archived; then
+    download_audio "$url" "$safe_name"
+  else
+    echo "  audio: skip (archived)" >&2
+  fi
+
+  if ! $video_archived; then
+    download_video "$url" "$safe_name"
+  else
+    echo "  video: skip (archived)" >&2
+  fi
 done
 
 make_m3u "$AUDIO_DIR" "$AUDIO_M3U" "audio/"
