@@ -1212,13 +1212,18 @@ body.is-fullscreen.gesture-mode #sidebarDrawer {
     width: min(340px, 88vw);
     max-width: none;
     z-index: 200;
-    background: var(--color-panel);
+    /* Black backing so no gaps show the fullscreen video behind. */
+    background: #000;
     transform: translateX(0);
     transition: transform 220ms ease;
     will-change: transform;
     padding: 0.4rem;
     box-sizing: border-box;
     overflow: hidden;
+}
+
+body.is-fullscreen.gesture-mode #playlistControls {
+    background: var(--color-panel);
 }
 
 body.is-fullscreen.gesture-mode.sidebar-hidden #sidebarDrawer {

@@ -1034,6 +1034,8 @@
     const SIDEBAR_AUTO_HIDE_MS = 7000;
     let sidebarAutoHideTimer = null;
     let sidebarCollapseTimer = null;
+    let sidebarInactivityInterval = null;
+    let sidebarLastActivityTs = 0;
 
     const LONG_PRESS_MS = 520;
     const TAP_MAX_MOVE_PX = 10;
@@ -1076,6 +1078,31 @@
       }
     }
 
+    function clearSidebarInactivityInterval() {
+      if (sidebarInactivityInterval) {
+        clearInterval(sidebarInactivityInterval);
+        sidebarInactivityInterval = null;
+      }
+    }
+
+    function ensureSidebarInactivityInterval() {
+      if (sidebarInactivityInterval) return;
+      sidebarInactivityInterval = setInterval(() => {
+        if (!isAppFullscreen()) {
+          clearSidebarInactivityInterval();
+          return;
+        }
+        if (document.body.classList.contains('sidebar-hidden')) {
+          clearSidebarInactivityInterval();
+          return;
+        }
+        if (!sidebarLastActivityTs) sidebarLastActivityTs = Date.now();
+        if (Date.now() - sidebarLastActivityTs >= SIDEBAR_AUTO_HIDE_MS) {
+          setFullscreenSidebarHidden(true);
+        }
+      }, 250);
+    }
+
     function isDesktopLayout() {
       return !!(window.matchMedia && window.matchMedia('(min-width: 1024px)').matches);
     }
@@ -1085,12 +1112,16 @@
       const wantsHidden = !!hidden;
 
       clearSidebarCollapseTimer();
+      if (wantsHidden) {
+        clearSidebarInactivityInterval();
+      }
 
       if (!wantsHidden) {
         // Show: expand the column first, then slide in.
         body.classList.remove('sidebar-collapsed');
         requestAnimationFrame(() => {
           body.classList.remove('sidebar-hidden');
+          bumpFullscreenSidebarAutoHide();
         });
         return;
       }
@@ -1117,16 +1148,14 @@
         sidebarAutoHideTimer = null;
       }
       clearSidebarCollapseTimer();
+      clearSidebarInactivityInterval();
     }
 
     function bumpFullscreenSidebarAutoHide() {
       if (!isAppFullscreen()) return;
       if (document.body.classList.contains('sidebar-hidden')) return;
-      clearSidebarAutoHideTimer();
-      sidebarAutoHideTimer = setTimeout(() => {
-        if (!isAppFullscreen()) return;
-        setFullscreenSidebarHidden(true);
-      }, SIDEBAR_AUTO_HIDE_MS);
+      sidebarLastActivityTs = Date.now();
+      ensureSidebarInactivityInterval();
     }
 
     function scheduleFullscreenSidebarAutoHide() {
@@ -1140,6 +1169,7 @@
 
       if (!isFs) {
         setFullscreenSidebarHidden(false);
+        sidebarLastActivityTs = 0;
         return;
       }
 
