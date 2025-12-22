@@ -1027,8 +1027,20 @@
 
     function isMobileGestureMode() {
       if (!getFullscreenElement()) return false;
-      const mq = window.matchMedia && window.matchMedia('(hover: none) and (pointer: coarse)');
-      return !!(mq && mq.matches);
+
+      const hasTouch = (navigator.maxTouchPoints || 0) > 0 || ('ontouchstart' in window);
+      if (!hasTouch) return false;
+
+      const coarse = !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
+      const noHover = !!(window.matchMedia && window.matchMedia('(hover: none)').matches);
+      const maxDim = Math.max(window.innerWidth || 0, window.innerHeight || 0);
+
+      // Covers phones + tablets (including iPad landscape @ 1024px and iPad Pro @ 1366px).
+      return coarse || noHover || maxDim <= 1366;
+    }
+
+    function updateGestureModeClass() {
+      document.body.classList.toggle('gesture-mode', isMobileGestureMode());
     }
 
     function setFullscreenSidebarHidden(hidden) {
@@ -1045,6 +1057,9 @@
     function scheduleFullscreenSidebarAutoHide() {
       const isFs = !!getFullscreenElement();
       document.body.classList.toggle('is-fullscreen', isFs);
+
+      // Enable touch gesture handling when appropriate.
+      updateGestureModeClass();
 
       clearSidebarAutoHideTimer();
 
@@ -2644,6 +2659,15 @@
 
       handleFullscreenChange();
     }
+
+    window.addEventListener('resize', () => {
+      if (!getFullscreenElement()) return;
+      updateGestureModeClass();
+    });
+    window.addEventListener('orientationchange', () => {
+      if (!getFullscreenElement()) return;
+      updateGestureModeClass();
+    });
 
     setupMobileGestureLayer();
 

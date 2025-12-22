@@ -1142,69 +1142,73 @@ body.hide-track-check .track-state-btn {
     display: block;
 }
 
-/* Fullscreen on phones/tablets: keep video fullscreen, slide list in/out with taps. */
-@media (max-width: 1023px) and (hover: none) and (pointer: coarse) {
-    body.is-fullscreen #player-container {
-        position: fixed;
-        inset: 0;
-        padding: 0;
-        background: var(--color-bg);
-        z-index: 1;
-    }
+/* Fullscreen touch gesture mode: keep video fullscreen, slide list in/out with taps.
+   This is controlled by JS adding `body.gesture-mode` (covers tablets like iPad too). */
+body.is-fullscreen.gesture-mode #player-container {
+    position: fixed;
+    inset: 0;
+    padding: 0;
+    background: var(--color-bg);
+    z-index: 1;
+}
 
-    body.is-fullscreen #player {
-        width: 100%;
-        height: 100%;
-        max-width: none;
-        aspect-ratio: auto;
-        border-radius: 0;
-    }
+body.is-fullscreen.gesture-mode #player {
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    aspect-ratio: auto;
+    border-radius: 0;
+}
 
-    body.is-fullscreen #playerGestureLayer {
-        display: block;
-    }
+body.is-fullscreen.gesture-mode #playerGestureLayer {
+    display: block;
+}
 
-    body.is-fullscreen #trackControls {
-        position: fixed;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        margin-bottom: 0;
-        z-index: 150;
-    }
+/* Prevent the YouTube iframe from swallowing taps/swipes while we are handling gestures. */
+body.is-fullscreen.gesture-mode #player iframe {
+    pointer-events: none;
+}
 
-    body.is-fullscreen #playlistControls,
-    body.is-fullscreen #trackListContainer {
-        position: fixed;
-        left: 0;
-        width: min(340px, 88vw);
-        z-index: 200;
-        transition: transform 220ms ease;
-        will-change: transform;
-        transform: translateX(0);
-    }
+body.is-fullscreen.gesture-mode #trackControls {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    margin-bottom: 0;
+    z-index: 150;
+}
 
-    body.is-fullscreen #playlistControls {
-        top: 0;
-        /* leave room for the track controls bar */
-        bottom: calc(46px + 0.5rem);
-        overflow: auto;
-        background: var(--color-panel);
-        padding-right: 0.4rem;
-    }
+body.is-fullscreen.gesture-mode #playlistControls,
+body.is-fullscreen.gesture-mode #trackListContainer {
+    position: fixed;
+    left: 0;
+    width: min(340px, 88vw);
+    z-index: 200;
+    transition: transform 220ms ease;
+    will-change: transform;
+    transform: translateX(0);
+}
 
-    body.is-fullscreen #trackListContainer {
-        top: 8.3rem;
-        bottom: calc(46px + 0.5rem);
-        border-top: none;
-        background: var(--color-panel);
-    }
+body.is-fullscreen.gesture-mode #playlistControls {
+    top: 0;
+    /* leave room for the track controls bar */
+    bottom: calc(46px + 0.5rem);
+    overflow: auto;
+    background: var(--color-panel);
+    padding-right: 0.4rem;
+}
 
-    body.is-fullscreen.sidebar-hidden #playlistControls,
-    body.is-fullscreen.sidebar-hidden #trackListContainer {
-        transform: translateX(-100%);
-        pointer-events: none;
-    }
+body.is-fullscreen.gesture-mode #trackListContainer {
+    top: 8.3rem;
+    bottom: calc(46px + 0.5rem);
+    border-top: none;
+    background: var(--color-panel);
+}
+
+body.is-fullscreen.gesture-mode.sidebar-hidden #playlistControls,
+body.is-fullscreen.gesture-mode.sidebar-hidden #trackListContainer {
+    transform: translateX(-100%);
+    pointer-events: none;
 }
 
 @media (min-width: 1024px) {
