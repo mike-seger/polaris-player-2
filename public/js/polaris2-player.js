@@ -1037,6 +1037,25 @@
     const SIDEBAR_AUTO_HIDE_MS = 80000;
     let sidebarInactivityInterval = null;
     let sidebarLastActivityTs = 0;
+    let sidebarHideSuppressedUntil = 0;
+
+    function suppressSidebarHideFromPlayerState(ms = 1500) {
+      const until = Date.now() + Math.max(0, ms || 0);
+      if (until > sidebarHideSuppressedUntil) sidebarHideSuppressedUntil = until;
+    }
+
+    function maybeHideSidebarFromPlayerStateChange(playerState) {
+      if (document.body.classList.contains('sidebar-hidden')) return;
+      if (Date.now() < sidebarHideSuppressedUntil) return;
+      if (!window.YT?.PlayerState) return;
+      if (
+        playerState === YT.PlayerState.PLAYING ||
+        playerState === YT.PlayerState.PAUSED ||
+        playerState === YT.PlayerState.BUFFERING
+      ) {
+        setSidebarHidden(true);
+      }
+    }
 
     function clearSidebarInactivityInterval() {
       if (sidebarInactivityInterval) {
@@ -1102,6 +1121,19 @@
         setSidebarHidden(true);
       };
       document.addEventListener('pointerdown', hideFromOutside, { capture: true, passive: true });
+
+      // Clicks inside cross-origin iframes don't bubble to the parent document.
+      // Best-effort: when the YouTube iframe gains focus, treat it as an outside interaction.
+      const hideFromIframeFocus = (event) => {
+        if (document.body.classList.contains('sidebar-hidden')) return;
+        if (!sidebarDrawer) return;
+        const target = event.target;
+        if (target instanceof Node && sidebarDrawer.contains(target)) return;
+        if (!(target instanceof HTMLElement)) return;
+        if (target.tagName !== 'IFRAME') return;
+        setSidebarHidden(true);
+      };
+      document.addEventListener('focusin', hideFromIframeFocus, { capture: true });
 
       // When hidden, a tap/click on the video shows the sidebar.
       if (playerGestureLayer) {
@@ -1958,6 +1990,10 @@
         focusActiveTrack({ scroll: false });
         stopSpectrumAnimation();
       }
+
+      // Clicking inside the YouTube iframe does not bubble to the document, but it does
+      // trigger state changes. Use those to hide the sidebar after an iframe interaction.
+      maybeHideSidebarFromPlayerStateChange(event.data);
     }
 
     function updatePlayPauseButton() {
@@ -2366,6 +2402,7 @@
         }
         if (playerState === playerStates.PAUSED) {
           if (playerReady && typeof player.playVideo === 'function') {
+            suppressSidebarHideFromPlayerState(1500);
             player.playVideo();
             isPlaying = true;
             updatePlayPauseButton();
@@ -2418,6 +2455,7 @@
             ? player.cueVideoById.bind(player)
             : null;
       if (invokeLoadVideo) {
+        suppressSidebarHideFromPlayerState(5000);
         invokeLoadVideo(videoId);
         pendingPlayIndex = null;
       } else {
@@ -2514,9 +2552,11 @@
 
       if (activelyPlaying) {
         if (typeof player.pauseVideo === 'function') {
+          suppressSidebarHideFromPlayerState(1500);
           player.pauseVideo();
         }
       } else if (typeof player.playVideo === 'function') {
+        suppressSidebarHideFromPlayerState(1500);
         player.playVideo();
       }
       focusActiveTrack();

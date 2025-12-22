@@ -160,7 +160,7 @@ input[type="text"]:focus-visible {
     top: 0;
     bottom: 0;
     left: 0;
-    width: min(340px, 88vw);
+    width: calc(var(--playlist-manager-button-size) * 3);
     max-width: none;
     z-index: 200;
     display: flex;
