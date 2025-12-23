@@ -1038,6 +1038,7 @@
     let sidebarInactivityInterval = null;
     let sidebarLastActivityTs = 0;
     let sidebarHideSuppressedUntil = 0;
+    let isProgressScrubbing = false;
 
     function suppressSidebarHideFromPlayerState(ms = 1500) {
       const until = Date.now() + Math.max(0, ms || 0);
@@ -1046,6 +1047,7 @@
 
     function maybeHideSidebarFromPlayerStateChange(playerState) {
       if (document.body.classList.contains('sidebar-hidden')) return;
+      if (isProgressScrubbing) return;
       if (Date.now() < sidebarHideSuppressedUntil) return;
       if (!window.YT?.PlayerState) return;
       if (
@@ -3224,6 +3226,24 @@
       timeLabel.textContent = `${formatTime(current)} / ${formatTime(duration)}`;
     }
 
+    function setProgressScrubbing(active) {
+      isProgressScrubbing = !!active;
+      if (isProgressScrubbing) {
+        suppressSidebarHideFromPlayerState(8000);
+      }
+    }
+
+    const clearProgressScrubbing = () => setProgressScrubbing(false);
+
+    // On touch devices, dragging the range thumb can trigger YouTube state changes
+    // (buffering/playing) and we must not treat those as outside taps.
+    progressRange.addEventListener('pointerdown', () => setProgressScrubbing(true), { passive: true });
+    progressRange.addEventListener('pointerup', clearProgressScrubbing, { passive: true });
+    progressRange.addEventListener('pointercancel', clearProgressScrubbing, { passive: true });
+    progressRange.addEventListener('touchstart', () => setProgressScrubbing(true), { passive: true });
+    progressRange.addEventListener('touchend', clearProgressScrubbing, { passive: true });
+    progressRange.addEventListener('touchcancel', clearProgressScrubbing, { passive: true });
+
     progressRange.addEventListener('input', () => {
       if (!player || typeof player.getDuration !== 'function' || typeof player.seekTo !== 'function') {
         return;
@@ -3232,5 +3252,8 @@
       if (!duration || !isFinite(duration) || duration <= 0) return;
       const frac = Number(progressRange.value) / 1000;
       const newTime = frac * duration;
+      if (isProgressScrubbing) {
+        suppressSidebarHideFromPlayerState(8000);
+      }
       player.seekTo(newTime, true);
     });
