@@ -1,3 +1,5 @@
+  import { YTController, STATES as CONTROLLER_STATES } from './YTController.mjs';
+
     let controller;
     let playlistItems = [];
     let currentIndex = -1;
@@ -32,10 +34,6 @@
     let playlistIOInstance = null;
     let playerReady = false;
     let pendingPlayIndex = null;
-
-    const CONTROLLER_STATES = (window.YTController && window.YTController.STATES)
-      ? window.YTController.STATES
-      : Object.freeze({ UNSTARTED: -1, ENDED: 0, PLAYING: 1, PAUSED: 2, BUFFERING: 3, CUED: 5 });
 
     const STORAGE_KEY = 'ytAudioPlayer.settings';
     let settings = loadSettings();
@@ -1947,13 +1945,8 @@
 
     function initController() {
       if (controller) return;
-      const Ctor = window.YTController;
-      if (typeof Ctor !== 'function') {
-        console.error('Missing YTController (public/js/YTController.js)');
-        return;
-      }
       playerReady = false;
-      controller = new Ctor({ elementId: 'player' });
+      controller = new YTController({ elementId: 'player' });
       controller.onReady(onPlayerReady);
       controller.onStateChange(onPlayerStateChange);
       controller.init();
