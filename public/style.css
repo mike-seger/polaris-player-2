@@ -97,6 +97,25 @@ body {
     overscroll-behavior: none;
     background: var(--color-bg);
     color: var(--color-text);
+
+    /* Prevent accidental selection during swipe/drag gestures (esp. iOS). */
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+}
+
+/* Keep selection/caret behavior inside editable controls. */
+input[type="text"],
+input[type="search"],
+input[type="url"],
+textarea {
+    -webkit-user-select: text;
+    user-select: text;
+}
+
+/* Prevent iOS/Safari image drag ghosting. */
+img {
+    -webkit-user-drag: none;
 }
 
 button,
