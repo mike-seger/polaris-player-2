@@ -262,6 +262,8 @@
     const playerGestureLayer = document.getElementById('playerGestureLayer');
     const sidebarDrawer = document.getElementById('sidebarDrawer');
     const trackSwipeLayer = document.getElementById('trackSwipeLayer');
+    const seekSwipeLayer = document.getElementById('seekSwipeLayer');
+    const seekSwipeFeedback = document.getElementById('seekSwipeFeedback');
     const playlistHistorySelect = document.getElementById('playlistHistorySelect');
     const trackListContainerEl = document.getElementById('trackListContainer');
     const alertOverlay = document.getElementById('alertOverlay');
@@ -1040,15 +1042,48 @@
     let sidebarLastActivityTs = 0;
     let sidebarHideSuppressedUntil = 0;
     let isProgressScrubbing = false;
+    let isSeekSwipeActive = false;
+    let seekFeedbackHideTimer = null;
 
     function suppressSidebarHideFromPlayerState(ms = 1500) {
       const until = Date.now() + Math.max(0, ms || 0);
       if (until > sidebarHideSuppressedUntil) sidebarHideSuppressedUntil = until;
     }
 
+    function setSeekFeedbackVisible(visible) {
+      if (!seekSwipeLayer || !seekSwipeFeedback) return;
+      if (visible) {
+        seekSwipeLayer.classList.add('is-active');
+        return;
+      }
+      // Don't hide while an active seek gesture is still running.
+      if (isSeekSwipeActive || isProgressScrubbing) return;
+      seekSwipeLayer.classList.remove('is-active');
+    }
+
+    function updateSeekFeedbackFromFraction(frac) {
+      if (!seekSwipeLayer || !seekSwipeFeedback) return;
+      const clamped = Math.max(0, Math.min(1, Number(frac)));
+      seekSwipeFeedback.textContent = `${Math.round(clamped * 100)}%`;
+      setSeekFeedbackVisible(true);
+    }
+
+    function scheduleSeekFeedbackFadeOut(delayMs = 0) {
+      if (!seekSwipeLayer || !seekSwipeFeedback) return;
+      if (seekFeedbackHideTimer) {
+        clearTimeout(seekFeedbackHideTimer);
+        seekFeedbackHideTimer = null;
+      }
+      const delay = Math.max(0, delayMs || 0);
+      seekFeedbackHideTimer = setTimeout(() => {
+        seekFeedbackHideTimer = null;
+        setSeekFeedbackVisible(false);
+      }, delay);
+    }
+
     function maybeHideSidebarFromPlayerStateChange(playerState) {
       if (document.body.classList.contains('sidebar-hidden')) return;
-      if (isProgressScrubbing) return;
+      if (isProgressScrubbing || isSeekSwipeActive) return;
       if (Date.now() < sidebarHideSuppressedUntil) return;
       if (!window.YT?.PlayerState) return;
       if (
@@ -3169,10 +3204,17 @@
         if (!player || typeof player.getCurrentTime !== 'function' || typeof player.seekTo !== 'function') {
           return;
         }
+        const duration = typeof player.getDuration === 'function' ? player.getDuration() : 0;
         const delta = e.key === 'ArrowLeft' ? -10 : 10;
         const currentTime = player.getCurrentTime();
         const newTime = Math.max(0, currentTime + delta);
+        suppressSidebarHideFromPlayerState(8000);
         player.seekTo(newTime, true);
+        if (duration && isFinite(duration) && duration > 0) {
+          updateSeekFeedbackFromFraction(newTime / duration);
+          // Let the browser paint it visible, then fade it out.
+          scheduleSeekFeedbackFadeOut(50);
+        }
         e.preventDefault();
         return;
       }
@@ -3231,6 +3273,11 @@
       isProgressScrubbing = !!active;
       if (isProgressScrubbing) {
         suppressSidebarHideFromPlayerState(8000);
+        updateSeekFeedbackFromFraction(Number(progressRange.value) / 1000);
+      }
+      if (!isProgressScrubbing) {
+        // Fade out once the user stops dragging.
+        setSeekFeedbackVisible(false);
       }
     }
 
@@ -3256,6 +3303,7 @@
       if (isProgressScrubbing) {
         suppressSidebarHideFromPlayerState(8000);
       }
+      updateSeekFeedbackFromFraction(frac);
       player.seekTo(newTime, true);
     });
 
@@ -3354,5 +3402,121 @@
 
       trackSwipeLayer.addEventListener('touchcancel', () => {
         swipeActive = false;
+      }, { passive: true });
+    })();
+
+    // Bottom seek stripe: horizontal swipe maps to absolute timeline position.
+    (function setupSeekSwipeGestures() {
+      if (!seekSwipeLayer) return;
+
+      const SEEK_UPDATE_THROTTLE_MS = 120;
+      let seekPointerId = null;
+      let lastSeekUpdateTs = 0;
+
+      function setSeekFeedback(percent) {
+        if (!seekSwipeFeedback) return;
+        const p = Math.max(0, Math.min(100, Math.round(percent)));
+        seekSwipeFeedback.textContent = `${p}%`;
+      }
+
+      function setSeekLayerActive(active) {
+        seekSwipeLayer.classList.toggle('is-active', !!active);
+      }
+
+      function seekFromClientX(clientX, force = false) {
+        if (!player || typeof player.getDuration !== 'function' || typeof player.seekTo !== 'function') return;
+        const duration = player.getDuration();
+        if (!duration || !isFinite(duration) || duration <= 0) return;
+
+        const rect = seekSwipeLayer.getBoundingClientRect();
+        const frac = rect.width > 0
+          ? Math.max(0, Math.min(1, (clientX - rect.left) / rect.width))
+          : 0;
+        setSeekFeedback(frac * 100);
+
+        const now = Date.now();
+        if (!force && now - lastSeekUpdateTs < SEEK_UPDATE_THROTTLE_MS) return;
+        lastSeekUpdateTs = now;
+
+        suppressSidebarHideFromPlayerState(8000);
+        player.seekTo(frac * duration, true);
+      }
+
+      function beginSeek(pointerId) {
+        isSeekSwipeActive = true;
+        seekPointerId = pointerId;
+        lastSeekUpdateTs = 0;
+        setSeekLayerActive(true);
+        suppressSidebarHideFromPlayerState(8000);
+      }
+
+      function endSeek() {
+        isSeekSwipeActive = false;
+        seekPointerId = null;
+        setSeekLayerActive(false);
+        suppressSidebarHideFromPlayerState(1500);
+      }
+
+      // Pointer events
+      seekSwipeLayer.addEventListener('pointerdown', (event) => {
+        if (event.defaultPrevented) return;
+        if (event.button !== 0 && event.pointerType === 'mouse') return;
+        if (isProgressScrubbing) return;
+
+        beginSeek(event.pointerId);
+        seekFromClientX(event.clientX, true);
+        try {
+          seekSwipeLayer.setPointerCapture(event.pointerId);
+        } catch {
+          // Ignore capture failures.
+        }
+      }, { passive: true });
+
+      seekSwipeLayer.addEventListener('pointermove', (event) => {
+        if (!isSeekSwipeActive) return;
+        if (seekPointerId !== null && event.pointerId !== seekPointerId) return;
+        seekFromClientX(event.clientX, false);
+      }, { passive: true });
+
+      seekSwipeLayer.addEventListener('pointerup', (event) => {
+        if (!isSeekSwipeActive) return;
+        if (seekPointerId !== null && event.pointerId !== seekPointerId) return;
+        seekFromClientX(event.clientX, true);
+        endSeek();
+      }, { passive: true });
+
+      seekSwipeLayer.addEventListener('pointercancel', () => {
+        if (!isSeekSwipeActive) return;
+        endSeek();
+      }, { passive: true });
+
+      // Touch events (iOS Safari)
+      seekSwipeLayer.addEventListener('touchstart', (event) => {
+        if (!event.touches || event.touches.length !== 1) return;
+        if (isProgressScrubbing) return;
+        const t = event.touches[0];
+        beginSeek(null);
+        seekFromClientX(t.clientX, true);
+      }, { passive: true });
+
+      seekSwipeLayer.addEventListener('touchmove', (event) => {
+        if (!isSeekSwipeActive) return;
+        const t = event.touches && event.touches[0] ? event.touches[0] : null;
+        if (!t) return;
+        seekFromClientX(t.clientX, false);
+      }, { passive: true });
+
+      seekSwipeLayer.addEventListener('touchend', (event) => {
+        if (!isSeekSwipeActive) return;
+        const t = (event.changedTouches && event.changedTouches[0]) ? event.changedTouches[0] : null;
+        if (t) {
+          seekFromClientX(t.clientX, true);
+        }
+        endSeek();
+      }, { passive: true });
+
+      seekSwipeLayer.addEventListener('touchcancel', () => {
+        if (!isSeekSwipeActive) return;
+        endSeek();
       }, { passive: true });
     })();

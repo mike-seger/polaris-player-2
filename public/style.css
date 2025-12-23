@@ -47,7 +47,7 @@ html:not(.icons-ready) .icon {
     --color-active: #28344d;
     --color-accent: #cc0000;
     --playlist-manager-button-size: 34px;
-    --sidebar-drawer-width: calc(var(--playlist-manager-button-size) * 3);
+    --sidebar-drawer-width: min(340px, 88vw);
 }
 
 .playlist-overlay-content {
@@ -1193,14 +1193,47 @@ body.hide-track-check .track-state-btn {
 /* Center swipe area: captures up/down swipes for prev/next. */
 #trackSwipeLayer {
     position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 37.5%;
-    width: 25%;
+    top: 15%;
+    bottom: 15%;
+    width: 15%;
+    left: auto;
+    right: 0;
     z-index: 6;
     background: transparent;
     pointer-events: auto;
     touch-action: none;
+}
+
+/* Bottom seek area: horizontal swipes behave like the progress thumb. */
+#seekSwipeLayer {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: calc(var(--app-vh, 1vh) * 15);
+    z-index: 6;
+    background: transparent;
+    pointer-events: auto;
+    touch-action: none;
+}
+
+#seekSwipeFeedback {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    color: var(--color-accent);
+    font-weight: 700;
+    font-size: calc(var(--app-vh, 1vh) * 9);
+    line-height: 1;
+    pointer-events: none;
+    user-select: none;
+    opacity: 0;
+    transition: opacity 500ms ease;
+}
+
+#seekSwipeLayer.is-active #seekSwipeFeedback {
+    opacity: 1;
 }
 
 /* When the sidebar is hidden, a simple tap/click on the video should show it.
@@ -1210,8 +1243,8 @@ body.sidebar-hidden #playerGestureLayer {
     pointer-events: auto;
     /* Only a left-edge vertical stripe should unhide the sidebar. */
     left: 0;
-    top: 0;
-    bottom: 0;
+    top: 15%;
+    bottom: 15%;
     right: auto;
     width: var(--sidebar-drawer-width);
 }
@@ -1242,6 +1275,6 @@ body.sidebar-hidden #playerGestureLayer {
 @media (min-width: 1024px) {
     /* Keep the unified overlay drawer on desktop too. */
     #sidebarDrawer {
-        width: 340px;
+        width: var(--sidebar-drawer-width);
     }
 }
