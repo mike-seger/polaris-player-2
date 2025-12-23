@@ -272,6 +272,42 @@
     const spectrumCanvas = document.getElementById('spectrumCanvas');
     let lastFocusedElement = null;
 
+    // iOS Safari: swiping on the YouTube iframe can trigger page scroll attempts
+    // (brief horizontal/vertical scrollbars). We lock scroll for touches in the
+    // player area, but still allow scrolling inside the sidebar + overlays.
+    const isIOS = (() => {
+      const ua = navigator.userAgent || '';
+      const platform = navigator.platform || '';
+      const isAppleMobile = /iP(hone|od|ad)/.test(ua);
+      const isIpadOS = platform === 'MacIntel' && navigator.maxTouchPoints > 1;
+      return isAppleMobile || isIpadOS;
+    })();
+
+    if (isIOS) {
+      document.addEventListener('touchmove', (event) => {
+        if (event.defaultPrevented) return;
+        const target = event.target instanceof Element ? event.target : null;
+        if (!target) return;
+
+        // Allow normal scrolling in scrollable UI surfaces.
+        if (
+          target.closest('#sidebarDrawer') ||
+          target.closest('#trackListContainer') ||
+          target.closest('#artistFilterOverlay') ||
+          target.closest('#countryFilterOverlay') ||
+          target.closest('.playlist-overlay-content') ||
+          target.closest('#alertOverlay')
+        ) {
+          return;
+        }
+
+        // Prevent iOS page scroll/bounce when touching the player/iframe area.
+        if (target.closest('#player-container') || target.closest('#player')) {
+          event.preventDefault();
+        }
+      }, { passive: false });
+    }
+
     // ---- Offline spectrum cache + renderer ----
     // Cache format: `public/spectrum-cache/<videoId>.spc32`
     // Header (32 bytes):
