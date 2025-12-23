@@ -41,7 +41,8 @@
       loadBtnSr: null,
       refreshUploadIcon: null,
       refreshSyncIcon: null,
-      refreshSr: null
+      refreshSr: null,
+      sidebarHiddenBeforeOpen: null
     };
 
     function applyPanelBounds(panelArg, overlayArg) {
@@ -904,6 +905,7 @@
     function openOverlay() {
       const overlay = ensureOverlay();
       state.lastFocused = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+      state.sidebarHiddenBeforeOpen = document.body.classList.contains('sidebar-hidden');
       overlay.style.display = 'flex';
       applyPanelBounds();
       overlay.setAttribute('aria-hidden', 'false');
@@ -911,6 +913,9 @@
         state.bodyOverflow = document.body.style.overflow;
         document.body.style.overflow = 'hidden';
       }
+      // Ensure the sidebar stays visible behind the overlay; otherwise closing via X can
+      // reveal an auto-hidden sidebar and look like the playlist UI disappeared.
+      document.body.classList.remove('sidebar-hidden');
       updateOverlayAvailability();
       updateStatus('');
       setSectionOpen('playlist', { force: true });
@@ -936,6 +941,10 @@
       state.loading = false;
       setLoading(false);
       updateStatus('');
+      if (typeof state.sidebarHiddenBeforeOpen === 'boolean') {
+        document.body.classList.toggle('sidebar-hidden', state.sidebarHiddenBeforeOpen);
+      }
+      state.sidebarHiddenBeforeOpen = null;
       if (state.lastFocused && typeof state.lastFocused.focus === 'function') {
         state.lastFocused.focus({ preventScroll: true });
       }
