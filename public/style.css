@@ -706,6 +706,14 @@ body.no-thumbs .track-title {
     padding-top: 0.05rem;
 }
 
+.track-number[role="button"] {
+    cursor: pointer;
+}
+
+.track-number[role="button"]:hover {
+    color: var(--color-accent);
+}
+
 .title {
     flex: 1;
     text-transform: lowercase;

@@ -2226,30 +2226,32 @@
         const numSpan = document.createElement('span');
         numSpan.className = 'track-number';
         numSpan.textContent = (displayIdx + 1);
+
+        // Click/keyboard on the track number toggles the primary artist filter.
+        // (Moved from thumbnail to avoid accidental taps on small screens.)
+        if (primaryArtist) {
+          numSpan.setAttribute('role', 'button');
+          numSpan.tabIndex = 0;
+          numSpan.title = `Filter artist: ${primaryArtist}`;
+
+          numSpan.addEventListener('click', (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            toggleArtistFilterName(primaryArtist);
+          });
+
+          numSpan.addEventListener('keydown', (event) => {
+            if (event.key !== 'Enter' && event.key !== ' ' && event.key !== 'Spacebar') return;
+            event.preventDefault();
+            event.stopPropagation();
+            toggleArtistFilterName(primaryArtist);
+          });
+        }
         li.appendChild(numSpan);
 
         if (trackDetailSettings.thumbnail && item.thumbnail) {
           const img = document.createElement('img');
           img.src = item.thumbnail;
-
-           if (primaryArtist) {
-             img.setAttribute('role', 'button');
-             img.tabIndex = 0;
-             img.title = `Filter artist: ${primaryArtist}`;
-
-             img.addEventListener('click', (event) => {
-               event.preventDefault();
-               event.stopPropagation();
-               toggleArtistFilterName(primaryArtist);
-             });
-
-             img.addEventListener('keydown', (event) => {
-               if (event.key !== 'Enter' && event.key !== ' ' && event.key !== 'Spacebar') return;
-               event.preventDefault();
-               event.stopPropagation();
-               toggleArtistFilterName(primaryArtist);
-             });
-           }
 
           li.appendChild(img);
         }
