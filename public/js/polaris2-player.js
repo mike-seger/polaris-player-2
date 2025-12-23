@@ -1949,7 +1949,7 @@
       if (controller) return;
       const Ctor = window.YTController;
       if (typeof Ctor !== 'function') {
-        console.error('Missing YTController (public/js/yt-controller.js)');
+        console.error('Missing YTController (public/js/YTController.js)');
         return;
       }
       playerReady = false;
