@@ -1190,6 +1190,19 @@ body.hide-track-check .track-state-btn {
     pointer-events: none;
 }
 
+/* Center swipe area: captures up/down swipes for prev/next. */
+#trackSwipeLayer {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 37.5%;
+    width: 25%;
+    z-index: 6;
+    background: transparent;
+    pointer-events: auto;
+    touch-action: none;
+}
+
 /* When the sidebar is hidden, a simple tap/click on the video should show it.
    Disable iframe pointer events so YouTube doesn't swallow that tap. */
 body.sidebar-hidden #playerGestureLayer {

@@ -261,6 +261,7 @@
     const trackControlsEl = document.getElementById('trackControls');
     const playerGestureLayer = document.getElementById('playerGestureLayer');
     const sidebarDrawer = document.getElementById('sidebarDrawer');
+    const trackSwipeLayer = document.getElementById('trackSwipeLayer');
     const playlistHistorySelect = document.getElementById('playlistHistorySelect');
     const trackListContainerEl = document.getElementById('trackListContainer');
     const alertOverlay = document.getElementById('alertOverlay');
@@ -3257,3 +3258,101 @@
       }
       player.seekTo(newTime, true);
     });
+
+    // Center vertical swipe area: up/down swipe for prev/next.
+    (function setupCenterSwipeGestures() {
+      if (!trackSwipeLayer) return;
+
+      const CENTER_SWIPE_MIN_DY_PX = 60;
+      const CENTER_SWIPE_MAX_DT_MS = 900;
+      const CENTER_SWIPE_VERTICAL_BIAS = 1.2; // |dy| must exceed |dx| * bias
+
+      let swipeActive = false;
+      let swipePointerId = null;
+      let startX = 0;
+      let startY = 0;
+      let startTs = 0;
+
+      function shouldIgnoreSwipeStart(eventTarget) {
+        if (isProgressScrubbing) return true;
+        if (sidebarDrawer && eventTarget instanceof Node && sidebarDrawer.contains(eventTarget)) return true;
+        if (progressRange && eventTarget instanceof Node && progressRange.contains(eventTarget)) return true;
+        return false;
+      }
+
+      function handleSwipeEnd(clientX, clientY) {
+        if (!swipeActive) return;
+        const dt = Date.now() - startTs;
+        swipeActive = false;
+        swipePointerId = null;
+
+        if (dt > CENTER_SWIPE_MAX_DT_MS) return;
+        const dx = clientX - startX;
+        const dy = clientY - startY;
+        if (Math.abs(dy) < CENTER_SWIPE_MIN_DY_PX) return;
+        if (Math.abs(dy) < Math.abs(dx) * CENTER_SWIPE_VERTICAL_BIAS) return;
+
+        // Swipe up = next, swipe down = previous.
+        if (dy < 0) {
+          playNext();
+        } else {
+          playPrev();
+        }
+      }
+
+      // Pointer events (most modern browsers).
+      trackSwipeLayer.addEventListener('pointerdown', (event) => {
+        if (event.defaultPrevented) return;
+        if (event.button !== 0 && event.pointerType === 'mouse') return;
+        if (shouldIgnoreSwipeStart(event.target)) return;
+
+        swipeActive = true;
+        swipePointerId = event.pointerId;
+        startX = event.clientX;
+        startY = event.clientY;
+        startTs = Date.now();
+
+        try {
+          trackSwipeLayer.setPointerCapture(event.pointerId);
+        } catch {
+          // Ignore capture failures.
+        }
+      }, { passive: true });
+
+      trackSwipeLayer.addEventListener('pointerup', (event) => {
+        if (!swipeActive) return;
+        if (swipePointerId !== null && event.pointerId !== swipePointerId) return;
+        handleSwipeEnd(event.clientX, event.clientY);
+      }, { passive: true });
+
+      trackSwipeLayer.addEventListener('pointercancel', () => {
+        swipeActive = false;
+        swipePointerId = null;
+      }, { passive: true });
+
+      // Touch events (iOS Safari quirks).
+      trackSwipeLayer.addEventListener('touchstart', (event) => {
+        if (!event.touches || event.touches.length !== 1) return;
+        if (shouldIgnoreSwipeStart(event.target)) return;
+        const t = event.touches[0];
+        swipeActive = true;
+        swipePointerId = null;
+        startX = t.clientX;
+        startY = t.clientY;
+        startTs = Date.now();
+      }, { passive: true });
+
+      trackSwipeLayer.addEventListener('touchend', (event) => {
+        if (!swipeActive) return;
+        const t = (event.changedTouches && event.changedTouches[0]) ? event.changedTouches[0] : null;
+        if (!t) {
+          swipeActive = false;
+          return;
+        }
+        handleSwipeEnd(t.clientX, t.clientY);
+      }, { passive: true });
+
+      trackSwipeLayer.addEventListener('touchcancel', () => {
+        swipeActive = false;
+      }, { passive: true });
+    })();
