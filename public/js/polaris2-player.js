@@ -1,4 +1,4 @@
-    let player;
+    let controller;
     let playlistItems = [];
     let currentIndex = -1;
     let isPlaying = false;
@@ -32,7 +32,10 @@
     let playlistIOInstance = null;
     let playerReady = false;
     let pendingPlayIndex = null;
-    let ytInitStarted = false;
+
+    const CONTROLLER_STATES = (window.YTController && window.YTController.STATES)
+      ? window.YTController.STATES
+      : Object.freeze({ UNSTARTED: -1, ENDED: 0, PLAYING: 1, PAUSED: 2, BUFFERING: 3, CUED: 5 });
 
     const STORAGE_KEY = 'ytAudioPlayer.settings';
     let settings = loadSettings();
@@ -461,14 +464,14 @@
     function startSpectrumAnimation() {
       stopSpectrumAnimation();
       if (!spectrumCacheEnabled) return;
-      if (!spectrumCanvas || !spectrumState.frames || !player || typeof player.getCurrentTime !== 'function') return;
+      if (!spectrumCanvas || !spectrumState.frames || !controller) return;
 
       const tick = () => {
-        if (!spectrumState.frames || !player || typeof player.getCurrentTime !== 'function') {
+        if (!spectrumState.frames || !controller) {
           spectrumState.rafId = null;
           return;
         }
-        const t = player.getCurrentTime();
+        const t = controller.getCurrentTime();
         const frameIndex = Math.max(0, Math.min(spectrumState.frameCount - 1, Math.floor(t * spectrumState.fps)));
         const offset = frameIndex * spectrumState.bins;
         const frame = spectrumState.frames.subarray(offset, offset + spectrumState.bins);
@@ -1121,11 +1124,10 @@
       if (document.body.classList.contains('sidebar-hidden')) return;
       if (isProgressScrubbing || isSeekSwipeActive) return;
       if (Date.now() < sidebarHideSuppressedUntil) return;
-      if (!window.YT?.PlayerState) return;
       if (
-        playerState === YT.PlayerState.PLAYING ||
-        playerState === YT.PlayerState.PAUSED ||
-        playerState === YT.PlayerState.BUFFERING
+        playerState === CONTROLLER_STATES.PLAYING ||
+        playerState === CONTROLLER_STATES.PAUSED ||
+        playerState === CONTROLLER_STATES.BUFFERING
       ) {
         setSidebarHidden(true);
       }
@@ -1943,58 +1945,21 @@
       }
     }
 
-    function initYouTubePlayer() {
-      if (ytInitStarted) return;
-      if (player) return;
-      if (!window.YT || typeof window.YT.Player !== 'function') return;
-
-      const playerOrigin = (window.location && window.location.origin)
-        ? window.location.origin
-        : `${window.location.protocol}//${window.location.host}`;
-
-      ytInitStarted = true;
+    function initController() {
+      if (controller) return;
+      const Ctor = window.YTController;
+      if (typeof Ctor !== 'function') {
+        console.error('Missing YTController (public/js/yt-controller.js)');
+        return;
+      }
       playerReady = false;
-      player = new YT.Player('player', {
-        height: '200',
-        width: '320',
-        videoId: '',
-        playerVars: {
-          autoplay: 0,
-          controls: 0,
-          origin: playerOrigin
-        },
-        events: {
-          onReady: onPlayerReady,
-          onStateChange: onPlayerStateChange
-        }
-      });
+      controller = new Ctor({ elementId: 'player' });
+      controller.onReady(onPlayerReady);
+      controller.onStateChange(onPlayerStateChange);
+      controller.init();
     }
 
-    // IFrame API ready
-    function onYouTubeIframeAPIReady() {
-      initYouTubePlayer();
-    }
-    window.onYouTubeIframeAPIReady = onYouTubeIframeAPIReady;
-
-    // Fallback: if the IFrame API loaded before we assigned the callback,
-    // initialize immediately.
-    if (window.YT && typeof window.YT.Player === 'function') {
-      if (typeof queueMicrotask === 'function') {
-        queueMicrotask(initYouTubePlayer);
-      } else {
-        setTimeout(initYouTubePlayer, 0);
-      }
-    }
-
-    // Diagnostics: warn if the IFrame API never appears.
-    setTimeout(() => {
-      if (player || ytInitStarted) return;
-      if (!window.YT || typeof window.YT.Player !== 'function') {
-        console.warn(
-          'YouTube IFrame API did not load. Possible causes: network blocks, CSP, ad-blockers, or mixed-content. Check DevTools Network/Console for https://www.youtube.com/iframe_api.'
-        );
-      }
-    }, 10000);
+    initController();
 
     async function onPlayerReady() {
       playerReady = true;
@@ -2012,7 +1977,7 @@
         if (!playlistItems.length) {
           await loadPlaylistFromLocal(startupPlaylistId || '');
         }
-        if (currentIndex >= 0 && playlistItems[currentIndex] && player) {
+        if (currentIndex >= 0 && playlistItems[currentIndex] && controller) {
           playIndex(currentIndex);
         } else {
           computeFilteredIndices();
@@ -2043,22 +2008,22 @@
       }
     }
 
-    function onPlayerStateChange(event) {
-      if (event.data === YT.PlayerState.ENDED) {
+    function onPlayerStateChange(state) {
+      if (state === CONTROLLER_STATES.ENDED) {
         playNext();
-      } else if (event.data === YT.PlayerState.PLAYING) {
+      } else if (state === CONTROLLER_STATES.PLAYING) {
         isPlaying = true;
         updatePlayPauseButton();
         focusActiveTrack({ scroll: false });
         if (spectrumCacheEnabled) {
           startSpectrumAnimation();
         }
-      } else if (event.data === YT.PlayerState.PAUSED) {
+      } else if (state === CONTROLLER_STATES.PAUSED) {
         isPlaying = false;
         updatePlayPauseButton();
         focusActiveTrack({ scroll: false });
         stopSpectrumAnimation();
-      } else if (event.data === YT.PlayerState.CUED || event.data === YT.PlayerState.UNSTARTED) {
+      } else if (state === CONTROLLER_STATES.CUED || state === CONTROLLER_STATES.UNSTARTED) {
         isPlaying = false;
         updatePlayPauseButton();
         focusActiveTrack({ scroll: false });
@@ -2067,7 +2032,7 @@
 
       // Clicking inside the YouTube iframe does not bubble to the document, but it does
       // trigger state changes. Use those to hide the sidebar after an iframe interaction.
-      maybeHideSidebarFromPlayerStateChange(event.data);
+      maybeHideSidebarFromPlayerStateChange(state);
     }
 
     function updatePlayPauseButton() {
@@ -2458,15 +2423,12 @@
     }
 
     function playIndex(idx) {
-      if (!player || !playlistItems[idx]) return;
-      const getState = typeof player.getPlayerState === 'function' ? player.getPlayerState.bind(player) : null;
-      const playerState = getState ? getState() : undefined;
-      const playerStates = window.YT?.PlayerState ?? {};
+      if (!controller || !playlistItems[idx]) return;
+      const playerState = controller.getState();
+      const playerStates = CONTROLLER_STATES;
       const sameIndex = currentIndex === idx;
       const targetVideoId = playlistItems[idx].videoId;
-      const currentVideoId = typeof player.getVideoData === 'function'
-        ? player.getVideoData()?.video_id
-        : undefined;
+      const currentVideoId = controller.getVideoId();
       const isSameVideo = sameIndex && targetVideoId && currentVideoId === targetVideoId;
       const isActivelyPlaying = playerState === playerStates.PLAYING || playerState === playerStates.BUFFERING;
       const previousIndex = currentIndex;
@@ -2477,9 +2439,9 @@
           return;
         }
         if (playerState === playerStates.PAUSED) {
-          if (playerReady && typeof player.playVideo === 'function') {
+          if (playerReady && controller) {
             suppressSidebarHideFromPlayerState(1500);
-            player.playVideo();
+            controller.play();
             isPlaying = true;
             updatePlayPauseButton();
             focusActiveTrack({ scroll: false });
@@ -2524,20 +2486,9 @@
         pendingPlayIndex = idx;
         return;
       }
-      const invokeLoadVideo =
-        typeof player.loadVideoById === 'function'
-          ? player.loadVideoById.bind(player)
-          : typeof player.cueVideoById === 'function'
-            ? player.cueVideoById.bind(player)
-            : null;
-      if (invokeLoadVideo) {
-        suppressSidebarHideFromPlayerState(5000);
-        invokeLoadVideo(videoId);
-        pendingPlayIndex = null;
-      } else {
-        console.warn('YouTube player API is not ready to load videos; skipping video load.');
-        pendingPlayIndex = idx;
-      }
+      suppressSidebarHideFromPlayerState(5000);
+      controller.load(videoId, { autoplay: true });
+      pendingPlayIndex = null;
       const playlistId = settings.playlistId || '';
       updateCurrentVideo(playlistId, videoId);
       focusActiveTrack();
@@ -2615,10 +2566,9 @@
     }
 
     function togglePlayback() {
-      if (!player) return;
-      const getState = typeof player.getPlayerState === 'function' ? player.getPlayerState.bind(player) : null;
-      const playerStates = window.YT?.PlayerState ?? {};
-      const state = getState ? getState() : undefined;
+      if (!controller) return;
+      const playerStates = CONTROLLER_STATES;
+      const state = controller.getState();
       const activelyPlaying = state === playerStates.PLAYING || state === playerStates.BUFFERING;
 
       if (isPlaying !== activelyPlaying) {
@@ -2627,13 +2577,11 @@
       }
 
       if (activelyPlaying) {
-        if (typeof player.pauseVideo === 'function') {
-          suppressSidebarHideFromPlayerState(1500);
-          player.pauseVideo();
-        }
-      } else if (typeof player.playVideo === 'function') {
         suppressSidebarHideFromPlayerState(1500);
-        player.playVideo();
+        controller.pause();
+      } else {
+        suppressSidebarHideFromPlayerState(1500);
+        controller.play();
       }
       focusActiveTrack();
     }
@@ -2780,7 +2728,7 @@
       renderTrackList();
       updateNowPlaying();
       updatePlayPauseButton();
-      if (currentIndex >= 0 && player) {
+      if (currentIndex >= 0 && controller) {
         playIndex(currentIndex);
       }
 
@@ -3018,7 +2966,7 @@
       addPlaylistToHistory(targetId, playlistTitle);
       updateUrlPlaylistParam(targetId);
 
-      if (currentIndex >= 0 && player) {
+      if (currentIndex >= 0 && controller) {
         playIndex(currentIndex);
       }
 
@@ -3239,15 +3187,15 @@
       }
 
       if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
-        if (!player || typeof player.getCurrentTime !== 'function' || typeof player.seekTo !== 'function') {
+        if (!controller) {
           return;
         }
-        const duration = typeof player.getDuration === 'function' ? player.getDuration() : 0;
+        const duration = controller.getDuration();
         const delta = e.key === 'ArrowLeft' ? -10 : 10;
-        const currentTime = player.getCurrentTime();
+        const currentTime = controller.getCurrentTime();
         const newTime = Math.max(0, currentTime + delta);
         suppressSidebarHideFromPlayerState(8000);
-        player.seekTo(newTime, true);
+        controller.seekTo(newTime, true);
         if (duration && isFinite(duration) && duration > 0) {
           updateSeekFeedbackFromFraction(newTime / duration);
           // Let the browser paint it visible, then fade it out.
@@ -3287,14 +3235,14 @@
     }
 
     function updateProgressBar() {
-      if (!player || typeof player.getDuration !== 'function' || typeof player.getCurrentTime !== 'function') {
+      if (!controller) {
         progressRange.value = 0;
         timeLabel.textContent = '00:00 / 00:00';
         return;
       }
 
-      const duration = player.getDuration();
-      const current = player.getCurrentTime();
+      const duration = controller.getDuration();
+      const current = controller.getCurrentTime();
 
       if (!duration || !isFinite(duration) || duration <= 0) {
         progressRange.value = 0;
@@ -3331,10 +3279,10 @@
     progressRange.addEventListener('touchcancel', clearProgressScrubbing, { passive: true });
 
     progressRange.addEventListener('input', () => {
-      if (!player || typeof player.getDuration !== 'function' || typeof player.seekTo !== 'function') {
+      if (!controller) {
         return;
       }
-      const duration = player.getDuration();
+      const duration = controller.getDuration();
       if (!duration || !isFinite(duration) || duration <= 0) return;
       const frac = Number(progressRange.value) / 1000;
       const newTime = frac * duration;
@@ -3342,7 +3290,7 @@
         suppressSidebarHideFromPlayerState(8000);
       }
       updateSeekFeedbackFromFraction(frac);
-      player.seekTo(newTime, true);
+      controller.seekTo(newTime, true);
     });
 
     // Center vertical swipe area: up/down swipe for prev/next.
@@ -3472,9 +3420,9 @@
       }
 
       function getCurrentPlaybackFraction() {
-        if (!player || typeof player.getDuration !== 'function' || typeof player.getCurrentTime !== 'function') return 0;
-        const duration = player.getDuration();
-        const t = player.getCurrentTime();
+        if (!controller) return 0;
+        const duration = controller.getDuration();
+        const t = controller.getCurrentTime();
         if (!duration || !isFinite(duration) || duration <= 0) return 0;
         if (!isFinite(t) || t < 0) return 0;
         return clampSeekSwipeFraction(t / duration);
@@ -3488,8 +3436,8 @@
       }
 
       function seekFromFraction(frac, force = false) {
-        if (!player || typeof player.getDuration !== 'function' || typeof player.seekTo !== 'function') return;
-        const duration = player.getDuration();
+        if (!controller) return;
+        const duration = controller.getDuration();
         if (!duration || !isFinite(duration) || duration <= 0) return;
 
         const clamped = clampSeekSwipeFraction(frac);
@@ -3500,7 +3448,7 @@
         lastSeekUpdateTs = now;
 
         suppressSidebarHideFromPlayerState(8000);
-        player.seekTo(clamped * duration, true);
+        controller.seekTo(clamped * duration, true);
       }
 
       function beginSeek(pointerId, startClientX) {
