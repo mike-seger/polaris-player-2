@@ -22,6 +22,10 @@ PORT=33001
 
 npm start
 
+# Override the port at runtime (shell env beats .env; CLI beats both):
+PORT=33002 npm start
+node server.mjs --port 33002
+
 # Or use auto-reload during development
 npm run dev
 

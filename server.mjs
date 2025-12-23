@@ -28,7 +28,40 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+
+function parsePort(value) {
+  if (value === undefined || value === null || value === '') return null;
+  const n = Number.parseInt(String(value), 10);
+  if (!Number.isFinite(n) || Number.isNaN(n)) return null;
+  // Allow 0 (ephemeral) and the valid TCP/UDP port range.
+  if (n < 0 || n > 65535) return null;
+  return n;
+}
+
+function parsePortFromArgs(argv) {
+  for (let i = 0; i < argv.length; i += 1) {
+    const a = argv[i];
+    if (a === '--port' || a === '-p') {
+      return parsePort(argv[i + 1]);
+    }
+    if (a && a.startsWith('--port=')) {
+      return parsePort(a.slice('--port='.length));
+    }
+  }
+  return null;
+}
+
+const DEFAULT_PORT = 3000;
+const argvPort = parsePortFromArgs(process.argv.slice(2));
+if (process.argv.includes('--port') || process.argv.includes('-p') || process.argv.some((a) => a.startsWith('--port='))) {
+  if (argvPort === null) {
+    console.error('Invalid --port value. Use an integer 0-65535 (0 chooses an ephemeral port).');
+    process.exit(1);
+  }
+}
+
+const envPort = parsePort(process.env.PORT);
+const PORT = argvPort ?? envPort ?? DEFAULT_PORT;
 const YT_API_KEY = process.env.YT_API_KEY;
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
 const SCRAPE_USER_AGENT =
@@ -478,4 +511,8 @@ app.use(express.static(path.join(__dirname, 'public')));
 loadOverrides();
 loadCache();
 
-app.listen(PORT, () => console.log(`Server at http://localhost:${PORT}`));
+const server = app.listen(PORT, () => {
+  const addr = server.address();
+  const actualPort = typeof addr === 'object' && addr ? addr.port : PORT;
+  console.log(`Server at http://localhost:${actualPort}`);
+});

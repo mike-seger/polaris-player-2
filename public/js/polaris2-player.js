@@ -3413,9 +3413,14 @@
       let seekPointerId = null;
       let lastSeekUpdateTs = 0;
 
+      const SEEK_SWIPE_MIN_FRAC = 0;
+      const SEEK_SWIPE_MAX_FRAC = 0.99;
+      let seekSwipeStartClientX = 0;
+      let seekSwipeStartFrac = 0;
+
       function setSeekFeedback(percent) {
         if (!seekSwipeFeedback) return;
-        const p = Math.max(0, Math.min(100, Math.round(percent)));
+        const p = Math.max(0, Math.min(99, Math.round(percent)));
         seekSwipeFeedback.textContent = `${p}%`;
       }
 
@@ -3423,29 +3428,50 @@
         seekSwipeLayer.classList.toggle('is-active', !!active);
       }
 
-      function seekFromClientX(clientX, force = false) {
+      function clampSeekSwipeFraction(frac) {
+        if (!isFinite(frac)) return SEEK_SWIPE_MIN_FRAC;
+        return Math.max(SEEK_SWIPE_MIN_FRAC, Math.min(SEEK_SWIPE_MAX_FRAC, frac));
+      }
+
+      function getCurrentPlaybackFraction() {
+        if (!player || typeof player.getDuration !== 'function' || typeof player.getCurrentTime !== 'function') return 0;
+        const duration = player.getDuration();
+        const t = player.getCurrentTime();
+        if (!duration || !isFinite(duration) || duration <= 0) return 0;
+        if (!isFinite(t) || t < 0) return 0;
+        return clampSeekSwipeFraction(t / duration);
+      }
+
+      function fractionFromClientX(clientX) {
+        const rect = seekSwipeLayer.getBoundingClientRect();
+        if (!rect.width || rect.width <= 0) return clampSeekSwipeFraction(seekSwipeStartFrac);
+        const deltaFrac = (clientX - seekSwipeStartClientX) / rect.width;
+        return clampSeekSwipeFraction(seekSwipeStartFrac + deltaFrac);
+      }
+
+      function seekFromFraction(frac, force = false) {
         if (!player || typeof player.getDuration !== 'function' || typeof player.seekTo !== 'function') return;
         const duration = player.getDuration();
         if (!duration || !isFinite(duration) || duration <= 0) return;
 
-        const rect = seekSwipeLayer.getBoundingClientRect();
-        const frac = rect.width > 0
-          ? Math.max(0, Math.min(1, (clientX - rect.left) / rect.width))
-          : 0;
-        setSeekFeedback(frac * 100);
+        const clamped = clampSeekSwipeFraction(frac);
+        setSeekFeedback(clamped * 100);
 
         const now = Date.now();
         if (!force && now - lastSeekUpdateTs < SEEK_UPDATE_THROTTLE_MS) return;
         lastSeekUpdateTs = now;
 
         suppressSidebarHideFromPlayerState(8000);
-        player.seekTo(frac * duration, true);
+        player.seekTo(clamped * duration, true);
       }
 
-      function beginSeek(pointerId) {
+      function beginSeek(pointerId, startClientX) {
         isSeekSwipeActive = true;
         seekPointerId = pointerId;
         lastSeekUpdateTs = 0;
+        seekSwipeStartClientX = startClientX;
+        seekSwipeStartFrac = getCurrentPlaybackFraction();
+        setSeekFeedback(seekSwipeStartFrac * 100);
         setSeekLayerActive(true);
         suppressSidebarHideFromPlayerState(8000);
       }
@@ -3463,8 +3489,7 @@
         if (event.button !== 0 && event.pointerType === 'mouse') return;
         if (isProgressScrubbing) return;
 
-        beginSeek(event.pointerId);
-        seekFromClientX(event.clientX, true);
+        beginSeek(event.pointerId, event.clientX);
         try {
           seekSwipeLayer.setPointerCapture(event.pointerId);
         } catch {
@@ -3475,13 +3500,13 @@
       seekSwipeLayer.addEventListener('pointermove', (event) => {
         if (!isSeekSwipeActive) return;
         if (seekPointerId !== null && event.pointerId !== seekPointerId) return;
-        seekFromClientX(event.clientX, false);
+        seekFromFraction(fractionFromClientX(event.clientX), false);
       }, { passive: true });
 
       seekSwipeLayer.addEventListener('pointerup', (event) => {
         if (!isSeekSwipeActive) return;
         if (seekPointerId !== null && event.pointerId !== seekPointerId) return;
-        seekFromClientX(event.clientX, true);
+        seekFromFraction(fractionFromClientX(event.clientX), true);
         endSeek();
       }, { passive: true });
 
@@ -3495,22 +3520,21 @@
         if (!event.touches || event.touches.length !== 1) return;
         if (isProgressScrubbing) return;
         const t = event.touches[0];
-        beginSeek(null);
-        seekFromClientX(t.clientX, true);
+        beginSeek(null, t.clientX);
       }, { passive: true });
 
       seekSwipeLayer.addEventListener('touchmove', (event) => {
         if (!isSeekSwipeActive) return;
         const t = event.touches && event.touches[0] ? event.touches[0] : null;
         if (!t) return;
-        seekFromClientX(t.clientX, false);
+        seekFromFraction(fractionFromClientX(t.clientX), false);
       }, { passive: true });
 
       seekSwipeLayer.addEventListener('touchend', (event) => {
         if (!isSeekSwipeActive) return;
         const t = (event.changedTouches && event.changedTouches[0]) ? event.changedTouches[0] : null;
         if (t) {
-          seekFromClientX(t.clientX, true);
+          seekFromFraction(fractionFromClientX(t.clientX), true);
         }
         endSeek();
       }, { passive: true });

@@ -1108,6 +1108,73 @@ body.hide-track-check .track-state-btn {
     color: var(--color-accent);
 }
 
+/* Phones: slightly shrink controls to avoid overflow (iOS can get tight in fullscreen/pseudo-fullscreen). */
+@media (max-width: 430px) {
+    #trackControls-buttons {
+        gap: 0.18rem;
+    }
+
+    #trackControls-buttons button {
+        width: 44px;
+        height: 44px;
+    }
+
+    .track-controls-group button .icon {
+        font-size: 32px;
+        width: 32px;
+        height: 32px;
+    }
+
+    #thumbToggleBtn .icon,
+    #shuffleBtn .icon,
+    #fullscreenBtn .icon {
+        font-size: 28px;
+        width: 28px;
+        height: 28px;
+    }
+
+    #spectrumCanvas {
+        height: 44px;
+        max-height: 44px;
+    }
+}
+
+/* Very small screens (e.g. iPhone SE): keep right-side buttons fully visible. */
+@media (max-width: 360px) {
+    #trackControls {
+        padding: 0.25rem;
+    }
+
+    #trackControls-buttons {
+        gap: 0.15rem;
+    }
+
+    #trackControls-buttons button {
+        width: 40px;
+        height: 40px;
+    }
+
+    /* Keep icons proportional to the smaller hit target. */
+    .track-controls-group button .icon {
+        font-size: 28px;
+        width: 28px;
+        height: 28px;
+    }
+
+    #thumbToggleBtn .icon,
+    #shuffleBtn .icon,
+    #fullscreenBtn .icon {
+        font-size: 26px;
+        width: 26px;
+        height: 26px;
+    }
+
+    #spectrumCanvas {
+        height: 40px;
+        max-height: 40px;
+    }
+}
+
 /* progress slider */
 #progressWrapper {
     display: flex;
@@ -1172,6 +1239,7 @@ body.hide-track-check .track-state-btn {
     position: fixed;
     inset: 0;
     padding: 0;
+    --track-swipe-layer-width: 15%;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -1195,7 +1263,7 @@ body.hide-track-check .track-state-btn {
     position: absolute;
     top: 15%;
     bottom: 15%;
-    width: 15%;
+    width: var(--track-swipe-layer-width);
     left: auto;
     right: 0;
     z-index: 6;
@@ -1218,16 +1286,18 @@ body.hide-track-check .track-state-btn {
 }
 
 #seekSwipeFeedback {
-    position: absolute;
-    left: 50%;
+    position: fixed;
+    left: auto;
+    right: calc(var(--track-swipe-layer-width) * 0.5);
     top: 50%;
-    transform: translate(-50%, -50%);
+    transform: translate(50%, -50%);
     color: var(--color-accent);
     font-weight: 700;
     font-size: calc(var(--app-vh, 1vh) * 9);
     line-height: 1;
     pointer-events: none;
     user-select: none;
+    z-index: 7;
     opacity: 0;
     transition: opacity 500ms ease;
 }
