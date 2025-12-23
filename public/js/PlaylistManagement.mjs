@@ -1,4 +1,3 @@
-(function () {
   function initPlaylistIO(options = {}) {
     const {
       triggerElement,
@@ -1409,5 +1408,8 @@
     };
   }
 
+if (typeof window !== 'undefined') {
   window.initPlaylistIO = initPlaylistIO;
-})();
+}
+
+export { initPlaylistIO };

@@ -1,4 +1,19 @@
   import { YTController, STATES as CONTROLLER_STATES } from './YTController.mjs';
+  import { SettingsStore } from './SettingsStore.mjs';
+  import { PlaylistHistoryStore } from './PlaylistHistoryStore.mjs';
+  import { FilterStateStore } from './FilterStateStore.mjs';
+  import { TrackDetailSettingsStore } from './TrackDetailSettingsStore.mjs';
+  import { SeekSwipeController } from './SeekSwipeController.mjs';
+  import { TrackSwipeController } from './TrackSwipeController.mjs';
+  import { getFlagEmojiForIso3 } from './CountryFlags.mjs';
+  import { initPlaylistIO } from './PlaylistManagement.mjs';
+  import { Spectrum } from './Spectrum.mjs';
+  import { TextUtils } from './TextUtils.mjs';
+  import { ShuffleQueue } from './ShuffleQueue.mjs';
+  import { createAlert } from './Alert.mjs';
+  import { Sidebar } from './Sidebar.mjs';
+  import { ArtistFilterOverlay } from './ArtistFilterOverlay.mjs';
+  import { CountryFilterOverlay } from './CountryFilterOverlay.mjs';
 
     let controller;
     let playlistItems = [];
@@ -16,13 +31,12 @@
     let trackDetailSettings = { ...DEFAULT_TRACK_DETAILS };
     let trackDetailsOverlayVisible = false;
 
+    let trackDetailStore = null;
+
+    let filterStateStore = null;
     let filterText = '';
-  let artistFilters = [];
-  let artistFilterOverlayVisible = false;
-  let artistSortMode = 'az';
+    let artistFilters = [];
     let countryFilters = [];
-    let countryFilterOverlayVisible = false;
-    let countrySortMode = 'az';
     let filteredIndices = [];
     let trackRowElements = new Map();
     let visibleIndices = [];
@@ -36,25 +50,30 @@
     let pendingPlayIndex = null;
 
     const STORAGE_KEY = 'ytAudioPlayer.settings';
-    let settings = loadSettings();
+    let notifySettingsUpdated = () => {};
+    const settingsStore = new SettingsStore(STORAGE_KEY, { onChange: () => notifySettingsUpdated() });
+    let settings = settingsStore.load();
 
-    // Shuffle mode: persisted on/off, in-memory non-repeating history.
-    let shuffleEnabled = typeof settings.shuffleEnabled === 'boolean' ? settings.shuffleEnabled : true;
-    let shuffleBag = [];
-    let shuffleBagVersion = -1;
     let playlistVersion = 0;
-    let shuffleHistory = [];
-    let shuffleHistoryPos = -1;
-    let shuffleNavigatingHistory = false;
+    const shuffleQueue = new ShuffleQueue({
+      enabled: typeof settings.shuffleEnabled === 'boolean' ? settings.shuffleEnabled : true,
+      getQueueIndices: () => (Array.isArray(visibleIndices) && visibleIndices.length)
+        ? visibleIndices
+        : playlistItems.map((_, idx) => idx),
+      getQueueVersion: () => visibleIndicesVersion,
+      getCurrentIndex: () => currentIndex
+    });
     const API_BASE_PATH = window.location.hostname.endsWith('polaris.net128.com') ? '/u2b' : '.';
     const STATUS_ENDPOINT = `${API_BASE_PATH}/api/status`;
     const PLAYLIST_ENDPOINT = `${API_BASE_PATH}/api/playlist`;
     const LOCAL_PLAYLIST_PATH = './local-playlist.json';
     const PLAYLIST_HISTORY_LIMIT = 25;
-    const rawPlaylistHistory = Array.isArray(settings.playlistHistory) ? settings.playlistHistory : [];
-    let playlistHistory = normalizePlaylistHistory(rawPlaylistHistory);
-    settings.playlistHistory = playlistHistory;
-    const historyNeedsPersist = JSON.stringify(rawPlaylistHistory) !== JSON.stringify(playlistHistory);
+    const playlistHistoryStore = new PlaylistHistoryStore({
+      limit: PLAYLIST_HISTORY_LIMIT,
+      getSettings: () => settings,
+      saveSettings: (patch) => saveSettings(patch)
+    });
+    let playlistHistory = playlistHistoryStore.get();
     const TRACK_STATE_DEFAULT = 'default';
     const TRACK_STATE_CHECKED = 'checked';
     const urlParams = new URLSearchParams(window.location.search);
@@ -63,29 +82,22 @@
     const shouldResetSettingsFromQuery = ((urlParams.get('reset') || '').trim().toLowerCase() === 'true');
 
     // settings helpers
-    let notifySettingsUpdated = () => {};
-    function loadSettings() {
-      try {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        return raw ? JSON.parse(raw) : {};
-      } catch (e) {
-        console.warn('Failed to load settings:', e);
-        return {};
-      }
-    }
     function saveSettings(patch) {
-      settings = Object.assign({}, settings, patch);
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
-      } catch (e) {
-        console.warn('Failed to save settings:', e);
-      }
-      try {
-        notifySettingsUpdated();
-      } catch (notifyError) {
-        console.warn('Settings overlay update failed:', notifyError);
-      }
+      settings = settingsStore.patch(patch);
     }
+
+    filterStateStore = new FilterStateStore({
+      getSettings: () => settings,
+      saveSettings: (patch) => saveSettings(patch)
+    });
+    ({ filterText, artistFilters, countryFilters } = filterStateStore.snapshot());
+
+    trackDetailStore = new TrackDetailSettingsStore({
+      defaults: DEFAULT_TRACK_DETAILS,
+      getSettings: () => settings,
+      saveSettings: (patch) => saveSettings(patch)
+    });
+    ({ preferences: trackDetailSettings, sortAlphabetically } = trackDetailStore.snapshot());
 
     function getCurrentVideoMap() {
       const map = settings.currentVideoMap;
@@ -180,46 +192,6 @@
 
     migrateLegacySettings();
 
-    function normalizePlaylistHistory(raw) {
-      if (!Array.isArray(raw)) return [];
-      const cleaned = [];
-      const seen = new Set();
-      for (const entry of raw) {
-        if (!entry) continue;
-
-        let id = '';
-        let title = '';
-
-        if (typeof entry === 'string') {
-          id = entry.trim();
-          title = id;
-        } else if (typeof entry === 'object') {
-          if (typeof entry.id === 'string') {
-            id = entry.id.trim();
-          } else if (typeof entry.playlistId === 'string') {
-            id = entry.playlistId.trim();
-          } else if (typeof entry.url === 'string') {
-            const url = entry.url.trim();
-            const match = url.match(/[?&]list=([^&#]+)/);
-            id = match ? decodeURIComponent(match[1]) : url;
-          }
-
-          if (typeof entry.title === 'string' && entry.title.trim().length) {
-            title = entry.title.trim();
-          } else if (typeof entry.name === 'string' && entry.name.trim().length) {
-            title = entry.name.trim();
-          }
-        }
-
-        if (!id) continue;
-        if (seen.has(id)) continue;
-        seen.add(id);
-        cleaned.push({ id, title: title || id });
-        if (cleaned.length >= PLAYLIST_HISTORY_LIMIT) break;
-      }
-      return cleaned;
-    }
-
     // DOM refs
     const sidebarMenuBtn = document.getElementById('sidebarMenuBtn');
     const playlistIOBtn = document.getElementById('playlistIOBtn');
@@ -271,334 +243,103 @@
     const alertMessageEl = document.getElementById('alertMessage');
     const alertCloseBtn = document.getElementById('alertCloseBtn');
     const spectrumCanvas = document.getElementById('spectrumCanvas');
-    let lastFocusedElement = null;
+    const alert = createAlert({ overlayEl: alertOverlay, messageEl: alertMessageEl, closeBtn: alertCloseBtn });
 
-    // iOS Safari: swiping on the YouTube iframe can trigger page scroll attempts
-    // (brief horizontal/vertical scrollbars). We lock scroll for touches in the
-    // player area, but still allow scrolling inside the sidebar + overlays.
-    const isIOS = (() => {
-      const ua = navigator.userAgent || '';
-      const platform = navigator.platform || '';
-      const isAppleMobile = /iP(hone|od|ad)/.test(ua);
-      const isIpadOS = platform === 'MacIntel' && navigator.maxTouchPoints > 1;
-      return isAppleMobile || isIpadOS;
-    })();
+    const spectrum = new Spectrum({ canvas: spectrumCanvas });
 
-    if (isIOS) {
-      document.addEventListener('touchmove', (event) => {
-        if (event.defaultPrevented) return;
-        const target = event.target instanceof Element ? event.target : null;
-        if (!target) return;
+    const sidebar = new Sidebar({
+      sidebarMenuBtn,
+      sidebarDrawer,
+      playerGestureLayer,
+      isInteractionBlockingHide: () => isProgressScrubbing || isSeekSwipeActive,
+      allowScrollSelectors: [
+        '#sidebarDrawer',
+        '#trackListContainer',
+        '#artistFilterOverlay',
+        '#countryFilterOverlay',
+        '.playlist-overlay-content',
+        '#alertOverlay'
+      ]
+    });
+    const showAlert = (message) => alert.show(message);
 
-        // Allow normal scrolling in scrollable UI surfaces.
-        if (
-          target.closest('#sidebarDrawer') ||
-          target.closest('#trackListContainer') ||
-          target.closest('#artistFilterOverlay') ||
-          target.closest('#countryFilterOverlay') ||
-          target.closest('.playlist-overlay-content') ||
-          target.closest('#alertOverlay')
-        ) {
-          return;
+    const countryFilterOverlayController = new CountryFilterOverlay({
+      buttonEl: countryFilterBtn,
+      overlayEl: countryFilterOverlay,
+      wrapperEl: countryFilterWrapper,
+      optionsEl: countryFilterOptions,
+      filterInputEl,
+      onBeforeOpen: () => {
+        if (trackDetailsOverlayVisible) {
+          closeTrackDetailsOverlay();
         }
-
-        // Prevent iOS page scroll/bounce when touching the player/iframe area.
-        if (target.closest('#player-container') || target.closest('#player')) {
-          event.preventDefault();
+        if (artistFilterOverlayController.isVisible()) {
+          artistFilterOverlayController.close();
         }
-      }, { passive: false });
-    }
+      },
+      getPlaylistItems: () => playlistItems,
+      getFilters: () => countryFilters,
+      setFilters: (next) => {
+        countryFilters = filterStateStore.setCountryFilters(next);
+        return countryFilters;
+      },
+      onFiltersChanged: () => {
+        computeFilteredIndices();
+        renderTrackList();
+      },
+      normalizeIso3: (code) => normalizeIso3(code),
+      normalizeCountryFilterList: (value) => normalizeCountryFilterList(value),
+      splitCountryCodes: (value) => splitCountryCodes(value),
+      makeSortKey: (value) => makeSortKey(value),
+      getFlagEmojiForIso3: (iso3) => getFlagEmojiForIso3(iso3),
+    });
 
-    // ---- Offline spectrum cache + renderer ----
-    // Cache format: `public/spectrum-cache/<videoId>.spc32`
-    // Header (32 bytes):
-    // 0..3   magic 'SPC1'
-    // 4      version u8
-    // 5      bins u8
-    // 6      fps u8
-    // 7      reserved
-    // 8..11  sampleRate u32le
-    // 12..15 durationMs u32le
-    // 16..19 frameCount u32le
-    // 20..27 videoIdHash (sha256 first 8 bytes)
-    // 28..31 reserved
-    // Payload: frameCount * bins u8
-
-    const SPECTRUM_CACHE_DIR = './spectrum-cache';
-    let spectrumCacheEnabled = true;
-    const spectrumState = {
-      bins: 16,
-      fps: 20,
-      frameCount: 0,
-      durationMs: 0,
-      frames: null,
-      peaks: null,
-      rafId: null,
-      lastVideoId: '',
-      dpr: 1,
-    };
-
-    function clearSpectrumCanvas() {
-      if (!spectrumCanvas) return;
-      const ctx = spectrumCanvas.getContext('2d');
-      if (!ctx) return;
-      ctx.clearRect(0, 0, spectrumCanvas.width, spectrumCanvas.height);
-    }
-
-    function disableSpectrumCache() {
-      spectrumCacheEnabled = false;
-      stopSpectrumAnimation();
-      spectrumState.frames = null;
-      spectrumState.frameCount = 0;
-      spectrumState.durationMs = 0;
-      spectrumState.lastVideoId = '';
-      document.body.classList.add('spectrum-missing');
-      clearSpectrumCanvas();
-    }
-
-    function ensureSpectrumPeaks(binCount) {
-      if (spectrumState.peaks && spectrumState.peaks.length === binCount) return;
-      spectrumState.peaks = new Float32Array(binCount);
-      spectrumState.peaks.fill(0);
-    }
-
-    function u8ToHex(u8) {
-      return Array.from(u8, (b) => b.toString(16).padStart(2, '0')).join('');
-    }
-
-    async function sha256First8Bytes(str) {
-      if (!window.crypto?.subtle) return null;
-      const data = new TextEncoder().encode(str);
-      const digest = await window.crypto.subtle.digest('SHA-256', data);
-      return new Uint8Array(digest).slice(0, 8);
-    }
-
-    function drawSpectrumFrame(frameU8) {
-      if (!spectrumCanvas || !frameU8) return;
-      const ctx = spectrumCanvas.getContext('2d');
-      if (!ctx) return;
-
-      const cssW = spectrumCanvas.clientWidth || 1;
-      const cssH = spectrumCanvas.clientHeight || 1;
-      const dpr = window.devicePixelRatio || 1;
-      if (spectrumState.dpr !== dpr || spectrumCanvas.width !== Math.round(cssW * dpr) || spectrumCanvas.height !== Math.round(cssH * dpr)) {
-        spectrumState.dpr = dpr;
-        spectrumCanvas.width = Math.round(cssW * dpr);
-        spectrumCanvas.height = Math.round(cssH * dpr);
-      }
-
-      const W = spectrumCanvas.width;
-      const H = spectrumCanvas.height;
-      ctx.clearRect(0, 0, W, H);
-
-      // Background grid-like dots (subtle Winamp vibe)
-      ctx.fillStyle = 'rgba(255,255,255,0.04)';
-      const grid = Math.max(4, Math.floor(8 * spectrumState.dpr));
-      for (let y = grid; y < H; y += grid) {
-        for (let x = grid; x < W; x += grid) {
-          ctx.fillRect(x, y, 1, 1);
+    const artistFilterOverlayController = new ArtistFilterOverlay({
+      buttonEl: artistFilterBtn,
+      overlayEl: artistFilterOverlay,
+      wrapperEl: artistFilterWrapper,
+      optionsEl: artistFilterOptions,
+      filterInputEl,
+      onBeforeOpen: () => {
+        if (trackDetailsOverlayVisible) {
+          closeTrackDetailsOverlay();
         }
-      }
-
-      const binCount = Math.min(frameU8.length, spectrumState.bins);
-      ensureSpectrumPeaks(binCount);
-      // More Winamp-like proportion: fewer, chunkier bars.
-      // Reduce gaps ~50% and spend the space on wider bars.
-      const gap = Math.max(1, Math.round(1.5 * spectrumState.dpr));
-      const barW = Math.max(2, Math.floor((W - gap * (binCount + 1)) / binCount));
-      const maxBarH = H - Math.round(6 * spectrumState.dpr);
-      const baseY = H - Math.round(3 * spectrumState.dpr);
-
-      // Peak hold: keep a decaying peak per bin.
-      // Tuned for ~60fps render loop while cache is 20fps.
-      const peakFallPerFrame = 0.018; // fraction per animation frame
-      // Peak marker should be a single device pixel.
-      const peakCapH = Math.max(1, Math.round(1 * spectrumState.dpr));
-
-      for (let i = 0; i < binCount; i++) {
-        const v = frameU8[i] / 255;
-        const h = Math.max(1, Math.round(v * maxBarH));
-        const x = gap + i * (barW + gap);
-        const y = baseY - h;
-
-        // Height-based ramp: green -> yellow -> orange -> red.
-        // Red should occupy a noticeable top band, not just 1px.
-        const grad = ctx.createLinearGradient(0, y, 0, baseY);
-        // More vivid ramp.
-        grad.addColorStop(0.00, '#ff0033'); // vivid red (top)
-        grad.addColorStop(0.18, '#ff6a00'); // vivid orange
-        grad.addColorStop(0.40, '#ffe600'); // vivid yellow
-        grad.addColorStop(1.00, '#00ff57'); // vivid green (bottom)
-        ctx.fillStyle = grad;
-        ctx.fillRect(x, y, barW, h);
-
-        // Peak hold update + draw (thicker cap)
-        const peaks = spectrumState.peaks;
-        const nextPeak = Math.max(v, (peaks[i] || 0) - peakFallPerFrame);
-        peaks[i] = nextPeak;
-
-        const peakH = Math.max(1, Math.round(nextPeak * maxBarH));
-        const peakY = Math.max(0, baseY - peakH);
-        const capY = Math.max(0, peakY);
-        const capH = Math.min(peakCapH, baseY - capY);
-
-        // Pick cap color by level (green/yellow/orange/red)
-        let capColor = '#00ff57';
-        if (nextPeak >= 0.88) capColor = '#ff0033';
-        else if (nextPeak >= 0.76) capColor = '#ff6a00';
-        else if (nextPeak >= 0.60) capColor = '#ffe600';
-        ctx.fillStyle = capColor;
-        ctx.fillRect(x, capY, barW, capH);
-      }
-    }
-
-    function stopSpectrumAnimation() {
-      if (spectrumState.rafId) {
-        cancelAnimationFrame(spectrumState.rafId);
-        spectrumState.rafId = null;
-      }
-    }
-
-    function startSpectrumAnimation() {
-      stopSpectrumAnimation();
-      if (!spectrumCacheEnabled) return;
-      if (!spectrumCanvas || !spectrumState.frames || !controller) return;
-
-      const tick = () => {
-        if (!spectrumState.frames || !controller) {
-          spectrumState.rafId = null;
-          return;
+        if (countryFilterOverlayController.isVisible()) {
+          countryFilterOverlayController.close();
         }
-        const t = controller.getCurrentTime();
-        const frameIndex = Math.max(0, Math.min(spectrumState.frameCount - 1, Math.floor(t * spectrumState.fps)));
-        const offset = frameIndex * spectrumState.bins;
-        const frame = spectrumState.frames.subarray(offset, offset + spectrumState.bins);
-        drawSpectrumFrame(frame);
-        spectrumState.rafId = requestAnimationFrame(tick);
-      };
+      },
+      getPlaylistItems: () => playlistItems,
+      getFilters: () => artistFilters,
+      setFilters: (next) => {
+        artistFilters = filterStateStore.setArtistFilters(next);
+        return artistFilters;
+      },
+      onFiltersChanged: (renderOptions = {}) => {
+        computeFilteredIndices();
+        renderTrackList(renderOptions);
+      },
+      normalizeArtistName: (name) => normalizeArtistName(name),
+      normalizeArtistKey: (name) => normalizeArtistKey(name),
+      makeSortKey: (value) => makeSortKey(value),
+    });
 
-      spectrumState.rafId = requestAnimationFrame(tick);
-    }
-
-    async function loadSpectrumForVideoId(videoId) {
-      if (!spectrumCacheEnabled) return false;
-      if (!videoId) return false;
-      if (videoId === spectrumState.lastVideoId && spectrumState.frames) return true;
-
-      stopSpectrumAnimation();
-      spectrumState.lastVideoId = videoId;
-      spectrumState.frames = null;
-      spectrumState.frameCount = 0;
-      spectrumState.durationMs = 0;
-      document.body.classList.add('spectrum-missing');
-
-      const url = `${SPECTRUM_CACHE_DIR}/${encodeURIComponent(videoId)}.spc32`;
-      let buf;
-      try {
-        const resp = await fetch(url, { cache: 'no-store' });
-        if (!resp.ok) return false;
-        buf = await resp.arrayBuffer();
-      } catch {
-        return false;
-      }
-
-      if (buf.byteLength < 32) return false;
-      const view = new DataView(buf);
-      const magic = String.fromCharCode(view.getUint8(0), view.getUint8(1), view.getUint8(2), view.getUint8(3));
-      if (magic !== 'SPC1') return false;
-      const version = view.getUint8(4);
-      if (version !== 1) return false;
-      const bins = view.getUint8(5);
-      const fps = view.getUint8(6);
-      const durationMs = view.getUint32(12, true);
-      const frameCount = view.getUint32(16, true);
-      const hashBytes = new Uint8Array(buf.slice(20, 28));
-
-      // Optional integrity check (best-effort).
-      try {
-        const expect = await sha256First8Bytes(videoId);
-        if (expect) {
-          for (let i = 0; i < 8; i++) {
-            if (expect[i] !== hashBytes[i]) {
-              console.warn('Spectrum cache hash mismatch for', videoId, 'got', u8ToHex(hashBytes), 'expected', u8ToHex(expect));
-              break;
-            }
-          }
-        }
-      } catch {
-        // ignore
-      }
-
-      const payloadOffset = 32;
-      const expectedBytes = payloadOffset + frameCount * bins;
-      if (buf.byteLength < expectedBytes) return false;
-
-      spectrumState.bins = bins;
-      spectrumState.fps = fps;
-      spectrumState.durationMs = durationMs;
-      spectrumState.frameCount = frameCount;
-      spectrumState.frames = new Uint8Array(buf, payloadOffset, frameCount * bins);
-      spectrumState.peaks = null;
-
-      document.body.classList.remove('spectrum-missing');
-      return true;
-    }
-
-    function hideAlert() {
-      if (!alertOverlay) return;
-      alertOverlay.classList.remove('visible');
-      alertOverlay.style.display = '';
-      alertOverlay.setAttribute('aria-hidden', 'true');
-      if (lastFocusedElement && typeof lastFocusedElement.focus === 'function') {
-        lastFocusedElement.focus({ preventScroll: true });
-      }
-      lastFocusedElement = null;
-    }
-
-    function showAlert(message) {
-      if (!alertOverlay || !alertMessageEl || !alertCloseBtn) {
-        window.alert(typeof message === 'string' ? message : JSON.stringify(message, null, 2));
-        return;
-      }
-      const formatted = typeof message === 'string' ? message : JSON.stringify(message, null, 2);
-      alertMessageEl.textContent = formatted;
-      alertMessageEl.scrollTop = 0;
-      lastFocusedElement = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-      alertOverlay.style.display = 'flex';
-      alertOverlay.classList.add('visible');
-      alertOverlay.setAttribute('aria-hidden', 'false');
-      alertCloseBtn.focus({ preventScroll: true });
-    }
-
-    if (alertCloseBtn) {
-      alertCloseBtn.addEventListener('click', hideAlert);
-    }
-
-    if (alertOverlay) {
-      alertOverlay.addEventListener('click', (event) => {
-        if (event.target === alertOverlay) {
-          hideAlert();
-        }
-      });
-    }
+    countryFilterOverlayController.setup();
+    artistFilterOverlayController.setup();
 
     document.addEventListener('keydown', (event) => {
       if (event.key === 'Escape') {
         let handled = false;
-        if (alertOverlay?.classList.contains('visible')) {
-          hideAlert();
-          handled = true;
-        }
+        handled = alert.handleEscape(event) || handled;
         if (trackDetailsOverlayVisible) {
           closeTrackDetailsOverlay({ focusButton: !handled });
           handled = true;
         }
-        if (artistFilterOverlayVisible) {
-          closeArtistFilterOverlay({ focusButton: !handled });
+        if (artistFilterOverlayController.isVisible()) {
+          artistFilterOverlayController.close({ focusButton: !handled });
           handled = true;
         }
-        if (countryFilterOverlayVisible) {
-          closeCountryFilterOverlay({ focusButton: !handled });
+        if (countryFilterOverlayController.isVisible()) {
+          countryFilterOverlayController.close({ focusButton: !handled });
           handled = true;
         }
         if (handled) {
@@ -606,134 +347,6 @@
         }
       }
     });
-
-    const TYPEAHEAD_TIMEOUT_MS = 700;
-    let countryTypeahead = { buffer: '', lastTs: 0 };
-    let artistTypeahead = { buffer: '', lastTs: 0 };
-
-    function isTextInputActive() {
-      const el = document.activeElement;
-      if (!el) return false;
-      const tag = (el.tagName || '').toLowerCase();
-      if (tag === 'textarea' || tag === 'select') return true;
-      if (tag === 'input') {
-        const type = (el.getAttribute('type') || '').toLowerCase();
-        return type === '' || type === 'text' || type === 'search' || type === 'email' || type === 'number'
-          || type === 'password' || type === 'url' || type === 'tel';
-      }
-      return !!el.isContentEditable;
-    }
-
-    function scrollFirstSelectedOptionIntoView(optionsEl) {
-      if (!optionsEl) return;
-      const labels = Array.from(optionsEl.querySelectorAll('label.track-details-option'));
-      for (const label of labels) {
-        if (label.dataset && label.dataset.role === 'all') continue;
-        const input = label.querySelector('input[type="checkbox"]');
-        if (input && input.checked) {
-          // Prefer manual container scroll to avoid browser quirks when overlays flip
-          // from display:none -> display:flex.
-          try {
-            const containerRect = optionsEl.getBoundingClientRect();
-            const labelRect = label.getBoundingClientRect();
-            const sticky = optionsEl.querySelector('label.track-details-option[data-role="all"]');
-            const stickyHeight = sticky ? sticky.getBoundingClientRect().height : 0;
-            const desiredTop = labelRect.top - containerRect.top - stickyHeight - 6;
-            optionsEl.scrollTop += desiredTop;
-          } catch (e) {
-            label.scrollIntoView({ block: 'nearest' });
-          }
-          return;
-        }
-      }
-      optionsEl.scrollTop = 0;
-    }
-
-    function scheduleScrollFirstSelectedOptionIntoView(optionsEl) {
-      if (!optionsEl) return;
-      // Two RAFs ensures the overlay has been displayed and laid out.
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          scrollFirstSelectedOptionIntoView(optionsEl);
-        });
-      });
-    }
-
-    function handleOverlayTypeahead(state, optionsEl, rawChar) {
-      if (!optionsEl) return;
-      const now = Date.now();
-      if (now - state.lastTs > TYPEAHEAD_TIMEOUT_MS) {
-        state.buffer = '';
-      }
-      state.lastTs = now;
-      state.buffer += rawChar;
-
-      const query = makeSortKey(state.buffer);
-      if (!query) return;
-
-      const labels = Array.from(optionsEl.querySelectorAll('label.track-details-option'));
-      for (const label of labels) {
-        if (label.dataset && label.dataset.role === 'all') continue;
-        const key = (label.dataset && typeof label.dataset.searchKey === 'string')
-          ? label.dataset.searchKey
-          : makeSortKey(label.textContent || '');
-        if (key.startsWith(query)) {
-          label.scrollIntoView({ block: 'nearest' });
-          break;
-        }
-      }
-    }
-
-    document.addEventListener('keydown', (event) => {
-      if (event.defaultPrevented) return;
-      if (event.metaKey || event.ctrlKey || event.altKey) return;
-      if (!artistFilterOverlayVisible && !countryFilterOverlayVisible) return;
-
-      // Don't hijack typing in the main filter input.
-      if (document.activeElement === filterInputEl) return;
-
-      const optionsEl = countryFilterOverlayVisible ? countryFilterOptions : artistFilterOptions;
-      if (!optionsEl) return;
-
-      if (event.key === 'ArrowDown') {
-        event.preventDefault();
-        optionsEl.scrollBy({ top: 32, behavior: 'auto' });
-        return;
-      }
-      if (event.key === 'ArrowUp') {
-        event.preventDefault();
-        optionsEl.scrollBy({ top: -32, behavior: 'auto' });
-        return;
-      }
-      if (event.key === 'PageDown') {
-        event.preventDefault();
-        optionsEl.scrollBy({ top: Math.max(64, Math.floor(optionsEl.clientHeight * 0.9)), behavior: 'auto' });
-        return;
-      }
-      if (event.key === 'PageUp') {
-        event.preventDefault();
-        optionsEl.scrollBy({ top: -Math.max(64, Math.floor(optionsEl.clientHeight * 0.9)), behavior: 'auto' });
-        return;
-      }
-
-      const key = event.key;
-      if (!key || key.length !== 1) return;
-      if (isTextInputActive()) return;
-
-      // Allow latin/cyrillic letters, digits, and a few separators.
-      if (!/[a-zA-Z0-9\u0400-\u04FF\s\-_.]/.test(key)) return;
-
-      if (countryFilterOverlayVisible) {
-        handleOverlayTypeahead(countryTypeahead, optionsEl, key);
-      } else if (artistFilterOverlayVisible) {
-        handleOverlayTypeahead(artistTypeahead, optionsEl, key);
-      }
-    });
-
-    function persistPlaylistHistory() {
-      settings.playlistHistory = playlistHistory;
-      saveSettings({ playlistHistory });
-    }
 
     function getLocalPlaylistOptions() {
       const library = localPlaylistLibrary;
@@ -815,21 +428,15 @@
 
     function addPlaylistToHistory(id, title) {
       if (!id) return;
-      const cleanedTitle = title && title.trim().length ? title.trim() : id;
-
-      const existing = playlistHistory.filter((entry) => entry.id !== id);
-      playlistHistory = [{ id, title: cleanedTitle }, ...existing];
-      if (playlistHistory.length > PLAYLIST_HISTORY_LIMIT) {
-        playlistHistory = playlistHistory.slice(0, PLAYLIST_HISTORY_LIMIT);
-      }
-      persistPlaylistHistory();
+      playlistHistoryStore.add(id, title);
+      playlistHistory = playlistHistoryStore.get();
       updatePlaylistHistorySelect(id);
     }
 
     function removePlaylistFromHistory(id) {
       if (!id) return;
-      playlistHistory = playlistHistory.filter((entry) => entry.id !== id);
-      persistPlaylistHistory();
+      playlistHistoryStore.remove(id);
+      playlistHistory = playlistHistoryStore.get();
       const patch = {};
       const map = getCurrentVideoMap();
       if (map[id]) {
@@ -851,36 +458,42 @@
 
     function resetStoredSettings() {
       try {
-        localStorage.removeItem(STORAGE_KEY);
+        settingsStore.reset();
       } catch (error) {
         console.warn('Failed to clear stored settings:', error);
         throw error;
       }
 
-      settings = {};
-      playlistHistory = [];
+      settings = settingsStore.get();
+      playlistHistoryStore.replace([], { persist: false });
+      playlistHistory = playlistHistoryStore.get();
       updatePlaylistHistorySelect('');
 
-      shuffleEnabled = true;
-      shuffleBag = [];
-      shuffleBagVersion = -1;
-      resetShuffleHistory();
+      shuffleQueue.setEnabled(true);
       updateShuffleButtonState();
 
       filterText = '';
+      if (filterStateStore) {
+        filterStateStore.resetInMemory();
+      }
       if (filterInputEl) {
         filterInputEl.value = '';
       }
 
       countryFilters = [];
-      updateCountryFilterOptions();
-      closeCountryFilterOverlay();
+      countryFilterOverlayController.updateOptions();
+      countryFilterOverlayController.close();
 
       artistFilters = [];
-      updateArtistFilterOptions();
-      closeArtistFilterOverlay();
+      artistFilterOverlayController.updateOptions();
+      artistFilterOverlayController.close();
 
-      trackDetailSettings = { ...DEFAULT_TRACK_DETAILS };
+      if (trackDetailStore) {
+        ({ preferences: trackDetailSettings, sortAlphabetically } = trackDetailStore.resetInMemory());
+      } else {
+        trackDetailSettings = { ...DEFAULT_TRACK_DETAILS };
+        sortAlphabetically = false;
+      }
       applyTrackDetailPreferences();
       syncTrackDetailsControls();
       closeTrackDetailsOverlay();
@@ -899,10 +512,6 @@
       }
 
       return true;
-    }
-
-    if (historyNeedsPersist) {
-      persistPlaylistHistory();
     }
 
     updatePlaylistHistorySelect(settings.playlistId || '');
@@ -930,63 +539,17 @@
       window.visualViewport.addEventListener('scroll', updateViewportHeight);
     }
 
-    // init from settings
-    if (settings.trackDetailPreferences && typeof settings.trackDetailPreferences === 'object' && !Array.isArray(settings.trackDetailPreferences)) {
-      trackDetailSettings = { ...DEFAULT_TRACK_DETAILS, ...settings.trackDetailPreferences };
-    } else {
-      trackDetailSettings = { ...DEFAULT_TRACK_DETAILS };
-      if (typeof settings.showThumbnails === 'boolean') {
-        trackDetailSettings.thumbnail = settings.showThumbnails;
-      }
-    }
-    if (typeof settings.sortAlphabetically === 'boolean') {
-      sortAlphabetically = settings.sortAlphabetically;
-    }
-    trackDetailSettings.sortAZ = !!sortAlphabetically;
-    if (typeof settings.filterText === 'string') {
-      filterText = settings.filterText;
+    // init from settings (handled by stores)
+    if (filterInputEl) {
       filterInputEl.value = filterText;
-    }
-    if (Array.isArray(settings.artistFilters)) {
-      artistFilters = normalizeArtistFilterList(settings.artistFilters);
-    }
-    if (Array.isArray(settings.countryFilters)) {
-      countryFilters = normalizeCountryFilterList(settings.countryFilters);
-    } else if (typeof settings.countryFilter === 'string') {
-      const legacy = normalizeIso3(settings.countryFilter);
-      countryFilters = legacy ? [legacy] : [];
     }
     updateFilterWrapperClass();
     applyTrackDetailPreferences();
     syncTrackDetailsControls();
     updateTrackDetailsButtonState();
 
-    function normalizeIso3(code) {
-      return (code || '').trim().toUpperCase();
-    }
-
-    const CYRILLIC_TO_LATIN = Object.freeze({
-      А: 'A', а: 'a', Б: 'B', б: 'b', В: 'V', в: 'v', Г: 'G', г: 'g', Д: 'D', д: 'd',
-      Е: 'E', е: 'e', Ё: 'Yo', ё: 'yo', Ж: 'Zh', ж: 'zh', З: 'Z', з: 'z', И: 'I', и: 'i',
-      Й: 'Y', й: 'y', К: 'K', к: 'k', Л: 'L', л: 'l', М: 'M', м: 'm', Н: 'N', н: 'n',
-      О: 'O', о: 'o', П: 'P', п: 'p', Р: 'R', р: 'r', С: 'S', с: 's', Т: 'T', т: 't',
-      У: 'U', у: 'u', Ф: 'F', ф: 'f', Х: 'Kh', х: 'kh', Ц: 'Ts', ц: 'ts', Ч: 'Ch', ч: 'ch',
-      Ш: 'Sh', ш: 'sh', Щ: 'Shch', щ: 'shch', Ъ: '', ъ: '', Ы: 'Y', ы: 'y', Ь: '', ь: '',
-      Э: 'E', э: 'e', Ю: 'Yu', ю: 'yu', Я: 'Ya', я: 'ya',
-      І: 'I', і: 'i', Ї: 'Yi', ї: 'yi', Є: 'Ye', є: 'ye', Ґ: 'G', ґ: 'g'
-    });
-
-    function transliterateCyrillicToLatin(value) {
-      if (typeof value !== 'string' || !value) return '';
-      let out = '';
-      for (const ch of value) {
-        out += (ch in CYRILLIC_TO_LATIN) ? CYRILLIC_TO_LATIN[ch] : ch;
-      }
-      return out;
-    }
-
     function makeSortKey(value) {
-      return transliterateCyrillicToLatin((value || '')).toLowerCase();
+      return TextUtils.makeSortKey(value);
     }
 
     function hashIndexList(indices) {
@@ -1012,8 +575,8 @@
 
     function updateShuffleButtonState() {
       if (!shuffleBtn) return;
-      shuffleBtn.classList.toggle('active', !!shuffleEnabled);
-      shuffleBtn.setAttribute('aria-pressed', String(!!shuffleEnabled));
+      shuffleBtn.classList.toggle('active', shuffleQueue.isEnabled());
+      shuffleBtn.setAttribute('aria-pressed', String(shuffleQueue.isEnabled()));
       if (shuffleIcon) {
         shuffleIcon.className = 'icon shuffle';
         shuffleIcon.textContent = 'shuffle';
@@ -1073,19 +636,9 @@
       }
     }
 
-    // Sidebar: unified overlay drawer everywhere.
-    const SIDEBAR_AUTO_HIDE_MS = 80000;
-    let sidebarInactivityInterval = null;
-    let sidebarLastActivityTs = 0;
-    let sidebarHideSuppressedUntil = 0;
     let isProgressScrubbing = false;
     let isSeekSwipeActive = false;
     let seekFeedbackHideTimer = null;
-
-    function suppressSidebarHideFromPlayerState(ms = 1500) {
-      const until = Date.now() + Math.max(0, ms || 0);
-      if (until > sidebarHideSuppressedUntil) sidebarHideSuppressedUntil = until;
-    }
 
     function setSeekFeedbackVisible(visible) {
       if (!seekSwipeLayer || !seekSwipeFeedback) return;
@@ -1118,196 +671,26 @@
       }, delay);
     }
 
-    function maybeHideSidebarFromPlayerStateChange(playerState) {
-      if (document.body.classList.contains('sidebar-hidden')) return;
-      if (isProgressScrubbing || isSeekSwipeActive) return;
-      if (Date.now() < sidebarHideSuppressedUntil) return;
-      if (
-        playerState === CONTROLLER_STATES.PLAYING ||
-        playerState === CONTROLLER_STATES.PAUSED ||
-        playerState === CONTROLLER_STATES.BUFFERING
-      ) {
-        setSidebarHidden(true);
-      }
-    }
-
-    function clearSidebarInactivityInterval() {
-      if (sidebarInactivityInterval) {
-        clearInterval(sidebarInactivityInterval);
-        sidebarInactivityInterval = null;
-      }
-    }
-
-    function ensureSidebarInactivityInterval() {
-      if (sidebarInactivityInterval) return;
-      sidebarInactivityInterval = setInterval(() => {
-        if (document.body.classList.contains('sidebar-hidden')) {
-          clearSidebarInactivityInterval();
-          return;
-        }
-        if (!sidebarLastActivityTs) sidebarLastActivityTs = Date.now();
-        if (Date.now() - sidebarLastActivityTs >= SIDEBAR_AUTO_HIDE_MS) {
-          setSidebarHidden(true);
-        }
-      }, 500);
-    }
-
-    function noteSidebarActivity() {
-      if (document.body.classList.contains('sidebar-hidden')) return;
-      sidebarLastActivityTs = Date.now();
-      ensureSidebarInactivityInterval();
-    }
-
-    function setSidebarHidden(hidden) {
-      const wantsHidden = !!hidden;
-      document.body.classList.toggle('sidebar-hidden', wantsHidden);
-      document.body.classList.remove('sidebar-collapsed');
-      if (wantsHidden) {
-        clearSidebarInactivityInterval();
-        return;
-      }
-      sidebarLastActivityTs = Date.now();
-      ensureSidebarInactivityInterval();
-    }
 
     function handleFullscreenChange() {
       updateFullscreenButtonState();
       document.body.classList.toggle('is-fullscreen', isAppFullscreen());
     }
 
-    function setupSidebarInteractions() {
-      // Menu button hides the sidebar.
-      if (sidebarMenuBtn) {
-        sidebarMenuBtn.addEventListener('click', (event) => {
-          event.preventDefault();
-          event.stopPropagation();
-          setSidebarHidden(true);
-        });
-      }
 
-      // Clicking outside the drawer hides it, but must NOT block or swallow the click,
-      // so the YouTube iframe still receives it.
-      const hideFromOutside = (event) => {
-        if (document.body.classList.contains('sidebar-hidden')) return;
-        if (!sidebarDrawer) return;
-        const target = event.target;
-        if (target instanceof Node && sidebarDrawer.contains(target)) return;
-        setSidebarHidden(true);
-      };
-      document.addEventListener('pointerdown', hideFromOutside, { capture: true, passive: true });
-
-      // Clicks inside cross-origin iframes don't bubble to the parent document.
-      // Best-effort: when the YouTube iframe gains focus, treat it as an outside interaction.
-      const hideFromIframeFocus = (event) => {
-        if (document.body.classList.contains('sidebar-hidden')) return;
-        if (!sidebarDrawer) return;
-        const target = event.target;
-        if (target instanceof Node && sidebarDrawer.contains(target)) return;
-        if (!(target instanceof HTMLElement)) return;
-        if (target.tagName !== 'IFRAME') return;
-        setSidebarHidden(true);
-      };
-      document.addEventListener('focusin', hideFromIframeFocus, { capture: true });
-
-      // When hidden, a tap/click on the video shows the sidebar.
-      if (playerGestureLayer) {
-        const showFromVideo = (event) => {
-          if (!document.body.classList.contains('sidebar-hidden')) return;
-          event.preventDefault();
-          event.stopPropagation();
-          setSidebarHidden(false);
-        };
-        playerGestureLayer.addEventListener('pointerdown', showFromVideo, { passive: false });
-        playerGestureLayer.addEventListener('click', showFromVideo, { passive: false });
-      }
-
-      // Any interaction while visible resets the inactivity timer.
-      const bump = () => noteSidebarActivity();
-      document.addEventListener('pointerdown', bump, { capture: true, passive: true });
-      document.addEventListener('touchstart', bump, { capture: true, passive: true });
-      document.addEventListener('keydown', bump, { capture: true });
-      document.addEventListener('wheel', bump, { capture: true, passive: true });
-
-      // Start the timer if the sidebar begins visible.
-      noteSidebarActivity();
-    }
-
-    function getShuffleQueueIndices() {
-      return (Array.isArray(visibleIndices) && visibleIndices.length)
-        ? visibleIndices
-        : playlistItems.map((_, idx) => idx);
-    }
-
-    function resetShuffleBag() {
-      const queue = getShuffleQueueIndices();
-      const remaining = queue.filter((idx) => idx !== currentIndex);
-      shuffleArrayInPlace(remaining);
-      shuffleBag = remaining;
-      shuffleBagVersion = visibleIndicesVersion;
-    }
-
-    function resetShuffleHistory() {
-      shuffleHistory = [];
-      shuffleHistoryPos = -1;
-    }
-
-    function recordShuffleHistory(idx) {
-      if (!shuffleEnabled) return;
-      if (shuffleNavigatingHistory) return;
-      if (typeof idx !== 'number' || idx < 0) return;
-
-      // If the user went back and then plays a new track, discard the "forward" part.
-      if (shuffleHistoryPos >= 0 && shuffleHistoryPos < shuffleHistory.length - 1) {
-        shuffleHistory = shuffleHistory.slice(0, shuffleHistoryPos + 1);
-      }
-
-      const last = shuffleHistory.length ? shuffleHistory[shuffleHistory.length - 1] : null;
-      if (last === idx) {
-        shuffleHistoryPos = shuffleHistory.length - 1;
-        return;
-      }
-
-      shuffleHistory.push(idx);
-      shuffleHistoryPos = shuffleHistory.length - 1;
-    }
-
-    function noteShufflePlayed(idx) {
-      if (!shuffleEnabled) return;
-      if (shuffleBagVersion !== visibleIndicesVersion) return;
-      const pos = shuffleBag.indexOf(idx);
-      if (pos >= 0) {
-        shuffleBag.splice(pos, 1);
-      }
-    }
-
-    function getNextShuffleIndex() {
-      const queue = getShuffleQueueIndices();
-      if (!queue.length) return -1;
-      if (shuffleBagVersion !== visibleIndicesVersion) {
-        resetShuffleBag();
-      }
-      if (!shuffleBag.length) {
-        resetShuffleBag();
-      }
-      if (!shuffleBag.length) return -1;
-      return shuffleBag.pop();
-    }
 
     function toggleShuffleMode() {
-      shuffleEnabled = !shuffleEnabled;
-      saveSettings({ shuffleEnabled: !!shuffleEnabled });
-      shuffleBag = [];
-      shuffleBagVersion = -1;
-      resetShuffleHistory();
+      shuffleQueue.toggle();
+      saveSettings({ shuffleEnabled: shuffleQueue.isEnabled() });
       updateShuffleButtonState();
     }
 
     function normalizeArtistName(name) {
-      return (name || '').trim().toLowerCase();
+      return TextUtils.normalizeArtistName(name);
     }
 
     function normalizeArtistKey(name) {
-      return normalizeArtistName(name);
+      return TextUtils.normalizeArtistKey(name);
     }
 
     function normalizeArtistFilterList(value) {
@@ -1327,29 +710,7 @@
     }
 
     function toggleArtistFilterName(name) {
-      const cleaned = normalizeArtistName(name);
-      if (!cleaned) return;
-      const key = normalizeArtistKey(cleaned);
-      if (!key) return;
-
-      const next = new Map();
-      artistFilters.forEach((entry) => {
-        const entryKey = normalizeArtistKey(entry);
-        if (!entryKey) return;
-        next.set(entryKey, normalizeArtistName(entry));
-      });
-
-      if (next.has(key)) {
-        next.delete(key);
-      } else {
-        next.set(key, cleaned);
-      }
-
-      artistFilters = Array.from(next.values());
-      persistArtistFilters();
-      computeFilteredIndices();
-      renderTrackList({ preserveScroll: true, skipActiveScroll: true });
-      updateArtistFilterOptions();
+      artistFilterOverlayController.toggleName(name, { preserveScroll: true, skipActiveScroll: true });
     }
 
     function normalizeCountryFilterList(value) {
@@ -1364,6 +725,12 @@
         out.push(code);
       });
       return out;
+    }
+
+    function normalizeIso3(code) {
+      return filterStateStore
+        ? filterStateStore.normalizeIso3(code)
+        : (code || '').trim().toUpperCase();
     }
 
     function splitCountryCodes(value) {
@@ -1395,474 +762,14 @@
         .filter(Boolean);
     }
 
-    function collectArtistCounts() {
-      const displayByKey = new Map();
-      const counts = new Map();
-
-      (playlistItems || []).forEach((item) => {
-        const artists = splitArtists(getArtistSourceText(item));
-        if (!artists.length) return;
-
-        // Count each track once per artist key.
-        const uniq = new Map();
-        artists.forEach((artist) => {
-          const key = normalizeArtistKey(artist);
-          if (!key) return;
-          if (!uniq.has(key)) {
-            uniq.set(key, artist);
-          }
-        });
-
-        uniq.forEach((artist, key) => {
-          if (!displayByKey.has(key)) {
-            displayByKey.set(key, artist);
-          }
-          counts.set(key, (counts.get(key) || 0) + 1);
-        });
-      });
-
-      const artists = Array.from(displayByKey.entries())
-        .sort((a, b) => {
-          const keyA = makeSortKey(a[1]);
-          const keyB = makeSortKey(b[1]);
-          if (keyA < keyB) return -1;
-          if (keyA > keyB) return 1;
-          return a[1].localeCompare(b[1], undefined, { sensitivity: 'base' });
-        })
-        .map(([, display]) => display);
-
-      return { artists, counts };
-    }
-
-    function collectCountryCounts() {
-      const counts = new Map();
-      (playlistItems || []).forEach((item) => {
-        const codes = splitCountryCodes(item && typeof item === 'object' ? item.country : '');
-        if (!codes.length) {
-          counts.set('?', (counts.get('?') || 0) + 1);
-          return;
-        }
-
-        // Count each track once per country code.
-        const uniq = new Set(codes);
-        uniq.forEach((code) => {
-          counts.set(code, (counts.get(code) || 0) + 1);
-        });
-      });
-
-      const codes = Array.from(counts.keys())
-        .filter((c) => c !== '?')
-        .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
-
-      if (counts.has('?')) {
-        codes.unshift('?');
-      }
-
-      return { codes, counts };
-    }
-
     function getCountryFlagEmoji(iso3) {
       if (iso3 === '?') return '🏳️';
-      return typeof window.getFlagEmojiForIso3 === 'function'
-        ? window.getFlagEmojiForIso3(iso3)
-        : '';
-    }
-
-    function formatCountryOptionText(iso3, count) {
-      if (iso3 === '?') return `? (${count})`;
-      return `${iso3} (${count})`;
-    }
-
-    function updateCountryFilterButtonState() {
-      if (!countryFilterBtn) return;
-      const active = Array.isArray(countryFilters) && countryFilters.length > 0;
-      countryFilterBtn.classList.toggle('active', active);
-      countryFilterBtn.setAttribute('aria-expanded', String(countryFilterOverlayVisible));
-      countryFilterBtn.setAttribute('aria-pressed', String(countryFilterOverlayVisible));
-    }
-
-    function openCountryFilterOverlay() {
-      if (!countryFilterOverlay) return;
-      if (trackDetailsOverlayVisible) {
-        closeTrackDetailsOverlay();
-      }
-      if (artistFilterOverlayVisible) {
-        closeArtistFilterOverlay();
-      }
-      updateCountryFilterOptions();
-      countryFilterOverlay.classList.add('visible');
-      countryFilterOverlay.setAttribute('aria-hidden', 'false');
-      countryFilterOverlayVisible = true;
-      updateCountryFilterButtonState();
-      if (countryFilterOptions) {
-        scheduleScrollFirstSelectedOptionIntoView(countryFilterOptions);
-      }
-    }
-
-    function closeCountryFilterOverlay(options = {}) {
-      if (!countryFilterOverlay) return;
-      countryFilterOverlay.classList.remove('visible');
-      countryFilterOverlay.setAttribute('aria-hidden', 'true');
-      countryFilterOverlayVisible = false;
-      updateCountryFilterButtonState();
-      if (options.focusButton && countryFilterBtn && typeof countryFilterBtn.focus === 'function') {
-        countryFilterBtn.focus({ preventScroll: true });
-      }
-    }
-
-    function toggleCountryFilterOverlay() {
-      if (countryFilterOverlayVisible) {
-        closeCountryFilterOverlay();
-      } else {
-        openCountryFilterOverlay();
-      }
-    }
-
-    function persistCountryFilters() {
-      const normalized = normalizeCountryFilterList(countryFilters);
-      countryFilters = normalized;
-      // Keep legacy single-value for older builds; first selection wins.
-      saveSettings({ countryFilters: normalized, countryFilter: normalized[0] || '' });
-      updateCountryFilterButtonState();
+      return getFlagEmojiForIso3(iso3);
     }
 
     function toggleCountryFilterCode(code) {
-      const normalizedCode = normalizeIso3(code);
-      if (!normalizedCode) return;
-      const next = new Set(normalizeCountryFilterList(countryFilters));
-      if (next.has(normalizedCode)) {
-        next.delete(normalizedCode);
-      } else {
-        next.add(normalizedCode);
-      }
-      countryFilters = Array.from(next);
-      persistCountryFilters();
-      computeFilteredIndices();
-      renderTrackList();
-      if (countryFilterOverlayVisible) {
-        updateCountryFilterOptions();
-      }
+      countryFilterOverlayController.toggleCode(code);
     }
-
-    function updateCountryFilterOptions() {
-      if (!countryFilterBtn || !countryFilterOptions) return;
-
-      const { codes, counts } = collectCountryCounts();
-      countryFilterOptions.innerHTML = '';
-
-      if (!codes.length) {
-        countryFilterBtn.disabled = true;
-        countryFilterBtn.title = 'No country tags available';
-        countryFilters = [];
-        persistCountryFilters();
-        return;
-      }
-
-      countryFilterBtn.disabled = false;
-      countryFilterBtn.title = 'Filter by country';
-
-      const selected = new Set(normalizeCountryFilterList(countryFilters));
-
-      const sortedCodes = (() => {
-        const hasUnknown = codes.length > 0 && codes[0] === '?';
-        const rest = hasUnknown ? codes.slice(1) : codes.slice();
-        if (countrySortMode === 'count') {
-          rest.sort((a, b) => {
-            const countA = counts.get(a) || 0;
-            const countB = counts.get(b) || 0;
-            if (countB !== countA) return countB - countA;
-            return a.localeCompare(b, undefined, { sensitivity: 'base' });
-          });
-        } else {
-          rest.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
-        }
-        return hasUnknown ? ['?'].concat(rest) : rest;
-      })();
-
-      const headerRow = document.createElement('div');
-      headerRow.className = 'track-details-option';
-      headerRow.dataset.role = 'all';
-
-      const allLabel = document.createElement('label');
-      allLabel.className = 'track-details-inline';
-      const allInput = document.createElement('input');
-      allInput.type = 'checkbox';
-      allInput.checked = selected.size === 0;
-      allInput.setAttribute('aria-label', 'All countries');
-      const allText = document.createElement('span');
-      allText.textContent = 'All';
-      allLabel.appendChild(allInput);
-      allLabel.appendChild(allText);
-
-      const sortLabel = document.createElement('span');
-      sortLabel.className = 'track-details-inline-label';
-      sortLabel.textContent = 'sort';
-
-      const sortSelect = document.createElement('select');
-      sortSelect.className = 'track-details-select';
-      sortSelect.setAttribute('aria-label', 'Sort countries');
-      const sortOptions = [
-        { value: 'az', label: 'a-z' },
-        { value: 'count', label: 'count' }
-      ];
-      sortOptions.forEach(({ value, label }) => {
-        const opt = document.createElement('option');
-        opt.value = value;
-        opt.textContent = label;
-        sortSelect.appendChild(opt);
-      });
-      sortSelect.value = countrySortMode;
-
-      headerRow.appendChild(allLabel);
-      headerRow.appendChild(sortLabel);
-      headerRow.appendChild(sortSelect);
-      countryFilterOptions.appendChild(headerRow);
-
-      allInput.addEventListener('change', () => {
-        if (allInput.checked) {
-          countryFilters = [];
-          persistCountryFilters();
-          computeFilteredIndices();
-          renderTrackList();
-          updateCountryFilterOptions();
-        }
-      });
-
-      sortSelect.addEventListener('change', () => {
-        countrySortMode = sortSelect.value === 'count' ? 'count' : 'az';
-        updateCountryFilterOptions();
-      });
-
-      sortedCodes.forEach((code) => {
-        const optLabel = document.createElement('label');
-        optLabel.className = 'track-details-option';
-        optLabel.dataset.searchKey = makeSortKey(code);
-
-        const input = document.createElement('input');
-        input.type = 'checkbox';
-        input.checked = selected.has(code);
-        input.value = code;
-
-        const flag = getCountryFlagEmoji(code);
-        if (flag) {
-          const flagSpan = document.createElement('span');
-          flagSpan.className = 'country-flag-emoji';
-          flagSpan.textContent = flag;
-          optLabel.appendChild(input);
-          optLabel.appendChild(flagSpan);
-        } else {
-          optLabel.appendChild(input);
-        }
-
-        const text = document.createElement('span');
-        text.textContent = formatCountryOptionText(code, counts.get(code) || 0);
-        optLabel.appendChild(text);
-        countryFilterOptions.appendChild(optLabel);
-
-        input.addEventListener('change', () => {
-          const next = new Set(normalizeCountryFilterList(countryFilters));
-          const normalizedCode = normalizeIso3(code);
-          if (input.checked) {
-            next.add(normalizedCode);
-          } else {
-            next.delete(normalizedCode);
-          }
-
-          countryFilters = Array.from(next);
-          persistCountryFilters();
-          computeFilteredIndices();
-          renderTrackList();
-          updateCountryFilterOptions();
-        });
-      });
-    }
-
-    function updateArtistFilterButtonState() {
-      if (!artistFilterBtn) return;
-      const active = Array.isArray(artistFilters) && artistFilters.length > 0;
-      artistFilterBtn.classList.toggle('active', active);
-      artistFilterBtn.setAttribute('aria-expanded', String(artistFilterOverlayVisible));
-      artistFilterBtn.setAttribute('aria-pressed', String(artistFilterOverlayVisible));
-    }
-
-    function openArtistFilterOverlay() {
-      if (!artistFilterOverlay) return;
-      if (trackDetailsOverlayVisible) {
-        closeTrackDetailsOverlay();
-      }
-      if (countryFilterOverlayVisible) {
-        closeCountryFilterOverlay();
-      }
-      updateArtistFilterOptions();
-      artistFilterOverlay.classList.add('visible');
-      artistFilterOverlay.setAttribute('aria-hidden', 'false');
-      artistFilterOverlayVisible = true;
-      updateArtistFilterButtonState();
-      if (artistFilterOptions) {
-        scheduleScrollFirstSelectedOptionIntoView(artistFilterOptions);
-      }
-    }
-
-    function closeArtistFilterOverlay(options = {}) {
-      if (!artistFilterOverlay) return;
-      artistFilterOverlay.classList.remove('visible');
-      artistFilterOverlay.setAttribute('aria-hidden', 'true');
-      artistFilterOverlayVisible = false;
-      updateArtistFilterButtonState();
-      if (options.focusButton && artistFilterBtn && typeof artistFilterBtn.focus === 'function') {
-        artistFilterBtn.focus({ preventScroll: true });
-      }
-    }
-
-    function toggleArtistFilterOverlay() {
-      if (artistFilterOverlayVisible) {
-        closeArtistFilterOverlay();
-      } else {
-        openArtistFilterOverlay();
-      }
-    }
-
-    function persistArtistFilters() {
-      const normalized = normalizeArtistFilterList(artistFilters);
-      artistFilters = normalized;
-      saveSettings({ artistFilters: normalized });
-      updateArtistFilterButtonState();
-    }
-
-    function updateArtistFilterOptions() {
-      if (!artistFilterBtn || !artistFilterOptions) return;
-
-      const { artists, counts } = collectArtistCounts();
-      artistFilterOptions.innerHTML = '';
-
-      if (!artists.length) {
-        artistFilterBtn.disabled = true;
-        artistFilterBtn.title = 'No artists detected';
-        artistFilters = [];
-        persistArtistFilters();
-        return;
-      }
-
-      artistFilterBtn.disabled = false;
-      artistFilterBtn.title = 'Filter by artist';
-
-      const selectedKeys = new Set(artistFilters.map(normalizeArtistKey).filter(Boolean));
-
-      const sortedArtists = (artistSortMode === 'count')
-        ? [...artists].sort((a, b) => {
-          const keyA = normalizeArtistKey(a);
-          const keyB = normalizeArtistKey(b);
-          const countA = counts.get(keyA) || 0;
-          const countB = counts.get(keyB) || 0;
-          if (countB !== countA) return countB - countA;
-          const sortA = makeSortKey(a);
-          const sortB = makeSortKey(b);
-          if (sortA < sortB) return -1;
-          if (sortA > sortB) return 1;
-          return a.localeCompare(b, undefined, { sensitivity: 'base' });
-        })
-        : artists;
-
-      const headerRow = document.createElement('div');
-      headerRow.className = 'track-details-option';
-      headerRow.dataset.role = 'all';
-
-      const allLabel = document.createElement('label');
-      allLabel.className = 'track-details-inline';
-      const allInput = document.createElement('input');
-      allInput.type = 'checkbox';
-      allInput.checked = selectedKeys.size === 0;
-      allInput.setAttribute('aria-label', 'All artists');
-      const allText = document.createElement('span');
-      allText.textContent = 'All';
-      allLabel.appendChild(allInput);
-      allLabel.appendChild(allText);
-
-      const sortLabel = document.createElement('span');
-      sortLabel.className = 'track-details-inline-label';
-      sortLabel.textContent = 'sort';
-
-      const sortSelect = document.createElement('select');
-      sortSelect.className = 'track-details-select';
-      sortSelect.setAttribute('aria-label', 'Sort artists');
-      const sortOptions = [
-        { value: 'az', label: 'a-z' },
-        { value: 'count', label: 'count' }
-      ];
-      sortOptions.forEach(({ value, label }) => {
-        const opt = document.createElement('option');
-        opt.value = value;
-        opt.textContent = label;
-        sortSelect.appendChild(opt);
-      });
-      sortSelect.value = artistSortMode;
-
-      headerRow.appendChild(allLabel);
-      headerRow.appendChild(sortLabel);
-      headerRow.appendChild(sortSelect);
-      artistFilterOptions.appendChild(headerRow);
-
-      allInput.addEventListener('change', () => {
-        if (!allInput.checked) return;
-        artistFilters = [];
-        persistArtistFilters();
-        computeFilteredIndices();
-        renderTrackList();
-        updateArtistFilterOptions();
-      });
-
-      sortSelect.addEventListener('change', () => {
-        artistSortMode = sortSelect.value === 'count' ? 'count' : 'az';
-        updateArtistFilterOptions();
-      });
-
-      sortedArtists.forEach((artist) => {
-        const key = normalizeArtistKey(artist);
-        if (!key) return;
-
-        const optLabel = document.createElement('label');
-        optLabel.className = 'track-details-option';
-        optLabel.dataset.searchKey = makeSortKey(artist);
-
-        const input = document.createElement('input');
-        input.type = 'checkbox';
-        input.checked = selectedKeys.has(key);
-        input.value = artist;
-
-        const text = document.createElement('span');
-        text.textContent = `${artist} (${counts.get(key) || 0})`;
-
-        optLabel.appendChild(input);
-        optLabel.appendChild(text);
-        artistFilterOptions.appendChild(optLabel);
-
-        input.addEventListener('change', () => {
-          const next = new Map();
-          artistFilters.forEach((entry) => {
-            const entryKey = normalizeArtistKey(entry);
-            if (entryKey) next.set(entryKey, normalizeArtistName(entry));
-          });
-
-          if (input.checked) {
-            next.set(key, artist);
-          } else {
-            next.delete(key);
-          }
-
-          artistFilters = Array.from(next.values());
-          persistArtistFilters();
-          computeFilteredIndices();
-          renderTrackList();
-          updateArtistFilterOptions();
-        });
-      });
-    }
-
-    updateCountryFilterOptions();
-    updateCountryFilterButtonState();
-
-    updateArtistFilterOptions();
-    updateArtistFilterButtonState();
 
     function applyTrackDetailPreferences(options = {}) {
       const { refreshThumbnails = false, preserveScroll = true } = options || {};
@@ -1876,8 +783,7 @@
       const nextSort = !!prefs.sortAZ;
       const sortChanged = sortAlphabetically !== nextSort;
       if (sortChanged) {
-        sortAlphabetically = nextSort;
-        saveSettings({ sortAlphabetically });
+        sortAlphabetically = trackDetailStore.setSortAlphabetically(nextSort);
         renderTrackList({ preserveScroll, skipActiveScroll: preserveScroll });
       }
 
@@ -1906,16 +812,16 @@
     }
 
     function persistTrackDetailSettings() {
-      saveSettings({ trackDetailPreferences: { ...trackDetailSettings } });
+      trackDetailSettings = trackDetailStore.setPreferences(trackDetailSettings);
     }
 
     function openTrackDetailsOverlay() {
       if (!trackDetailsOverlay) return;
-      if (artistFilterOverlayVisible) {
-        closeArtistFilterOverlay();
+      if (artistFilterOverlayController.isVisible()) {
+        artistFilterOverlayController.close();
       }
-      if (countryFilterOverlayVisible) {
-        closeCountryFilterOverlay();
+      if (countryFilterOverlayController.isVisible()) {
+        countryFilterOverlayController.close();
       }
       syncTrackDetailsControls();
       trackDetailsOverlay.classList.add('visible');
@@ -1947,6 +853,7 @@
       if (controller) return;
       playerReady = false;
       controller = new YTController({ elementId: 'player' });
+      spectrum.setController(controller);
       controller.onReady(onPlayerReady);
       controller.onStateChange(onPlayerStateChange);
       controller.init();
@@ -2008,24 +915,22 @@
         isPlaying = true;
         updatePlayPauseButton();
         focusActiveTrack({ scroll: false });
-        if (spectrumCacheEnabled) {
-          startSpectrumAnimation();
-        }
+        spectrum.start();
       } else if (state === CONTROLLER_STATES.PAUSED) {
         isPlaying = false;
         updatePlayPauseButton();
         focusActiveTrack({ scroll: false });
-        stopSpectrumAnimation();
+        spectrum.stop();
       } else if (state === CONTROLLER_STATES.CUED || state === CONTROLLER_STATES.UNSTARTED) {
         isPlaying = false;
         updatePlayPauseButton();
         focusActiveTrack({ scroll: false });
-        stopSpectrumAnimation();
+        spectrum.stop();
       }
 
       // Clicking inside the YouTube iframe does not bubble to the document, but it does
       // trigger state changes. Use those to hide the sidebar after an iframe interaction.
-      maybeHideSidebarFromPlayerStateChange(state);
+      sidebar.maybeHideFromPlayerStateChange(state);
     }
 
     function updatePlayPauseButton() {
@@ -2168,8 +1073,7 @@
       if (nextHash !== visibleIndicesHash) {
         visibleIndicesHash = nextHash;
         visibleIndicesVersion += 1;
-        // Shuffle bag resets lazily via version mismatch.
-        resetShuffleHistory();
+        shuffleQueue.onQueueChanged();
       }
       const activePlaylistId = getActivePlaylistId();
 
@@ -2415,8 +1319,9 @@
       }
     }
 
-    function playIndex(idx) {
+    function playIndex(idx, options = {}) {
       if (!controller || !playlistItems[idx]) return;
+      const suppressShuffleHistoryRecord = !!options.suppressShuffleHistoryRecord;
       const playerState = controller.getState();
       const playerStates = CONTROLLER_STATES;
       const sameIndex = currentIndex === idx;
@@ -2433,7 +1338,7 @@
         }
         if (playerState === playerStates.PAUSED) {
           if (playerReady && controller) {
-            suppressSidebarHideFromPlayerState(1500);
+            sidebar.suppressHide(1500);
             controller.play();
             isPlaying = true;
             updatePlayPauseButton();
@@ -2447,24 +1352,24 @@
       }
 
       currentIndex = idx;
-      noteShufflePlayed(idx);
-      recordShuffleHistory(idx);
+      shuffleQueue.notePlayed(idx);
+      shuffleQueue.recordHistory(idx, { suppress: suppressShuffleHistoryRecord });
       const videoId = targetVideoId;
       isPlaying = false;
       updateNowPlaying();
 
-      if (!spectrumCacheEnabled) {
-        stopSpectrumAnimation();
+      if (!spectrum.isEnabled()) {
+        spectrum.stop();
         document.body.classList.add('spectrum-missing');
-        clearSpectrumCanvas();
+        spectrum.clearCanvas();
       } else {
         // Load offline spectrum cache for this video (non-blocking).
-        loadSpectrumForVideoId(videoId).then((ok) => {
+        spectrum.loadForVideoId(videoId).then((ok) => {
           if (!ok) {
-            stopSpectrumAnimation();
-            clearSpectrumCanvas();
+            spectrum.stop();
+            spectrum.clearCanvas();
           } else if (isPlaying) {
-            startSpectrumAnimation();
+            spectrum.start();
           }
         });
       }
@@ -2479,7 +1384,7 @@
         pendingPlayIndex = idx;
         return;
       }
-      suppressSidebarHideFromPlayerState(5000);
+      sidebar.suppressHide(5000);
       controller.load(videoId, { autoplay: true });
       pendingPlayIndex = null;
       const playlistId = settings.playlistId || '';
@@ -2510,51 +1415,27 @@
     function playNext() {
       let nextIdx = -1;
       let fromHistory = false;
-      if (shuffleEnabled) {
-        // If user previously went back, go forward through history first.
-        if (shuffleHistoryPos >= 0 && shuffleHistoryPos < shuffleHistory.length - 1) {
-          shuffleHistoryPos += 1;
-          nextIdx = shuffleHistory[shuffleHistoryPos];
-          fromHistory = true;
-        } else {
-          nextIdx = getNextShuffleIndex();
-        }
+      if (shuffleQueue.isEnabled()) {
+        const choice = shuffleQueue.next();
+        nextIdx = choice.index;
+        fromHistory = choice.fromHistory;
       } else {
         nextIdx = getRelativeVisibleIndex(1);
       }
       if (nextIdx >= 0) {
-        if (shuffleEnabled && fromHistory) {
-          shuffleNavigatingHistory = true;
-        }
-        try {
-          playIndex(nextIdx);
-        } finally {
-          if (shuffleEnabled && fromHistory) {
-            shuffleNavigatingHistory = false;
-          }
-        }
+        playIndex(nextIdx, { suppressShuffleHistoryRecord: shuffleQueue.isEnabled() && fromHistory });
       }
     }
 
     function playPrev() {
       let prevIdx = -1;
-      if (shuffleEnabled) {
-        if (shuffleHistoryPos > 0) {
-          shuffleHistoryPos -= 1;
-          prevIdx = shuffleHistory[shuffleHistoryPos];
-        }
+      if (shuffleQueue.isEnabled()) {
+        prevIdx = shuffleQueue.prev();
       } else {
         prevIdx = getRelativeVisibleIndex(-1);
       }
       if (prevIdx >= 0) {
-        if (shuffleEnabled) {
-          shuffleNavigatingHistory = true;
-        }
-        try {
-          playIndex(prevIdx);
-        } finally {
-          shuffleNavigatingHistory = false;
-        }
+        playIndex(prevIdx, { suppressShuffleHistoryRecord: shuffleQueue.isEnabled() });
       }
     }
 
@@ -2570,10 +1451,10 @@
       }
 
       if (activelyPlaying) {
-        suppressSidebarHideFromPlayerState(1500);
+        sidebar.suppressHide(1500);
         controller.pause();
       } else {
-        suppressSidebarHideFromPlayerState(1500);
+        sidebar.suppressHide(1500);
         controller.play();
       }
       focusActiveTrack();
@@ -2640,7 +1521,7 @@
       handleFullscreenChange();
     }
 
-    setupSidebarInteractions();
+    sidebar.setup();
 
     if (shuffleBtn) {
       shuffleBtn.addEventListener('click', () => {
@@ -2685,14 +1566,12 @@
       const data = await resp.json();
       playlistItems = data.items || [];
       playlistVersion += 1;
-      shuffleBag = [];
-      shuffleBagVersion = -1;
-      resetShuffleHistory();
+      shuffleQueue.resetAll();
       visibleIndicesHash = 0;
       visibleIndicesVersion += 1;
 
-      updateCountryFilterOptions();
-      updateArtistFilterOptions();
+      countryFilterOverlayController.updateOptions();
+      artistFilterOverlayController.updateOptions();
       const resolvedPlaylistId =
         (typeof data.playlistId === 'string' && data.playlistId.trim().length
           ? data.playlistId.trim()
@@ -2848,7 +1727,7 @@
       try {
         const resp = await fetch(STATUS_ENDPOINT, { cache: 'no-store' });
         if (!resp || !resp.ok) {
-          disableSpectrumCache();
+          spectrum.disable();
           return false;
         }
         try {
@@ -2856,14 +1735,14 @@
           if (body && typeof body === 'object' && !Array.isArray(body)) {
             if (Object.prototype.hasOwnProperty.call(body, 'spectrum-cache')) {
               if (body['spectrum-cache'] === false) {
-                disableSpectrumCache();
+                spectrum.disable();
               } else if (body['spectrum-cache'] === true) {
-                spectrumCacheEnabled = true;
+                spectrum.setEnabled(true);
               }
             }
           }
           if (body && body.ok === false) {
-            disableSpectrumCache();
+            spectrum.disable();
             return false;
           }
         } catch (error) {
@@ -2872,7 +1751,7 @@
         return true;
       } catch (error) {
         console.warn('Server status check failed:', error);
-        disableSpectrumCache();
+        spectrum.disable();
         return false;
       }
     }
@@ -2933,14 +1812,12 @@
 
       playlistItems = Array.isArray(entry.items) ? entry.items.slice() : [];
       playlistVersion += 1;
-      shuffleBag = [];
-      shuffleBagVersion = -1;
-      resetShuffleHistory();
+      shuffleQueue.resetAll();
       visibleIndicesHash = 0;
       visibleIndicesVersion += 1;
 
-      updateCountryFilterOptions();
-      updateArtistFilterOptions();
+      countryFilterOverlayController.updateOptions();
+      artistFilterOverlayController.updateOptions();
       saveSettings({ playlistId: targetId });
 
       const savedMap = getCurrentVideoMap();
@@ -3042,49 +1919,10 @@
 
     // filter
     filterInputEl.addEventListener('input', () => {
-      filterText = filterInputEl.value || '';
+      filterText = filterStateStore.setFilterText(filterInputEl.value || '');
       updateFilterWrapperClass();
       computeFilteredIndices();
       renderTrackList();
-      saveSettings({ filterText });
-    });
-
-    if (countryFilterBtn) {
-      countryFilterBtn.addEventListener('click', (event) => {
-        event.stopPropagation();
-        toggleCountryFilterOverlay();
-      });
-    }
-
-    if (artistFilterBtn) {
-      artistFilterBtn.addEventListener('click', (event) => {
-        event.stopPropagation();
-        toggleArtistFilterOverlay();
-      });
-    }
-
-    if (artistFilterOverlay) {
-      artistFilterOverlay.addEventListener('click', (event) => {
-        event.stopPropagation();
-      });
-    }
-
-    document.addEventListener('click', (event) => {
-      if (!artistFilterOverlayVisible) return;
-      if (artistFilterWrapper && artistFilterWrapper.contains(event.target)) return;
-      closeArtistFilterOverlay();
-    });
-
-    if (countryFilterOverlay) {
-      countryFilterOverlay.addEventListener('click', (event) => {
-        event.stopPropagation();
-      });
-    }
-
-    document.addEventListener('click', (event) => {
-      if (!countryFilterOverlayVisible) return;
-      if (countryFilterWrapper && countryFilterWrapper.contains(event.target)) return;
-      closeCountryFilterOverlay();
     });
 
     function updateFilterWrapperClass() {
@@ -3097,11 +1935,10 @@
 
     clearFilterBtn.addEventListener('click', () => {
       filterInputEl.value = '';
-      filterText = '';
+      filterText = filterStateStore.clearFilterText();
       updateFilterWrapperClass();
       computeFilteredIndices();
       renderTrackList();
-      saveSettings({ filterText: '' });
     });
 
     if (trackListContainerEl) {
@@ -3187,7 +2024,7 @@
         const delta = e.key === 'ArrowLeft' ? -10 : 10;
         const currentTime = controller.getCurrentTime();
         const newTime = Math.max(0, currentTime + delta);
-        suppressSidebarHideFromPlayerState(8000);
+        sidebar.suppressHide(8000);
         controller.seekTo(newTime, true);
         if (duration && isFinite(duration) && duration > 0) {
           updateSeekFeedbackFromFraction(newTime / duration);
@@ -3251,7 +2088,7 @@
     function setProgressScrubbing(active) {
       isProgressScrubbing = !!active;
       if (isProgressScrubbing) {
-        suppressSidebarHideFromPlayerState(8000);
+        sidebar.suppressHide(8000);
         updateSeekFeedbackFromFraction(Number(progressRange.value) / 1000);
       }
       if (!isProgressScrubbing) {
@@ -3280,7 +2117,7 @@
       const frac = Number(progressRange.value) / 1000;
       const newTime = frac * duration;
       if (isProgressScrubbing) {
-        suppressSidebarHideFromPlayerState(8000);
+        sidebar.suppressHide(8000);
       }
       updateSeekFeedbackFromFraction(frac);
       controller.seekTo(newTime, true);
@@ -3290,236 +2127,46 @@
     (function setupCenterSwipeGestures() {
       if (!trackSwipeLayer) return;
 
-      const CENTER_SWIPE_MIN_DY_PX = 60;
-      const CENTER_SWIPE_MAX_DT_MS = 900;
-      const CENTER_SWIPE_VERTICAL_BIAS = 1.2; // |dy| must exceed |dx| * bias
+      const centerSwipeController = new TrackSwipeController({
+        layerEl: trackSwipeLayer,
+        minDyPx: 60,
+        maxDtMs: 900,
+        verticalBias: 1.2,
+        shouldIgnoreStart: (eventTarget) => {
+          if (isProgressScrubbing) return true;
+          if (sidebarDrawer && eventTarget instanceof Node && sidebarDrawer.contains(eventTarget)) return true;
+          if (progressRange && eventTarget instanceof Node && progressRange.contains(eventTarget)) return true;
+          return false;
+        },
+        onNext: () => playNext(),
+        onPrev: () => playPrev()
+      });
 
-      let swipeActive = false;
-      let swipePointerId = null;
-      let startX = 0;
-      let startY = 0;
-      let startTs = 0;
-
-      function shouldIgnoreSwipeStart(eventTarget) {
-        if (isProgressScrubbing) return true;
-        if (sidebarDrawer && eventTarget instanceof Node && sidebarDrawer.contains(eventTarget)) return true;
-        if (progressRange && eventTarget instanceof Node && progressRange.contains(eventTarget)) return true;
-        return false;
-      }
-
-      function handleSwipeEnd(clientX, clientY) {
-        if (!swipeActive) return;
-        const dt = Date.now() - startTs;
-        swipeActive = false;
-        swipePointerId = null;
-
-        if (dt > CENTER_SWIPE_MAX_DT_MS) return;
-        const dx = clientX - startX;
-        const dy = clientY - startY;
-        if (Math.abs(dy) < CENTER_SWIPE_MIN_DY_PX) return;
-        if (Math.abs(dy) < Math.abs(dx) * CENTER_SWIPE_VERTICAL_BIAS) return;
-
-        // Swipe up = next, swipe down = previous.
-        if (dy < 0) {
-          playNext();
-        } else {
-          playPrev();
-        }
-      }
-
-      // Pointer events (most modern browsers).
-      trackSwipeLayer.addEventListener('pointerdown', (event) => {
-        if (event.defaultPrevented) return;
-        if (event.button !== 0 && event.pointerType === 'mouse') return;
-        if (shouldIgnoreSwipeStart(event.target)) return;
-
-        swipeActive = true;
-        swipePointerId = event.pointerId;
-        startX = event.clientX;
-        startY = event.clientY;
-        startTs = Date.now();
-
-        try {
-          trackSwipeLayer.setPointerCapture(event.pointerId);
-        } catch {
-          // Ignore capture failures.
-        }
-      }, { passive: true });
-
-      trackSwipeLayer.addEventListener('pointerup', (event) => {
-        if (!swipeActive) return;
-        if (swipePointerId !== null && event.pointerId !== swipePointerId) return;
-        handleSwipeEnd(event.clientX, event.clientY);
-      }, { passive: true });
-
-      trackSwipeLayer.addEventListener('pointercancel', () => {
-        swipeActive = false;
-        swipePointerId = null;
-      }, { passive: true });
-
-      // Touch events (iOS Safari quirks).
-      trackSwipeLayer.addEventListener('touchstart', (event) => {
-        if (!event.touches || event.touches.length !== 1) return;
-        if (shouldIgnoreSwipeStart(event.target)) return;
-        const t = event.touches[0];
-        swipeActive = true;
-        swipePointerId = null;
-        startX = t.clientX;
-        startY = t.clientY;
-        startTs = Date.now();
-      }, { passive: true });
-
-      trackSwipeLayer.addEventListener('touchend', (event) => {
-        if (!swipeActive) return;
-        const t = (event.changedTouches && event.changedTouches[0]) ? event.changedTouches[0] : null;
-        if (!t) {
-          swipeActive = false;
-          return;
-        }
-        handleSwipeEnd(t.clientX, t.clientY);
-      }, { passive: true });
-
-      trackSwipeLayer.addEventListener('touchcancel', () => {
-        swipeActive = false;
-      }, { passive: true });
+      centerSwipeController.attach();
     })();
 
     // Bottom seek stripe: horizontal swipe maps to absolute timeline position.
     (function setupSeekSwipeGestures() {
       if (!seekSwipeLayer) return;
 
-      const SEEK_UPDATE_THROTTLE_MS = 120;
-      let seekPointerId = null;
-      let lastSeekUpdateTs = 0;
+      const seekSwipeController = new SeekSwipeController({
+        layerEl: seekSwipeLayer,
+        isBlocked: () => isProgressScrubbing,
+        getDuration: () => controller ? controller.getDuration() : 0,
+        getCurrentTime: () => controller ? controller.getCurrentTime() : 0,
+        seekTo: (seconds, allowSeekAhead) => {
+          if (!controller) return;
+          controller.seekTo(seconds, allowSeekAhead);
+        },
+        setActive: (active) => {
+          isSeekSwipeActive = !!active;
+          seekSwipeLayer.classList.toggle('is-active', !!active);
+        },
+        onFeedbackFraction: (frac) => {
+          updateSeekFeedbackFromFraction(frac);
+        },
+        suppressSidebarHide: (ms) => sidebar.suppressHide(ms)
+      });
 
-      const SEEK_SWIPE_MIN_FRAC = 0;
-      const SEEK_SWIPE_MAX_FRAC = 0.99;
-      let seekSwipeStartClientX = 0;
-      let seekSwipeStartFrac = 0;
-
-      function setSeekFeedback(percent) {
-        if (!seekSwipeFeedback) return;
-        const p = Math.max(0, Math.min(99, Math.round(percent)));
-        seekSwipeFeedback.textContent = `${p}%`;
-      }
-
-      function setSeekLayerActive(active) {
-        seekSwipeLayer.classList.toggle('is-active', !!active);
-      }
-
-      function clampSeekSwipeFraction(frac) {
-        if (!isFinite(frac)) return SEEK_SWIPE_MIN_FRAC;
-        return Math.max(SEEK_SWIPE_MIN_FRAC, Math.min(SEEK_SWIPE_MAX_FRAC, frac));
-      }
-
-      function getCurrentPlaybackFraction() {
-        if (!controller) return 0;
-        const duration = controller.getDuration();
-        const t = controller.getCurrentTime();
-        if (!duration || !isFinite(duration) || duration <= 0) return 0;
-        if (!isFinite(t) || t < 0) return 0;
-        return clampSeekSwipeFraction(t / duration);
-      }
-
-      function fractionFromClientX(clientX) {
-        const rect = seekSwipeLayer.getBoundingClientRect();
-        if (!rect.width || rect.width <= 0) return clampSeekSwipeFraction(seekSwipeStartFrac);
-        const deltaFrac = (clientX - seekSwipeStartClientX) / rect.width;
-        return clampSeekSwipeFraction(seekSwipeStartFrac + deltaFrac);
-      }
-
-      function seekFromFraction(frac, force = false) {
-        if (!controller) return;
-        const duration = controller.getDuration();
-        if (!duration || !isFinite(duration) || duration <= 0) return;
-
-        const clamped = clampSeekSwipeFraction(frac);
-        setSeekFeedback(clamped * 100);
-
-        const now = Date.now();
-        if (!force && now - lastSeekUpdateTs < SEEK_UPDATE_THROTTLE_MS) return;
-        lastSeekUpdateTs = now;
-
-        suppressSidebarHideFromPlayerState(8000);
-        controller.seekTo(clamped * duration, true);
-      }
-
-      function beginSeek(pointerId, startClientX) {
-        isSeekSwipeActive = true;
-        seekPointerId = pointerId;
-        lastSeekUpdateTs = 0;
-        seekSwipeStartClientX = startClientX;
-        seekSwipeStartFrac = getCurrentPlaybackFraction();
-        setSeekFeedback(seekSwipeStartFrac * 100);
-        setSeekLayerActive(true);
-        suppressSidebarHideFromPlayerState(8000);
-      }
-
-      function endSeek() {
-        isSeekSwipeActive = false;
-        seekPointerId = null;
-        setSeekLayerActive(false);
-        suppressSidebarHideFromPlayerState(1500);
-      }
-
-      // Pointer events
-      seekSwipeLayer.addEventListener('pointerdown', (event) => {
-        if (event.defaultPrevented) return;
-        if (event.button !== 0 && event.pointerType === 'mouse') return;
-        if (isProgressScrubbing) return;
-
-        beginSeek(event.pointerId, event.clientX);
-        try {
-          seekSwipeLayer.setPointerCapture(event.pointerId);
-        } catch {
-          // Ignore capture failures.
-        }
-      }, { passive: true });
-
-      seekSwipeLayer.addEventListener('pointermove', (event) => {
-        if (!isSeekSwipeActive) return;
-        if (seekPointerId !== null && event.pointerId !== seekPointerId) return;
-        seekFromFraction(fractionFromClientX(event.clientX), false);
-      }, { passive: true });
-
-      seekSwipeLayer.addEventListener('pointerup', (event) => {
-        if (!isSeekSwipeActive) return;
-        if (seekPointerId !== null && event.pointerId !== seekPointerId) return;
-        seekFromFraction(fractionFromClientX(event.clientX), true);
-        endSeek();
-      }, { passive: true });
-
-      seekSwipeLayer.addEventListener('pointercancel', () => {
-        if (!isSeekSwipeActive) return;
-        endSeek();
-      }, { passive: true });
-
-      // Touch events (iOS Safari)
-      seekSwipeLayer.addEventListener('touchstart', (event) => {
-        if (!event.touches || event.touches.length !== 1) return;
-        if (isProgressScrubbing) return;
-        const t = event.touches[0];
-        beginSeek(null, t.clientX);
-      }, { passive: true });
-
-      seekSwipeLayer.addEventListener('touchmove', (event) => {
-        if (!isSeekSwipeActive) return;
-        const t = event.touches && event.touches[0] ? event.touches[0] : null;
-        if (!t) return;
-        seekFromFraction(fractionFromClientX(t.clientX), false);
-      }, { passive: true });
-
-      seekSwipeLayer.addEventListener('touchend', (event) => {
-        if (!isSeekSwipeActive) return;
-        const t = (event.changedTouches && event.changedTouches[0]) ? event.changedTouches[0] : null;
-        if (t) {
-          seekFromFraction(fractionFromClientX(t.clientX), true);
-        }
-        endSeek();
-      }, { passive: true });
-
-      seekSwipeLayer.addEventListener('touchcancel', () => {
-        if (!isSeekSwipeActive) return;
-        endSeek();
-      }, { passive: true });
+      seekSwipeController.attach();
     })();
