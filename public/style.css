@@ -1288,8 +1288,8 @@ body.hide-track-check .track-state-btn {
 /* Center swipe area: captures up/down swipes for prev/next. */
 #trackSwipeLayer {
     position: absolute;
-    top: 15%;
-    bottom: 15%;
+    top: 10%;
+    bottom: 20%;
     width: var(--track-swipe-layer-width);
     left: auto;
     right: 0;
@@ -1304,7 +1304,7 @@ body.hide-track-check .track-state-btn {
     position: absolute;
     left: 0;
     right: 0;
-    bottom: 0;
+    top: 0;
     height: calc(var(--app-vh, 1vh) * 15);
     z-index: 6;
     background: transparent;
