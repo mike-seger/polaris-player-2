@@ -1316,7 +1316,7 @@ body.sidebar-hidden #playerGestureLayer {
     top: 15%;
     bottom: 15%;
     right: auto;
-    width: var(--sidebar-drawer-width);
+    width: min(var(--sidebar-drawer-width), 35vw);
 }
 
 
