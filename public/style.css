@@ -104,6 +104,12 @@ body {
     -webkit-touch-callout: none;
 }
 
+/* Fullscreen cursor auto-hide (toggled by JS). */
+body.cursor-hidden,
+body.cursor-hidden * {
+    cursor: none !important;
+}
+
 /* Keep selection/caret behavior inside editable controls. */
 input[type="text"],
 input[type="search"],

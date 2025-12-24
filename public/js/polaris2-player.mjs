@@ -103,8 +103,9 @@
     function sanitizeLocalVideoBasename(name) {
       return String(name || '')
         .trim()
-        // Normalize common quote variants to match typical macOS “smart quote” filenames.
-        .replace(/[\u2018\u2019']/g, '\u2019')
+        // Normalize common quote variants to straight apostrophe (') to match
+        // on-disk files that use ASCII apostrophes (encoded as %27).
+        .replace(/[\u2018\u2019]/g, "'")
         .replace(/[\\/]/g, '_');
     }
 
@@ -879,10 +880,117 @@
       }, delay);
     }
 
+    const CURSOR_IDLE_HIDE_DELAY_MS = 5000;
+    let _cursorIdleHideTimer = null;
+    let _cursorIdleListenersAttached = false;
+    let _cursorWakeOverlay = null;
+    let _cursorWakeOverlayListenersAttached = false;
+
+    function clearCursorIdleTimer() {
+      if (_cursorIdleHideTimer) {
+        clearTimeout(_cursorIdleHideTimer);
+        _cursorIdleHideTimer = null;
+      }
+    }
+
+    function ensureCursorWakeOverlay() {
+      if (_cursorWakeOverlay) return _cursorWakeOverlay;
+      const el = document.createElement('div');
+      el.setAttribute('aria-hidden', 'true');
+      el.style.position = 'fixed';
+      el.style.inset = '0';
+      el.style.zIndex = '2147483647';
+      el.style.display = 'none';
+      el.style.cursor = 'none';
+      el.style.background = 'transparent';
+      el.style.pointerEvents = 'auto';
+      // Prevent text selection/magnifier on iOS while cursor is hidden.
+      el.style.webkitUserSelect = 'none';
+      el.style.userSelect = 'none';
+      document.body.appendChild(el);
+      _cursorWakeOverlay = el;
+      return el;
+    }
+
+    function showCursor() {
+      document.body.classList.remove('cursor-hidden');
+      if (_cursorWakeOverlay) {
+        _cursorWakeOverlay.style.display = 'none';
+      }
+    }
+
+    function hideCursor() {
+      document.body.classList.add('cursor-hidden');
+      const overlay = ensureCursorWakeOverlay();
+      overlay.style.display = 'block';
+    }
+
+    function scheduleCursorIdleHide() {
+      clearCursorIdleTimer();
+      _cursorIdleHideTimer = setTimeout(() => {
+        _cursorIdleHideTimer = null;
+        if (!isAppFullscreen()) {
+          showCursor();
+          return;
+        }
+        hideCursor();
+      }, CURSOR_IDLE_HIDE_DELAY_MS);
+    }
+
+    function onFullscreenPointerActivity() {
+      if (!isAppFullscreen()) return;
+      // Always show immediately on movement.
+      showCursor();
+      scheduleCursorIdleHide();
+    }
+
+    function startFullscreenCursorAutoHide() {
+      if (_cursorIdleListenersAttached) return;
+      _cursorIdleListenersAttached = true;
+
+      showCursor();
+      scheduleCursorIdleHide();
+
+      // Use capture so we still see movement early in the event chain.
+      window.addEventListener('pointermove', onFullscreenPointerActivity, { passive: true, capture: true });
+      window.addEventListener('mousemove', onFullscreenPointerActivity, { passive: true, capture: true });
+      // If the cursor is hidden while over a cross-origin iframe, we won't receive
+      // pointer events from inside it. The overlay (enabled only when hidden)
+      // ensures movement wakes the cursor reliably.
+      const overlay = ensureCursorWakeOverlay();
+      if (!_cursorWakeOverlayListenersAttached) {
+        _cursorWakeOverlayListenersAttached = true;
+        overlay.addEventListener('pointermove', onFullscreenPointerActivity, { passive: true });
+        overlay.addEventListener('mousemove', onFullscreenPointerActivity, { passive: true });
+      }
+    }
+
+    function stopFullscreenCursorAutoHide() {
+      if (!_cursorIdleListenersAttached) {
+        showCursor();
+        clearCursorIdleTimer();
+        return;
+      }
+      _cursorIdleListenersAttached = false;
+      clearCursorIdleTimer();
+      showCursor();
+      window.removeEventListener('pointermove', onFullscreenPointerActivity, true);
+      window.removeEventListener('mousemove', onFullscreenPointerActivity, true);
+      if (_cursorWakeOverlay) {
+        _cursorWakeOverlay.style.display = 'none';
+      }
+    }
+
 
     function handleFullscreenChange() {
       updateFullscreenButtonState();
-      document.body.classList.toggle('is-fullscreen', isAppFullscreen());
+      const fs = isAppFullscreen();
+      document.body.classList.toggle('is-fullscreen', fs);
+      if (fs) {
+        startFullscreenCursorAutoHide();
+      } else {
+        stopFullscreenCursorAutoHide();
+      }
     }
 
 

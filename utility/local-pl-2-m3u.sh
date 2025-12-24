@@ -108,7 +108,7 @@ import re, sys
 s = sys.argv[1]
 
 s = re.sub(r'[\x00-\x1f\x7f]', '', s)                 # control chars
-s = re.sub(r'[\\/:"*?<>|]', '_', s)                   # path/bad chars
+s = re.sub(r'[\\/:"*<>|]', '_', s)                    # path/bad chars
 s = s.replace("'", "’").replace('"', "”")             # nicer quotes
 s = re.sub(r'\s+', ' ', s).strip()                    # collapse spaces
 s = re.sub(r'^[. ]+|[. ]+$', '', s)                   # trim dots/spaces
