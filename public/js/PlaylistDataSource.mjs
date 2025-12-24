@@ -158,9 +158,19 @@ export class PlaylistDataSource {
         return (settings && typeof settings.playerMode === 'string') ? settings.playerMode : 'youtube';
       },
       setPlayerMode: (mode) => {
-        const next = (mode === 'local') ? 'local' : 'youtube';
+        const next = (mode === 'local' || mode === 'spotify') ? mode : 'youtube';
         if (typeof this.saveSettings === 'function') {
           this.saveSettings({ playerMode: next });
+        }
+      },
+      getSpotifyClientId: () => {
+        const settings = this.getSettings();
+        return (settings && typeof settings.spotifyClientId === 'string') ? settings.spotifyClientId : '';
+      },
+      setSpotifyClientId: (clientId) => {
+        const next = String(clientId || '').trim();
+        if (typeof this.saveSettings === 'function') {
+          this.saveSettings({ spotifyClientId: next });
         }
       },
       resetUserSettings: () => this.resetUserSettings(),

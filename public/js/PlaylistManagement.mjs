@@ -10,7 +10,9 @@
       getUserSettings = () => ({}),
       resetUserSettings = () => {},
       getPlayerMode = () => 'youtube',
-      setPlayerMode = () => {}
+      setPlayerMode = () => {},
+      getSpotifyClientId = () => '',
+      setSpotifyClientId = () => {}
     } = options;
 
     const state = {
@@ -204,8 +206,19 @@
         if (section && section.playerModeSelect) {
           try {
             const mode = String(getPlayerMode() || 'youtube');
-            section.playerModeSelect.value = (mode === 'local') ? 'local' : 'youtube';
+            section.playerModeSelect.value = (mode === 'local' || mode === 'spotify') ? mode : 'youtube';
           } catch { /* ignore */ }
+        }
+
+        if (section && section.spotifyClientIdInput) {
+          try {
+            const v = String(getSpotifyClientId() || '');
+            section.spotifyClientIdInput.value = v;
+          } catch { /* ignore */ }
+        }
+
+        if (section && typeof section.updateSpotifyVisibility === 'function') {
+          try { section.updateSpotifyVisibility(); } catch { /* ignore */ }
         }
       }
     }
@@ -644,23 +657,106 @@
       const optLocal = document.createElement('option');
       optLocal.value = 'local';
       optLocal.textContent = 'Local video player';
+      const optSpotify = document.createElement('option');
+      optSpotify.value = 'spotify';
+      optSpotify.textContent = 'Spotify player (Premium)';
       playerSelect.appendChild(optYoutube);
       playerSelect.appendChild(optLocal);
+      playerSelect.appendChild(optSpotify);
 
       try {
         const mode = String(getPlayerMode() || 'youtube');
-        playerSelect.value = (mode === 'local') ? 'local' : 'youtube';
+        playerSelect.value = (mode === 'local' || mode === 'spotify') ? mode : 'youtube';
       } catch { /* ignore */ }
 
       playerSelect.addEventListener('change', () => {
-        const next = playerSelect.value === 'local' ? 'local' : 'youtube';
+        const next = (playerSelect.value === 'local' || playerSelect.value === 'spotify') ? playerSelect.value : 'youtube';
         try { setPlayerMode(next); } catch { /* ignore */ }
+        try {
+          const section = state.sections.get('videoPlayer');
+          if (section && typeof section.updateSpotifyVisibility === 'function') {
+            section.updateSpotifyVisibility();
+          }
+        } catch { /* ignore */ }
       });
+
+      const spotifyRow = document.createElement('div');
+      spotifyRow.style.display = 'flex';
+      spotifyRow.style.flexDirection = 'column';
+      spotifyRow.style.gap = '0.35rem';
+
+      const spotifyLabel = document.createElement('label');
+      spotifyLabel.textContent = 'Spotify Client ID';
+      spotifyLabel.style.fontSize = '0.75rem';
+      spotifyLabel.style.fontWeight = '600';
+      spotifyLabel.style.letterSpacing = '0.05em';
+      spotifyLabel.style.textTransform = 'uppercase';
+      spotifyLabel.style.color = '#a8b3c7';
+
+      const spotifyClientIdInput = document.createElement('input');
+      spotifyClientIdInput.type = 'text';
+      spotifyClientIdInput.autocomplete = 'off';
+      spotifyClientIdInput.spellcheck = false;
+      spotifyClientIdInput.placeholder = 'Paste Spotify App Client ID…';
+      spotifyClientIdInput.style.padding = '0.55rem 0.6rem';
+      spotifyClientIdInput.style.borderRadius = '6px';
+      spotifyClientIdInput.style.border = '1px solid #2b2f3a';
+      spotifyClientIdInput.style.background = '#11141c';
+      spotifyClientIdInput.style.color = '#f5f7fa';
+      spotifyClientIdInput.style.fontSize = '0.9rem';
+      spotifyClientIdInput.style.outline = 'none';
+
+      const spotifyHint = document.createElement('p');
+      spotifyHint.textContent = 'Used for Spotify login (stored locally in ytAudioPlayer.settings).';
+      spotifyHint.style.margin = '0';
+      spotifyHint.style.fontSize = '0.75rem';
+      spotifyHint.style.color = '#6c7488';
+      spotifyHint.style.lineHeight = '1.4';
+
+      try {
+        spotifyClientIdInput.value = String(getSpotifyClientId() || '');
+      } catch { /* ignore */ }
+
+      let spotifyWriteTimer = null;
+      function commitSpotifyClientId() {
+        const v = String(spotifyClientIdInput.value || '').trim();
+        try { setSpotifyClientId(v); } catch { /* ignore */ }
+      }
+
+      spotifyClientIdInput.addEventListener('input', () => {
+        if (spotifyWriteTimer) {
+          clearTimeout(spotifyWriteTimer);
+          spotifyWriteTimer = null;
+        }
+        spotifyWriteTimer = setTimeout(() => {
+          spotifyWriteTimer = null;
+          commitSpotifyClientId();
+        }, 300);
+      });
+      spotifyClientIdInput.addEventListener('blur', () => commitSpotifyClientId());
+      spotifyClientIdInput.addEventListener('keydown', (e) => {
+        if (e && e.key === 'Enter') {
+          e.preventDefault();
+          commitSpotifyClientId();
+        }
+      });
+
+      spotifyRow.appendChild(spotifyLabel);
+      spotifyRow.appendChild(spotifyClientIdInput);
+      spotifyRow.appendChild(spotifyHint);
+
+      function updateSpotifyVisibility() {
+        const isSpotify = playerSelect.value === 'spotify';
+        spotifyRow.style.display = isSpotify ? 'flex' : 'none';
+      }
+      updateSpotifyVisibility();
 
       try {
         const section = state.sections.get('videoPlayer');
         if (section) {
           section.playerModeSelect = playerSelect;
+          section.spotifyClientIdInput = spotifyClientIdInput;
+          section.updateSpotifyVisibility = updateSpotifyVisibility;
         }
       } catch { /* ignore */ }
 
@@ -676,6 +772,7 @@
 
       videoPlayerSection.content.appendChild(playerIntro);
       videoPlayerSection.content.appendChild(playerRow);
+      videoPlayerSection.content.appendChild(spotifyRow);
       videoPlayerSection.content.appendChild(localHint);
 
       const settingsSection = createAccordionSection({ id: 'settings', title: 'Stored Settings' });

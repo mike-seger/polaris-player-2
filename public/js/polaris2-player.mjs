@@ -1,6 +1,8 @@
   import { PlayerHost } from './players/PlayerHost.mjs';
   import { YouTubeAdapter } from './players/adapters/YouTubeAdapter.mjs';
   import { HtmlVideoAdapter } from './players/adapters/HtmlVideoAdapter.mjs';
+  import { SpotifyAdapter } from './players/adapters/SpotifyAdapter.mjs';
+  import { SpotifyAuth } from './players/SpotifyAuth.mjs';
   import { SettingsStore } from './SettingsStore.mjs';
   import { PlaylistHistoryStore } from './PlaylistHistoryStore.mjs';
   import { FilterStateStore } from './FilterStateStore.mjs';
@@ -59,6 +61,12 @@
     const settingsStore = new SettingsStore(STORAGE_KEY, { onChange: () => notifySettingsUpdated() });
     let settings = settingsStore.load();
 
+    const spotifyAuth = new SpotifyAuth({
+      clientId: (settings && typeof settings.spotifyClientId === 'string') ? settings.spotifyClientId : '',
+      // Use SpotifyAuth's stable default redirectUri (directory root, no index.html).
+      redirectUri: undefined,
+    });
+
     let playlistVersion = 0;
     const shuffleQueue = new ShuffleQueue({
       enabled: typeof settings.shuffleEnabled === 'boolean' ? settings.shuffleEnabled : true,
@@ -90,6 +98,9 @@
     function saveSettings(patch) {
       const prevMode = (settings && typeof settings.playerMode === 'string') ? settings.playerMode : 'youtube';
       settings = settingsStore.patch(patch);
+      if (patch && typeof patch.spotifyClientId === 'string') {
+        try { spotifyAuth.setClientId(patch.spotifyClientId); } catch { /* ignore */ }
+      }
       const nextMode = (settings && typeof settings.playerMode === 'string') ? settings.playerMode : 'youtube';
       if (patch && typeof patch.playerMode === 'string' && nextMode !== prevMode) {
         handlePlayerModeChanged(prevMode, nextMode);
@@ -97,7 +108,8 @@
     }
 
     function getPlayerMode() {
-      return (settings && settings.playerMode === 'local') ? 'local' : 'youtube';
+      const mode = (settings && typeof settings.playerMode === 'string') ? settings.playerMode : 'youtube';
+      return (mode === 'local' || mode === 'spotify') ? mode : 'youtube';
     }
 
     function sanitizeLocalVideoBasename(name) {
@@ -286,6 +298,61 @@
     const spectrumCanvas = document.getElementById('spectrumCanvas');
     const alert = createAlert({ overlayEl: alertOverlay, messageEl: alertMessageEl, closeBtn: alertCloseBtn });
 
+    async function ensureSpotifySession({ promptIfMissing = false, promptLogin = false } = {}) {
+      let clientId = (settings && typeof settings.spotifyClientId === 'string') ? settings.spotifyClientId.trim() : '';
+      if (!clientId && promptIfMissing) {
+        const entered = window.prompt('Spotify Client ID (from Spotify Developer Dashboard):', '');
+        if (entered && String(entered).trim()) {
+          clientId = String(entered).trim();
+          saveSettings({ spotifyClientId: clientId });
+        }
+      }
+
+      try { spotifyAuth.setClientId(clientId); } catch { /* ignore */ }
+
+      if (!clientId) {
+        alert.show('Spotify mode requires a Spotify Client ID. Add it in Playlist → Video Player → Spotify Client ID (stored in ytAudioPlayer.settings.spotifyClientId).');
+        return false;
+      }
+
+      try {
+        await spotifyAuth.getAccessToken();
+        return true;
+      } catch (err) {
+        if (!promptLogin) {
+          const msg = err && err.message ? err.message : String(err);
+          alert.show(msg);
+          return false;
+        }
+        const ok = window.confirm('Spotify is not logged in. Log in now?');
+        if (!ok) {
+          alert.show('Spotify login is required to use Spotify mode.');
+          return false;
+        }
+        try {
+          await spotifyAuth.login();
+          return false;
+        } catch (loginErr) {
+          const msg = loginErr && loginErr.message ? loginErr.message : String(loginErr);
+          alert.show(`Spotify login failed: ${msg}`);
+          return false;
+        }
+      }
+    }
+
+    // If we're returning from Spotify OAuth, complete the token exchange now.
+    void spotifyAuth.handleRedirectCallback()
+      .then((handled) => {
+        if (handled) {
+          alert.show('Spotify login complete.');
+        }
+      })
+      .catch((err) => {
+        const msg = err && err.message ? err.message : String(err);
+        console.warn('Spotify auth callback failed:', err);
+        alert.show(`Spotify login failed: ${msg}\n\nExpected Redirect URI in your Spotify app settings:\n${spotifyAuth.redirectUri}`);
+      });
+
     const spectrum = new Spectrum({ canvas: spectrumCanvas });
 
     const trackListView = new TrackListView({
@@ -405,6 +472,12 @@
           ? playerHost.getThumbnailUrl(buildTrackFromPlaylistItem(item))
           : buildLocalThumbnailUrlForItem(item);
         return localThumb || '';
+      }
+
+      if (mode === 'spotify') {
+        // Keep whatever the playlist provides; don't fall back to YouTube thumbnails.
+        const existing = (item && typeof item.thumbnail === 'string') ? item.thumbnail : '';
+        return existing || '';
       }
 
       // YouTube mode: keep playlist-provided thumbnails, but provide a safe fallback.
@@ -1119,27 +1192,43 @@
     function buildTrackFromPlaylistItem(item) {
       const videoId = item && item.videoId ? String(item.videoId).trim() : '';
       const mode = getPlayerMode();
+      const spotifyId = item && item.spotifyId ? String(item.spotifyId).trim() : '';
       return {
         id: videoId,
         title: item?.userTitle || item?.title || '',
         source: (mode === 'local')
           ? { kind: 'file', url: buildLocalVideoUrlForItem(item) }
-          : { kind: 'youtube', videoId },
+          : (mode === 'spotify')
+            ? { kind: 'spotify', trackId: spotifyId || 'unmatched' }
+            : { kind: 'youtube', videoId },
       };
     }
 
     function handlePlayerModeChanged(_prevMode, _nextMode) {
       if (!playerHost) return;
       if (currentIndex < 0 || !playlistItems[currentIndex]) return;
-      const autoplay = !!isPlaying;
-      isPlaying = false;
-      updatePlayPauseButton();
-      void playerHost.stop().catch(() => {});
-      void playerHost.load(buildTrackFromPlaylistItem(playlistItems[currentIndex]), { autoplay })
-        .catch((err) => console.error('Player load error:', err));
 
-      // Ensure UI reflects the new mode (e.g., hide thumbnails in local mode).
-      renderTrackList();
+      const doSwitchLoad = () => {
+        const autoplay = !!isPlaying;
+        isPlaying = false;
+        updatePlayPauseButton();
+        void playerHost.stop().catch(() => {});
+        void playerHost.load(buildTrackFromPlaylistItem(playlistItems[currentIndex]), { autoplay })
+          .catch((err) => console.error('Player load error:', err));
+
+        // Ensure UI reflects the new mode (e.g., hide thumbnails in local mode).
+        renderTrackList();
+      };
+
+      if (_nextMode === 'spotify') {
+        void ensureSpotifySession({ promptIfMissing: true, promptLogin: true })
+          .then((ok) => { if (ok) doSwitchLoad(); })
+          .catch((err) => console.warn('Spotify readiness failed:', err));
+        return;
+      }
+
+      doSwitchLoad();
+
     }
 
     function initPlayerHost() {
@@ -1150,7 +1239,8 @@
         // Let the adapter create its own mount element inside #player.
         // This avoids the YouTube API replacing the #player node itself.
         new YouTubeAdapter({ elementId: null, controls: 0, autoplay: false }),
-        new HtmlVideoAdapter()
+        new HtmlVideoAdapter(),
+        new SpotifyAdapter({ auth: spotifyAuth })
       ]);
 
       // Mount into the existing video pane element.
@@ -1383,8 +1473,19 @@
       // With the generic player host, the adapter may create the underlying player on first load.
       // Allow loads even before the "ready" state is observed; otherwise nothing can ever start.
       sidebar.suppressHide(5000);
-      void playerHost.load(buildTrackFromPlaylistItem(playlistItems[idx]), { autoplay: true })
-        .catch((err) => console.error('Player load error:', err));
+
+      const mode = getPlayerMode();
+      if (mode === 'spotify') {
+        void ensureSpotifySession({ promptIfMissing: true, promptLogin: true })
+          .then((ok) => {
+            if (!ok) return;
+            return playerHost.load(buildTrackFromPlaylistItem(playlistItems[idx]), { autoplay: true });
+          })
+          .catch((err) => console.error('Player load error:', err));
+      } else {
+        void playerHost.load(buildTrackFromPlaylistItem(playlistItems[idx]), { autoplay: true })
+          .catch((err) => console.error('Player load error:', err));
+      }
       pendingPlayIndex = null;
       const playlistId = settings.playlistId || '';
       updateCurrentVideo(playlistId, videoId);

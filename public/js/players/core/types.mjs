@@ -64,11 +64,15 @@
  * @property {"youtube"} kind
  * @property {string} videoId
  *
+ * @typedef {Object} TrackSourceSpotify
+ * @property {"spotify"} kind
+ * @property {string} trackId
+ *
  * @typedef {Object} TrackSourceVlc
  * @property {"vlc"} kind
  * @property {string} input
  *
- * @typedef {TrackSourceFile|TrackSourceYouTube|TrackSourceVlc} TrackSource
+ * @typedef {TrackSourceFile|TrackSourceYouTube|TrackSourceSpotify|TrackSourceVlc} TrackSource
  */
 
 /**
