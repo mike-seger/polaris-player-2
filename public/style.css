@@ -1357,6 +1357,11 @@ body.sidebar-hidden #playerGestureLayer {
     background: #000;
     border-radius: 0;
     overflow: hidden;
+
+    /* Center intrinsic-size media (e.g., <video>) inside the full-screen pane. */
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 #player iframe {
@@ -1365,6 +1370,29 @@ body.sidebar-hidden #playerGestureLayer {
     border: 0;
     border-radius: inherit;
     display: block;
+}
+
+#player video {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: contain;
+}
+
+/* `#trackControls` is programmatically focused for keyboard shortcuts; don't show a focus ring. */
+#trackControls:focus,
+#trackControls:focus-visible {
+    outline: none;
+}
+
+/* Video player elements can be programmatically focused; keep that invisible. */
+#player:focus,
+#player:focus-visible,
+#player iframe:focus,
+#player iframe:focus-visible,
+#player video:focus,
+#player video:focus-visible {
+    outline: none;
 }
 
 /* Sidebar behavior is unified everywhere: a single overlay drawer + tap-to-show when hidden. */

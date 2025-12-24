@@ -346,6 +346,53 @@
     });
     const showAlert = (message) => alert.show(message);
 
+    function focusTrackControls() {
+      if (!trackControlsEl) return;
+      try {
+        if (!trackControlsEl.hasAttribute('tabindex')) {
+          trackControlsEl.setAttribute('tabindex', '0');
+        }
+        trackControlsEl.focus({ preventScroll: true });
+      } catch {
+        /* ignore */
+      }
+    }
+
+    function focusActivePlayerPane() {
+      // Prefer focusing the actual active media element (<video> or <iframe>).
+      const paneEl = (() => {
+        try {
+          const pane = playerHost ? playerHost.getMediaPane() : null;
+          const el = pane && pane.element;
+          return (el instanceof HTMLElement) ? el : null;
+        } catch {
+          return null;
+        }
+      })();
+
+      if (paneEl) {
+        try {
+          // Ensure focus() works even if the element isn't normally tabbable.
+          if (!paneEl.hasAttribute('tabindex')) paneEl.setAttribute('tabindex', '-1');
+          paneEl.focus({ preventScroll: true });
+          return;
+        } catch {
+          /* ignore */
+        }
+      }
+
+      // Fallback: focus the player container.
+      const playerEl = document.getElementById('player');
+      if (playerEl instanceof HTMLElement) {
+        try {
+          if (!playerEl.hasAttribute('tabindex')) playerEl.setAttribute('tabindex', '-1');
+          playerEl.focus({ preventScroll: true });
+        } catch {
+          /* ignore */
+        }
+      }
+    }
+
     let trackListItemsCache = { version: -1, mode: '', items: [] };
 
     function getThumbnailUrlForItem(item) {
@@ -1359,6 +1406,24 @@
 
     sidebar.setup();
 
+    // When the sidebar is shown/hidden (via tap layer, Enter binding, auto-hide, etc)
+    // move focus to a sensible target so keyboard shortcuts keep working.
+    let _lastSidebarHidden = document.body.classList.contains('sidebar-hidden');
+    const sidebarClassObserver = new MutationObserver(() => {
+      const nextHidden = document.body.classList.contains('sidebar-hidden');
+      if (nextHidden === _lastSidebarHidden) return;
+      _lastSidebarHidden = nextHidden;
+
+      if (isTextInputFocused()) return;
+
+      if (nextHidden) {
+        focusActivePlayerPane();
+      } else {
+        focusTrackControls();
+      }
+    });
+    sidebarClassObserver.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+
     if (shuffleBtn) {
       shuffleBtn.addEventListener('click', () => {
         toggleShuffleMode();
@@ -1599,6 +1664,14 @@
       }
       trackControlsEl.addEventListener('keydown', (event) => {
         if (event.defaultPrevented) return;
+        // If the container itself is focused (not a child button), Enter hides the sidebar.
+        if ((event.key === 'Enter' || event.key === 'Return' || event.code === 'NumpadEnter')
+          && event.target === trackControlsEl
+          && !event.ctrlKey && !event.altKey && !event.metaKey) {
+          event.preventDefault();
+          sidebar.setHidden(true);
+          return;
+        }
         if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
           event.preventDefault();
           if (event.key === 'ArrowUp') {
@@ -1619,8 +1692,50 @@
       return false;
     }
 
+    function isEnterKey(e) {
+      return e && (e.key === 'Enter' || e.key === 'Return' || e.code === 'NumpadEnter');
+    }
+
     document.addEventListener('keydown', (e) => {
       if (isTextInputFocused()) return;
+
+      // Enter toggles the sidebar in/out, but don't steal Enter from controls
+      // inside the sidebar (track list uses Enter to toggle completion).
+      if (isEnterKey(e) && !e.defaultPrevented && !e.ctrlKey && !e.altKey && !e.metaKey) {
+        const hidden = !!(document.body && document.body.classList && document.body.classList.contains('sidebar-hidden'));
+        const activeEl = document.activeElement;
+        const inSidebarDrawer = !!(sidebarDrawer && activeEl instanceof Node && sidebarDrawer.contains(activeEl));
+        const inTrackList = !!(trackListContainerEl && activeEl instanceof Node && trackListContainerEl.contains(activeEl));
+
+        // Always allow showing the sidebar when hidden.
+        if (hidden) {
+          e.preventDefault();
+          e.stopPropagation();
+          sidebar.setHidden(false);
+          return;
+        }
+
+        // When visible, only hide if focus isn't in the sidebar UI.
+        if (!inSidebarDrawer && !inTrackList) {
+          e.preventDefault();
+          e.stopPropagation();
+          sidebar.setHidden(true);
+          return;
+        }
+      }
+
+      // When the sidebar is hidden, focus may be on the video/gesture layers.
+      // Handle prev/next globally so arrow keys remain reliable.
+      const sidebarHidden = !!(document.body && document.body.classList && document.body.classList.contains('sidebar-hidden'));
+      if (sidebarHidden && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
+        if (!e.defaultPrevented) {
+          e.preventDefault();
+          e.stopPropagation();
+          if (e.key === 'ArrowUp') playPrev();
+          else playNext();
+        }
+        return;
+      }
 
       if (e.code === 'Space' || e.key === ' ' || e.key === 'Spacebar') {
         const activeEl = document.activeElement;
@@ -1666,7 +1781,7 @@
         e.preventDefault();
         return;
       }
-    });
+    }, { capture: true });
 
     // progress slider
     let progressInterval = null;
