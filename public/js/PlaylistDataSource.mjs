@@ -153,6 +153,16 @@ export class PlaylistDataSource {
           return settings;
         }
       },
+      getPlayerMode: () => {
+        const settings = this.getSettings();
+        return (settings && typeof settings.playerMode === 'string') ? settings.playerMode : 'youtube';
+      },
+      setPlayerMode: (mode) => {
+        const next = (mode === 'local') ? 'local' : 'youtube';
+        if (typeof this.saveSettings === 'function') {
+          this.saveSettings({ playerMode: next });
+        }
+      },
       resetUserSettings: () => this.resetUserSettings(),
       onLoad: async ({ playlistId, forceRefresh }) => {
         await onLoadPlaylist({ playlistId, forceRefresh: Boolean(forceRefresh) });

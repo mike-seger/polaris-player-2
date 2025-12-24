@@ -1,5 +1,3 @@
-import { STATES as CONTROLLER_STATES } from './YTController.mjs';
-
 export class Sidebar {
   constructor(options = {}) {
     const {
@@ -57,13 +55,12 @@ export class Sidebar {
     if (this.isHidden()) return;
     if (this.isInteractionBlockingHide()) return;
     if (Date.now() < this.sidebarHideSuppressedUntil) return;
-    if (
-      playerState === CONTROLLER_STATES.PLAYING ||
-      playerState === CONTROLLER_STATES.PAUSED ||
-      playerState === CONTROLLER_STATES.BUFFERING
-    ) {
-      this.setHidden(true);
-    }
+    // Accept either generic string states (PlayerHost) or legacy numeric YT states.
+    const s = playerState;
+    const isActiveString = s === 'playing' || s === 'paused' || s === 'buffering';
+    // YT IFrame numeric constants: PLAYING=1, PAUSED=2, BUFFERING=3
+    const isActiveNumeric = s === 1 || s === 2 || s === 3;
+    if (isActiveString || isActiveNumeric) this.setHidden(true);
   }
 
   clearInactivityInterval() {

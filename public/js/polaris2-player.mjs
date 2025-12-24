@@ -1,4 +1,6 @@
-  import { YTController, STATES as CONTROLLER_STATES } from './YTController.mjs';
+  import { PlayerHost } from './players/PlayerHost.mjs';
+  import { YouTubeAdapter } from './players/adapters/YouTubeAdapter.mjs';
+  import { HtmlVideoAdapter } from './players/adapters/HtmlVideoAdapter.mjs';
   import { SettingsStore } from './SettingsStore.mjs';
   import { PlaylistHistoryStore } from './PlaylistHistoryStore.mjs';
   import { FilterStateStore } from './FilterStateStore.mjs';
@@ -20,7 +22,7 @@
   import { TrackDetailsOverlay } from './TrackDetailsOverlay.mjs';
   import { PlaylistDataSource } from './PlaylistDataSource.mjs';
 
-    let controller;
+    let playerHost;
     let playlistItems = [];
     let currentIndex = -1;
     let isPlaying = false;
@@ -86,7 +88,28 @@
 
     // settings helpers
     function saveSettings(patch) {
+      const prevMode = (settings && typeof settings.playerMode === 'string') ? settings.playerMode : 'youtube';
       settings = settingsStore.patch(patch);
+      const nextMode = (settings && typeof settings.playerMode === 'string') ? settings.playerMode : 'youtube';
+      if (patch && typeof patch.playerMode === 'string' && nextMode !== prevMode) {
+        handlePlayerModeChanged(prevMode, nextMode);
+      }
+    }
+
+    function getPlayerMode() {
+      return (settings && settings.playerMode === 'local') ? 'local' : 'youtube';
+    }
+
+    function sanitizeLocalVideoBasename(name) {
+      return String(name || '').trim().replace(/[\\/]/g, '_');
+    }
+
+    function buildLocalVideoUrlForItem(item) {
+      const rawTitle = (item && typeof item.userTitle === 'string' && item.userTitle.trim().length)
+        ? item.userTitle
+        : (item && typeof item.title === 'string' ? item.title : '');
+      const base = sanitizeLocalVideoBasename(rawTitle);
+      return `${window.location.origin}/video/${encodeURIComponent(base)}.mp4`;
     }
 
     filterStateStore = new FilterStateStore({
@@ -265,7 +288,12 @@
       getFilteredIndices: () => filteredIndices,
       getSortAlphabetically: () => sortAlphabetically,
 
-      getTrackDetailSettings: () => trackDetailSettings,
+      getTrackDetailSettings: () => {
+        if (getPlayerMode() === 'local') {
+          return { ...trackDetailSettings, thumbnail: false };
+        }
+        return trackDetailSettings;
+      },
 
       normalizeArtistName: (name) => normalizeArtistName(name),
       makeSortKey: (value) => makeSortKey(value),
@@ -836,17 +864,101 @@
 
     // TrackDetailsOverlay logic extracted to TrackDetailsOverlay.mjs
 
-    function initController() {
-      if (controller) return;
-      playerReady = false;
-      controller = new YTController({ elementId: 'player' });
-      spectrum.setController(controller);
-      controller.onReady(onPlayerReady);
-      controller.onStateChange(onPlayerStateChange);
-      controller.init();
+    function getPlayerInfo() {
+      return playerHost ? playerHost.getInfo() : {
+        state: 'idle',
+        muted: false,
+        volume: 1,
+        rate: 1,
+        time: { positionMs: 0, durationMs: undefined, bufferedMs: undefined },
+        activeTrackId: undefined,
+      };
     }
 
-    initController();
+    function getPlayerDurationSeconds() {
+      const ms = getPlayerInfo().time.durationMs;
+      return typeof ms === 'number' && isFinite(ms) && ms > 0 ? ms / 1000 : 0;
+    }
+
+    function getPlayerCurrentTimeSeconds() {
+      const ms = getPlayerInfo().time.positionMs;
+      return typeof ms === 'number' && isFinite(ms) && ms > 0 ? ms / 1000 : 0;
+    }
+
+    function getActiveTrackId() {
+      return getPlayerInfo().activeTrackId || '';
+    }
+
+    function seekToSeconds(seconds) {
+      if (!playerHost) return;
+      const s = Number(seconds);
+      if (!isFinite(s)) return;
+      void playerHost.seekToMs(Math.max(0, Math.floor(s * 1000)));
+    }
+
+    function buildTrackFromPlaylistItem(item) {
+      const videoId = item && item.videoId ? String(item.videoId).trim() : '';
+      const mode = getPlayerMode();
+      return {
+        id: videoId,
+        title: item?.userTitle || item?.title || '',
+        source: (mode === 'local')
+          ? { kind: 'file', url: buildLocalVideoUrlForItem(item) }
+          : { kind: 'youtube', videoId },
+      };
+    }
+
+    function handlePlayerModeChanged(_prevMode, _nextMode) {
+      if (!playerHost) return;
+      if (currentIndex < 0 || !playlistItems[currentIndex]) return;
+      const autoplay = !!isPlaying;
+      isPlaying = false;
+      updatePlayPauseButton();
+      void playerHost.stop().catch(() => {});
+      void playerHost.load(buildTrackFromPlaylistItem(playlistItems[currentIndex]), { autoplay })
+        .catch((err) => console.error('Player load error:', err));
+
+      // Ensure UI reflects the new mode (e.g., hide thumbnails in local mode).
+      renderTrackList();
+    }
+
+    function initPlayerHost() {
+      if (playerHost) return;
+      playerReady = false;
+
+      playerHost = new PlayerHost([
+        // Let the adapter create its own mount element inside #player.
+        // This avoids the YouTube API replacing the #player node itself.
+        new YouTubeAdapter({ elementId: null, controls: 0, autoplay: false }),
+        new HtmlVideoAdapter()
+      ]);
+
+      // Mount into the existing video pane element.
+      const container = document.getElementById('player');
+      if (container instanceof HTMLElement) {
+        playerHost.mount(container);
+      }
+
+      // Spectrum expects a controller-like API with getCurrentTime() in seconds.
+      spectrum.setController({
+        getCurrentTime: () => getPlayerCurrentTimeSeconds(),
+      });
+
+      let firedReady = false;
+      playerHost.on('state', (state) => {
+        onPlayerStateChange(state);
+        if (!firedReady && state === 'ready') {
+          firedReady = true;
+          void onPlayerReady();
+        }
+      });
+      playerHost.on('ended', () => playNext());
+      playerHost.on('error', (err) => {
+        console.error('Player error:', err);
+      });
+    }
+
+    initPlayerHost();
 
     async function onPlayerReady() {
       playerReady = true;
@@ -864,7 +976,7 @@
         if (!playlistItems.length) {
           await loadPlaylistFromLocal(startupPlaylistId || '');
         }
-        if (currentIndex >= 0 && playlistItems[currentIndex] && controller) {
+        if (currentIndex >= 0 && playlistItems[currentIndex] && playerHost) {
           playIndex(currentIndex);
         } else {
           computeFilteredIndices();
@@ -896,19 +1008,18 @@
     }
 
     function onPlayerStateChange(state) {
-      if (state === CONTROLLER_STATES.ENDED) {
-        playNext();
-      } else if (state === CONTROLLER_STATES.PLAYING) {
-        isPlaying = true;
-        updatePlayPauseButton();
-        focusActiveTrack({ scroll: false });
-        spectrum.start();
-      } else if (state === CONTROLLER_STATES.PAUSED) {
+      if (state === 'ended') {
         isPlaying = false;
         updatePlayPauseButton();
         focusActiveTrack({ scroll: false });
         spectrum.stop();
-      } else if (state === CONTROLLER_STATES.CUED || state === CONTROLLER_STATES.UNSTARTED) {
+        playNext();
+      } else if (state === 'playing' || state === 'buffering') {
+        isPlaying = true;
+        updatePlayPauseButton();
+        focusActiveTrack({ scroll: false });
+        spectrum.start();
+      } else if (state === 'paused' || state === 'ready' || state === 'idle') {
         isPlaying = false;
         updatePlayPauseButton();
         focusActiveTrack({ scroll: false });
@@ -990,15 +1101,14 @@
     }
 
     function playIndex(idx, options = {}) {
-      if (!controller || !playlistItems[idx]) return;
+      if (!playerHost || !playlistItems[idx]) return;
       const suppressShuffleHistoryRecord = !!options.suppressShuffleHistoryRecord;
-      const playerState = controller.getState();
-      const playerStates = CONTROLLER_STATES;
+      const playerState = getPlayerInfo().state;
       const sameIndex = currentIndex === idx;
       const targetVideoId = playlistItems[idx].videoId;
-      const currentVideoId = controller.getVideoId();
-      const isSameVideo = sameIndex && targetVideoId && currentVideoId === targetVideoId;
-      const isActivelyPlaying = playerState === playerStates.PLAYING || playerState === playerStates.BUFFERING;
+      const currentTrackId = getActiveTrackId();
+      const isSameVideo = sameIndex && targetVideoId && currentTrackId === targetVideoId;
+      const isActivelyPlaying = playerState === 'playing' || playerState === 'buffering';
       const previousIndex = currentIndex;
 
       if (isSameVideo) {
@@ -1006,10 +1116,10 @@
         if (isActivelyPlaying) {
           return;
         }
-        if (playerState === playerStates.PAUSED) {
-          if (playerReady && controller) {
+        if (playerState === 'paused') {
+          if (playerReady && playerHost) {
             sidebar.suppressHide(1500);
-            controller.play();
+            void playerHost.play();
             isPlaying = true;
             updatePlayPauseButton();
             focusActiveTrack({ scroll: false });
@@ -1050,12 +1160,11 @@
         updateActiveTrackRow(previousIndex, currentIndex);
       }
       updatePlayPauseButton();
-      if (!playerReady) {
-        pendingPlayIndex = idx;
-        return;
-      }
+      // With the generic player host, the adapter may create the underlying player on first load.
+      // Allow loads even before the "ready" state is observed; otherwise nothing can ever start.
       sidebar.suppressHide(5000);
-      controller.load(videoId, { autoplay: true });
+      void playerHost.load(buildTrackFromPlaylistItem(playlistItems[idx]), { autoplay: true })
+        .catch((err) => console.error('Player load error:', err));
       pendingPlayIndex = null;
       const playlistId = settings.playlistId || '';
       updateCurrentVideo(playlistId, videoId);
@@ -1110,10 +1219,18 @@
     }
 
     function togglePlayback() {
-      if (!controller) return;
-      const playerStates = CONTROLLER_STATES;
-      const state = controller.getState();
-      const activelyPlaying = state === playerStates.PLAYING || state === playerStates.BUFFERING;
+      if (!playerHost) return;
+      if (!getActiveTrackId()) {
+        const idx = currentIndex >= 0
+          ? currentIndex
+          : (Array.isArray(visibleIndices) && visibleIndices.length ? visibleIndices[0] : (playlistItems.length ? 0 : -1));
+        if (idx >= 0) {
+          playIndex(idx);
+          return;
+        }
+      }
+      const state = getPlayerInfo().state;
+      const activelyPlaying = state === 'playing' || state === 'buffering';
 
       if (isPlaying !== activelyPlaying) {
         isPlaying = activelyPlaying;
@@ -1122,10 +1239,10 @@
 
       if (activelyPlaying) {
         sidebar.suppressHide(1500);
-        controller.pause();
+        void playerHost.pause().catch(() => {});
       } else {
         sidebar.suppressHide(1500);
-        controller.play();
+        void playerHost.play().catch(() => {});
       }
       focusActiveTrack();
     }
@@ -1288,7 +1405,7 @@
         notifySettingsUpdated = typeof fn === 'function' ? fn : () => {};
       },
 
-      getController: () => controller,
+      getController: () => playerHost,
       getCurrentIndex: () => currentIndex,
       setCurrentIndex: (next) => {
         currentIndex = next;
@@ -1473,15 +1590,15 @@
       }
 
       if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
-        if (!controller) {
+        if (!playerHost) {
           return;
         }
-        const duration = controller.getDuration();
+        const duration = getPlayerDurationSeconds();
         const delta = e.key === 'ArrowLeft' ? -10 : 10;
-        const currentTime = controller.getCurrentTime();
+        const currentTime = getPlayerCurrentTimeSeconds();
         const newTime = Math.max(0, currentTime + delta);
         sidebar.suppressHide(8000);
-        controller.seekTo(newTime, true);
+        seekToSeconds(newTime);
         if (duration && isFinite(duration) && duration > 0) {
           updateSeekFeedbackFromFraction(newTime / duration);
           // Let the browser paint it visible, then fade it out.
@@ -1521,18 +1638,18 @@
     }
 
     function updateProgressBar() {
-      if (!controller) {
+      if (!playerHost) {
         progressRange.value = 0;
         timeLabel.textContent = '00:00 / 00:00';
         return;
       }
 
-      const duration = controller.getDuration();
-      const current = controller.getCurrentTime();
+      const duration = getPlayerDurationSeconds();
+      const current = getPlayerCurrentTimeSeconds();
 
       if (!duration || !isFinite(duration) || duration <= 0) {
         progressRange.value = 0;
-        timeLabel.textContent = '00:00 / 00:00';
+        timeLabel.textContent = `${formatTime(current)} / --:--`;
         return;
       }
 
@@ -1565,10 +1682,10 @@
     progressRange.addEventListener('touchcancel', clearProgressScrubbing, { passive: true });
 
     progressRange.addEventListener('input', () => {
-      if (!controller) {
+      if (!playerHost) {
         return;
       }
-      const duration = controller.getDuration();
+      const duration = getPlayerDurationSeconds();
       if (!duration || !isFinite(duration) || duration <= 0) return;
       const frac = Number(progressRange.value) / 1000;
       const newTime = frac * duration;
@@ -1576,7 +1693,7 @@
         sidebar.suppressHide(8000);
       }
       updateSeekFeedbackFromFraction(frac);
-      controller.seekTo(newTime, true);
+      seekToSeconds(newTime);
     });
 
     // Center vertical swipe area: up/down swipe for prev/next.
@@ -1608,11 +1725,11 @@
       const seekSwipeController = new SeekSwipeController({
         layerEl: seekSwipeLayer,
         isBlocked: () => isProgressScrubbing,
-        getDuration: () => controller ? controller.getDuration() : 0,
-        getCurrentTime: () => controller ? controller.getCurrentTime() : 0,
+        getDuration: () => getPlayerDurationSeconds(),
+        getCurrentTime: () => getPlayerCurrentTimeSeconds(),
         seekTo: (seconds, allowSeekAhead) => {
-          if (!controller) return;
-          controller.seekTo(seconds, allowSeekAhead);
+          void allowSeekAhead;
+          seekToSeconds(seconds);
         },
         setActive: (active) => {
           isSeekSwipeActive = !!active;

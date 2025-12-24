@@ -5,3 +5,4 @@ spectrum-cache/
 .DS_Store
 .oauth-token.json
 .tmp-spectrum
+__pycache__

@@ -8,7 +8,9 @@
       getPlaylistHistory = () => [],
       removePlaylist = () => {},
       getUserSettings = () => ({}),
-      resetUserSettings = () => {}
+      resetUserSettings = () => {},
+      getPlayerMode = () => 'youtube',
+      setPlayerMode = () => {}
     } = options;
 
     const state = {
@@ -196,6 +198,15 @@
       }
       if (sectionId === 'settings') {
         refreshSettingsView();
+      }
+      if (sectionId === 'videoPlayer') {
+        const section = state.sections.get('videoPlayer');
+        if (section && section.playerModeSelect) {
+          try {
+            const mode = String(getPlayerMode() || 'youtube');
+            section.playerModeSelect.value = (mode === 'local') ? 'local' : 'youtube';
+          } catch { /* ignore */ }
+        }
       }
     }
 
@@ -595,6 +606,78 @@
       playlistSection.content.appendChild(staticNotice);
       playlistSection.content.appendChild(form);
 
+      const videoPlayerSection = createAccordionSection({ id: 'videoPlayer', title: 'Video Player' });
+      videoPlayerSection.content.style.padding = '0.75rem 0.8rem 0.9rem';
+      videoPlayerSection.content.style.gap = '0.6rem';
+
+      const playerIntro = document.createElement('p');
+      playerIntro.textContent = 'Select the active player implementation.';
+      playerIntro.style.margin = '0';
+      playerIntro.style.fontSize = '0.8rem';
+      playerIntro.style.color = '#a8b3c7';
+      playerIntro.style.lineHeight = '1.5';
+
+      const playerRow = document.createElement('div');
+      playerRow.style.display = 'flex';
+      playerRow.style.flexDirection = 'column';
+      playerRow.style.gap = '0.35rem';
+
+      const playerLabel = document.createElement('label');
+      playerLabel.textContent = 'Player';
+      playerLabel.style.fontSize = '0.75rem';
+      playerLabel.style.fontWeight = '600';
+      playerLabel.style.letterSpacing = '0.05em';
+      playerLabel.style.textTransform = 'uppercase';
+      playerLabel.style.color = '#a8b3c7';
+
+      const playerSelect = document.createElement('select');
+      playerSelect.style.padding = '0.55rem 0.6rem';
+      playerSelect.style.borderRadius = '6px';
+      playerSelect.style.border = '1px solid #2b2f3a';
+      playerSelect.style.background = '#11141c';
+      playerSelect.style.color = '#f5f7fa';
+      playerSelect.style.fontSize = '0.9rem';
+      playerSelect.style.outline = 'none';
+      const optYoutube = document.createElement('option');
+      optYoutube.value = 'youtube';
+      optYoutube.textContent = 'YouTube player (default)';
+      const optLocal = document.createElement('option');
+      optLocal.value = 'local';
+      optLocal.textContent = 'Local video player';
+      playerSelect.appendChild(optYoutube);
+      playerSelect.appendChild(optLocal);
+
+      try {
+        const mode = String(getPlayerMode() || 'youtube');
+        playerSelect.value = (mode === 'local') ? 'local' : 'youtube';
+      } catch { /* ignore */ }
+
+      playerSelect.addEventListener('change', () => {
+        const next = playerSelect.value === 'local' ? 'local' : 'youtube';
+        try { setPlayerMode(next); } catch { /* ignore */ }
+      });
+
+      try {
+        const section = state.sections.get('videoPlayer');
+        if (section) {
+          section.playerModeSelect = playerSelect;
+        }
+      } catch { /* ignore */ }
+
+      playerRow.appendChild(playerLabel);
+      playerRow.appendChild(playerSelect);
+
+      const localHint = document.createElement('p');
+      localHint.textContent = 'Local mode loads: /video/<userTitle>.mp4';
+      localHint.style.margin = '0';
+      localHint.style.fontSize = '0.75rem';
+      localHint.style.color = '#6c7488';
+      localHint.style.lineHeight = '1.4';
+
+      videoPlayerSection.content.appendChild(playerIntro);
+      videoPlayerSection.content.appendChild(playerRow);
+      videoPlayerSection.content.appendChild(localHint);
+
       const settingsSection = createAccordionSection({ id: 'settings', title: 'Stored Settings' });
       //settingsSection.content.style.gap = '0.6rem';
       settingsSection.content.style.flex = '1 1 auto';
@@ -770,6 +853,7 @@
       settingsSection.content.appendChild(settingsPre);
 
       accordion.appendChild(playlistSection.wrapper);
+      accordion.appendChild(videoPlayerSection.wrapper);
       accordion.appendChild(settingsSection.wrapper);
 
       panel.appendChild(header);
