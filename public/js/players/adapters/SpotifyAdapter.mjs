@@ -87,6 +87,17 @@ export class SpotifyAdapter {
     this._player = null;
     this._deviceId = '';
 
+    this._pollTimer = null;
+    this._isPolling = false;
+    this._activeSpotifyTrackId = '';
+    this._endedFired = false;
+    this._suppressEndedUntilMs = 0;
+
+    this._lastPollPositionMs = 0;
+    this._lastPollDurationMs = 0;
+    this._lastPollWasPlaying = false;
+    this._inactivePollCount = 0;
+
     this._state = {
       state: 'idle',
       muted: false,
@@ -182,12 +193,17 @@ export class SpotifyAdapter {
       this._setState('ready');
       this._root.textContent = 'Spotify connected.';
       this._em.emit('capabilities', this.getCapabilities());
+
+      // Start polling to provide smooth progress/time updates.
+      this._startPolling();
     });
 
     player.addListener('not_ready', () => {
       this._deviceId = '';
       this._setState('error');
       this._root.textContent = 'Spotify disconnected.';
+
+      this._stopPolling();
     });
 
     player.addListener('player_state_changed', (s) => {
@@ -204,9 +220,12 @@ export class SpotifyAdapter {
       this._em.emit('time', this._state.time);
       this._em.emit('state', this._state.state);
 
-      // End detection: when paused near the end.
-      if (paused && durationMs > 0 && durationMs - positionMs < 800) {
-        this._em.emit('ended');
+      // Lightweight end detection fallback.
+      if (!this._endedFired && Date.now() >= this._suppressEndedUntilMs) {
+        if (paused && durationMs > 0 && durationMs - positionMs < 800) {
+          this._endedFired = true;
+          this._em.emit('ended');
+        }
       }
     });
 
@@ -226,6 +245,100 @@ export class SpotifyAdapter {
 
     if (!this._deviceId) {
       throw new Error('Spotify player did not become ready (missing device id).');
+    }
+  }
+
+  _startPolling() {
+    if (this._pollTimer) return;
+    if (!this._player) return;
+    this._isPolling = true;
+    this._pollTimer = setInterval(() => {
+      void this._pollOnce();
+    }, 500);
+  }
+
+  _stopPolling() {
+    this._isPolling = false;
+    if (this._pollTimer) {
+      clearInterval(this._pollTimer);
+      this._pollTimer = null;
+    }
+  }
+
+  async _pollOnce() {
+    if (!this._isPolling || !this._player) return;
+
+    let st = null;
+    try {
+      st = await this._player.getCurrentState();
+    } catch {
+      return;
+    }
+
+    if (!st) {
+      // Not active on this device.
+      this._inactivePollCount += 1;
+      if (!this._endedFired && Date.now() >= this._suppressEndedUntilMs) {
+        // If we were playing and suddenly became inactive for a short period,
+        // treat this as an end-of-track for purposes of advancing the queue.
+        if (this._lastPollWasPlaying && this._inactivePollCount >= 3) {
+          this._endedFired = true;
+          this._em.emit('ended');
+          return;
+        }
+      }
+
+      if (this._state.state !== 'ready' && this._state.state !== 'idle') {
+        this._setState('ready');
+      }
+      return;
+    }
+
+    this._inactivePollCount = 0;
+
+    const positionMs = Number(st.position) || 0;
+    const durationMs = Number(st.duration) || 0;
+    const paused = !!st.paused;
+    const currentSpotifyId = st?.track_window?.current_track?.id ? String(st.track_window.current_track.id) : '';
+
+    const prevPos = this._lastPollPositionMs;
+    const prevDur = this._lastPollDurationMs;
+    const prevWasPlaying = this._lastPollWasPlaying;
+
+    this._state.time = {
+      positionMs,
+      durationMs: durationMs > 0 ? durationMs : undefined,
+      bufferedMs: undefined,
+    };
+    this._state.state = paused ? 'paused' : 'playing';
+    this._em.emit('time', this._state.time);
+    this._em.emit('state', this._state.state);
+
+    this._lastPollPositionMs = positionMs;
+    this._lastPollDurationMs = durationMs;
+    this._lastPollWasPlaying = !paused;
+
+    // End detection:
+    // - If Spotify advances to a different track than the one we started, treat that as ended.
+    // - Or if it pauses within ~800ms of the end.
+    if (!this._endedFired && Date.now() >= this._suppressEndedUntilMs) {
+      if (this._activeSpotifyTrackId && currentSpotifyId && currentSpotifyId !== this._activeSpotifyTrackId) {
+        this._endedFired = true;
+        this._em.emit('ended');
+        return;
+      }
+
+      // If we were very near the end and suddenly jumped back near 0, treat as ended.
+      if (prevDur > 0 && prevPos > prevDur - 1500 && positionMs < 1000 && (prevWasPlaying || paused)) {
+        this._endedFired = true;
+        this._em.emit('ended');
+        return;
+      }
+
+      if (paused && durationMs > 0 && durationMs - positionMs < 800) {
+        this._endedFired = true;
+        this._em.emit('ended');
+      }
     }
   }
 
@@ -254,6 +367,9 @@ export class SpotifyAdapter {
     const startMs = typeof opts.startMs === 'number' ? Math.max(0, Math.floor(opts.startMs)) : 0;
 
     this._state.activeTrackId = track.id;
+    this._activeSpotifyTrackId = trackId;
+    this._endedFired = false;
+    this._suppressEndedUntilMs = Date.now() + 2000;
     this._setState('loading');
 
     const accessToken = await this._auth.getAccessToken();
@@ -341,6 +457,7 @@ export class SpotifyAdapter {
   }
 
   async dispose() {
+    this._stopPolling();
     try {
       if (this._player) {
         await this._player.disconnect();
