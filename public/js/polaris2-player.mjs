@@ -336,6 +336,7 @@
       sidebarDrawer,
       playerGestureLayer,
       isInteractionBlockingHide: () => isProgressScrubbing || isSeekSwipeActive,
+      isAutoHideEnabled: () => document.body.classList.contains('is-fullscreen'),
       allowScrollSelectors: [
         '#sidebarDrawer',
         '#trackListContainer',
@@ -804,6 +805,9 @@
       return !!getFullscreenElement() || isPseudoFullscreen();
     }
 
+    let _lastAppFullscreen = isAppFullscreen();
+    let _sidebarHiddenBeforeFullscreen = sidebar ? sidebar.isHidden() : false;
+
     function requestFullscreenFor(el) {
       if (!el) return null;
       const req = el.requestFullscreen || el.webkitRequestFullscreen;
@@ -986,6 +990,18 @@
       updateFullscreenButtonState();
       const fs = isAppFullscreen();
       document.body.classList.toggle('is-fullscreen', fs);
+
+      // Only auto-hide in fullscreen. When leaving fullscreen, restore the sidebar
+      // to the state it had before entering fullscreen.
+      if (fs && !_lastAppFullscreen) {
+        _sidebarHiddenBeforeFullscreen = sidebar ? sidebar.isHidden() : false;
+        // If visible, start (or resume) the inactivity timer now that fullscreen is enabled.
+        if (sidebar && !sidebar.isHidden()) sidebar.noteActivity();
+      } else if (!fs && _lastAppFullscreen) {
+        if (sidebar) sidebar.setHidden(!!_sidebarHiddenBeforeFullscreen);
+      }
+      _lastAppFullscreen = fs;
+
       if (fs) {
         startFullscreenCursorAutoHide();
       } else {

@@ -5,6 +5,7 @@ export class Sidebar {
       sidebarDrawer = null,
       playerGestureLayer = null,
       isInteractionBlockingHide = () => false,
+      isAutoHideEnabled = () => true,
       allowScrollSelectors = [],
     } = options;
 
@@ -12,6 +13,7 @@ export class Sidebar {
     this.sidebarDrawer = sidebarDrawer;
     this.playerGestureLayer = playerGestureLayer;
     this.isInteractionBlockingHide = isInteractionBlockingHide;
+    this.isAutoHideEnabled = (typeof isAutoHideEnabled === 'function') ? isAutoHideEnabled : (() => true);
     this.allowScrollSelectors = Array.isArray(allowScrollSelectors) ? allowScrollSelectors : [];
 
     this.SIDEBAR_AUTO_HIDE_MS = 80000;
@@ -52,6 +54,7 @@ export class Sidebar {
   }
 
   maybeHideFromPlayerStateChange(playerState) {
+    if (!this.isAutoHideEnabled()) return;
     if (this.isHidden()) return;
     if (this.isInteractionBlockingHide()) return;
     if (Date.now() < this.sidebarHideSuppressedUntil) return;
@@ -71,8 +74,16 @@ export class Sidebar {
   }
 
   ensureInactivityInterval() {
+    if (!this.isAutoHideEnabled()) {
+      this.clearInactivityInterval();
+      return;
+    }
     if (this.sidebarInactivityInterval) return;
     this.sidebarInactivityInterval = setInterval(() => {
+      if (!this.isAutoHideEnabled()) {
+        this.clearInactivityInterval();
+        return;
+      }
       if (this.isHidden()) {
         this.clearInactivityInterval();
         return;
@@ -86,6 +97,10 @@ export class Sidebar {
 
   noteActivity() {
     if (this.isHidden()) return;
+    if (!this.isAutoHideEnabled()) {
+      this.clearInactivityInterval();
+      return;
+    }
     this.sidebarLastActivityTs = Date.now();
     this.ensureInactivityInterval();
   }

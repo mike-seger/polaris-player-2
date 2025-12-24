@@ -128,6 +128,15 @@ def main(argv: Optional[List[str]] = None) -> int:
         default="unmatched",
         help="Value to write to spotifyId when no unique match is found (default: unmatched)",
     )
+    p.add_argument(
+        "--fill-missing",
+        action="store_true",
+        help=(
+            "Also process items that are missing spotifyId (or have empty spotifyId), setting them to the "
+            "unmatched value when no unique match is found. Without this flag, only items whose spotifyId "
+            "already equals the unmatched value are updated."
+        ),
+    )
 
     args = p.parse_args(argv)
 
@@ -153,13 +162,29 @@ def main(argv: Optional[List[str]] = None) -> int:
     enriched = 0
     ambiguous = 0
     missing = 0
+    skipped = 0
 
     for item in items:
         if not isinstance(item, dict):
             continue
 
-        # Don't overwrite if caller already populated spotifyId.
-        if isinstance(item.get("spotifyId"), str) and item.get("spotifyId"):
+        existing = item.get("spotifyId")
+
+        # Default behavior: only update items explicitly marked as unmatched.
+        if existing is None:
+            if not args.fill_missing:
+                skipped += 1
+                continue
+        elif isinstance(existing, str):
+            if existing.strip() == "":
+                if not args.fill_missing:
+                    skipped += 1
+                    continue
+            elif existing != args.unmatched_value:
+                skipped += 1
+                continue
+        else:
+            skipped += 1
             continue
 
         user_title = (item.get("userTitle") or item.get("title") or "").strip()
@@ -205,6 +230,7 @@ def main(argv: Optional[List[str]] = None) -> int:
                 "ambiguous": ambiguous,
                 "csv_total": len(csv_rows),
                 "csv_unused": len(csv_rows) - len(used_indices),
+                "skipped": skipped,
             },
             indent=2,
         ),
