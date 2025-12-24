@@ -96,6 +96,16 @@ export class HtmlVideoAdapter {
 
   supports(kind) { return kind === "file"; }
 
+  getThumbnailUrl(track) {
+    const rawTitle = (track && typeof track.title === 'string') ? track.title : '';
+    const base = String(rawTitle || '')
+      .trim()
+      .replace(/[\u2018\u2019']/g, '\u2019')
+      .replace(/[\\/]/g, '_');
+    if (!base) return undefined;
+    return `${window.location.origin}/video/thumbnail/${encodeURIComponent(base)}.jpg`;
+  }
+
   mount(container) {
     this._container = container;
     if (container && !container.contains(this._el)) container.appendChild(this._el);

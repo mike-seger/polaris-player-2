@@ -83,6 +83,13 @@ export class YouTubeAdapter {
 
   supports(kind) { return kind === "youtube"; }
 
+  getThumbnailUrl(track) {
+    const videoId = track?.source?.videoId || track?.id;
+    const cleaned = (videoId || '').trim();
+    if (!cleaned) return undefined;
+    return `https://i.ytimg.com/vi/${encodeURIComponent(cleaned)}/mqdefault.jpg`;
+  }
+
   mount(container) {
     this._yt.mount(container);
     this._yt.init();

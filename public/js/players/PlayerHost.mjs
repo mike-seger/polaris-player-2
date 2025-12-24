@@ -94,6 +94,21 @@ export class PlayerHost {
   }
 
   /**
+   * Returns a thumbnail/artwork URL for a track if the relevant adapter can provide one.
+   * @param {import("./core/types.mjs").Track} track
+   * @returns {string|undefined}
+   */
+  getThumbnailUrl(track) {
+    if (!track || !track.source || !track.source.kind) return undefined;
+    const a = this.adapters.find((ad) => ad && typeof ad.supports === 'function' && ad.supports(track.source.kind));
+    const fn = a && a.getThumbnailUrl;
+    if (typeof fn === 'function') {
+      try { return fn.call(a, track); } catch { return undefined; }
+    }
+    return track.artworkUrl;
+  }
+
+  /**
    * Routes track to adapter by `track.source.kind`.
    * @param {import("./core/types.mjs").Track} track
    * @param {import("./core/types.mjs").AdapterLoadOptions=} opts

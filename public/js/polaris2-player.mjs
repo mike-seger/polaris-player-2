@@ -101,7 +101,20 @@
     }
 
     function sanitizeLocalVideoBasename(name) {
-      return String(name || '').trim().replace(/[\\/]/g, '_');
+      return String(name || '')
+        .trim()
+        // Normalize common quote variants to match typical macOS “smart quote” filenames.
+        .replace(/[\u2018\u2019']/g, '\u2019')
+        .replace(/[\\/]/g, '_');
+    }
+
+    function buildLocalThumbnailUrlForItem(item) {
+      const rawTitle = (item && typeof item.userTitle === 'string' && item.userTitle.trim().length)
+        ? item.userTitle
+        : (item && typeof item.title === 'string' ? item.title : '');
+      const base = sanitizeLocalVideoBasename(rawTitle);
+      if (!base) return '';
+      return `${window.location.origin}/video/thumbnail/${encodeURIComponent(base)}.jpg`;
     }
 
     function buildLocalVideoUrlForItem(item) {
@@ -279,7 +292,7 @@
       scrollContainerEl: trackListContainerEl,
       focusContainerEl: trackListContainerEl,
 
-      getPlaylistItems: () => playlistItems,
+      getPlaylistItems: () => getPlaylistItemsForTrackList(),
       getCurrentIndex: () => currentIndex,
 
       getFilterText: () => filterText,
@@ -289,9 +302,6 @@
       getSortAlphabetically: () => sortAlphabetically,
 
       getTrackDetailSettings: () => {
-        if (getPlayerMode() === 'local') {
-          return { ...trackDetailSettings, thumbnail: false };
-        }
         return trackDetailSettings;
       },
 
@@ -335,6 +345,45 @@
       ]
     });
     const showAlert = (message) => alert.show(message);
+
+    let trackListItemsCache = { version: -1, mode: '', items: [] };
+
+    function getThumbnailUrlForItem(item) {
+      const mode = getPlayerMode();
+
+      if (mode === 'local') {
+        const localThumb = (playerHost && typeof playerHost.getThumbnailUrl === 'function')
+          ? playerHost.getThumbnailUrl(buildTrackFromPlaylistItem(item))
+          : buildLocalThumbnailUrlForItem(item);
+        return localThumb || '';
+      }
+
+      // YouTube mode: keep playlist-provided thumbnails, but provide a safe fallback.
+      const existing = (item && typeof item.thumbnail === 'string') ? item.thumbnail : '';
+      if (existing) return existing;
+      if (playerHost && typeof playerHost.getThumbnailUrl === 'function') {
+        const fallback = playerHost.getThumbnailUrl(buildTrackFromPlaylistItem(item));
+        return fallback || '';
+      }
+      const videoId = item && item.videoId ? String(item.videoId).trim() : '';
+      if (!videoId) return '';
+      return `https://i.ytimg.com/vi/${encodeURIComponent(videoId)}/mqdefault.jpg`;
+    }
+
+    function getPlaylistItemsForTrackList() {
+      const mode = getPlayerMode();
+      if (trackListItemsCache.version === playlistVersion && trackListItemsCache.mode === mode) {
+        return trackListItemsCache.items;
+      }
+      const items = (playlistItems || []).map((it) => {
+        const thumb = getThumbnailUrlForItem(it);
+        if (!thumb) return it;
+        // Override only what TrackListView reads.
+        return { ...it, thumbnail: thumb };
+      });
+      trackListItemsCache = { version: playlistVersion, mode, items };
+      return items;
+    }
 
     let trackDetailsOverlayController;
 

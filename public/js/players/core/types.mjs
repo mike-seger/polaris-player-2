@@ -95,6 +95,7 @@
  * @property {(sourceKind: TrackSource["kind"]) => boolean} supports
  * @property {(container: HTMLElement) => void=} mount
  * @property {() => void=} unmount
+ * @property {(track: Track) => (string|undefined)=} getThumbnailUrl
  * @property {() => Capability} getCapabilities
  * @property {(track: Track, opts?: AdapterLoadOptions) => Promise<void>} load
  * @property {() => Promise<void>} play
