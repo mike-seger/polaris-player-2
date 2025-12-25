@@ -204,6 +204,12 @@ export class Sidebar {
         if (!this.isHidden()) return;
         event.preventDefault();
         event.stopPropagation();
+        // In fullscreen, revealing the sidebar is itself a player-surface interaction.
+        // Don't immediately auto-hide again on the next player state poll/change.
+        this.suppressHide(5000);
+        this.lastPointerTs = 0;
+        this.lastPointerWasInDrawer = false;
+        this.lastPointerWasInPlayer = false;
         this.setHidden(false);
       };
       this.playerGestureLayer.addEventListener('pointerdown', showFromVideo, { passive: false });
