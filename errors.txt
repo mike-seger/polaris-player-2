@@ -1,0 +1,1502 @@
+index.js:15 It is recommended that a robustness level be specified. Not specifying the robustness level could result in unexpected behavior.
+t.requestMediaKeySystemAccess @ index.js:15
+t.init @ index.js:15
+(anonymous) @ index.js:15
+t.create @ index.js:15
+t.create @ index.js:15
+(anonymous) @ index.js:15
+r.createPlayer @ index.js:15
+d @ index.js:15
+r.createStreamerForClient @ index.js:15
+e._onInit @ index.js:30
+e._handleMessages @ index.js:30
+e._receiveMessage @ index.js:30
+index.js:15  GET https://api.spotify.com/v1/melody/v1/check_scope?scope=web-playback 403 (Forbidden)
+r.request @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+(anonymous) @ index.js:15
+e._tick @ index.js:3
+e.start @ index.js:3
+t._sendRetriedRequest @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+t._sendRequest @ index.js:15
+t.request @ index.js:15
+t.request @ index.js:15
+e._verifyToken @ index.js:30
+Promise.then
+e._getToken @ index.js:30
+(anonymous) @ index.js:15
+token @ index.js:15
+(anonymous) @ index.js:15
+t._refreshToken @ index.js:15
+(anonymous) @ index.js:15
+e._tick @ index.js:3
+e.start @ index.js:3
+e.init @ index.js:3
+t._authenticate @ index.js:15
+t.authenticate @ index.js:15
+(anonymous) @ index.js:30
+Promise.then
+e._onConnect @ index.js:30
+e._handleMessages @ index.js:30
+e._receiveMessage @ index.js:30
+polaris2-player.mjs:1528 Player error: {code: 'AUTH_ERROR', message: 'Invalid token scopes.'}
+(anonymous) @ polaris2-player.mjs:1528
+emit @ Emitter.mjs:33
+(anonymous) @ PlayerHost.mjs:196
+emit @ Emitter.mjs:33
+_setError @ SpotifyAdapter.mjs:708
+(anonymous) @ SpotifyAdapter.mjs:516
+(anonymous) @ spotify-player.js:3
+t._onEvent @ spotify-player.js:3
+t._handleMessages @ spotify-player.js:3
+e._receiveMessage @ spotify-player.js:3
+SpotifyAdapter.mjs:107  PUT https://api.spotify.com/v1/me/player 404 (Not Found)
+spotifyApi @ SpotifyAdapter.mjs:107
+load @ SpotifyAdapter.mjs:756
+await in load
+load @ PlayerHost.mjs:129
+(anonymous) @ polaris2-player.mjs:1915
+Promise.then
+playIndex @ polaris2-player.mjs:1913
+togglePlayback @ polaris2-player.mjs:1991
+(anonymous) @ polaris2-player.mjs:2014
+polaris2-player.mjs:1918 Player load error: Error: Spotify API PUT /me/player failed (404): {
+  "error" : {
+    "status" : 404,
+    "message" : "Device not found"
+  }
+}
+    at spotifyApi (SpotifyAdapter.mjs:128:19)
+    at async SpotifyAdapter.load (SpotifyAdapter.mjs:756:5)
+    at async PlayerHost.load (PlayerHost.mjs:129:5)
+(anonymous) @ polaris2-player.mjs:1918
+Promise.catch
+playIndex @ polaris2-player.mjs:1918
+togglePlayback @ polaris2-player.mjs:1991
+(anonymous) @ polaris2-player.mjs:2014
+SpotifyAdapter.mjs:107  PUT https://api.spotify.com/v1/me/player 404 (Not Found)
+spotifyApi @ SpotifyAdapter.mjs:107
+load @ SpotifyAdapter.mjs:756
+await in load
+load @ PlayerHost.mjs:129
+(anonymous) @ polaris2-player.mjs:1915
+Promise.then
+playIndex @ polaris2-player.mjs:1913
+onPlayerReady @ polaris2-player.mjs:1601
+await in onPlayerReady
+(anonymous) @ polaris2-player.mjs:1522
+emit @ Emitter.mjs:33
+(anonymous) @ PlayerHost.mjs:194
+emit @ Emitter.mjs:33
+_setState @ SpotifyAdapter.mjs:702
+(anonymous) @ SpotifyAdapter.mjs:528
+(anonymous) @ spotify-player.js:3
+t._onEvent @ spotify-player.js:3
+t._handleMessages @ spotify-player.js:3
+e._receiveMessage @ spotify-player.js:3
+polaris2-player.mjs:1918 Player load error: Error: Spotify API PUT /me/player failed (404): {
+  "error" : {
+    "status" : 404,
+    "message" : "Device not found"
+  }
+}
+    at spotifyApi (SpotifyAdapter.mjs:128:19)
+    at async SpotifyAdapter.load (SpotifyAdapter.mjs:756:5)
+    at async PlayerHost.load (PlayerHost.mjs:129:5)
+(anonymous) @ polaris2-player.mjs:1918
+Promise.catch
+playIndex @ polaris2-player.mjs:1918
+onPlayerReady @ polaris2-player.mjs:1601
+await in onPlayerReady
+(anonymous) @ polaris2-player.mjs:1522
+emit @ Emitter.mjs:33
+(anonymous) @ PlayerHost.mjs:194
+emit @ Emitter.mjs:33
+_setState @ SpotifyAdapter.mjs:702
+(anonymous) @ SpotifyAdapter.mjs:528
+(anonymous) @ spotify-player.js:3
+t._onEvent @ spotify-player.js:3
+t._handleMessages @ spotify-player.js:3
+e._receiveMessage @ spotify-player.js:3
+
+
+
+
+
+index.js:15 It is recommended that a robustness level be specified. Not specifying the robustness level could result in unexpected behavior.
+t.requestMediaKeySystemAccess @ index.js:15
+t.init @ index.js:15
+(anonymous) @ index.js:15
+t.create @ index.js:15
+t.create @ index.js:15
+(anonymous) @ index.js:15
+r.createPlayer @ index.js:15
+d @ index.js:15
+r.createStreamerForClient @ index.js:15
+e._onInit @ index.js:30
+e._handleMessages @ index.js:30
+e._receiveMessage @ index.js:30
+index.js:15  GET https://api.spotify.com/v1/melody/v1/check_scope?scope=web-playback 403 (Forbidden)
+r.request @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+(anonymous) @ index.js:15
+e._tick @ index.js:3
+e.start @ index.js:3
+t._sendRetriedRequest @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+t._sendRequest @ index.js:15
+t.request @ index.js:15
+t.request @ index.js:15
+e._verifyToken @ index.js:30
+Promise.then
+e._getToken @ index.js:30
+(anonymous) @ index.js:15
+token @ index.js:15
+(anonymous) @ index.js:15
+t._refreshToken @ index.js:15
+(anonymous) @ index.js:15
+e._tick @ index.js:3
+e.start @ index.js:3
+e.init @ index.js:3
+t._authenticate @ index.js:15
+t.authenticate @ index.js:15
+(anonymous) @ index.js:30
+Promise.then
+e._onConnect @ index.js:30
+e._handleMessages @ index.js:30
+e._receiveMessage @ index.js:30
+polaris2-player.mjs:1528 Player error: {code: 'AUTH_ERROR', message: 'Invalid token scopes.'}
+(anonymous) @ polaris2-player.mjs:1528
+emit @ Emitter.mjs:33
+(anonymous) @ PlayerHost.mjs:196
+emit @ Emitter.mjs:33
+_setError @ SpotifyAdapter.mjs:728
+(anonymous) @ SpotifyAdapter.mjs:535
+(anonymous) @ spotify-player.js:3
+t._onEvent @ spotify-player.js:3
+t._handleMessages @ spotify-player.js:3
+e._receiveMessage @ spotify-player.js:3
+index.js:15  POST https://api.spotify.com/v1/widevine-license/v1/audio/license 429 (Too Many Requests)
+r.request @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+(anonymous) @ index.js:15
+e._tick @ index.js:3
+e.start @ index.js:3
+t._sendRetriedRequest @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+t._sendRequest @ index.js:15
+t.request @ index.js:15
+t._onMessage @ index.js:15
+index.js:15  POST https://api.spotify.com/v1/widevine-license/v1/audio/license 429 (Too Many Requests)
+r.request @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+(anonymous) @ index.js:15
+e._tick @ index.js:3
+(anonymous) @ index.js:3
+setTimeout
+e._failure @ index.js:3
+(anonymous) @ index.js:3
+Promise.catch
+e._tick @ index.js:3
+e.start @ index.js:3
+t._sendRetriedRequest @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+t._sendRequest @ index.js:15
+t.request @ index.js:15
+t._onMessage @ index.js:15
+index.js:15  POST https://api.spotify.com/v1/widevine-license/v1/audio/license 429 (Too Many Requests)
+r.request @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+(anonymous) @ index.js:15
+e._tick @ index.js:3
+e.start @ index.js:3
+t._sendRetriedRequest @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+t._sendRequest @ index.js:15
+t.request @ index.js:15
+t._onMessage @ index.js:15
+index.js:15  POST https://api.spotify.com/v1/widevine-license/v1/audio/license 429 (Too Many Requests)
+r.request @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+(anonymous) @ index.js:15
+e._tick @ index.js:3
+(anonymous) @ index.js:3
+setTimeout
+e._failure @ index.js:3
+(anonymous) @ index.js:3
+Promise.catch
+e._tick @ index.js:3
+e.start @ index.js:3
+t._sendRetriedRequest @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+t._sendRequest @ index.js:15
+t.request @ index.js:15
+t._onMessage @ index.js:15
+index.js:15  POST https://api.spotify.com/v1/widevine-license/v1/audio/license 429 (Too Many Requests)
+r.request @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+(anonymous) @ index.js:15
+e._tick @ index.js:3
+(anonymous) @ index.js:3
+setTimeout
+e._failure @ index.js:3
+(anonymous) @ index.js:3
+Promise.catch
+e._tick @ index.js:3
+(anonymous) @ index.js:3
+setTimeout
+e._failure @ index.js:3
+(anonymous) @ index.js:3
+Promise.catch
+e._tick @ index.js:3
+e.start @ index.js:3
+t._sendRetriedRequest @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+t._sendRequest @ index.js:15
+t.request @ index.js:15
+t._onMessage @ index.js:15
+index.js:15  POST https://api.spotify.com/v1/widevine-license/v1/audio/license 429 (Too Many Requests)
+r.request @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+(anonymous) @ index.js:15
+e._tick @ index.js:3
+(anonymous) @ index.js:3
+setTimeout
+e._failure @ index.js:3
+(anonymous) @ index.js:3
+Promise.catch
+e._tick @ index.js:3
+(anonymous) @ index.js:3
+setTimeout
+e._failure @ index.js:3
+(anonymous) @ index.js:3
+Promise.catch
+e._tick @ index.js:3
+e.start @ index.js:3
+t._sendRetriedRequest @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+t._sendRequest @ index.js:15
+t.request @ index.js:15
+t._onMessage @ index.js:15
+index.js:15  POST https://api.spotify.com/v1/widevine-license/v1/audio/license 429 (Too Many Requests)
+r.request @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+(anonymous) @ index.js:15
+e._tick @ index.js:3
+e.start @ index.js:3
+t._sendRetriedRequest @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+t._sendRequest @ index.js:15
+t.request @ index.js:15
+t._onMessage @ index.js:15
+index.js:15  POST https://api.spotify.com/v1/widevine-license/v1/audio/license 429 (Too Many Requests)
+r.request @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+(anonymous) @ index.js:15
+e._tick @ index.js:3
+e.start @ index.js:3
+t._sendRetriedRequest @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+t._sendRequest @ index.js:15
+t.request @ index.js:15
+t._onMessage @ index.js:15
+index.js:15  POST https://api.spotify.com/v1/widevine-license/v1/audio/license 429 (Too Many Requests)
+r.request @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+(anonymous) @ index.js:15
+e._tick @ index.js:3
+(anonymous) @ index.js:3
+setTimeout
+e._failure @ index.js:3
+(anonymous) @ index.js:3
+Promise.catch
+e._tick @ index.js:3
+e.start @ index.js:3
+t._sendRetriedRequest @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+t._sendRequest @ index.js:15
+t.request @ index.js:15
+t._onMessage @ index.js:15
+index.js:15  POST https://api.spotify.com/v1/widevine-license/v1/audio/license 429 (Too Many Requests)
+r.request @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+(anonymous) @ index.js:15
+e._tick @ index.js:3
+(anonymous) @ index.js:3
+setTimeout
+e._failure @ index.js:3
+(anonymous) @ index.js:3
+Promise.catch
+e._tick @ index.js:3
+(anonymous) @ index.js:3
+setTimeout
+e._failure @ index.js:3
+(anonymous) @ index.js:3
+Promise.catch
+e._tick @ index.js:3
+e.start @ index.js:3
+t._sendRetriedRequest @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+t._sendRequest @ index.js:15
+t.request @ index.js:15
+t._onMessage @ index.js:15
+polaris2-player.mjs:1528 Player error: {code: 'PLAYBACK_ERROR', message: 'Playback error'}
+(anonymous) @ polaris2-player.mjs:1528
+emit @ Emitter.mjs:33
+(anonymous) @ PlayerHost.mjs:196
+emit @ Emitter.mjs:33
+_setError @ SpotifyAdapter.mjs:728
+(anonymous) @ SpotifyAdapter.mjs:542
+(anonymous) @ spotify-player.js:3
+t._onEvent @ spotify-player.js:3
+t._handleMessages @ spotify-player.js:3
+e._receiveMessage @ spotify-player.js:3
+index.js:15  POST https://api.spotify.com/v1/widevine-license/v1/audio/license 429 (Too Many Requests)
+r.request @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+(anonymous) @ index.js:15
+e._tick @ index.js:3
+e.start @ index.js:3
+t._sendRetriedRequest @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+t._sendRequest @ index.js:15
+t.request @ index.js:15
+t._onMessage @ index.js:15
+index.js:15  POST https://api.spotify.com/v1/widevine-license/v1/audio/license 429 (Too Many Requests)
+r.request @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+(anonymous) @ index.js:15
+e._tick @ index.js:3
+(anonymous) @ index.js:3
+setTimeout
+e._failure @ index.js:3
+(anonymous) @ index.js:3
+Promise.catch
+e._tick @ index.js:3
+e.start @ index.js:3
+t._sendRetriedRequest @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+t._sendRequest @ index.js:15
+t.request @ index.js:15
+t._onMessage @ index.js:15
+index.js:15  POST https://api.spotify.com/v1/widevine-license/v1/audio/license 429 (Too Many Requests)
+r.request @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+(anonymous) @ index.js:15
+e._tick @ index.js:3
+(anonymous) @ index.js:3
+setTimeout
+e._failure @ index.js:3
+(anonymous) @ index.js:3
+Promise.catch
+e._tick @ index.js:3
+(anonymous) @ index.js:3
+setTimeout
+e._failure @ index.js:3
+(anonymous) @ index.js:3
+Promise.catch
+e._tick @ index.js:3
+e.start @ index.js:3
+t._sendRetriedRequest @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+t._sendRequest @ index.js:15
+t.request @ index.js:15
+t._onMessage @ index.js:15
+index.js:15  POST https://api.spotify.com/v1/widevine-license/v1/audio/license 429 (Too Many Requests)
+r.request @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+(anonymous) @ index.js:15
+e._tick @ index.js:3
+e.start @ index.js:3
+t._sendRetriedRequest @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+t._sendRequest @ index.js:15
+t.request @ index.js:15
+t._onMessage @ index.js:15
+index.js:15  POST https://api.spotify.com/v1/widevine-license/v1/audio/license 429 (Too Many Requests)
+r.request @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+(anonymous) @ index.js:15
+e._tick @ index.js:3
+(anonymous) @ index.js:3
+setTimeout
+e._failure @ index.js:3
+(anonymous) @ index.js:3
+Promise.catch
+e._tick @ index.js:3
+e.start @ index.js:3
+t._sendRetriedRequest @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+t._sendRequest @ index.js:15
+t.request @ index.js:15
+t._onMessage @ index.js:15
+index.js:15  POST https://api.spotify.com/v1/widevine-license/v1/audio/license 429 (Too Many Requests)
+r.request @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+(anonymous) @ index.js:15
+e._tick @ index.js:3
+e.start @ index.js:3
+t._sendRetriedRequest @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+t._sendRequest @ index.js:15
+t.request @ index.js:15
+t._onMessage @ index.js:15
+index.js:15  POST https://api.spotify.com/v1/widevine-license/v1/audio/license 429 (Too Many Requests)
+r.request @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+(anonymous) @ index.js:15
+e._tick @ index.js:3
+(anonymous) @ index.js:3
+setTimeout
+e._failure @ index.js:3
+(anonymous) @ index.js:3
+Promise.catch
+e._tick @ index.js:3
+e.start @ index.js:3
+t._sendRetriedRequest @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+t._sendRequest @ index.js:15
+t.request @ index.js:15
+t._onMessage @ index.js:15
+index.js:15  POST https://api.spotify.com/v1/widevine-license/v1/audio/license 429 (Too Many Requests)
+r.request @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+(anonymous) @ index.js:15
+e._tick @ index.js:3
+(anonymous) @ index.js:3
+setTimeout
+e._failure @ index.js:3
+(anonymous) @ index.js:3
+Promise.catch
+e._tick @ index.js:3
+(anonymous) @ index.js:3
+setTimeout
+e._failure @ index.js:3
+(anonymous) @ index.js:3
+Promise.catch
+e._tick @ index.js:3
+e.start @ index.js:3
+t._sendRetriedRequest @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+t._sendRequest @ index.js:15
+t.request @ index.js:15
+t._onMessage @ index.js:15
+index.js:15  POST https://api.spotify.com/v1/widevine-license/v1/audio/license 429 (Too Many Requests)
+r.request @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+(anonymous) @ index.js:15
+e._tick @ index.js:3
+(anonymous) @ index.js:3
+setTimeout
+e._failure @ index.js:3
+(anonymous) @ index.js:3
+Promise.catch
+e._tick @ index.js:3
+(anonymous) @ index.js:3
+setTimeout
+e._failure @ index.js:3
+(anonymous) @ index.js:3
+Promise.catch
+e._tick @ index.js:3
+e.start @ index.js:3
+t._sendRetriedRequest @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+t._sendRequest @ index.js:15
+t.request @ index.js:15
+t._onMessage @ index.js:15
+polaris2-player.mjs:1528 Player error: {code: 'PLAYBACK_ERROR', message: 'Playback error'}
+(anonymous) @ polaris2-player.mjs:1528
+emit @ Emitter.mjs:33
+(anonymous) @ PlayerHost.mjs:196
+emit @ Emitter.mjs:33
+_setError @ SpotifyAdapter.mjs:728
+(anonymous) @ SpotifyAdapter.mjs:542
+(anonymous) @ spotify-player.js:3
+t._onEvent @ spotify-player.js:3
+t._handleMessages @ spotify-player.js:3
+e._receiveMessage @ spotify-player.js:3
+index.js:15  POST https://api.spotify.com/v1/melody/v1/msg/batch 429 (Too Many Requests)
+r.request @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+(anonymous) @ index.js:15
+e._tick @ index.js:3
+e.start @ index.js:3
+t._sendRetriedRequest @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+t._sendRequest @ index.js:15
+t.request @ index.js:15
+(anonymous) @ index.js:3
+(anonymous) @ index.js:3
+Promise.then
+e._sendBatchedLogs @ index.js:3
+(anonymous) @ index.js:3
+postMessage
+a @ index.js:15
+e.emit @ index.js:15
+t._emitError @ index.js:15
+t._onLicenseRequestError @ index.js:15
+e._dispatchFromStore @ index.js:15
+(anonymous) @ index.js:15
+o @ index.js:15
+r @ index.js:15
+postMessage
+a @ index.js:15
+e.emit @ index.js:15
+o @ index.js:15
+t._handleLicenseResponse @ index.js:15
+Promise.then
+t._onMessage @ index.js:15
+index.js:15  PUT https://api.spotify.com/v1/track-playback/v1/devices/3447ba678a433c1a70740429736a4e7a43fbe34a/state 429 (Too Many Requests)
+r.request @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+(anonymous) @ index.js:15
+e._tick @ index.js:3
+e.start @ index.js:3
+t._sendRetriedRequest @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+t._sendRequest @ index.js:15
+t.request @ index.js:15
+r._updateState @ index.js:15
+r._onSpeedChanged @ index.js:15
+e._dispatchFromStore @ index.js:15
+(anonymous) @ index.js:15
+o @ index.js:15
+r @ index.js:15
+postMessage
+a @ index.js:15
+e.emitAndWait @ index.js:15
+i @ index.js:15
+e._dispatchFromStore @ index.js:15
+(anonymous) @ index.js:15
+o @ index.js:15
+r @ index.js:15
+postMessage
+a @ index.js:15
+e.emitAndWait @ index.js:15
+i @ index.js:15
+e._dispatchFromStore @ index.js:15
+(anonymous) @ index.js:15
+o @ index.js:15
+r @ index.js:15
+postMessage
+a @ index.js:15
+e.emit @ index.js:15
+t._loadContent @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+t.load @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+t._changeTrack @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+t.next @ index.js:15
+t._handleError @ index.js:15
+e._dispatchFromStore @ index.js:15
+(anonymous) @ index.js:15
+o @ index.js:15
+r @ index.js:15
+postMessage
+a @ index.js:15
+e.emit @ index.js:15
+t._emitError @ index.js:15
+t._onLicenseRequestError @ index.js:15
+e._dispatchFromStore @ index.js:15
+(anonymous) @ index.js:15
+o @ index.js:15
+r @ index.js:15
+postMessage
+a @ index.js:15
+e.emit @ index.js:15
+o @ index.js:15
+t._handleLicenseResponse @ index.js:15
+Promise.then
+t._onMessage @ index.js:15
+index.js:15  POST https://api.spotify.com/v1/widevine-license/v1/audio/license 429 (Too Many Requests)
+r.request @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+(anonymous) @ index.js:15
+e._tick @ index.js:3
+e.start @ index.js:3
+t._sendRetriedRequest @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+t._sendRequest @ index.js:15
+t.request @ index.js:15
+t._onMessage @ index.js:15
+index.js:15  PUT https://api.spotify.com/v1/track-playback/v1/devices/3447ba678a433c1a70740429736a4e7a43fbe34a/state 429 (Too Many Requests)
+r.request @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+(anonymous) @ index.js:15
+e._tick @ index.js:3
+e.start @ index.js:3
+t._sendRetriedRequest @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+t._sendRequest @ index.js:15
+t.request @ index.js:15
+r._updateState @ index.js:15
+r._onSpeedChanged @ index.js:15
+e._dispatchFromStore @ index.js:15
+(anonymous) @ index.js:15
+o @ index.js:15
+r @ index.js:15
+postMessage
+a @ index.js:15
+e.emitAndWait @ index.js:15
+i @ index.js:15
+e._dispatchFromStore @ index.js:15
+(anonymous) @ index.js:15
+o @ index.js:15
+r @ index.js:15
+postMessage
+a @ index.js:15
+e.emitAndWait @ index.js:15
+i @ index.js:15
+e._dispatchFromStore @ index.js:15
+(anonymous) @ index.js:15
+o @ index.js:15
+r @ index.js:15
+postMessage
+a @ index.js:15
+e.emit @ index.js:15
+t._onVideoResize @ index.js:15
+index.js:15  POST https://api.spotify.com/v1/widevine-license/v1/audio/license 429 (Too Many Requests)
+r.request @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+(anonymous) @ index.js:15
+e._tick @ index.js:3
+(anonymous) @ index.js:3
+setTimeout
+e._retryAfter @ index.js:3
+e._failure @ index.js:3
+(anonymous) @ index.js:3
+Promise.catch
+e._tick @ index.js:3
+e.start @ index.js:3
+t._sendRetriedRequest @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+t._sendRequest @ index.js:15
+t.request @ index.js:15
+t._onMessage @ index.js:15
+index.js:15  POST https://api.spotify.com/v1/widevine-license/v1/audio/license 429 (Too Many Requests)
+r.request @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+(anonymous) @ index.js:15
+e._tick @ index.js:3
+(anonymous) @ index.js:3
+setTimeout
+e._failure @ index.js:3
+(anonymous) @ index.js:3
+Promise.catch
+e._tick @ index.js:3
+(anonymous) @ index.js:3
+setTimeout
+e._retryAfter @ index.js:3
+e._failure @ index.js:3
+(anonymous) @ index.js:3
+Promise.catch
+e._tick @ index.js:3
+e.start @ index.js:3
+t._sendRetriedRequest @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+t._sendRequest @ index.js:15
+t.request @ index.js:15
+t._onMessage @ index.js:15
+polaris2-player.mjs:1528 Player error: {code: 'PLAYBACK_ERROR', message: 'Playback error'}
+(anonymous) @ polaris2-player.mjs:1528
+emit @ Emitter.mjs:33
+(anonymous) @ PlayerHost.mjs:196
+emit @ Emitter.mjs:33
+_setError @ SpotifyAdapter.mjs:728
+(anonymous) @ SpotifyAdapter.mjs:542
+(anonymous) @ spotify-player.js:3
+t._onEvent @ spotify-player.js:3
+t._handleMessages @ spotify-player.js:3
+e._receiveMessage @ spotify-player.js:3
+index.js:15  POST https://api.spotify.com/v1/widevine-license/v1/audio/license 429 (Too Many Requests)
+r.request @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+(anonymous) @ index.js:15
+e._tick @ index.js:3
+e.start @ index.js:3
+t._sendRetriedRequest @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+t._sendRequest @ index.js:15
+t.request @ index.js:15
+t._onMessage @ index.js:15
+index.js:15  POST https://api.spotify.com/v1/widevine-license/v1/audio/license 429 (Too Many Requests)
+r.request @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+(anonymous) @ index.js:15
+e._tick @ index.js:3
+(anonymous) @ index.js:3
+setTimeout
+e._failure @ index.js:3
+(anonymous) @ index.js:3
+Promise.catch
+e._tick @ index.js:3
+e.start @ index.js:3
+t._sendRetriedRequest @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+t._sendRequest @ index.js:15
+t.request @ index.js:15
+t._onMessage @ index.js:15
+index.js:15  POST https://api.spotify.com/v1/widevine-license/v1/audio/license 429 (Too Many Requests)
+r.request @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+(anonymous) @ index.js:15
+e._tick @ index.js:3
+(anonymous) @ index.js:3
+setTimeout
+e._failure @ index.js:3
+(anonymous) @ index.js:3
+Promise.catch
+e._tick @ index.js:3
+(anonymous) @ index.js:3
+setTimeout
+e._failure @ index.js:3
+(anonymous) @ index.js:3
+Promise.catch
+e._tick @ index.js:3
+e.start @ index.js:3
+t._sendRetriedRequest @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+t._sendRequest @ index.js:15
+t.request @ index.js:15
+t._onMessage @ index.js:15
+polaris2-player.mjs:1528 Player error: {code: 'PLAYBACK_ERROR', message: 'Playback error'}
+(anonymous) @ polaris2-player.mjs:1528
+emit @ Emitter.mjs:33
+(anonymous) @ PlayerHost.mjs:196
+emit @ Emitter.mjs:33
+_setError @ SpotifyAdapter.mjs:728
+(anonymous) @ SpotifyAdapter.mjs:542
+(anonymous) @ spotify-player.js:3
+t._onEvent @ spotify-player.js:3
+t._handleMessages @ spotify-player.js:3
+e._receiveMessage @ spotify-player.js:3
+index.js:15  POST https://api.spotify.com/v1/widevine-license/v1/audio/license 429 (Too Many Requests)
+r.request @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+(anonymous) @ index.js:15
+e._tick @ index.js:3
+e.start @ index.js:3
+t._sendRetriedRequest @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+t._sendRequest @ index.js:15
+t.request @ index.js:15
+t._onMessage @ index.js:15
+index.js:15  POST https://api.spotify.com/v1/widevine-license/v1/audio/license 429 (Too Many Requests)
+r.request @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+(anonymous) @ index.js:15
+e._tick @ index.js:3
+(anonymous) @ index.js:3
+setTimeout
+e._failure @ index.js:3
+(anonymous) @ index.js:3
+Promise.catch
+e._tick @ index.js:3
+e.start @ index.js:3
+t._sendRetriedRequest @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+t._sendRequest @ index.js:15
+t.request @ index.js:15
+t._onMessage @ index.js:15
+index.js:15  POST https://api.spotify.com/v1/widevine-license/v1/audio/license 429 (Too Many Requests)
+r.request @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+(anonymous) @ index.js:15
+e._tick @ index.js:3
+e.start @ index.js:3
+t._sendRetriedRequest @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+t._sendRequest @ index.js:15
+t.request @ index.js:15
+t._onMessage @ index.js:15
+index.js:15  POST https://api.spotify.com/v1/widevine-license/v1/audio/license 429 (Too Many Requests)
+r.request @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+(anonymous) @ index.js:15
+e._tick @ index.js:3
+(anonymous) @ index.js:3
+setTimeout
+e._failure @ index.js:3
+(anonymous) @ index.js:3
+Promise.catch
+e._tick @ index.js:3
+e.start @ index.js:3
+t._sendRetriedRequest @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+t._sendRequest @ index.js:15
+t.request @ index.js:15
+t._onMessage @ index.js:15
+index.js:15  POST https://api.spotify.com/v1/widevine-license/v1/audio/license 429 (Too Many Requests)
+r.request @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+(anonymous) @ index.js:15
+e._tick @ index.js:3
+(anonymous) @ index.js:3
+setTimeout
+e._failure @ index.js:3
+(anonymous) @ index.js:3
+Promise.catch
+e._tick @ index.js:3
+(anonymous) @ index.js:3
+setTimeout
+e._failure @ index.js:3
+(anonymous) @ index.js:3
+Promise.catch
+e._tick @ index.js:3
+e.start @ index.js:3
+t._sendRetriedRequest @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+t._sendRequest @ index.js:15
+t.request @ index.js:15
+t._onMessage @ index.js:15
+polaris2-player.mjs:1528 Player error: {code: 'PLAYBACK_ERROR', message: 'Playback error'}
+(anonymous) @ polaris2-player.mjs:1528
+emit @ Emitter.mjs:33
+(anonymous) @ PlayerHost.mjs:196
+emit @ Emitter.mjs:33
+_setError @ SpotifyAdapter.mjs:728
+(anonymous) @ SpotifyAdapter.mjs:542
+(anonymous) @ spotify-player.js:3
+t._onEvent @ spotify-player.js:3
+t._handleMessages @ spotify-player.js:3
+e._receiveMessage @ spotify-player.js:3
+index.js:15  POST https://api.spotify.com/v1/widevine-license/v1/audio/license 429 (Too Many Requests)
+r.request @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+(anonymous) @ index.js:15
+e._tick @ index.js:3
+e.start @ index.js:3
+t._sendRetriedRequest @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+t._sendRequest @ index.js:15
+t.request @ index.js:15
+t._onMessage @ index.js:15
+index.js:15  POST https://api.spotify.com/v1/widevine-license/v1/audio/license 429 (Too Many Requests)
+r.request @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+(anonymous) @ index.js:15
+e._tick @ index.js:3
+(anonymous) @ index.js:3
+setTimeout
+e._failure @ index.js:3
+(anonymous) @ index.js:3
+Promise.catch
+e._tick @ index.js:3
+e.start @ index.js:3
+t._sendRetriedRequest @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+t._sendRequest @ index.js:15
+t.request @ index.js:15
+t._onMessage @ index.js:15
+index.js:15  POST https://api.spotify.com/v1/widevine-license/v1/audio/license 429 (Too Many Requests)
+r.request @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+(anonymous) @ index.js:15
+e._tick @ index.js:3
+(anonymous) @ index.js:3
+setTimeout
+e._failure @ index.js:3
+(anonymous) @ index.js:3
+Promise.catch
+e._tick @ index.js:3
+(anonymous) @ index.js:3
+setTimeout
+e._failure @ index.js:3
+(anonymous) @ index.js:3
+Promise.catch
+e._tick @ index.js:3
+e.start @ index.js:3
+t._sendRetriedRequest @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+t._sendRequest @ index.js:15
+t.request @ index.js:15
+t._onMessage @ index.js:15
+polaris2-player.mjs:1528 Player error: {code: 'PLAYBACK_ERROR', message: 'Playback error'}
+(anonymous) @ polaris2-player.mjs:1528
+emit @ Emitter.mjs:33
+(anonymous) @ PlayerHost.mjs:196
+emit @ Emitter.mjs:33
+_setError @ SpotifyAdapter.mjs:728
+(anonymous) @ SpotifyAdapter.mjs:542
+(anonymous) @ spotify-player.js:3
+t._onEvent @ spotify-player.js:3
+t._handleMessages @ spotify-player.js:3
+e._receiveMessage @ spotify-player.js:3
+index.js:15  POST https://api.spotify.com/v1/widevine-license/v1/audio/license 429 (Too Many Requests)
+r.request @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+(anonymous) @ index.js:15
+e._tick @ index.js:3
+e.start @ index.js:3
+t._sendRetriedRequest @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+t._sendRequest @ index.js:15
+t.request @ index.js:15
+t._onMessage @ index.js:15
+index.js:15  POST https://api.spotify.com/v1/widevine-license/v1/audio/license 429 (Too Many Requests)
+r.request @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+(anonymous) @ index.js:15
+e._tick @ index.js:3
+(anonymous) @ index.js:3
+setTimeout
+e._failure @ index.js:3
+(anonymous) @ index.js:3
+Promise.catch
+e._tick @ index.js:3
+e.start @ index.js:3
+t._sendRetriedRequest @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+t._sendRequest @ index.js:15
+t.request @ index.js:15
+t._onMessage @ index.js:15
+index.js:15  POST https://api.spotify.com/v1/widevine-license/v1/audio/license 429 (Too Many Requests)
+r.request @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+(anonymous) @ index.js:15
+e._tick @ index.js:3
+(anonymous) @ index.js:3
+setTimeout
+e._failure @ index.js:3
+(anonymous) @ index.js:3
+Promise.catch
+e._tick @ index.js:3
+(anonymous) @ index.js:3
+setTimeout
+e._failure @ index.js:3
+(anonymous) @ index.js:3
+Promise.catch
+e._tick @ index.js:3
+e.start @ index.js:3
+t._sendRetriedRequest @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+t._sendRequest @ index.js:15
+t.request @ index.js:15
+t._onMessage @ index.js:15
+index.js:15  POST https://api.spotify.com/v1/widevine-license/v1/audio/license 429 (Too Many Requests)
+r.request @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+(anonymous) @ index.js:15
+e._tick @ index.js:3
+e.start @ index.js:3
+t._sendRetriedRequest @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+t._sendRequest @ index.js:15
+t.request @ index.js:15
+t._onMessage @ index.js:15
+index.js:15  POST https://api.spotify.com/v1/widevine-license/v1/audio/license 429 (Too Many Requests)
+r.request @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+(anonymous) @ index.js:15
+e._tick @ index.js:3
+(anonymous) @ index.js:3
+setTimeout
+e._failure @ index.js:3
+(anonymous) @ index.js:3
+Promise.catch
+e._tick @ index.js:3
+e.start @ index.js:3
+t._sendRetriedRequest @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+t._sendRequest @ index.js:15
+t.request @ index.js:15
+t._onMessage @ index.js:15
+index.js:15  POST https://api.spotify.com/v1/widevine-license/v1/audio/license 429 (Too Many Requests)
+r.request @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+(anonymous) @ index.js:15
+e._tick @ index.js:3
+e.start @ index.js:3
+t._sendRetriedRequest @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+t._sendRequest @ index.js:15
+t.request @ index.js:15
+t._onMessage @ index.js:15
+index.js:15  POST https://api.spotify.com/v1/widevine-license/v1/audio/license 429 (Too Many Requests)
+r.request @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+(anonymous) @ index.js:15
+e._tick @ index.js:3
+(anonymous) @ index.js:3
+setTimeout
+e._failure @ index.js:3
+(anonymous) @ index.js:3
+Promise.catch
+e._tick @ index.js:3
+e.start @ index.js:3
+t._sendRetriedRequest @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+t._sendRequest @ index.js:15
+t.request @ index.js:15
+t._onMessage @ index.js:15
+index.js:15  POST https://api.spotify.com/v1/widevine-license/v1/audio/license 429 (Too Many Requests)
+r.request @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+(anonymous) @ index.js:15
+e._tick @ index.js:3
+(anonymous) @ index.js:3
+setTimeout
+e._failure @ index.js:3
+(anonymous) @ index.js:3
+Promise.catch
+e._tick @ index.js:3
+(anonymous) @ index.js:3
+setTimeout
+e._failure @ index.js:3
+(anonymous) @ index.js:3
+Promise.catch
+e._tick @ index.js:3
+e.start @ index.js:3
+t._sendRetriedRequest @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+t._sendRequest @ index.js:15
+t.request @ index.js:15
+t._onMessage @ index.js:15
+polaris2-player.mjs:1528 Player error: {code: 'PLAYBACK_ERROR', message: 'Playback error'}
+(anonymous) @ polaris2-player.mjs:1528
+emit @ Emitter.mjs:33
+(anonymous) @ PlayerHost.mjs:196
+emit @ Emitter.mjs:33
+_setError @ SpotifyAdapter.mjs:728
+(anonymous) @ SpotifyAdapter.mjs:542
+(anonymous) @ spotify-player.js:3
+t._onEvent @ spotify-player.js:3
+t._handleMessages @ spotify-player.js:3
+e._receiveMessage @ spotify-player.js:3
+index.js:15  POST https://api.spotify.com/v1/widevine-license/v1/audio/license 429 (Too Many Requests)
+r.request @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+(anonymous) @ index.js:15
+e._tick @ index.js:3
+e.start @ index.js:3
+t._sendRetriedRequest @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+t._sendRequest @ index.js:15
+t.request @ index.js:15
+t._onMessage @ index.js:15
+index.js:15  POST https://api.spotify.com/v1/widevine-license/v1/audio/license 429 (Too Many Requests)
+r.request @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+(anonymous) @ index.js:15
+e._tick @ index.js:3
+(anonymous) @ index.js:3
+setTimeout
+e._failure @ index.js:3
+(anonymous) @ index.js:3
+Promise.catch
+e._tick @ index.js:3
+e.start @ index.js:3
+t._sendRetriedRequest @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+t._sendRequest @ index.js:15
+t.request @ index.js:15
+t._onMessage @ index.js:15
+index.js:15  POST https://api.spotify.com/v1/widevine-license/v1/audio/license 429 (Too Many Requests)
+r.request @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+(anonymous) @ index.js:15
+e._tick @ index.js:3
+(anonymous) @ index.js:3
+setTimeout
+e._failure @ index.js:3
+(anonymous) @ index.js:3
+Promise.catch
+e._tick @ index.js:3
+(anonymous) @ index.js:3
+setTimeout
+e._failure @ index.js:3
+(anonymous) @ index.js:3
+Promise.catch
+e._tick @ index.js:3
+e.start @ index.js:3
+t._sendRetriedRequest @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+t._sendRequest @ index.js:15
+t.request @ index.js:15
+t._onMessage @ index.js:15
+polaris2-player.mjs:1528 Player error: {code: 'PLAYBACK_ERROR', message: 'Playback error'}
+(anonymous) @ polaris2-player.mjs:1528
+emit @ Emitter.mjs:33
+(anonymous) @ PlayerHost.mjs:196
+emit @ Emitter.mjs:33
+_setError @ SpotifyAdapter.mjs:728
+(anonymous) @ SpotifyAdapter.mjs:542
+(anonymous) @ spotify-player.js:3
+t._onEvent @ spotify-player.js:3
+t._handleMessages @ spotify-player.js:3
+e._receiveMessage @ spotify-player.js:3
+index.js:15  POST https://api.spotify.com/v1/widevine-license/v1/audio/license 429 (Too Many Requests)
+r.request @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+(anonymous) @ index.js:15
+e._tick @ index.js:3
+e.start @ index.js:3
+t._sendRetriedRequest @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+t._sendRequest @ index.js:15
+t.request @ index.js:15
+t._onMessage @ index.js:15
+index.js:15  POST https://api.spotify.com/v1/widevine-license/v1/audio/license 429 (Too Many Requests)
+r.request @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+(anonymous) @ index.js:15
+e._tick @ index.js:3
+(anonymous) @ index.js:3
+setTimeout
+e._failure @ index.js:3
+(anonymous) @ index.js:3
+Promise.catch
+e._tick @ index.js:3
+e.start @ index.js:3
+t._sendRetriedRequest @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+t._sendRequest @ index.js:15
+t.request @ index.js:15
+t._onMessage @ index.js:15
+index.js:15  POST https://api.spotify.com/v1/widevine-license/v1/audio/license 429 (Too Many Requests)
+r.request @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+(anonymous) @ index.js:15
+e._tick @ index.js:3
+(anonymous) @ index.js:3
+setTimeout
+e._failure @ index.js:3
+(anonymous) @ index.js:3
+Promise.catch
+e._tick @ index.js:3
+(anonymous) @ index.js:3
+setTimeout
+e._failure @ index.js:3
+(anonymous) @ index.js:3
+Promise.catch
+e._tick @ index.js:3
+e.start @ index.js:3
+t._sendRetriedRequest @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+t._sendRequest @ index.js:15
+t.request @ index.js:15
+t._onMessage @ index.js:15
+polaris2-player.mjs:1528 Player error: {code: 'PLAYBACK_ERROR', message: 'Playback error'}
+(anonymous) @ polaris2-player.mjs:1528
+emit @ Emitter.mjs:33
+(anonymous) @ PlayerHost.mjs:196
+emit @ Emitter.mjs:33
+_setError @ SpotifyAdapter.mjs:728
+(anonymous) @ SpotifyAdapter.mjs:542
+(anonymous) @ spotify-player.js:3
+t._onEvent @ spotify-player.js:3
+t._handleMessages @ spotify-player.js:3
+e._receiveMessage @ spotify-player.js:3
+index.js:15  POST https://api.spotify.com/v1/widevine-license/v1/audio/license 429 (Too Many Requests)
+r.request @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+(anonymous) @ index.js:15
+e._tick @ index.js:3
+e.start @ index.js:3
+t._sendRetriedRequest @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+t._sendRequest @ index.js:15
+t.request @ index.js:15
+t._onMessage @ index.js:15
+index.js:15  POST https://api.spotify.com/v1/widevine-license/v1/audio/license 429 (Too Many Requests)
+r.request @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+(anonymous) @ index.js:15
+e._tick @ index.js:3
+(anonymous) @ index.js:3
+setTimeout
+e._failure @ index.js:3
+(anonymous) @ index.js:3
+Promise.catch
+e._tick @ index.js:3
+e.start @ index.js:3
+t._sendRetriedRequest @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+t._sendRequest @ index.js:15
+t.request @ index.js:15
+t._onMessage @ index.js:15
+index.js:15  POST https://api.spotify.com/v1/widevine-license/v1/audio/license 429 (Too Many Requests)
+r.request @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+(anonymous) @ index.js:15
+e._tick @ index.js:3
+(anonymous) @ index.js:3
+setTimeout
+e._failure @ index.js:3
+(anonymous) @ index.js:3
+Promise.catch
+e._tick @ index.js:3
+(anonymous) @ index.js:3
+setTimeout
+e._failure @ index.js:3
+(anonymous) @ index.js:3
+Promise.catch
+e._tick @ index.js:3
+e.start @ index.js:3
+t._sendRetriedRequest @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+t._sendRequest @ index.js:15
+t.request @ index.js:15
+t._onMessage @ index.js:15
+polaris2-player.mjs:1528 Player error: {code: 'PLAYBACK_ERROR', message: 'Playback error'}
+(anonymous) @ polaris2-player.mjs:1528
+emit @ Emitter.mjs:33
+(anonymous) @ PlayerHost.mjs:196
+emit @ Emitter.mjs:33
+_setError @ SpotifyAdapter.mjs:728
+(anonymous) @ SpotifyAdapter.mjs:542
+(anonymous) @ spotify-player.js:3
+t._onEvent @ spotify-player.js:3
+t._handleMessages @ spotify-player.js:3
+e._receiveMessage @ spotify-player.js:3
+index.js:15  POST https://api.spotify.com/v1/widevine-license/v1/audio/license 429 (Too Many Requests)
+r.request @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+(anonymous) @ index.js:15
+e._tick @ index.js:3
+e.start @ index.js:3
+t._sendRetriedRequest @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+t._sendRequest @ index.js:15
+t.request @ index.js:15
+t._onMessage @ index.js:15
+index.js:15  POST https://api.spotify.com/v1/widevine-license/v1/audio/license 429 (Too Many Requests)
+r.request @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+(anonymous) @ index.js:15
+e._tick @ index.js:3
+(anonymous) @ index.js:3
+setTimeout
+e._failure @ index.js:3
+(anonymous) @ index.js:3
+Promise.catch
+e._tick @ index.js:3
+e.start @ index.js:3
+t._sendRetriedRequest @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+t._sendRequest @ index.js:15
+t.request @ index.js:15
+t._onMessage @ index.js:15
+index.js:15  POST https://api.spotify.com/v1/widevine-license/v1/audio/license 429 (Too Many Requests)
+r.request @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+(anonymous) @ index.js:15
+e._tick @ index.js:3
+(anonymous) @ index.js:3
+setTimeout
+e._failure @ index.js:3
+(anonymous) @ index.js:3
+Promise.catch
+e._tick @ index.js:3
+(anonymous) @ index.js:3
+setTimeout
+e._failure @ index.js:3
+(anonymous) @ index.js:3
+Promise.catch
+e._tick @ index.js:3
+e.start @ index.js:3
+t._sendRetriedRequest @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+t._sendRequest @ index.js:15
+t.request @ index.js:15
+t._onMessage @ index.js:15
+polaris2-player.mjs:1528 Player error: {code: 'PLAYBACK_ERROR', message: 'Playback error'}
+(anonymous) @ polaris2-player.mjs:1528
+emit @ Emitter.mjs:33
+(anonymous) @ PlayerHost.mjs:196
+emit @ Emitter.mjs:33
+_setError @ SpotifyAdapter.mjs:728
+(anonymous) @ SpotifyAdapter.mjs:542
+(anonymous) @ spotify-player.js:3
+t._onEvent @ spotify-player.js:3
+t._handleMessages @ spotify-player.js:3
+e._receiveMessage @ spotify-player.js:3
+index.js:15  POST https://api.spotify.com/v1/widevine-license/v1/audio/license 429 (Too Many Requests)
+r.request @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+(anonymous) @ index.js:15
+e._tick @ index.js:3
+e.start @ index.js:3
+t._sendRetriedRequest @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+t._sendRequest @ index.js:15
+t.request @ index.js:15
+t._onMessage @ index.js:15
+index.js:15  POST https://api.spotify.com/v1/widevine-license/v1/audio/license 429 (Too Many Requests)
+r.request @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+(anonymous) @ index.js:15
+e._tick @ index.js:3
+(anonymous) @ index.js:3
+setTimeout
+e._failure @ index.js:3
+(anonymous) @ index.js:3
+Promise.catch
+e._tick @ index.js:3
+e.start @ index.js:3
+t._sendRetriedRequest @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+t._sendRequest @ index.js:15
+t.request @ index.js:15
+t._onMessage @ index.js:15
+index.js:15  POST https://api.spotify.com/v1/widevine-license/v1/audio/license 429 (Too Many Requests)
+r.request @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+(anonymous) @ index.js:15
+e._tick @ index.js:3
+(anonymous) @ index.js:3
+setTimeout
+e._failure @ index.js:3
+(anonymous) @ index.js:3
+Promise.catch
+e._tick @ index.js:3
+(anonymous) @ index.js:3
+setTimeout
+e._failure @ index.js:3
+(anonymous) @ index.js:3
+Promise.catch
+e._tick @ index.js:3
+e.start @ index.js:3
+t._sendRetriedRequest @ index.js:15
+(anonymous) @ index.js:15
+Promise.then
+t._sendRequest @ index.js:15
+t.request @ index.js:15
+t._onMessage @ index.js:15
+polaris2-player.mjs:1528 Player error: {code: 'PLAYBACK_ERROR', message: 'Playback error'}
+(anonymous) @ polaris2-player.mjs:1528
+emit @ Emitter.mjs:33
+(anonymous) @ PlayerHost.mjs:196
+emit @ Emitter.mjs:33
+_setError @ SpotifyAdapter.mjs:728
+(anonymous) @ SpotifyAdapter.mjs:542
+(anonymous) @ spotify-player.js:3
+t._onEvent @ spotify-player.js:3
+t._handleMessages @ spotify-player.js:3
+e._receiveMessage @ spotify-player.js:3

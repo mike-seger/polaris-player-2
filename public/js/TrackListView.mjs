@@ -81,6 +81,29 @@ export class TrackListView {
     this._installScrollGuards();
   }
 
+  _applyThumbnailStyles(img, url) {
+    if (!(img instanceof HTMLImageElement)) return;
+    const u = String(url || '').trim();
+
+    // Ensure thumbnails always fit the fixed 16:9 slot.
+    // We use CSS vars so sizing stays in sync with `public/style.css`.
+    img.style.width = 'var(--track-thumb-width)';
+    img.style.height = 'var(--track-row-base-height)';
+    img.style.flexShrink = '0';
+    img.style.display = 'block';
+    img.style.borderRadius = '6px';
+    img.style.background = 'var(--color-hover)';
+
+    const isSpotifyPlaceholder = u.includes('/img/spotify-icon.png') || u.endsWith('spotify-icon.png');
+    if (isSpotifyPlaceholder) {
+      img.style.objectFit = 'contain';
+      img.classList.add('spotify-placeholder-thumb');
+    } else {
+      img.style.objectFit = '';
+      img.classList.remove('spotify-placeholder-thumb');
+    }
+  }
+
   _snapScrollToRowBoundary() {
     const container = this.scrollContainerEl;
     const ul = this.ulEl;
@@ -146,6 +169,7 @@ export class TrackListView {
     const existingImg = li.querySelector('img');
     if (existingImg instanceof HTMLImageElement) {
       if (existingImg.getAttribute('src') !== nextUrl) existingImg.setAttribute('src', nextUrl);
+      this._applyThumbnailStyles(existingImg, nextUrl);
       return;
     }
 
@@ -154,6 +178,7 @@ export class TrackListView {
     img.alt = '';
     img.loading = 'lazy';
     img.decoding = 'async';
+    this._applyThumbnailStyles(img, nextUrl);
 
     const numEl = li.querySelector('.track-number');
     if (numEl && numEl.parentNode === li) {
@@ -349,6 +374,7 @@ export class TrackListView {
         img.alt = '';
         img.loading = 'lazy';
         img.decoding = 'async';
+        this._applyThumbnailStyles(img, img.src);
         li.appendChild(img);
       }
 

@@ -398,11 +398,45 @@
           alert.show('Spotify login is required to use Spotify mode.');
           return false;
         }
+
+        const spotifyRedirectUri = (() => {
+          const isLocalHost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+          if (isLocalHost) {
+            const port = window.location.port ? `:${window.location.port}` : '';
+            return `${window.location.protocol}//127.0.0.1${port}/spotify-callback.html`;
+          }
+          return new URL('/spotify-callback.html', window.location.origin).toString();
+        })();
+
         try {
+          if (typeof spotifyAuth.loginWithPopup === 'function') {
+            const handled = await spotifyAuth.loginWithPopup({ redirectUri: spotifyRedirectUri });
+            if (handled) {
+              alert.show('Spotify login complete.');
+              return true;
+            }
+            return false;
+          }
+
+          // Likely running a cached/older SpotifyAuth module. Fall back to the redirect-based login.
+          spotifyAuth.redirectUri = spotifyRedirectUri;
+          alert.show('Spotify login needs a hard refresh (cached JS). Falling back to redirect-based login.');
           await spotifyAuth.login();
           return false;
         } catch (loginErr) {
           const msg = loginErr && loginErr.message ? loginErr.message : String(loginErr);
+          if (/popup was blocked/i.test(msg)) {
+            try {
+              spotifyAuth.redirectUri = spotifyRedirectUri;
+              alert.show('Spotify popup was blocked. Falling back to redirect-based login.');
+              await spotifyAuth.login();
+              return false;
+            } catch (fallbackErr) {
+              const fallbackMsg = fallbackErr && fallbackErr.message ? fallbackErr.message : String(fallbackErr);
+              alert.show(`Spotify login failed: ${fallbackMsg}`);
+              return false;
+            }
+          }
           alert.show(`Spotify login failed: ${msg}`);
           return false;
         }
@@ -662,27 +696,15 @@
     }
 
     function scheduleSpotifyArtworkPrefetchByIndices(indices) {
-      spotifyArtworkIndicesSnapshot = Array.isArray(indices) ? indices : [];
-
-      if (getPlayerMode() !== 'spotify') {
-        spotifyArtworkSession += 1;
-        if (spotifyArtworkPrefetchTimer) {
-          clearTimeout(spotifyArtworkPrefetchTimer);
-          spotifyArtworkPrefetchTimer = null;
-        }
-        return;
-      }
-
-      if (!spotifyAdapter || typeof spotifyAdapter.prefetchArtwork !== 'function') return;
-      if (!spotifyArtworkIndicesSnapshot.length) return;
-      if (!trackDetailSettings || !trackDetailSettings.thumbnail) return;
-      if (spotifyArtworkPrefetchTimer || spotifyArtworkPrefetchRunning) return;
-
-      const session = spotifyArtworkSession;
-      spotifyArtworkPrefetchTimer = setTimeout(() => {
+      // Artwork warmup via Spotify Web API causes frequent 429 rate limits at scale.
+      // We now rely on the Web Playback SDK state to populate artwork cache while playing.
+      spotifyArtworkIndicesSnapshot = [];
+      spotifyArtworkSession += 1;
+      if (spotifyArtworkPrefetchTimer) {
+        clearTimeout(spotifyArtworkPrefetchTimer);
         spotifyArtworkPrefetchTimer = null;
-        void spotifyArtworkPrefetchTick(session);
-      }, 0);
+      }
+      void indices;
     }
 
     function getThumbnailUrlForItem(item) {
@@ -702,9 +724,10 @@
           : undefined;
         if (cached) return cached;
 
-        const existing = (item && typeof item.thumbnail === 'string') ? item.thumbnail : '';
-        if (existing && !isYouTubeThumbUrl(existing)) return existing;
-        return '';
+        const artwork = (item && typeof item.artwork === 'string') ? String(item.artwork).trim() : '';
+        if (artwork) return artwork;
+
+        return './img/spotify-icon.png';
       }
 
       // YouTube mode: keep playlist-provided thumbnails, but provide a safe fallback.
@@ -1420,6 +1443,8 @@
       const videoId = item && item.videoId ? String(item.videoId).trim() : '';
       const mode = getPlayerMode();
       const spotifyId = item && item.spotifyId ? String(item.spotifyId).trim() : '';
+
+      const itemArtwork = (item && typeof item.artwork === 'string') ? String(item.artwork).trim() : '';
       return {
         id: videoId,
         title: item?.userTitle || item?.title || '',
@@ -1428,6 +1453,7 @@
           : (mode === 'spotify')
             ? { kind: 'spotify', trackId: spotifyId || 'unmatched' }
             : { kind: 'youtube', videoId },
+        ...(mode === 'spotify' && itemArtwork ? { artworkUrl: itemArtwork } : {}),
       };
     }
 
@@ -1463,6 +1489,35 @@
       playerReady = false;
 
       spotifyAdapter = new SpotifyAdapter({ auth: spotifyAuth });
+
+      // When Spotify artwork becomes available (learned from SDK state), update the current row thumbnail ASAP.
+      // We also invalidate the playlist->thumb cache so the next render uses the newly cached art.
+      try {
+        if (spotifyAdapter && typeof spotifyAdapter.on === 'function') {
+          spotifyAdapter.on('artwork', (payload) => {
+            if (getPlayerMode() !== 'spotify') return;
+            const trackId = payload && typeof payload.trackId === 'string' ? payload.trackId : '';
+            const url = payload && typeof payload.url === 'string' ? payload.url : '';
+            const tid = String(trackId || '').trim();
+            const u = String(url || '').trim();
+            if (!tid || !u) return;
+
+            // Force thumbnail recompute on subsequent renders.
+            try { trackListItemsCache.version = -1; } catch { /* ignore */ }
+
+            const idx = currentIndex;
+            const items = Array.isArray(playlistItems) ? playlistItems : [];
+            const item = (idx >= 0 && idx < items.length) ? items[idx] : null;
+            const itemTid = item && item.spotifyId ? String(item.spotifyId).trim() : '';
+            if (!itemTid || itemTid !== tid) return;
+
+            // Update the existing row without a full rerender.
+            try { queueSpotifyThumbUpdate(idx, u); } catch { /* ignore */ }
+          });
+        }
+      } catch {
+        // ignore
+      }
 
       playerHost = new PlayerHost([
         // Let the adapter create its own mount element inside #player.
@@ -1761,42 +1816,17 @@
         return;
       }
 
-      const trackId = item && item.spotifyId ? String(item.spotifyId).trim() : '';
       const track = buildTrackFromPlaylistItem(item);
 
       const cached = (playerHost && typeof playerHost.getThumbnailUrl === 'function')
         ? playerHost.getThumbnailUrl(track)
         : undefined;
-      const existing = (item && typeof item.thumbnail === 'string') ? item.thumbnail : '';
-      const url = cached || ((existing && !isYouTubeThumbUrl(existing)) ? existing : '');
 
-      if (url) {
-        if (artEl.getAttribute('src') !== url) artEl.setAttribute('src', url);
-        if (barEl) barEl.classList.remove('no-art');
-
-        // Main video area replacement.
-        try { spotifyAdapter?.setArtworkUrl?.(url); } catch { /* ignore */ }
-        return;
-      }
-
-      // Nothing cached yet: hide art for now but kick off prefetch, then refresh.
-      artEl.removeAttribute('src');
-      artEl.removeAttribute('srcset');
-      if (barEl) barEl.classList.add('no-art');
-
-      try { spotifyAdapter?.setArtworkUrl?.(''); } catch { /* ignore */ }
-
-      if (spotifyAdapter && typeof spotifyAdapter.prefetchArtwork === 'function' && trackId && trackId !== 'unmatched') {
-        const idxAtCall = currentIndex;
-        void spotifyAdapter.prefetchArtwork(trackId)
-          .then((nextUrl) => {
-            if (!nextUrl) return;
-            if (getPlayerMode() !== 'spotify') return;
-            if (currentIndex !== idxAtCall) return;
-            updateNowPlaying();
-          })
-          .catch(() => {});
-      }
+      const artwork = (item && typeof item.artwork === 'string') ? String(item.artwork).trim() : '';
+      const url = cached || artwork || './img/spotify-icon.png';
+      if (artEl.getAttribute('src') !== url) artEl.setAttribute('src', url);
+      if (barEl) barEl.classList.remove('no-art');
+      return;
     }
 
     function playIndex(idx, options = {}) {
@@ -2173,6 +2203,15 @@
         return false;
       }
 
+      let spotifyArtworkCache = null;
+      try {
+        const raw = localStorage.getItem('polaris.spotify.artwork.v1');
+        const obj = raw ? JSON.parse(raw) : null;
+        spotifyArtworkCache = (obj && typeof obj === 'object') ? obj : null;
+      } catch {
+        spotifyArtworkCache = null;
+      }
+
       const activePlaylistId = getActivePlaylistId();
       const indices = (Array.isArray(visibleIndices) && visibleIndices.length)
         ? visibleIndices
@@ -2193,10 +2232,29 @@
         itemCount: indices.length,
         items: indices.map((idx) => {
           const item = playlistItems[idx];
-          const entry = {
-            ...item,
-            userTitle: item.userTitle ?? item.title
-          };
+
+          const spotifyId = item && item.spotifyId ? String(item.spotifyId).trim() : '';
+          const artwork = (spotifyArtworkCache && spotifyId && spotifyArtworkCache[spotifyId] && typeof spotifyArtworkCache[spotifyId].url === 'string')
+            ? String(spotifyArtworkCache[spotifyId].url).trim()
+            : '';
+
+          // Preserve a stable key order and insert `artwork` immediately after `thumbnail`.
+          const entry = {};
+          if (item && typeof item === 'object') {
+            for (const [k, v] of Object.entries(item)) {
+              entry[k] = v;
+              if (k === 'thumbnail' && artwork) {
+                entry.artwork = artwork;
+              }
+            }
+          }
+
+          // If there is no `thumbnail` field, still include artwork at the end.
+          if (artwork && !Object.prototype.hasOwnProperty.call(entry, 'artwork')) {
+            entry.artwork = artwork;
+          }
+
+          entry.userTitle = item.userTitle ?? item.title;
           if (isTrackChecked(activePlaylistId, item.videoId)) {
             entry.checked = true;
           }

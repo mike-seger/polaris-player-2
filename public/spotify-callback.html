@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Spotify Login Callback</title>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 24px; color: #111; }
+    code { background: #f2f2f2; padding: 2px 4px; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <p>Completing Spotify login…</p>
+  <script>
+    (function () {
+      var STORAGE_KEY = 'polaris.spotifyAuth';
+      var VERIFIER_KEY = 'polaris.spotifyPkceVerifier';
+      var STATE_KEY = 'polaris.spotifyAuthState';
+
+      function nowMs() { return Date.now(); }
+
+      function setStatus(html) {
+        try { document.body.innerHTML = html; } catch (e) { /* ignore */ }
+      }
+
+      function loadSpotifyClientIdFromSettings() {
+        try {
+          var raw = localStorage.getItem('ytAudioPlayer.settings');
+          if (!raw) return '';
+          var obj = JSON.parse(raw);
+          if (!obj || typeof obj !== 'object') return '';
+          var v = obj.spotifyClientId;
+          return (typeof v === 'string') ? v.trim() : '';
+        } catch (e) {
+          return '';
+        }
+      }
+
+      try {
+        var url = new URL(window.location.href);
+        var code = url.searchParams.get('code') || '';
+        var state = url.searchParams.get('state') || '';
+        var error = url.searchParams.get('error') || '';
+
+        var payload = {
+          type: 'spotify-auth-callback',
+          code: code,
+          state: state,
+          error: error
+        };
+
+        if (window.opener && !window.opener.closed) {
+          window.opener.postMessage(payload, '*');
+
+          // Best-effort close.
+          window.close();
+
+          // If the popup can't be closed automatically, show a message.
+          setTimeout(function () {
+            setStatus('<p>Spotify login complete. You can close this window.</p>');
+          }, 250);
+          return;
+        }
+
+        // No opener -> handle redirect-based flow here (fallback path).
+        if (error) {
+          setStatus('<p>Spotify login failed: <code>' + String(error) + '</code></p>');
+          return;
+        }
+
+        if (!code) {
+          setStatus('<p>Missing Spotify auth code.</p>');
+          return;
+        }
+
+        var expectedState = '';
+        var verifier = '';
+        try { expectedState = sessionStorage.getItem(STATE_KEY) || ''; } catch (e) { /* ignore */ }
+        try { verifier = sessionStorage.getItem(VERIFIER_KEY) || ''; } catch (e) { /* ignore */ }
+
+        if (!expectedState || state !== expectedState) {
+          setStatus('<p>Spotify login failed: state mismatch.</p>');
+          return;
+        }
+        if (!verifier) {
+          setStatus('<p>Spotify login failed: missing PKCE verifier.</p>');
+          return;
+        }
+
+        var clientId = loadSpotifyClientIdFromSettings();
+        if (!clientId) {
+          setStatus('<p>Spotify login failed: missing Client ID (ytAudioPlayer.settings.spotifyClientId).</p>');
+          return;
+        }
+
+        // Must exactly match the redirect_uri used in the authorize request.
+        var usedRedirectUri = (function () {
+          var u = new URL(window.location.href);
+          u.search = '';
+          u.hash = '';
+          return u.toString();
+        })();
+
+        var body = new URLSearchParams();
+        body.set('grant_type', 'authorization_code');
+        body.set('code', code);
+        body.set('redirect_uri', usedRedirectUri);
+        body.set('client_id', clientId);
+        body.set('code_verifier', verifier);
+
+        fetch('https://accounts.spotify.com/api/token', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: body.toString()
+        })
+          .then(function (resp) {
+            if (!resp.ok) {
+              return resp.text().then(function (t) {
+                throw new Error('Spotify token exchange failed (' + resp.status + '): ' + (t || ''));
+              });
+            }
+            return resp.json();
+          })
+          .then(function (json) {
+            try {
+              localStorage.setItem(STORAGE_KEY, JSON.stringify({
+                access_token: json.access_token,
+                refresh_token: json.refresh_token,
+                expires_at_ms: nowMs() + (Number(json.expires_in) || 0) * 1000,
+                token_type: json.token_type,
+                scope: json.scope,
+                obtained_at_ms: nowMs()
+              }));
+            } catch (e) {
+              // ignore
+            }
+
+            // Redirect back to the app root.
+            var backUrl = new URL('./', window.location.href).toString();
+            window.location.replace(backUrl);
+          })
+          .catch(function (e) {
+            var msg = String(e && e.message ? e.message : e);
+            setStatus('<p>Spotify login failed. ' + msg + '</p>');
+          });
+      } catch (e) {
+        setStatus('<p>Spotify login failed. You can close this window.</p>');
+      }
+    })();
+  </script>
+</body>
+</html>

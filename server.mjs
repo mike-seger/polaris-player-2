@@ -505,7 +505,15 @@ app.get('/api/cache-info', (req, res) => {
 });
 
 // Register static file handling after API routes so dynamic endpoints take precedence.
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, 'public'), {
+  etag: true,
+  maxAge: 0,
+  setHeaders: (res, filePath) => {
+    if (/\.(html|mjs|js|css)$/i.test(filePath)) {
+      res.setHeader('Cache-Control', 'no-store');
+    }
+  }
+}));
 
 // load overrides first so cache entries get userTitle baked in on initial fetch
 loadOverrides();
