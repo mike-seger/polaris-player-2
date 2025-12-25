@@ -78,6 +78,7 @@ export class TrackListView {
 
     this._lastUserScrollIntentMs = 0;
     this._lastProgrammaticScrollMs = 0;
+    this._scrollActiveRaf = 0;
     this._installScrollGuards();
   }
 
@@ -217,18 +218,55 @@ export class TrackListView {
   scrollActiveIntoView(options = {}) {
     const { guardUserScroll = false, guardWindowMs = 1500 } = options || {};
     if (!this.ulEl) return;
+    if (!this.scrollContainerEl) return;
     if (guardUserScroll && (Date.now() - this._lastUserScrollIntentMs) < guardWindowMs) return;
+    const container = this.scrollContainerEl;
     const active = this.ulEl.querySelector('li.active');
-    if (active) {
-      this._lastProgrammaticScrollMs = Date.now();
-      active.scrollIntoView({ block: 'center', behavior: 'auto' });
+    if (!active) return;
 
-      // scrollIntoView can land on sub-pixel / partial-row offsets; snap to a row boundary.
-      // Use a rAF so layout/scroll positions have settled.
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => this._snapScrollToRowBoundary());
-      });
-    }
+    // Deduplicate multiple calls within the same frame.
+    if (this._scrollActiveRaf) return;
+
+    // Compute a single final scrollTop (center + row-boundary snap) and apply once.
+    // This avoids a visible two-step scroll (scrollIntoView, then snap adjustment).
+    this._scrollActiveRaf = requestAnimationFrame(() => {
+      this._scrollActiveRaf = 0;
+      if (!this.ulEl || !this.scrollContainerEl) return;
+      if (guardUserScroll && (Date.now() - this._lastUserScrollIntentMs) < guardWindowMs) return;
+
+      const activeNow = this.ulEl.querySelector('li.active');
+      if (!activeNow) return;
+
+      const containerRect = container.getBoundingClientRect();
+      const activeRect = activeNow.getBoundingClientRect();
+
+      // Where is the active row within the scroll content?
+      const activeTopInScroll = (activeRect.top - containerRect.top) + container.scrollTop;
+      const targetCenterTop = activeTopInScroll - (container.clientHeight / 2 - activeRect.height / 2);
+
+      // Snap so the top-most visible row is fully visible (avoid partial row at top).
+      let snapped = targetCenterTop;
+      try {
+        const lis = this.ulEl.querySelectorAll('li');
+        if (lis && lis.length >= 2) {
+          const base = Number(lis[0].offsetTop) || 0;
+          const step = (Number(lis[1].offsetTop) || 0) - base;
+          if (step > 0) {
+            const rel = snapped - base;
+            snapped = base + Math.ceil(rel / step) * step;
+          }
+        }
+      } catch {
+        // ignore
+      }
+
+      const maxScroll = Math.max(0, container.scrollHeight - container.clientHeight);
+      const nextTop = Math.max(0, Math.min(maxScroll, Math.round(snapped)));
+      if (Math.abs(container.scrollTop - nextTop) < 1) return;
+
+      this._lastProgrammaticScrollMs = Date.now();
+      container.scrollTop = nextTop;
+    });
   }
 
   focusActiveTrack(options = {}) {

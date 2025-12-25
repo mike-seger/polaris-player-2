@@ -718,14 +718,15 @@
       }
 
       if (mode === 'spotify') {
-        // Prefer cached Spotify album art via adapter; never use YouTube thumbnails in Spotify mode.
+        // If the playlist provides artwork, use it directly and do NOT touch the cache.
+        const artwork = (item && typeof item.artwork === 'string') ? String(item.artwork).trim() : '';
+        if (artwork) return artwork;
+
+        // Otherwise prefer cached Spotify album art via adapter; never use YouTube thumbnails in Spotify mode.
         const cached = (playerHost && typeof playerHost.getThumbnailUrl === 'function')
           ? playerHost.getThumbnailUrl(buildTrackFromPlaylistItem(item))
           : undefined;
         if (cached) return cached;
-
-        const artwork = (item && typeof item.artwork === 'string') ? String(item.artwork).trim() : '';
-        if (artwork) return artwork;
 
         return './img/spotify-icon.png';
       }
@@ -1818,12 +1819,15 @@
 
       const track = buildTrackFromPlaylistItem(item);
 
-      const cached = (playerHost && typeof playerHost.getThumbnailUrl === 'function')
-        ? playerHost.getThumbnailUrl(track)
-        : undefined;
-
+      // If the playlist provides artwork, use it directly and do NOT touch the cache.
       const artwork = (item && typeof item.artwork === 'string') ? String(item.artwork).trim() : '';
-      const url = cached || artwork || './img/spotify-icon.png';
+      const cached = artwork
+        ? undefined
+        : ((playerHost && typeof playerHost.getThumbnailUrl === 'function')
+          ? playerHost.getThumbnailUrl(track)
+          : undefined);
+
+      const url = artwork || cached || './img/spotify-icon.png';
       if (artEl.getAttribute('src') !== url) artEl.setAttribute('src', url);
       if (barEl) barEl.classList.remove('no-art');
       return;
@@ -2193,6 +2197,16 @@
       },
     });
 
+    // Allow the Settings overlay to request clearing the Spotify artwork cache.
+    // This is global so the overlay code doesn't need direct access to player/adapter instances.
+    window.addEventListener('polaris:flushSpotifyArtworkCache', () => {
+      try { localStorage.removeItem('polaris.spotify.artwork.v1'); } catch { /* ignore */ }
+      try { spotifyAdapter?.flushArtworkCache?.(); } catch { /* ignore */ }
+      try { trackListItemsCache.version = -1; } catch { /* ignore */ }
+      try { renderTrackList({ preserveScroll: true }); } catch { try { renderTrackList(); } catch { /* ignore */ } }
+      try { updateNowPlaying(); } catch { /* ignore */ }
+    });
+
     async function loadPlaylistFromServer(forceRefresh = false, playlistIdOverride = '') {
       return playlistDataSource.loadPlaylistFromServer(Boolean(forceRefresh), playlistIdOverride);
     }
@@ -2233,10 +2247,14 @@
         items: indices.map((idx) => {
           const item = playlistItems[idx];
 
+          const itemArtwork = (item && typeof item.artwork === 'string') ? String(item.artwork).trim() : '';
+
           const spotifyId = item && item.spotifyId ? String(item.spotifyId).trim() : '';
-          const artwork = (spotifyArtworkCache && spotifyId && spotifyArtworkCache[spotifyId] && typeof spotifyArtworkCache[spotifyId].url === 'string')
-            ? String(spotifyArtworkCache[spotifyId].url).trim()
-            : '';
+          const artwork = itemArtwork
+            ? ''
+            : ((spotifyArtworkCache && spotifyId && spotifyArtworkCache[spotifyId] && typeof spotifyArtworkCache[spotifyId].url === 'string')
+              ? String(spotifyArtworkCache[spotifyId].url).trim()
+              : '');
 
           // Preserve a stable key order and insert `artwork` immediately after `thumbnail`.
           const entry = {};

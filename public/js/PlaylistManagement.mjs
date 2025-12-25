@@ -1355,6 +1355,21 @@
 
       cacheActions.appendChild(cacheRefreshBtn);
 
+      const cacheFlushBtn = document.createElement('button');
+      cacheFlushBtn.type = 'button';
+      cacheFlushBtn.textContent = 'Flush artwork cache';
+      styleSecondaryButton(cacheFlushBtn);
+      cacheFlushBtn.addEventListener('click', () => {
+        try {
+          window.dispatchEvent(new CustomEvent('polaris:flushSpotifyArtworkCache'));
+        } catch {
+          try { window.dispatchEvent(new Event('polaris:flushSpotifyArtworkCache')); } catch { /* ignore */ }
+        }
+        refreshCacheStatsView();
+      });
+
+      cacheActions.appendChild(cacheFlushBtn);
+
       cacheContent.appendChild(cacheIntro);
       cacheContent.appendChild(cacheStatus);
       cacheContent.appendChild(cacheActions);

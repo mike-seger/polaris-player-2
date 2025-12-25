@@ -182,9 +182,17 @@ export class SpotifyAdapter {
     this._player = null;
     this._deviceId = '';
 
+    this._ensureReadyPromise = null;
+
+    this._pendingPlay = null; // { trackId, startMs }
+    this._startingPlayPromise = null;
+    this._playbackRecoverTimer = null;
+    this._playbackRecoverBackoffMs = 0;
+
     this._pollTimer = null;
     this._isPolling = false;
     this._activeSpotifyTrackId = '';
+    this._activeTrackSkipArtworkCache = false;
     this._endedFired = false;
     this._suppressEndedUntilMs = 0;
 
@@ -210,6 +218,97 @@ export class SpotifyAdapter {
     this._artworkPrefetchInFlight = new Map();
     /** @type {Map<string, string>} */
     this._lastArtworkEmitById = new Map();
+
+    /** @type {Set<string>} */
+    this._skipArtworkCacheIds = new Set();
+  }
+
+  async _startPlayback(trackId, startMs = 0) {
+    const tid = String(trackId || '').trim();
+    if (!tid) return;
+    if (!this._deviceId) return;
+
+    if (this._startingPlayPromise) {
+      return this._startingPlayPromise.catch(() => {});
+    }
+
+    this._startingPlayPromise = (async () => {
+      const accessToken = await this._auth.getAccessToken();
+      // Ensure this device is active before play.
+      await spotifyApi(accessToken, '/me/player', {
+        method: 'PUT',
+        json: { device_ids: [this._deviceId], play: false },
+      });
+
+      await spotifyApi(accessToken, '/me/player/play', {
+        method: 'PUT',
+        query: { device_id: this._deviceId },
+        json: {
+          uris: [`spotify:track:${tid}`],
+          position_ms: Math.max(0, Math.floor(Number(startMs) || 0)),
+        },
+      });
+    })();
+
+    try {
+      await this._startingPlayPromise;
+    } finally {
+      this._startingPlayPromise = null;
+    }
+  }
+
+  _schedulePlaybackRecovery(reason = '') {
+    if (this._playbackRecoverTimer) return;
+    const prev = Math.max(0, Number(this._playbackRecoverBackoffMs) || 0);
+    const next = Math.min(120000, prev ? prev * 2 : 5000);
+    const jitter = Math.floor(Math.random() * Math.min(1000, Math.max(200, next * 0.2)));
+    const waitMs = next + jitter;
+    this._playbackRecoverBackoffMs = next;
+
+    this._playbackRecoverTimer = setTimeout(() => {
+      this._playbackRecoverTimer = null;
+      void this._recoverPlayback(reason);
+    }, waitMs);
+  }
+
+  async _recoverPlayback(_reason = '') {
+    // Best-effort: recreate the SDK player. This helps recover from certain SDK playback failures.
+    const wasPlaying = this._state.state === 'playing' || this._state.state === 'buffering';
+    const tid = String(this._activeSpotifyTrackId || '').trim();
+    const pending = this._pendingPlay;
+
+    this._stopPolling();
+    try { await this._player?.disconnect?.(); } catch { /* ignore */ }
+    this._player = null;
+    this._deviceId = '';
+    this._ensureReadyPromise = null;
+
+    try {
+      await this._ensureReady();
+    } catch {
+      return;
+    }
+
+    // Resume requested playback.
+    if (pending && pending.trackId) {
+      try {
+        await this._startPlayback(pending.trackId, pending.startMs);
+        this._pendingPlay = null;
+        this._setState('playing');
+      } catch {
+        // keep pending
+      }
+      return;
+    }
+
+    if (wasPlaying && tid) {
+      try {
+        await this._startPlayback(tid, this._lastPollPositionMs || 0);
+        this._setState('playing');
+      } catch {
+        // ignore
+      }
+    }
   }
 
   _emitArtworkIfNew(trackId, url) {
@@ -248,6 +347,7 @@ export class SpotifyAdapter {
     if (!url) return;
 
     if (trackId) {
+      if (this._skipArtworkCacheIds && this._skipArtworkCacheIds.has(trackId)) return;
       try {
         const prev = getCachedArtworkUrl(trackId);
         if (prev !== url) {
@@ -264,6 +364,7 @@ export class SpotifyAdapter {
     // During track changes the SDK can briefly report the previous/current track; blindly
     // keying that artwork under the requested id causes rapid src flips (visible flicker).
     if (extraKey && extraKey !== trackId && this._sdkTrackMatchesId(t, extraKey)) {
+      if (this._skipArtworkCacheIds && this._skipArtworkCacheIds.has(extraKey)) return;
       try {
         const prev = getCachedArtworkUrl(extraKey);
         if (prev !== url) {
@@ -380,6 +481,9 @@ export class SpotifyAdapter {
    * NOTE: Must be synchronous because the UI calls PlayerHost.getThumbnailUrl() synchronously.
    */
   getThumbnailUrl(track) {
+    const explicit = track && typeof track.artworkUrl === 'string' ? String(track.artworkUrl || '').trim() : '';
+    if (explicit) return explicit;
+
     const trackId = track && track.source && track.source.kind === 'spotify'
       ? String(track.source.trackId || '').trim()
       : '';
@@ -544,124 +648,151 @@ export class SpotifyAdapter {
 
   getInfo() { return this._state; }
 
+  flushArtworkCache() {
+    try { localStorage.removeItem(SPOTIFY_ARTWORK_CACHE_KEY); } catch { /* ignore */ }
+    try { this._lastArtworkEmitById && this._lastArtworkEmitById.clear(); } catch { /* ignore */ }
+  }
+
   async _ensureReady() {
     if (!this._auth) throw new Error('SpotifyAuth not configured.');
 
-    // Make sure we can refresh/obtain a token.
-    await this._auth.getAccessToken();
+    // Serialize SDK initialization: concurrent calls can create multiple Players, which can
+    // drastically increase DRM license requests and lead to 429s / playback failures.
+    if (this._ensureReadyPromise) {
+      await this._ensureReadyPromise;
+      if (this._player && this._deviceId) return;
+    }
 
-    if (this._player && this._deviceId) return;
+    this._ensureReadyPromise = (async () => {
 
-    await loadSpotifySdkOnce();
+      // Make sure we can refresh/obtain a token.
+      await this._auth.getAccessToken();
 
-    const player = new window.Spotify.Player({
-      name: this._sdkName,
-      getOAuthToken: async (cb) => {
+      if (this._player && this._deviceId) return;
+
+      await loadSpotifySdkOnce();
+
+      const player = new window.Spotify.Player({
+        name: this._sdkName,
+        getOAuthToken: async (cb) => {
+          try {
+            const token = await this._auth.getAccessToken();
+            cb(token);
+          } catch {
+            cb('');
+          }
+        },
+        volume: clamp01(this._state.volume),
+      });
+
+      player.addListener('initialization_error', ({ message }) => {
+        this._setError('INIT_ERROR', message);
+      });
+      player.addListener('authentication_error', ({ message }) => {
+        this._setError('AUTH_ERROR', message);
+      });
+      player.addListener('account_error', ({ message }) => {
+        // Most commonly: user is not Premium.
+        this._setError('ACCOUNT_ERROR', message);
+      });
+      player.addListener('playback_error', ({ message }) => {
+        this._setError('PLAYBACK_ERROR', message);
+        this._schedulePlaybackRecovery(message || 'playback_error');
+      });
+
+      player.addListener('ready', ({ device_id }) => {
+        this._deviceId = device_id || '';
+        this._setState('ready');
+        if (this._statusEl) this._statusEl.textContent = 'Spotify connected.';
+        this._em.emit('capabilities', this.getCapabilities());
+
+        // Start polling to provide smooth progress/time updates.
+        this._startPolling();
+      });
+
+      player.addListener('not_ready', () => {
+        this._deviceId = '';
+        this._setState('error');
+        if (this._statusEl) this._statusEl.textContent = 'Spotify disconnected.';
+        this.setArtworkUrl('');
+
+        this._stopPolling();
+        this._schedulePlaybackRecovery('not_ready');
+      });
+
+      player.addListener('player_state_changed', (s) => {
+        if (!s) return;
+
+        // The Web Playback SDK provides album images in state; use it to populate our artwork cache
+        // without hitting the Web API. This naturally fills as you play/skip.
         try {
-          const token = await this._auth.getAccessToken();
-          cb(token);
+          const tw = s && s.track_window ? s.track_window : null;
+          const current = tw && tw.current_track ? tw.current_track : null;
+          if (!this._activeTrackSkipArtworkCache) {
+            this._maybeCacheArtworkFromSdkTrack(current, this._activeSpotifyTrackId);
+          }
+
+          // Intentionally do NOT cache artwork for previous/next tracks.
+          // The SDK track_window can include adjacent queue tracks, and caching them eagerly
+          // creates "unexpected" new cache entries even when the playlist already provides artwork.
+
+          const activeKey = String(this._activeSpotifyTrackId || '').trim();
+          if (activeKey && this._sdkTrackMatchesId(current, activeKey)) {
+            // Prefer the SDK-provided image directly to avoid cache timing issues.
+            if (!this._activeTrackSkipArtworkCache && !(this._skipArtworkCacheIds && this._skipArtworkCacheIds.has(activeKey))) {
+              const images = current && current.album && Array.isArray(current.album.images) ? current.album.images : [];
+              const url = images.length && images[0] && typeof images[0].url === 'string' ? String(images[0].url).trim() : '';
+              if (url) this.setArtworkUrl(url);
+            }
+          }
         } catch {
-          cb('');
+          // ignore
         }
-      },
-      volume: clamp01(this._state.volume),
-    });
 
-    player.addListener('initialization_error', ({ message }) => {
-      this._setError('INIT_ERROR', message);
-    });
-    player.addListener('authentication_error', ({ message }) => {
-      this._setError('AUTH_ERROR', message);
-    });
-    player.addListener('account_error', ({ message }) => {
-      // Most commonly: user is not Premium.
-      this._setError('ACCOUNT_ERROR', message);
-    });
-    player.addListener('playback_error', ({ message }) => {
-      this._setError('PLAYBACK_ERROR', message);
-    });
+        const positionMs = Number(s.position) || 0;
+        const durationMs = Number(s.duration) || 0;
+        const paused = !!s.paused;
+        this._state.time = {
+          positionMs,
+          durationMs: durationMs > 0 ? durationMs : undefined,
+          bufferedMs: undefined,
+        };
+        this._state.state = paused ? 'paused' : 'playing';
+        this._em.emit('time', this._state.time);
+        this._em.emit('state', this._state.state);
 
-    player.addListener('ready', ({ device_id }) => {
-      this._deviceId = device_id || '';
-      this._setState('ready');
-      if (this._statusEl) this._statusEl.textContent = 'Spotify connected.';
-      this._em.emit('capabilities', this.getCapabilities());
-
-      // Start polling to provide smooth progress/time updates.
-      this._startPolling();
-    });
-
-    player.addListener('not_ready', () => {
-      this._deviceId = '';
-      this._setState('error');
-      if (this._statusEl) this._statusEl.textContent = 'Spotify disconnected.';
-      this.setArtworkUrl('');
-
-      this._stopPolling();
-    });
-
-    player.addListener('player_state_changed', (s) => {
-      if (!s) return;
-
-      // The Web Playback SDK provides album images in state; use it to populate our artwork cache
-      // without hitting the Web API (and without 429s). This naturally fills as you play/skip.
-      try {
-        const tw = s && s.track_window ? s.track_window : null;
-        const current = tw && tw.current_track ? tw.current_track : null;
-        this._maybeCacheArtworkFromSdkTrack(current, this._activeSpotifyTrackId);
-        const prev = tw && Array.isArray(tw.previous_tracks) ? tw.previous_tracks : [];
-        const next = tw && Array.isArray(tw.next_tracks) ? tw.next_tracks : [];
-        for (const t of prev) this._maybeCacheArtworkFromSdkTrack(t);
-        for (const t of next) this._maybeCacheArtworkFromSdkTrack(t);
-
-        // If we are currently showing a placeholder, upgrade immediately if SDK gave us art
-        // for the currently requested/playing track.
-        const activeKey = String(this._activeSpotifyTrackId || '').trim();
-        if (activeKey && this._sdkTrackMatchesId(current, activeKey)) {
-          const cached = getCachedArtworkUrl(activeKey);
-          if (cached) this.setArtworkUrl(cached);
+        // Lightweight end detection fallback.
+        if (!this._endedFired && Date.now() >= this._suppressEndedUntilMs) {
+          if (paused && durationMs > 0 && durationMs - positionMs < 800) {
+            this._endedFired = true;
+            this._em.emit('ended');
+          }
         }
-      } catch {
-        // ignore
+      });
+
+      this._player = player;
+      this._setState('loading');
+
+      const ok = await player.connect();
+      if (!ok) {
+        throw new Error('Spotify player connect() failed.');
       }
 
-      const positionMs = Number(s.position) || 0;
-      const durationMs = Number(s.duration) || 0;
-      const paused = !!s.paused;
-      this._state.time = {
-        positionMs,
-        durationMs: durationMs > 0 ? durationMs : undefined,
-        bufferedMs: undefined,
-      };
-      this._state.state = paused ? 'paused' : 'playing';
-      this._em.emit('time', this._state.time);
-      this._em.emit('state', this._state.state);
-
-      // Lightweight end detection fallback.
-      if (!this._endedFired && Date.now() >= this._suppressEndedUntilMs) {
-        if (paused && durationMs > 0 && durationMs - positionMs < 800) {
-          this._endedFired = true;
-          this._em.emit('ended');
-        }
+      // Wait briefly for device id.
+      for (let i = 0; i < 50; i += 1) {
+        if (this._deviceId) break;
+        await delay(50);
       }
-    });
 
-    this._player = player;
-    this._setState('loading');
+      if (!this._deviceId) {
+        throw new Error('Spotify player did not become ready (missing device id).');
+      }
+    })();
 
-    const ok = await player.connect();
-    if (!ok) {
-      throw new Error('Spotify player connect() failed.');
-    }
-
-    // Wait briefly for device id.
-    for (let i = 0; i < 50; i += 1) {
-      if (this._deviceId) break;
-      await delay(50);
-    }
-
-    if (!this._deviceId) {
-      throw new Error('Spotify player did not become ready (missing device id).');
+    try {
+      await this._ensureReadyPromise;
+    } finally {
+      // keep the promise around if we're still not ready; it will be replaced on recovery.
     }
   }
 
@@ -782,16 +913,40 @@ export class SpotifyAdapter {
       ? String(track.artworkUrl || '').trim()
       : '';
 
-    // Best-effort prefetch of album art for UI thumbnails.
-    // Show cached art immediately in the main pane if available.
+    // If the playlist already provides artwork for this track, do NOT read/write the cache for it.
     try {
-      const cachedUrl = getCachedArtworkUrl(trackId);
-      if (cachedUrl) this.setArtworkUrl(cachedUrl);
-      else if (fallbackArtworkUrl) this.setArtworkUrl(fallbackArtworkUrl);
-      else this.setArtworkUrl('');
+      if (fallbackArtworkUrl) this._skipArtworkCacheIds.add(trackId);
+      else this._skipArtworkCacheIds.delete(trackId);
     } catch {
-      if (fallbackArtworkUrl) this.setArtworkUrl(fallbackArtworkUrl);
-      else this.setArtworkUrl('');
+      // ignore
+    }
+
+    this._activeTrackSkipArtworkCache = !!fallbackArtworkUrl;
+
+    // UI artwork:
+    // - If playlist provides art, show it immediately.
+    // - Else show cached art if available.
+    // - Else keep previous art during the loading transition to avoid flashing the placeholder.
+    if (fallbackArtworkUrl) {
+      this.setArtworkUrl(fallbackArtworkUrl);
+    } else {
+      try {
+        const cachedUrl = getCachedArtworkUrl(trackId);
+        if (cachedUrl) this.setArtworkUrl(cachedUrl);
+        else {
+          const cur = this._artImg ? String(this._artImg.getAttribute('src') || '').trim() : '';
+          const ph = String(this._placeholderArtworkUrl || '').trim();
+          if (!cur || (ph && cur === ph)) {
+            this.setArtworkUrl('');
+          }
+        }
+      } catch {
+        const cur = this._artImg ? String(this._artImg.getAttribute('src') || '').trim() : '';
+        const ph = String(this._placeholderArtworkUrl || '').trim();
+        if (!cur || (ph && cur === ph)) {
+          this.setArtworkUrl('');
+        }
+      }
     }
 
     const activeAtCall = trackId;
@@ -808,6 +963,9 @@ export class SpotifyAdapter {
     this._suppressEndedUntilMs = Date.now() + 7000;
     this._inactivePollCount = 0;
     this._setState('loading');
+
+    // Store pending play details for non-autoplay loads.
+    this._pendingPlay = autoplay ? null : { trackId, startMs };
 
     const accessToken = await this._auth.getAccessToken();
 
@@ -829,20 +987,14 @@ export class SpotifyAdapter {
       json: { device_ids: [this._deviceId], play: false },
     }));
 
-    await retryOnceOn404(() => spotifyApi(accessToken, '/me/player/play', {
-      method: 'PUT',
-      query: { device_id: this._deviceId },
-      json: {
-        uris: [`spotify:track:${trackId}`],
-        position_ms: startMs,
-      },
-    }));
-
-    // If caller didn't request autoplay, pause immediately.
-    if (!autoplay) {
-      try { await this.pause(); } catch { /* ignore */ }
-    } else {
+    if (autoplay) {
+      await retryOnceOn404(() => this._startPlayback(trackId, startMs));
+      this._pendingPlay = null;
+      this._playbackRecoverBackoffMs = 0;
       this._setState('playing');
+    } else {
+      // Do NOT start-and-pause playback: that triggers DRM license requests and can lead to 429s.
+      this._setState('ready');
     }
 
     this._em.emit('capabilities', this.getCapabilities());
@@ -851,6 +1003,20 @@ export class SpotifyAdapter {
   async play() {
     await this._ensureReady();
     if (!this._player) return;
+
+    const pending = this._pendingPlay;
+    if (pending && pending.trackId) {
+      try {
+        await this._startPlayback(pending.trackId, pending.startMs);
+        this._pendingPlay = null;
+        this._playbackRecoverBackoffMs = 0;
+        this._setState('playing');
+        return;
+      } catch {
+        // fall through to resume
+      }
+    }
+
     await this._player.resume();
     this._setState('playing');
   }
@@ -864,6 +1030,7 @@ export class SpotifyAdapter {
 
   async stop() {
     // Spotify doesn't have a true stop; pause and rewind.
+    this._pendingPlay = null;
     await this.pause();
     try { await this.seekToMs(0); } catch { /* ignore */ }
     this._setState('ready');
@@ -874,6 +1041,12 @@ export class SpotifyAdapter {
     await this._ensureReady();
     if (!this._player) return;
     const x = Math.max(0, Math.floor(Number(ms) || 0));
+
+    // If we're not actively playing yet (non-autoplay load), update the pending start point.
+    if (this._pendingPlay && this._pendingPlay.trackId) {
+      this._pendingPlay = { ...this._pendingPlay, startMs: x };
+    }
+
     await this._player.seek(x);
     this._state.time = { ...this._state.time, positionMs: x };
     this._em.emit('time', this._state.time);
