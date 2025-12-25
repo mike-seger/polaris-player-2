@@ -855,11 +855,15 @@ body.show-track-country:not(.no-wrap-lines) .track-country-flags {
     color: #3a4458;
 }
 
-.track-state-btn:hover,
-.track-state-btn:focus {
+.track-state-btn:hover {
     background: #1b2230;
     color: var(--color-text);
     outline: none;
+}
+
+.track-state-btn:focus-visible {
+    outline: 2px solid #2b3446;
+    outline-offset: 2px;
 }
 
 .track-state-btn[data-state="default"]:hover,

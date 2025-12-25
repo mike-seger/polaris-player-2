@@ -91,6 +91,18 @@ function setCachedArtworkUrl(trackId, url) {
   writeArtworkCache(cache);
 }
 
+async function retryOnceOn404(fn) {
+  try {
+    return await fn();
+  } catch (e) {
+    if (e && e.status === 404) {
+      await delay(350);
+      return fn().catch(() => undefined);
+    }
+    throw e;
+  }
+}
+
 async function spotifyApi(accessToken, path, { method = 'GET', query = null, json = null } = {}) {
   const url = new URL(`https://api.spotify.com/v1/${path.replace(/^\//, '')}`);
   if (query && typeof query === 'object') {
@@ -190,6 +202,13 @@ export class SpotifyAdapter {
 
     this._pendingPlay = null; // { trackId, startMs }
     this._startingPlayPromise = null;
+
+    // External-device polling throttling.
+    this._lastExternalPollAt = 0;
+    this._lastExternalPolledTrackId = '';
+    this._suppressExternalPollUntilMs = 0;
+    this._externalSeekTimer = null;
+    this._externalSeekPendingMs = null;
     this._playbackRecoverTimer = null;
     this._playbackRecoverBackoffMs = 0;
 
@@ -305,13 +324,7 @@ export class SpotifyAdapter {
 
     this._startingPlayPromise = (async () => {
       const accessToken = await this._auth.getAccessToken();
-      // Ensure the target device is active before play.
-      await spotifyApi(accessToken, '/me/player', {
-        method: 'PUT',
-        json: { device_ids: [targetDeviceId], play: false },
-      });
-
-      await spotifyApi(accessToken, '/me/player/play', {
+      const doPlay = () => spotifyApi(accessToken, '/me/player/play', {
         method: 'PUT',
         query: { device_id: targetDeviceId },
         json: {
@@ -319,6 +332,21 @@ export class SpotifyAdapter {
           position_ms: Math.max(0, Math.floor(Number(startMs) || 0)),
         },
       });
+
+      try {
+        await doPlay();
+      } catch (e) {
+        // Only transfer playback if Spotify reports there's no active device.
+        if (e && e.status === 404) {
+          await retryOnceOn404(() => spotifyApi(accessToken, '/me/player', {
+            method: 'PUT',
+            json: { device_ids: [targetDeviceId], play: false },
+          }));
+          await doPlay().catch(() => undefined);
+          return;
+        }
+        throw e;
+      }
     })();
 
     try {
@@ -887,6 +915,17 @@ export class SpotifyAdapter {
   async _pollOnce() {
     if (!this._isPolling || !this._player) return;
 
+    // If we're controlling an external Spotify Connect device, poll via Web API.
+    // Throttle to avoid hammering the API.
+    if (this._isExternalOutputSelected()) {
+      const now = Date.now();
+      if (now < this._suppressExternalPollUntilMs) return;
+      if (now - this._lastExternalPollAt < 1200) return;
+      this._lastExternalPollAt = now;
+      await this._pollExternalViaApi();
+      return;
+    }
+
     let st = null;
     try {
       st = await this._player.getCurrentState();
@@ -955,6 +994,83 @@ export class SpotifyAdapter {
         this._endedFired = true;
         this._em.emit('ended');
       }
+    }
+  }
+
+  async _pollExternalViaApi() {
+    let data = null;
+    try {
+      const accessToken = await this._auth.getAccessToken();
+      data = await spotifyApi(accessToken, '/me/player').catch(() => null);
+    } catch {
+      return;
+    }
+
+    const prevPos = this._lastPollPositionMs;
+    const prevDur = this._lastPollDurationMs;
+    const prevWasPlaying = this._lastPollWasPlaying;
+
+    if (!data || typeof data !== 'object' || !data.item) {
+      this._inactivePollCount += 1;
+
+      // In external mode, treat repeated inactivity near end as ended.
+      if (!this._endedFired && Date.now() >= this._suppressEndedUntilMs) {
+        const nearEnd = prevDur > 0 && prevPos > prevDur - 1200;
+        if (nearEnd && this._inactivePollCount >= 3) {
+          this._endedFired = true;
+          this._em.emit('ended');
+          return;
+        }
+      }
+
+      if (this._state.state !== 'ready' && this._state.state !== 'idle') {
+        this._setState('ready');
+      }
+      return;
+    }
+
+    this._inactivePollCount = 0;
+
+    const isPlaying = !!data.is_playing;
+    const progressMs = Number(data.progress_ms) || 0;
+    const item = data.item;
+    const durationMs = Number(item.duration_ms) || 0;
+    const itemId = typeof item.id === 'string' ? item.id : '';
+
+    this._state.time = {
+      positionMs: progressMs,
+      durationMs: durationMs > 0 ? durationMs : undefined,
+      bufferedMs: undefined,
+    };
+    this._state.state = isPlaying ? 'playing' : 'paused';
+    this._em.emit('time', this._state.time);
+    this._em.emit('state', this._state.state);
+
+    this._lastPollPositionMs = progressMs;
+    this._lastPollDurationMs = durationMs;
+    this._lastPollWasPlaying = isPlaying;
+
+    // End detection (external mode): time-based heuristics only.
+    if (!this._endedFired && Date.now() >= this._suppressEndedUntilMs) {
+      // Near-end -> pause.
+      if (!isPlaying && durationMs > 0 && durationMs - progressMs < 800) {
+        this._endedFired = true;
+        this._em.emit('ended');
+        return;
+      }
+
+      // Near-end -> jump back near 0.
+      if (prevDur > 0 && prevPos > prevDur - 1500 && progressMs < 1000 && (prevWasPlaying || !isPlaying)) {
+        this._endedFired = true;
+        this._em.emit('ended');
+        return;
+      }
+    }
+
+    // Opportunistically learn artwork when playing externally.
+    if (itemId && itemId !== this._lastExternalPolledTrackId) {
+      this._lastExternalPolledTrackId = itemId;
+      try { void this.prefetchArtwork(itemId); } catch { /* ignore */ }
     }
   }
 
@@ -1037,29 +1153,6 @@ export class SpotifyAdapter {
 
     // Store pending play details for non-autoplay loads.
     this._pendingPlay = autoplay ? null : { trackId, startMs };
-
-    const accessToken = await this._auth.getAccessToken();
-
-    const retryOnceOn404 = async (fn) => {
-      try {
-        return await fn();
-      } catch (e) {
-        if (e && e.status === 404) {
-          await delay(400);
-          return fn().catch(() => undefined);
-        }
-        throw e;
-      }
-    };
-
-    // Make the *target* device active (local SDK device or preferred external device).
-    const targetDeviceId = this._getTargetDeviceId();
-    if (targetDeviceId) {
-      await retryOnceOn404(() => spotifyApi(accessToken, '/me/player', {
-        method: 'PUT',
-        json: { device_ids: [targetDeviceId], play: false },
-      }));
-    }
 
     // If user picked an external output, ensure the local SDK device isn't still playing.
     if (this._isExternalOutputSelected()) {
@@ -1151,13 +1244,49 @@ export class SpotifyAdapter {
     if (this._isExternalOutputSelected()) {
       const targetDeviceId = this._getTargetDeviceId();
       if (!targetDeviceId) return;
-      const accessToken = await this._auth.getAccessToken();
-      await spotifyApi(accessToken, '/me/player/seek', {
-        method: 'PUT',
-        query: { device_id: targetDeviceId, position_ms: x },
-      });
+
+      // Coalesce slider drags into a single seek.
+      this._externalSeekPendingMs = x;
+      this._suppressExternalPollUntilMs = Date.now() + 900;
       this._state.time = { ...this._state.time, positionMs: x };
       this._em.emit('time', this._state.time);
+      this._lastPollPositionMs = x;
+
+      if (this._externalSeekTimer) {
+        clearTimeout(this._externalSeekTimer);
+        this._externalSeekTimer = null;
+      }
+
+      this._externalSeekTimer = setTimeout(async () => {
+        this._externalSeekTimer = null;
+        const desired = typeof this._externalSeekPendingMs === 'number' ? this._externalSeekPendingMs : x;
+        this._externalSeekPendingMs = null;
+        let accessToken = '';
+        try { accessToken = await this._auth.getAccessToken(); } catch { return; }
+
+        const doSeek = () => spotifyApi(accessToken, '/me/player/seek', {
+          method: 'PUT',
+          query: { device_id: targetDeviceId, position_ms: desired },
+        });
+
+        try {
+          await doSeek();
+        } catch (e) {
+          // Only transfer if Spotify says there's no active device.
+          if (e && e.status === 404) {
+            await retryOnceOn404(() => spotifyApi(accessToken, '/me/player', {
+              method: 'PUT',
+              json: { device_ids: [targetDeviceId], play: false },
+            }));
+            await doSeek().catch(() => undefined);
+          }
+        } finally {
+          // Force a fresh poll soon after a seek.
+          this._lastExternalPollAt = 0;
+          this._suppressExternalPollUntilMs = Date.now() + 250;
+        }
+      }, 140);
+
       return;
     }
 

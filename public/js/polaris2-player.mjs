@@ -118,6 +118,10 @@
     let holdPlayingUiUntilMs = 0;
     let lastAutoScrollIndex = null;
 
+    // Media Session (lock screen / hardware controls)
+    let mediaSessionInitialized = false;
+    let lastMediaPositionUpdateAt = 0;
+
     const STORAGE_KEY = 'ytAudioPlayer.settings';
     let notifySettingsUpdated = () => {};
     const settingsStore = new SettingsStore(STORAGE_KEY, { onChange: () => notifySettingsUpdated() });
@@ -1446,6 +1450,132 @@
       void playerHost.seekToMs(Math.max(0, Math.floor(s * 1000)));
     }
 
+    function supportsMediaSession() {
+      try {
+        return typeof navigator !== 'undefined'
+          && !!navigator.mediaSession
+          && typeof window !== 'undefined'
+          && typeof window.MediaMetadata === 'function';
+      } catch {
+        return false;
+      }
+    }
+
+    function buildAbsoluteUrl(url) {
+      const u = String(url || '').trim();
+      if (!u) return '';
+      try { return new URL(u, window.location.href).toString(); } catch { return u; }
+    }
+
+    function getCurrentTrackForMediaSession() {
+      if (currentIndex < 0 || currentIndex >= playlistItems.length) return null;
+      const item = playlistItems[currentIndex];
+      if (!item) return null;
+      return buildTrackFromPlaylistItem(item);
+    }
+
+    function updateMediaSessionMetadata() {
+      if (!supportsMediaSession()) return;
+      const track = getCurrentTrackForMediaSession();
+      if (!track) return;
+
+      // Prefer PlayerHost-derived thumbnail so Spotify can use cached/learned art.
+      let artUrl = '';
+      try {
+        artUrl = String(playerHost?.getThumbnailUrl?.(track) || track.artworkUrl || '').trim();
+      } catch {
+        artUrl = String(track.artworkUrl || '').trim();
+      }
+
+      // For Spotify, always show at least the placeholder.
+      if (!artUrl && getPlayerMode() === 'spotify') {
+        artUrl = './img/spotify-icon.png';
+      }
+
+      const title = String(track.title || '').trim();
+      const item = playlistItems[currentIndex] || {};
+      const artist = String(item.artist || item.channel || item.uploader || '').trim();
+
+      const artwork = artUrl
+        ? [
+            { src: buildAbsoluteUrl(artUrl), sizes: '96x96', type: 'image/png' },
+            { src: buildAbsoluteUrl(artUrl), sizes: '192x192', type: 'image/png' },
+            { src: buildAbsoluteUrl(artUrl), sizes: '512x512', type: 'image/png' },
+          ]
+        : [];
+
+      try {
+        navigator.mediaSession.metadata = new window.MediaMetadata({
+          title: title || ' ',
+          artist,
+          album: '',
+          artwork,
+        });
+      } catch {
+        // ignore
+      }
+    }
+
+    function updateMediaSessionPositionState(force = false) {
+      if (!supportsMediaSession()) return;
+      const now = Date.now();
+      if (!force && now - lastMediaPositionUpdateAt < 1000) return;
+      lastMediaPositionUpdateAt = now;
+
+      const info = getPlayerInfo();
+      const pos = Number(info?.time?.positionMs) || 0;
+      const dur = Number(info?.time?.durationMs) || 0;
+      const rate = Number(info?.rate) || 1;
+
+      if (!(dur > 0)) return;
+      try {
+        navigator.mediaSession.setPositionState({
+          duration: dur / 1000,
+          position: Math.max(0, Math.min(dur, pos)) / 1000,
+          playbackRate: rate,
+        });
+      } catch {
+        // ignore
+      }
+    }
+
+    function setupMediaSessionHandlers() {
+      if (!supportsMediaSession()) return;
+      if (mediaSessionInitialized) return;
+      mediaSessionInitialized = true;
+
+      const ms = navigator.mediaSession;
+      const safe = (action, handler) => {
+        try { ms.setActionHandler(action, handler); } catch { /* ignore */ }
+      };
+
+      safe('play', () => {
+        sidebar.suppressHide(1500);
+        void playerHost?.play?.().catch(() => {});
+        isPlaying = true;
+        updatePlayPauseButton();
+      });
+      safe('pause', () => {
+        sidebar.suppressHide(1500);
+        void playerHost?.pause?.().catch(() => {});
+        isPlaying = false;
+        updatePlayPauseButton();
+      });
+      safe('nexttrack', () => playNext({ keepPlayingUi: true }));
+      safe('previoustrack', () => playPrev());
+
+      // Prefer prev/next over 10s skip controls on iOS.
+      safe('seekbackward', null);
+      safe('seekforward', null);
+
+      // Allow scrub bar seeks.
+      safe('seekto', (details) => {
+        const t = details && typeof details.seekTime === 'number' ? details.seekTime : NaN;
+        if (!isFinite(t)) return;
+        seekToSeconds(t);
+      });
+    }
+
     function buildTrackFromPlaylistItem(item) {
       const videoId = item && item.videoId ? String(item.videoId).trim() : '';
       const mode = getPlayerMode();
@@ -1520,6 +1650,9 @@
 
             // Update the existing row without a full rerender.
             try { queueSpotifyThumbUpdate(idx, u); } catch { /* ignore */ }
+
+            // Keep lock-screen artwork in sync when the current track learns art.
+            try { updateMediaSessionMetadata(); } catch { /* ignore */ }
           });
         }
       } catch {
@@ -1554,6 +1687,12 @@
           applyConfiguredVolumeToHost();
         }
       });
+      playerHost.on('track', () => {
+        setupMediaSessionHandlers();
+        updateMediaSessionMetadata();
+        updateMediaSessionPositionState(true);
+      });
+      playerHost.on('time', () => updateMediaSessionPositionState(false));
       playerHost.on('ended', () => playNext());
       playerHost.on('error', (err) => {
         console.error('Player error:', err);
@@ -2025,6 +2164,9 @@
     document.getElementById('nextBtn').addEventListener('click', playNext);
     document.getElementById('prevBtn').addEventListener('click', playPrev);
 
+    // Initialize Media Session handlers once the UI is wired.
+    try { setupMediaSessionHandlers(); } catch { /* ignore */ }
+
     if (timeLabel) {
       timeLabel.addEventListener('click', (event) => {
         event.preventDefault();
@@ -2210,7 +2352,7 @@
         if (!spotifyAdapter || typeof spotifyAdapter.transferPlayback !== 'function') {
           throw new Error('Spotify player is not initialized.');
         }
-        await spotifyAdapter.transferPlayback(deviceId, { play: true });
+        await spotifyAdapter.transferPlayback(deviceId, { play: !!isPlaying });
       },
       getSpotifyLocalDeviceId: () => {
         try { return spotifyAdapter?.getLocalDeviceId?.() || ''; } catch { return ''; }
