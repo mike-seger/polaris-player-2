@@ -62,6 +62,12 @@ export class PlaylistDataSource {
       getController,
       getCurrentIndex,
       setCurrentIndex,
+
+      listSpotifyDevices,
+      transferSpotifyPlayback,
+      getSpotifyLocalDeviceId,
+      getOutputVolume01,
+      setOutputVolume01,
     } = options;
 
     this.statusEndpoint = statusEndpoint;
@@ -125,6 +131,12 @@ export class PlaylistDataSource {
     this.getController = getController;
     this.getCurrentIndex = getCurrentIndex;
     this.setCurrentIndex = setCurrentIndex;
+
+    this.listSpotifyDevices = typeof listSpotifyDevices === 'function' ? listSpotifyDevices : async () => [];
+    this.transferSpotifyPlayback = typeof transferSpotifyPlayback === 'function' ? transferSpotifyPlayback : async () => {};
+    this.getSpotifyLocalDeviceId = typeof getSpotifyLocalDeviceId === 'function' ? getSpotifyLocalDeviceId : () => '';
+    this.getOutputVolume01 = typeof getOutputVolume01 === 'function' ? getOutputVolume01 : () => 0.3;
+    this.setOutputVolume01 = typeof setOutputVolume01 === 'function' ? setOutputVolume01 : () => {};
   }
 
   setupPlaylistOverlay({ onLoadPlaylist } = {}) {
@@ -173,6 +185,13 @@ export class PlaylistDataSource {
           this.saveSettings({ spotifyClientId: next });
         }
       },
+
+      listSpotifyDevices: () => this.listSpotifyDevices(),
+      transferSpotifyPlayback: (deviceId) => this.transferSpotifyPlayback(deviceId),
+      getSpotifyLocalDeviceId: () => this.getSpotifyLocalDeviceId(),
+      getOutputVolume01: () => this.getOutputVolume01(),
+      setOutputVolume01: (v01) => this.setOutputVolume01(v01),
+
       resetUserSettings: () => this.resetUserSettings(),
       onLoad: async ({ playlistId, forceRefresh }) => {
         await onLoadPlaylist({ playlistId, forceRefresh: Boolean(forceRefresh) });

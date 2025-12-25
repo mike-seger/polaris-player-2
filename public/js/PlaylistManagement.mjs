@@ -15,6 +15,11 @@
       setPlayerMode = () => {},
       getSpotifyClientId = () => '',
       setSpotifyClientId = () => {},
+      listSpotifyDevices = async () => [],
+      transferSpotifyPlayback = async () => {},
+      getSpotifyLocalDeviceId = () => '',
+      getOutputVolume01 = () => 0.3,
+      setOutputVolume01 = () => {},
       getPlaylistItems = () => []
     } = options;
 
@@ -369,6 +374,8 @@
           section.icon.textContent = 'folder';
           section.wrapper.style.flex = '0 0 auto';
           section.wrapper.style.minHeight = 'auto';
+          section.wrapper.style.display = 'flex';
+          section.header.style.display = 'flex';
           section.content.style.display = 'none';
           section.content.style.flex = '0 0 auto';
           section.content.style.overflowY = 'hidden';
@@ -389,12 +396,27 @@
         section.header.setAttribute('aria-expanded', String(isOpen));
         section.icon.className = `icon ${isOpen ? 'folder_open' : 'folder'}`;
         section.icon.textContent = isOpen ? 'folder_open' : 'folder';
-        section.wrapper.style.flex = isOpen ? '1 1 auto' : '0 0 auto';
-        section.wrapper.style.minHeight = isOpen ? '0' : 'auto';
-        section.content.style.display = isOpen ? 'flex' : 'none';
-        section.content.style.flex = isOpen ? '1 1 auto' : '0 0 auto';
-        section.content.style.overflowY = isOpen ? 'auto' : 'hidden';
-        section.content.style.minHeight = isOpen ? '0' : 'auto';
+
+        // When one section is open, it should occupy the full settings content area.
+        // Hide other sections entirely; when closed, restore them.
+        if (isOpen) {
+          section.wrapper.style.display = 'flex';
+          section.header.style.display = 'flex';
+          section.wrapper.style.flex = '1 1 auto';
+          section.wrapper.style.minHeight = '0';
+          section.content.style.display = 'flex';
+          section.content.style.flex = '1 1 auto';
+          section.content.style.overflowY = 'auto';
+          section.content.style.minHeight = '0';
+        } else {
+          section.wrapper.style.display = 'none';
+          section.wrapper.style.flex = '0 0 auto';
+          section.wrapper.style.minHeight = 'auto';
+          section.content.style.display = 'none';
+          section.content.style.flex = '0 0 auto';
+          section.content.style.overflowY = 'hidden';
+          section.content.style.minHeight = 'auto';
+        }
       });
 
       state.openSectionId = sectionId;
@@ -449,7 +471,8 @@
       headerBtn.style.display = 'flex';
       headerBtn.style.alignItems = 'center';
       headerBtn.style.justifyContent = 'flex-start';
-      headerBtn.style.padding = '0.55rem 0';
+      // More compact title row.
+      headerBtn.style.padding = '0.275rem 0';
       headerBtn.style.background = 'transparent';
       headerBtn.style.border = 'none';
       headerBtn.style.color = '#f5f7fa';
@@ -459,7 +482,7 @@
       headerBtn.style.textTransform = 'uppercase';
       headerBtn.style.cursor = 'pointer';
       headerBtn.style.width = '100%';
-      headerBtn.style.gap = '0.6rem';
+      headerBtn.style.gap = '0.3rem';
 
       const iconSpan = document.createElement('span');
       iconSpan.className = 'icon unfold-more';
@@ -695,6 +718,7 @@
       loadBtn.style.flex = '1 1 0';
       loadBtn.style.minWidth = '0';
       stylePrimaryButton(loadBtn);
+      loadBtn.style.padding = '0.225rem 0.9rem';
       loadBtn.textContent = '';
       loadBtn.setAttribute('aria-label', 'Upload playlist');
       const loadIcon = document.createElement('span');
@@ -712,6 +736,7 @@
       refreshBtn.style.flex = '1 1 0';
       refreshBtn.style.minWidth = '0';
       stylePrimaryButton(refreshBtn);
+      refreshBtn.style.padding = '0.225rem 0.9rem';
       refreshBtn.textContent = '';
       refreshBtn.setAttribute('aria-label', 'Upload and refresh playlist');
       const refreshUploadIcon = document.createElement('span');
@@ -735,6 +760,7 @@
       downloadBtn.style.flex = '1 1 0';
       downloadBtn.style.minWidth = '0';
       stylePrimaryButton(downloadBtn);
+      downloadBtn.style.padding = '0.225rem 0.9rem';
       downloadBtn.textContent = '';
       downloadBtn.setAttribute('aria-label', 'Download playlist JSON');
       const downloadIcon = document.createElement('span');
@@ -918,7 +944,7 @@
       spotifyClientIdInput.style.minWidth = '0';
 
       const spotifyHint = document.createElement('p');
-      spotifyHint.textContent = 'Used for Spotify login (stored locally in ytAudioPlayer.settings).';
+      spotifyHint.textContent = 'Used for Spotify login.';
       spotifyHint.style.margin = '0';
       spotifyHint.style.fontSize = '0.75rem';
       spotifyHint.style.color = '#6c7488';
@@ -1006,9 +1032,255 @@
       spotifyRow.appendChild(spotifyClientIdRow);
       spotifyRow.appendChild(spotifyHint);
 
+      const spotifyDeviceRow = document.createElement('div');
+      spotifyDeviceRow.style.display = 'flex';
+      spotifyDeviceRow.style.flexDirection = 'column';
+      spotifyDeviceRow.style.gap = '0.35rem';
+
+      const spotifyDeviceLabel = document.createElement('label');
+      spotifyDeviceLabel.textContent = 'Spotify Connect Device';
+      spotifyDeviceLabel.style.fontSize = '0.75rem';
+      spotifyDeviceLabel.style.fontWeight = '600';
+      spotifyDeviceLabel.style.letterSpacing = '0.05em';
+      spotifyDeviceLabel.style.textTransform = 'uppercase';
+      spotifyDeviceLabel.style.color = '#a8b3c7';
+
+      const spotifyDeviceControls = document.createElement('div');
+      spotifyDeviceControls.style.display = 'flex';
+      spotifyDeviceControls.style.alignItems = 'center';
+      spotifyDeviceControls.style.gap = '0.5rem';
+
+      const spotifyDeviceSelect = document.createElement('select');
+      spotifyDeviceSelect.style.padding = '0.55rem 0.6rem';
+      spotifyDeviceSelect.style.borderRadius = '6px';
+      spotifyDeviceSelect.style.border = '1px solid #2b2f3a';
+      spotifyDeviceSelect.style.background = '#11141c';
+      spotifyDeviceSelect.style.color = '#f5f7fa';
+      // Match Player select size.
+      spotifyDeviceSelect.style.fontSize = '0.9rem';
+      spotifyDeviceSelect.style.outline = 'none';
+      spotifyDeviceSelect.style.flex = '1 1 auto';
+      spotifyDeviceSelect.style.minWidth = '0';
+
+      const spotifyDeviceHint = document.createElement('p');
+      spotifyDeviceHint.textContent = 'Routes Spotify audio to another device (e.g., Apple TV) via Spotify Connect.';
+      spotifyDeviceHint.style.margin = '0';
+      spotifyDeviceHint.style.fontSize = '0.75rem';
+      spotifyDeviceHint.style.color = '#6c7488';
+      spotifyDeviceHint.style.lineHeight = '1.4';
+
+      const spotifyVolumeRow = document.createElement('div');
+      spotifyVolumeRow.style.display = 'flex';
+      spotifyVolumeRow.style.flexDirection = 'column';
+      spotifyVolumeRow.style.gap = '0.35rem';
+
+      const spotifyVolumeLabel = document.createElement('label');
+      spotifyVolumeLabel.textContent = 'Output Volume';
+      spotifyVolumeLabel.style.fontSize = '0.75rem';
+      spotifyVolumeLabel.style.fontWeight = '600';
+      spotifyVolumeLabel.style.letterSpacing = '0.05em';
+      spotifyVolumeLabel.style.textTransform = 'uppercase';
+      spotifyVolumeLabel.style.color = '#a8b3c7';
+
+      const spotifyVolumeControls = document.createElement('div');
+      spotifyVolumeControls.style.display = 'flex';
+      spotifyVolumeControls.style.alignItems = 'center';
+      spotifyVolumeControls.style.gap = '0.6rem';
+
+      const spotifyVolumeRange = document.createElement('input');
+      spotifyVolumeRange.type = 'range';
+      spotifyVolumeRange.min = '0';
+      spotifyVolumeRange.max = '100';
+      spotifyVolumeRange.step = '1';
+      spotifyVolumeRange.style.flex = '1 1 auto';
+      spotifyVolumeRange.style.minWidth = '0';
+
+      const spotifyVolumeValue = document.createElement('div');
+      spotifyVolumeValue.textContent = '';
+      spotifyVolumeValue.style.flex = '0 0 auto';
+      spotifyVolumeValue.style.minWidth = '3.5rem';
+      spotifyVolumeValue.style.textAlign = 'right';
+      spotifyVolumeValue.style.fontFamily = 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace';
+      spotifyVolumeValue.style.color = '#a8b3c7';
+
+      const spotifyVolumeHint = document.createElement('p');
+      spotifyVolumeHint.textContent = 'Controls Spotify Connect device volume.';
+      spotifyVolumeHint.style.margin = '0';
+      spotifyVolumeHint.style.fontSize = '0.75rem';
+      spotifyVolumeHint.style.color = '#6c7488';
+      spotifyVolumeHint.style.lineHeight = '1.4';
+
+      const readVolume01 = () => {
+        try {
+          const v = Number(getOutputVolume01());
+          return isFinite(v) ? Math.max(0, Math.min(1, v)) : 0.3;
+        } catch {
+          return 0.3;
+        }
+      };
+
+      function renderSpotifyVolume() {
+        const v01 = readVolume01();
+        const pct = Math.round(v01 * 100);
+        spotifyVolumeRange.value = String(pct);
+        spotifyVolumeValue.textContent = `${pct}%`;
+      }
+
+      let spotifyVolumeWriteTimer = null;
+      spotifyVolumeRange.addEventListener('input', () => {
+        const pct = Math.max(0, Math.min(100, Math.round(Number(spotifyVolumeRange.value) || 0)));
+        spotifyVolumeValue.textContent = `${pct}%`;
+        if (spotifyVolumeWriteTimer) {
+          clearTimeout(spotifyVolumeWriteTimer);
+          spotifyVolumeWriteTimer = null;
+        }
+        spotifyVolumeWriteTimer = setTimeout(() => {
+          spotifyVolumeWriteTimer = null;
+          try { setOutputVolume01(pct / 100); } catch { /* ignore */ }
+        }, 100);
+      });
+      spotifyVolumeRange.addEventListener('change', () => {
+        const pct = Math.max(0, Math.min(100, Math.round(Number(spotifyVolumeRange.value) || 0)));
+        try { setOutputVolume01(pct / 100); } catch { /* ignore */ }
+      });
+
+      renderSpotifyVolume();
+
+      const spotifyDeviceStatus = document.createElement('p');
+      spotifyDeviceStatus.textContent = '';
+      spotifyDeviceStatus.style.margin = '0';
+      spotifyDeviceStatus.style.fontSize = '0.75rem';
+      spotifyDeviceStatus.style.color = '#6c7488';
+      spotifyDeviceStatus.style.lineHeight = '1.4';
+
+      let spotifyDevicesLoadedOnce = false;
+      let spotifyDevicesRefreshing = false;
+      let spotifyDevicesTransferring = false;
+      let spotifyDevicesPopulating = false;
+
+      function updateSpotifyDeviceDisabled() {
+        spotifyDeviceSelect.disabled = !!spotifyDevicesTransferring;
+      }
+
+      function setSpotifyDevicesEmpty(message) {
+        spotifyDeviceSelect.textContent = '';
+        const opt = document.createElement('option');
+        opt.value = '';
+        opt.textContent = message;
+        spotifyDeviceSelect.appendChild(opt);
+      }
+
+      async function refreshSpotifyDevices() {
+        if (spotifyDevicesRefreshing) return;
+        spotifyDevicesRefreshing = true;
+        spotifyDeviceStatus.textContent = 'Loading devices…';
+        spotifyDeviceStatus.style.color = '#6c7488';
+
+        try {
+          const devices = await listSpotifyDevices();
+          const localId = String(getSpotifyLocalDeviceId() || '').trim();
+
+          if (!Array.isArray(devices) || devices.length === 0) {
+            setSpotifyDevicesEmpty('No devices found');
+            spotifyDeviceStatus.textContent = 'No Spotify Connect devices available.';
+            return;
+          }
+
+          spotifyDevicesPopulating = true;
+          spotifyDeviceSelect.textContent = '';
+
+          let activeId = '';
+          for (const d of devices) {
+            const id = typeof d?.id === 'string' ? d.id : '';
+            const name = typeof d?.name === 'string' ? d.name : 'Unknown device';
+            const type = typeof d?.type === 'string' ? d.type : '';
+            const isActive = !!d?.is_active;
+            if (isActive && id) activeId = id;
+
+            const opt = document.createElement('option');
+            opt.value = id;
+            const parts = [name];
+            if (type) parts.push(`(${type})`);
+            if (id && localId && id === localId) parts.push('[this browser]');
+            if (isActive) parts.push('[active]');
+            opt.textContent = parts.join(' ');
+            spotifyDeviceSelect.appendChild(opt);
+          }
+
+          if (activeId) spotifyDeviceSelect.value = activeId;
+          spotifyDeviceStatus.textContent = `${devices.length} device(s) available.`;
+        } catch (err) {
+          const msg = (err && err.message) ? String(err.message) : 'Failed to load devices.';
+          setSpotifyDevicesEmpty('Failed to load devices');
+          spotifyDeviceStatus.textContent = msg;
+          spotifyDeviceStatus.style.color = '#f2d88c';
+        } finally {
+          spotifyDevicesPopulating = false;
+          spotifyDevicesRefreshing = false;
+          updateSpotifyDeviceDisabled();
+        }
+      }
+
+      // Refresh automatically when the dropdown is opened/focused.
+      let lastOpenRefreshAt = 0;
+      const scheduleRefreshOnOpen = () => {
+        const now = Date.now();
+        if (now - lastOpenRefreshAt < 300) return;
+        lastOpenRefreshAt = now;
+        void refreshSpotifyDevices();
+      };
+      spotifyDeviceSelect.addEventListener('pointerdown', scheduleRefreshOnOpen);
+      spotifyDeviceSelect.addEventListener('focus', scheduleRefreshOnOpen);
+
+      // Auto-transfer on selection.
+      spotifyDeviceSelect.addEventListener('change', async () => {
+        if (spotifyDevicesPopulating) return;
+        const targetId = String(spotifyDeviceSelect.value || '').trim();
+        if (!targetId) return;
+        if (spotifyDevicesRefreshing || spotifyDevicesTransferring) return;
+
+        spotifyDevicesTransferring = true;
+        updateSpotifyDeviceDisabled();
+        spotifyDeviceStatus.textContent = 'Transferring playback…';
+        spotifyDeviceStatus.style.color = '#6c7488';
+        try {
+          await transferSpotifyPlayback(targetId);
+          await refreshSpotifyDevices();
+        } catch (err) {
+          const msg = (err && err.message) ? String(err.message) : 'Transfer failed.';
+          spotifyDeviceStatus.textContent = msg;
+          spotifyDeviceStatus.style.color = '#f2d88c';
+          try { showAlert(`Spotify transfer failed: ${msg}`); } catch { /* ignore */ }
+        } finally {
+          spotifyDevicesTransferring = false;
+          updateSpotifyDeviceDisabled();
+        }
+      });
+
+      setSpotifyDevicesEmpty('Open to refresh');
+      updateSpotifyDeviceDisabled();
+
+      spotifyDeviceRow.appendChild(spotifyDeviceLabel);
+      spotifyDeviceControls.appendChild(spotifyDeviceSelect);
+      spotifyDeviceRow.appendChild(spotifyDeviceControls);
+      spotifyDeviceRow.appendChild(spotifyDeviceHint);
+      spotifyVolumeRow.appendChild(spotifyVolumeLabel);
+      spotifyVolumeControls.appendChild(spotifyVolumeRange);
+      spotifyVolumeControls.appendChild(spotifyVolumeValue);
+      spotifyVolumeRow.appendChild(spotifyVolumeControls);
+      spotifyVolumeRow.appendChild(spotifyVolumeHint);
+      spotifyDeviceRow.appendChild(spotifyVolumeRow);
+      spotifyDeviceRow.appendChild(spotifyDeviceStatus);
+
       function updateSpotifyVisibility() {
         const isSpotify = playerSelect.value === 'spotify';
         spotifyRow.style.display = isSpotify ? 'flex' : 'none';
+        spotifyDeviceRow.style.display = isSpotify ? 'flex' : 'none';
+
+        if (isSpotify && !spotifyDevicesLoadedOnce) {
+          spotifyDevicesLoadedOnce = true;
+          void refreshSpotifyDevices();
+        }
       }
       updateSpotifyVisibility();
 
@@ -1025,16 +1297,12 @@
       playerRow.appendChild(playerSelect);
 
       const localHint = document.createElement('p');
-      localHint.textContent = 'Local mode loads: /video/<userTitle>.mp4';
-      localHint.style.margin = '0';
-      localHint.style.fontSize = '0.75rem';
-      localHint.style.color = '#6c7488';
-      localHint.style.lineHeight = '1.4';
+      localHint.textContent = '';
 
       videoPlayerSection.content.appendChild(playerIntro);
       videoPlayerSection.content.appendChild(playerRow);
       videoPlayerSection.content.appendChild(spotifyRow);
-      videoPlayerSection.content.appendChild(localHint);
+      videoPlayerSection.content.appendChild(spotifyDeviceRow);
 
       const settingsSection = createAccordionSection({ id: 'settings', title: 'Stored Settings' });
       //settingsSection.content.style.gap = '0.6rem';

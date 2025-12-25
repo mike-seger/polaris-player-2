@@ -360,11 +360,17 @@
     const spectrumCanvas = document.getElementById('spectrumCanvas');
     const alert = createAlert({ overlayEl: alertOverlay, messageEl: alertMessageEl, closeBtn: alertCloseBtn });
 
-    function applyMaxVolumeToHost() {
+    function getConfiguredVolume01() {
+      const v = settings && typeof settings.volume01 === 'number' ? settings.volume01 : undefined;
+      const n = typeof v === 'number' && isFinite(v) ? v : 0.3;
+      return Math.max(0, Math.min(1, n));
+    }
+
+    function applyConfiguredVolumeToHost() {
       if (!playerHost) return;
       const caps = playerHost.getCapabilities();
       if (!caps || !caps.canSetVolume) return;
-      void playerHost.setVolume(1).catch(() => {});
+      void playerHost.setVolume(getConfiguredVolume01()).catch(() => {});
     }
 
     async function ensureSpotifySession({ promptIfMissing = false, promptLogin = false } = {}) {
@@ -1545,7 +1551,7 @@
         if (!firedReady && state === 'ready') {
           firedReady = true;
           void onPlayerReady();
-          applyMaxVolumeToHost();
+          applyConfiguredVolumeToHost();
         }
       });
       playerHost.on('ended', () => playNext());
@@ -1608,7 +1614,7 @@
       playerReady = true;
       startProgressTimer();
 
-      applyMaxVolumeToHost();
+      applyConfiguredVolumeToHost();
 
       try {
         await dataSourceReadyPromise;
@@ -1916,12 +1922,12 @@
           .then((ok) => {
             if (!ok) return;
             return playerHost.load(buildTrackFromPlaylistItem(playlistItems[idx]), { autoplay: true })
-              .then(() => applyMaxVolumeToHost());
+              .then(() => applyConfiguredVolumeToHost());
           })
           .catch((err) => console.error('Player load error:', err));
       } else {
         void playerHost.load(buildTrackFromPlaylistItem(playlistItems[idx]), { autoplay: true })
-          .then(() => applyMaxVolumeToHost())
+          .then(() => applyConfiguredVolumeToHost())
           .catch((err) => console.error('Player load error:', err));
       }
       pendingPlayIndex = null;
@@ -1930,7 +1936,7 @@
       focusActiveTrack();
     }
 
-    // No volume UI: default to max volume when players become ready / tracks load.
+    // Default volume: applied when players become ready / tracks load.
 
     function getRelativeVisibleIndex(offset) {
       const indices = visibleIndices.length ? visibleIndices : playlistItems.map((_, idx) => idx);
@@ -2194,6 +2200,32 @@
       setCurrentIndex: (next) => {
         currentIndex = next;
         return currentIndex;
+      },
+
+      listSpotifyDevices: async () => {
+        if (!spotifyAdapter || typeof spotifyAdapter.listDevices !== 'function') return [];
+        return spotifyAdapter.listDevices();
+      },
+      transferSpotifyPlayback: async (deviceId) => {
+        if (!spotifyAdapter || typeof spotifyAdapter.transferPlayback !== 'function') {
+          throw new Error('Spotify player is not initialized.');
+        }
+        await spotifyAdapter.transferPlayback(deviceId, { play: true });
+      },
+      getSpotifyLocalDeviceId: () => {
+        try { return spotifyAdapter?.getLocalDeviceId?.() || ''; } catch { return ''; }
+      },
+
+      getOutputVolume01: () => {
+        const v = settings && typeof settings.volume01 === 'number' ? settings.volume01 : 0.3;
+        const n = typeof v === 'number' && isFinite(v) ? v : 0.3;
+        return Math.max(0, Math.min(1, n));
+      },
+      setOutputVolume01: (v01) => {
+        const n = Number(v01);
+        const clamped = isFinite(n) ? Math.max(0, Math.min(1, n)) : 0.3;
+        saveSettings({ volume01: clamped });
+        try { applyConfiguredVolumeToHost(); } catch { /* ignore */ }
       },
     });
 

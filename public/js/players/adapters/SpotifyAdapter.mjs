@@ -182,6 +182,10 @@ export class SpotifyAdapter {
     this._player = null;
     this._deviceId = '';
 
+    // If set, Polaris will control playback on this Spotify Connect device
+    // instead of the local Web Playback SDK device (to route audio to e.g. Apple TV).
+    this._preferredOutputDeviceId = '';
+
     this._ensureReadyPromise = null;
 
     this._pendingPlay = null; // { trackId, startMs }
@@ -223,10 +227,77 @@ export class SpotifyAdapter {
     this._skipArtworkCacheIds = new Set();
   }
 
+  setPreferredOutputDeviceId(deviceId) {
+    const next = String(deviceId || '').trim();
+    // If the caller selects the local SDK device, clear the override.
+    if (next && this._deviceId && next === this._deviceId) {
+      this._preferredOutputDeviceId = '';
+      return;
+    }
+    this._preferredOutputDeviceId = next;
+  }
+
+  getPreferredOutputDeviceId() {
+    return String(this._preferredOutputDeviceId || '');
+  }
+
+  _getTargetDeviceId() {
+    const pref = String(this._preferredOutputDeviceId || '').trim();
+    if (pref) return pref;
+    return String(this._deviceId || '').trim();
+  }
+
+  _isExternalOutputSelected() {
+    const pref = String(this._preferredOutputDeviceId || '').trim();
+    if (!pref) return false;
+    if (this._deviceId && pref === this._deviceId) return false;
+    return true;
+  }
+
+  getLocalDeviceId() {
+    return String(this._deviceId || '');
+  }
+
+  async listDevices() {
+    const accessToken = await this._auth.getAccessToken();
+    const data = await spotifyApi(accessToken, '/me/player/devices').catch(() => null);
+    const devices = data && Array.isArray(data.devices) ? data.devices : [];
+    return devices;
+  }
+
+  async transferPlayback(deviceId, { play = true } = {}) {
+    const id = String(deviceId || '').trim();
+    if (!id) throw new Error('Missing Spotify deviceId');
+
+    const accessToken = await this._auth.getAccessToken();
+    await spotifyApi(accessToken, '/me/player', {
+      method: 'PUT',
+      json: { device_ids: [id], play: !!play },
+    });
+
+    // Remember intent so subsequent loads/plays don't yank output back to this browser.
+    this.setPreferredOutputDeviceId(id);
+
+    // If local Web Playback SDK was playing, force-stop it.
+    try { await this._player?.pause?.(); } catch { /* ignore */ }
+
+    // Safety: avoid blasting volume on external receivers.
+    // Spotify Connect volume is per-device; we cap to 30% on transfer unless the
+    // current Polaris volume state is already lower.
+    try {
+      const cur = typeof this._state?.volume === 'number' ? this._state.volume : 1;
+      const safe = Math.max(0, Math.min(1, Math.min(cur, 0.3)));
+      await this.setVolume(safe);
+    } catch {
+      // ignore
+    }
+  }
+
   async _startPlayback(trackId, startMs = 0) {
     const tid = String(trackId || '').trim();
     if (!tid) return;
-    if (!this._deviceId) return;
+    const targetDeviceId = this._getTargetDeviceId();
+    if (!targetDeviceId) return;
 
     if (this._startingPlayPromise) {
       return this._startingPlayPromise.catch(() => {});
@@ -234,15 +305,15 @@ export class SpotifyAdapter {
 
     this._startingPlayPromise = (async () => {
       const accessToken = await this._auth.getAccessToken();
-      // Ensure this device is active before play.
+      // Ensure the target device is active before play.
       await spotifyApi(accessToken, '/me/player', {
         method: 'PUT',
-        json: { device_ids: [this._deviceId], play: false },
+        json: { device_ids: [targetDeviceId], play: false },
       });
 
       await spotifyApi(accessToken, '/me/player/play', {
         method: 'PUT',
-        query: { device_id: this._deviceId },
+        query: { device_id: targetDeviceId },
         json: {
           uris: [`spotify:track:${tid}`],
           position_ms: Math.max(0, Math.floor(Number(startMs) || 0)),
@@ -981,11 +1052,19 @@ export class SpotifyAdapter {
       }
     };
 
-    // Make this device active.
-    await retryOnceOn404(() => spotifyApi(accessToken, '/me/player', {
-      method: 'PUT',
-      json: { device_ids: [this._deviceId], play: false },
-    }));
+    // Make the *target* device active (local SDK device or preferred external device).
+    const targetDeviceId = this._getTargetDeviceId();
+    if (targetDeviceId) {
+      await retryOnceOn404(() => spotifyApi(accessToken, '/me/player', {
+        method: 'PUT',
+        json: { device_ids: [targetDeviceId], play: false },
+      }));
+    }
+
+    // If user picked an external output, ensure the local SDK device isn't still playing.
+    if (this._isExternalOutputSelected()) {
+      try { await this._player?.pause?.(); } catch { /* ignore */ }
+    }
 
     if (autoplay) {
       await retryOnceOn404(() => this._startPlayback(trackId, startMs));
@@ -1002,7 +1081,7 @@ export class SpotifyAdapter {
 
   async play() {
     await this._ensureReady();
-    if (!this._player) return;
+    if (!this._player && !this._isExternalOutputSelected()) return;
 
     const pending = this._pendingPlay;
     if (pending && pending.trackId) {
@@ -1017,12 +1096,35 @@ export class SpotifyAdapter {
       }
     }
 
+    if (this._isExternalOutputSelected()) {
+      const targetDeviceId = this._getTargetDeviceId();
+      if (!targetDeviceId) return;
+      const accessToken = await this._auth.getAccessToken();
+      await spotifyApi(accessToken, '/me/player/play', {
+        method: 'PUT',
+        query: { device_id: targetDeviceId },
+      });
+      this._setState('playing');
+      return;
+    }
+
     await this._player.resume();
     this._setState('playing');
   }
 
   async pause() {
     await this._ensureReady();
+    if (this._isExternalOutputSelected()) {
+      const targetDeviceId = this._getTargetDeviceId();
+      if (!targetDeviceId) return;
+      const accessToken = await this._auth.getAccessToken();
+      await spotifyApi(accessToken, '/me/player/pause', {
+        method: 'PUT',
+        query: { device_id: targetDeviceId },
+      });
+      this._setState('paused');
+      return;
+    }
     if (!this._player) return;
     await this._player.pause();
     this._setState('paused');
@@ -1039,7 +1141,6 @@ export class SpotifyAdapter {
 
   async seekToMs(ms) {
     await this._ensureReady();
-    if (!this._player) return;
     const x = Math.max(0, Math.floor(Number(ms) || 0));
 
     // If we're not actively playing yet (non-autoplay load), update the pending start point.
@@ -1047,6 +1148,20 @@ export class SpotifyAdapter {
       this._pendingPlay = { ...this._pendingPlay, startMs: x };
     }
 
+    if (this._isExternalOutputSelected()) {
+      const targetDeviceId = this._getTargetDeviceId();
+      if (!targetDeviceId) return;
+      const accessToken = await this._auth.getAccessToken();
+      await spotifyApi(accessToken, '/me/player/seek', {
+        method: 'PUT',
+        query: { device_id: targetDeviceId, position_ms: x },
+      });
+      this._state.time = { ...this._state.time, positionMs: x };
+      this._em.emit('time', this._state.time);
+      return;
+    }
+
+    if (!this._player) return;
     await this._player.seek(x);
     this._state.time = { ...this._state.time, positionMs: x };
     this._em.emit('time', this._state.time);
@@ -1054,8 +1169,24 @@ export class SpotifyAdapter {
 
   async setVolume(v01) {
     await this._ensureReady();
-    if (!this._player) return;
     const v = clamp01(v01);
+
+    if (this._isExternalOutputSelected()) {
+      const targetDeviceId = this._getTargetDeviceId();
+      if (!targetDeviceId) return;
+      const accessToken = await this._auth.getAccessToken();
+      await spotifyApi(accessToken, '/me/player/volume', {
+        method: 'PUT',
+        query: { device_id: targetDeviceId, volume_percent: Math.max(0, Math.min(100, Math.round(v * 100))) },
+      });
+      this._state.volume = v;
+      if (v > 0) this._lastNonMutedVolume = v;
+      this._state.muted = v === 0;
+      this._em.emit('capabilities', this.getCapabilities());
+      return;
+    }
+
+    if (!this._player) return;
     await this._player.setVolume(v);
     this._state.volume = v;
     if (v > 0) this._lastNonMutedVolume = v;
