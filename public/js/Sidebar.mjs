@@ -169,17 +169,35 @@ export class Sidebar {
       if (this.isHidden()) return;
       if (!this.sidebarDrawer) return;
 
-      // Native <select> dropdown popups can dispatch pointer events with surprising
-      // targets (e.g. document/body). If a select inside the drawer is focused,
-      // treat this as an inside interaction so the dropdown doesn't immediately close.
-      const activeEl = document.activeElement;
-      if (activeEl instanceof HTMLElement
-        && activeEl.tagName === 'SELECT'
-        && this.sidebarDrawer.contains(activeEl)) {
+      // Playlist/Settings overlay is rendered outside the drawer (attached to <body>),
+      // but should still count as an "inside" interaction.
+      const tEl = (event && event.target instanceof Element) ? event.target : null;
+      if (tEl && (tEl.closest('#playlistIOOverlay') || tEl.closest('.playlist-overlay-content'))) {
         return;
       }
 
+      // iOS (and some browsers) can dispatch pointer events with surprising targets
+      // (e.g. document/body/html) when native UI (keyboard, select dropdown) appears.
+      // If a form field inside the drawer is focused, treat ambiguous targets as inside
+      // so the drawer doesn't immediately slide away while typing.
+      const activeEl = document.activeElement;
+      const isFocusedFieldInDrawer = (() => {
+        if (!(activeEl instanceof HTMLElement)) return false;
+        if (!this.sidebarDrawer.contains(activeEl)) return false;
+        const tag = String(activeEl.tagName || '').toUpperCase();
+        if (tag === 'SELECT' || tag === 'INPUT' || tag === 'TEXTAREA') return true;
+        if (activeEl.isContentEditable) return true;
+        return false;
+      })();
+
       const target = event.target;
+      if (isFocusedFieldInDrawer) {
+        // Only ignore events whose targets don't clearly indicate an outside click.
+        // This keeps normal outside taps working, but prevents iOS keyboard/focus quirks
+        // from closing the drawer.
+        if (!(target instanceof Node)) return;
+        if (target === document.body || target === document.documentElement) return;
+      }
       if (target instanceof Node && this.sidebarDrawer.contains(target)) return;
       this.setHidden(true);
     };

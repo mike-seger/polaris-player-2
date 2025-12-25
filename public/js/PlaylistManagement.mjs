@@ -914,6 +914,8 @@
       spotifyClientIdInput.style.color = '#f5f7fa';
       spotifyClientIdInput.style.fontSize = '0.9rem';
       spotifyClientIdInput.style.outline = 'none';
+      spotifyClientIdInput.style.flex = '1 1 auto';
+      spotifyClientIdInput.style.minWidth = '0';
 
       const spotifyHint = document.createElement('p');
       spotifyHint.textContent = 'Used for Spotify login (stored locally in ytAudioPlayer.settings).';
@@ -931,6 +933,54 @@
         const v = String(spotifyClientIdInput.value || '').trim();
         try { setSpotifyClientId(v); } catch { /* ignore */ }
       }
+
+      const spotifyClientIdRow = document.createElement('div');
+      spotifyClientIdRow.style.display = 'flex';
+      spotifyClientIdRow.style.alignItems = 'center';
+      spotifyClientIdRow.style.gap = '0.5rem';
+
+      const spotifyPasteBtn = document.createElement('button');
+      spotifyPasteBtn.type = 'button';
+      spotifyPasteBtn.textContent = 'Paste';
+      spotifyPasteBtn.title = 'Paste from clipboard';
+      spotifyPasteBtn.style.flex = '0 0 auto';
+      spotifyPasteBtn.style.padding = '0.55rem 0.75rem';
+      spotifyPasteBtn.style.fontSize = '0.78rem';
+      spotifyPasteBtn.style.fontWeight = '700';
+      spotifyPasteBtn.style.letterSpacing = '0.06em';
+      spotifyPasteBtn.style.textTransform = 'uppercase';
+      spotifyPasteBtn.style.borderRadius = '6px';
+      spotifyPasteBtn.style.border = '1px solid #394150';
+      spotifyPasteBtn.style.background = '#1b2231';
+      spotifyPasteBtn.style.color = '#a8b3c7';
+      spotifyPasteBtn.style.cursor = 'pointer';
+      spotifyPasteBtn.addEventListener('click', async (e) => {
+        try {
+          e.preventDefault();
+          e.stopPropagation();
+        } catch { /* ignore */ }
+
+        const readText = async () => {
+          if (!navigator.clipboard || typeof navigator.clipboard.readText !== 'function') {
+            throw new Error('Clipboard API not available.');
+          }
+          return navigator.clipboard.readText();
+        };
+
+        try {
+          const txt = String(await readText()).trim();
+          if (!txt) {
+            showAlert('Clipboard is empty.');
+            return;
+          }
+          spotifyClientIdInput.value = txt;
+          commitSpotifyClientId();
+          try { spotifyClientIdInput.focus({ preventScroll: true }); } catch { /* ignore */ }
+        } catch (err) {
+          const msg = (err && err.message) ? String(err.message) : 'Paste failed.';
+          showAlert(`Paste failed: ${msg}`);
+        }
+      });
 
       spotifyClientIdInput.addEventListener('input', () => {
         if (spotifyWriteTimer) {
@@ -951,7 +1001,9 @@
       });
 
       spotifyRow.appendChild(spotifyLabel);
-      spotifyRow.appendChild(spotifyClientIdInput);
+      spotifyClientIdRow.appendChild(spotifyClientIdInput);
+      spotifyClientIdRow.appendChild(spotifyPasteBtn);
+      spotifyRow.appendChild(spotifyClientIdRow);
       spotifyRow.appendChild(spotifyHint);
 
       function updateSpotifyVisibility() {
