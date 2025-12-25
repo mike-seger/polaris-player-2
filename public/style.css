@@ -1270,39 +1270,6 @@ body.hide-track-check .track-state-btn {
     cursor: pointer;
 }
 
-#nowPlayingBar {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    margin-top: 0.35rem;
-    padding-top: 0.25rem;
-    border-top: 1px solid var(--color-border);
-    min-height: 32px;
-}
-
-#nowPlayingArtwork {
-    width: 32px;
-    height: 32px;
-    flex: 0 0 auto;
-    border-radius: 6px;
-    object-fit: cover;
-    background: var(--color-hover);
-}
-
-#nowPlayingBar.no-art #nowPlayingArtwork {
-    display: none;
-}
-
-#nowPlaying {
-    flex: 1 1 auto;
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    color: var(--color-text);
-    font-size: 0.95rem;
-}
-
 /* Player between control groups */
 #player-container {
     position: fixed;

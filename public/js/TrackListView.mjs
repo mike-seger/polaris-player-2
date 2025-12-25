@@ -81,6 +81,34 @@ export class TrackListView {
     this._installScrollGuards();
   }
 
+  _snapScrollToRowBoundary() {
+    const container = this.scrollContainerEl;
+    const ul = this.ulEl;
+    if (!container || !ul) return;
+
+    const containerRect = container.getBoundingClientRect();
+    const lis = ul.querySelectorAll('li');
+    if (!lis || !lis.length) return;
+
+    // Find the first row whose top is at/under the container's top.
+    // If its top is > 0, it means the previous row is partially visible.
+    // Nudge scrollTop down so this row starts exactly at the top.
+    let firstVisibleTopDelta = null;
+    for (const li of lis) {
+      const r = li.getBoundingClientRect();
+      const delta = r.top - containerRect.top;
+      if (delta >= -0.5) {
+        firstVisibleTopDelta = delta;
+        break;
+      }
+    }
+
+    if (typeof firstVisibleTopDelta === 'number' && firstVisibleTopDelta > 1) {
+      this._lastProgrammaticScrollMs = Date.now();
+      container.scrollTop += firstVisibleTopDelta;
+    }
+  }
+
   _installScrollGuards() {
     const el = this.scrollContainerEl;
     if (!el || typeof el.addEventListener !== 'function') return;
@@ -169,6 +197,12 @@ export class TrackListView {
     if (active) {
       this._lastProgrammaticScrollMs = Date.now();
       active.scrollIntoView({ block: 'center', behavior: 'auto' });
+
+      // scrollIntoView can land on sub-pixel / partial-row offsets; snap to a row boundary.
+      // Use a rAF so layout/scroll positions have settled.
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => this._snapScrollToRowBoundary());
+      });
     }
   }
 

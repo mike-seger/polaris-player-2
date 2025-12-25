@@ -301,6 +301,13 @@
     const spectrumCanvas = document.getElementById('spectrumCanvas');
     const alert = createAlert({ overlayEl: alertOverlay, messageEl: alertMessageEl, closeBtn: alertCloseBtn });
 
+    function applyMaxVolumeToHost() {
+      if (!playerHost) return;
+      const caps = playerHost.getCapabilities();
+      if (!caps || !caps.canSetVolume) return;
+      void playerHost.setVolume(1).catch(() => {});
+    }
+
     async function ensureSpotifySession({ promptIfMissing = false, promptLogin = false } = {}) {
       let clientId = (settings && typeof settings.spotifyClientId === 'string') ? settings.spotifyClientId.trim() : '';
       if (!clientId && promptIfMissing) {
@@ -1423,6 +1430,7 @@
         if (!firedReady && state === 'ready') {
           firedReady = true;
           void onPlayerReady();
+          applyMaxVolumeToHost();
         }
       });
       playerHost.on('ended', () => playNext());
@@ -1436,6 +1444,8 @@
     async function onPlayerReady() {
       playerReady = true;
       startProgressTimer();
+
+      applyMaxVolumeToHost();
 
       try {
         await dataSourceReadyPromise;
@@ -1600,23 +1610,23 @@
 
     function updateNowPlaying() {
       const titleEl = document.getElementById('nowPlaying');
-      if (!titleEl) return;
-
       const barEl = document.getElementById('nowPlayingBar');
       const artEl = document.getElementById('nowPlayingArtwork');
 
       const item = (currentIndex >= 0 && playlistItems[currentIndex]) ? playlistItems[currentIndex] : null;
       if (!item) {
-        titleEl.textContent = '–';
+        if (titleEl) titleEl.textContent = '–';
         if (artEl) {
           artEl.removeAttribute('src');
           artEl.removeAttribute('srcset');
         }
         if (barEl) barEl.classList.add('no-art');
+
+        try { spotifyAdapter?.setArtworkUrl?.(''); } catch { /* ignore */ }
         return;
       }
 
-      titleEl.textContent = item.title;
+      if (titleEl) titleEl.textContent = item.title;
 
       const mode = getPlayerMode();
       if (mode !== 'spotify' || !artEl) {
@@ -1739,11 +1749,13 @@
         void ensureSpotifySession({ promptIfMissing: true, promptLogin: true })
           .then((ok) => {
             if (!ok) return;
-            return playerHost.load(buildTrackFromPlaylistItem(playlistItems[idx]), { autoplay: true });
+            return playerHost.load(buildTrackFromPlaylistItem(playlistItems[idx]), { autoplay: true })
+              .then(() => applyMaxVolumeToHost());
           })
           .catch((err) => console.error('Player load error:', err));
       } else {
         void playerHost.load(buildTrackFromPlaylistItem(playlistItems[idx]), { autoplay: true })
+          .then(() => applyMaxVolumeToHost())
           .catch((err) => console.error('Player load error:', err));
       }
       pendingPlayIndex = null;
@@ -1751,6 +1763,8 @@
       updateCurrentVideo(playlistId, videoId);
       focusActiveTrack();
     }
+
+    // No volume UI: default to max volume when players become ready / tracks load.
 
     function getRelativeVisibleIndex(offset) {
       const indices = visibleIndices.length ? visibleIndices : playlistItems.map((_, idx) => idx);
