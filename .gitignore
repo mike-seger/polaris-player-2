@@ -6,3 +6,4 @@ spectrum-cache/
 .oauth-token.json
 .tmp-spectrum
 __pycache__
+.spotify.env

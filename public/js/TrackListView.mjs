@@ -1,5 +1,7 @@
 import { splitArtists, splitTrackDisplayText, getSortKeyForTitle } from './TrackParsing.mjs';
 
+const TRANSPARENT_PIXEL = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==';
+
 export class TrackListView {
   constructor(options = {}) {
     const {
@@ -73,6 +75,64 @@ export class TrackListView {
       : () => {};
 
     this.trackRowElements = new Map();
+
+    this._lastUserScrollIntentMs = 0;
+    this._lastProgrammaticScrollMs = 0;
+    this._installScrollGuards();
+  }
+
+  _installScrollGuards() {
+    const el = this.scrollContainerEl;
+    if (!el || typeof el.addEventListener !== 'function') return;
+
+    const markUserIntent = () => {
+      this._lastUserScrollIntentMs = Date.now();
+    };
+
+    // Inputs that strongly suggest the user is trying to scroll the list.
+    el.addEventListener('wheel', markUserIntent, { passive: true });
+    el.addEventListener('touchstart', markUserIntent, { passive: true });
+    el.addEventListener('pointerdown', markUserIntent, { passive: true });
+
+    // Scroll events can be user-driven or programmatic; ignore those we just caused.
+    el.addEventListener('scroll', () => {
+      if (Date.now() - this._lastProgrammaticScrollMs < 250) return;
+      markUserIntent();
+    }, { passive: true });
+  }
+
+  /**
+   * Update (or insert) a thumbnail image for a given real playlist index.
+   * This avoids full list re-renders (which can cause flicker).
+   * @param {number} idx
+   * @param {string} url
+   */
+  updateThumbnail(idx, url) {
+    if (typeof idx !== 'number') return;
+    const nextUrl = String(url || '').trim();
+    if (!nextUrl) return;
+
+    const li = this.trackRowElements.get(idx);
+    if (!li) return;
+
+    const existingImg = li.querySelector('img');
+    if (existingImg instanceof HTMLImageElement) {
+      if (existingImg.getAttribute('src') !== nextUrl) existingImg.setAttribute('src', nextUrl);
+      return;
+    }
+
+    const img = document.createElement('img');
+    img.src = nextUrl;
+    img.alt = '';
+    img.loading = 'lazy';
+    img.decoding = 'async';
+
+    const numEl = li.querySelector('.track-number');
+    if (numEl && numEl.parentNode === li) {
+      li.insertBefore(img, numEl.nextSibling);
+    } else {
+      li.insertBefore(img, li.firstChild ? li.firstChild.nextSibling : null);
+    }
   }
 
   hasRow(idx) {
@@ -101,10 +161,13 @@ export class TrackListView {
     }
   }
 
-  scrollActiveIntoView() {
+  scrollActiveIntoView(options = {}) {
+    const { guardUserScroll = false, guardWindowMs = 1500 } = options || {};
     if (!this.ulEl) return;
+    if (guardUserScroll && (Date.now() - this._lastUserScrollIntentMs) < guardWindowMs) return;
     const active = this.ulEl.querySelector('li.active');
     if (active) {
+      this._lastProgrammaticScrollMs = Date.now();
       active.scrollIntoView({ block: 'center', behavior: 'auto' });
     }
   }
@@ -246,9 +309,12 @@ export class TrackListView {
       }
       li.appendChild(numSpan);
 
-      if (trackDetailSettings?.thumbnail && item.thumbnail) {
+      if (trackDetailSettings?.thumbnail) {
         const img = document.createElement('img');
-        img.src = item.thumbnail;
+        img.src = item.thumbnail ? item.thumbnail : TRANSPARENT_PIXEL;
+        img.alt = '';
+        img.loading = 'lazy';
+        img.decoding = 'async';
         li.appendChild(img);
       }
 

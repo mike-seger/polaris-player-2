@@ -48,8 +48,18 @@ export class ArtistFilterOverlay {
 
     this.removeKeydownHandler = null;
 
+    this._lastPointerDownInsideTs = 0;
+    this._handleDocumentPointerDown = (event) => {
+      if (!this.isVisible()) return;
+      if (!this.wrapperEl) return;
+      if (event.target instanceof Node && this.wrapperEl.contains(event.target)) {
+        this._lastPointerDownInsideTs = Date.now();
+      }
+    };
+
     this.handleOutsideClick = (event) => {
       if (!this.isVisible()) return;
+      if (Date.now() - this._lastPointerDownInsideTs < 750) return;
       if (this.wrapperEl && this.wrapperEl.contains(event.target)) return;
       this.close();
     };
@@ -69,6 +79,8 @@ export class ArtistFilterOverlay {
       });
     }
 
+    document.addEventListener('pointerdown', this._handleDocumentPointerDown, { capture: true, passive: true });
+    document.addEventListener('mousedown', this._handleDocumentPointerDown, { capture: true, passive: true });
     document.addEventListener('click', this.handleOutsideClick);
 
     if (!this.removeKeydownHandler) {

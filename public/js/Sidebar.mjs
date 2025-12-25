@@ -21,6 +21,10 @@ export class Sidebar {
     this.sidebarLastActivityTs = 0;
     this.sidebarHideSuppressedUntil = 0;
 
+    this.lastPointerTs = 0;
+    this.lastPointerWasInDrawer = false;
+    this.lastPointerWasInPlayer = false;
+
     this.isIOS = Sidebar.detectIOS();
   }
 
@@ -58,6 +62,16 @@ export class Sidebar {
     if (this.isHidden()) return;
     if (this.isInteractionBlockingHide()) return;
     if (Date.now() < this.sidebarHideSuppressedUntil) return;
+
+    // Only hide the sidebar in response to player state changes when a recent
+    // pointer interaction happened in the player surface (e.g., YouTube iframe).
+    // This prevents routine state polling (especially Spotify) from collapsing
+    // the sidebar while the user is interacting with controls like <select>.
+    const now = Date.now();
+    if (!this.lastPointerTs || (now - this.lastPointerTs) > 5000) return;
+    if (this.lastPointerWasInDrawer) return;
+    if (!this.lastPointerWasInPlayer) return;
+
     // Accept either generic string states (PlayerHost) or legacy numeric YT states.
     const s = playerState;
     const isActiveString = s === 'playing' || s === 'paused' || s === 'buffering';
@@ -154,6 +168,17 @@ export class Sidebar {
     const hideFromOutside = (event) => {
       if (this.isHidden()) return;
       if (!this.sidebarDrawer) return;
+
+      // Native <select> dropdown popups can dispatch pointer events with surprising
+      // targets (e.g. document/body). If a select inside the drawer is focused,
+      // treat this as an inside interaction so the dropdown doesn't immediately close.
+      const activeEl = document.activeElement;
+      if (activeEl instanceof HTMLElement
+        && activeEl.tagName === 'SELECT'
+        && this.sidebarDrawer.contains(activeEl)) {
+        return;
+      }
+
       const target = event.target;
       if (target instanceof Node && this.sidebarDrawer.contains(target)) return;
       this.setHidden(true);
@@ -186,9 +211,28 @@ export class Sidebar {
     }
 
     // Any interaction while visible resets the inactivity timer.
+    const bumpPointer = (event) => {
+      this.noteActivity();
+      this.lastPointerTs = Date.now();
+
+      const target = (event && event.target instanceof Element) ? event.target : null;
+      if (!target) {
+        this.lastPointerWasInDrawer = false;
+        this.lastPointerWasInPlayer = false;
+        return;
+      }
+
+      this.lastPointerWasInDrawer = !!(this.sidebarDrawer && target instanceof Node && this.sidebarDrawer.contains(target));
+      this.lastPointerWasInPlayer = !!(
+        target.closest('#player-container')
+        || target.closest('#player')
+        || (target instanceof HTMLElement && target.tagName === 'IFRAME')
+      );
+    };
     const bump = () => this.noteActivity();
-    document.addEventListener('pointerdown', bump, { capture: true, passive: true });
-    document.addEventListener('touchstart', bump, { capture: true, passive: true });
+
+    document.addEventListener('pointerdown', bumpPointer, { capture: true, passive: true });
+    document.addEventListener('touchstart', bumpPointer, { capture: true, passive: true });
     document.addEventListener('keydown', bump, { capture: true });
     document.addEventListener('wheel', bump, { capture: true, passive: true });
 

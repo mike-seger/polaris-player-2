@@ -24,7 +24,8 @@
   import { TrackDetailsOverlay } from './TrackDetailsOverlay.mjs';
   import { PlaylistDataSource } from './PlaylistDataSource.mjs';
 
-    let playerHost;
+  let playerHost;
+  let spotifyAdapter = null;
     let playlistItems = [];
     let currentIndex = -1;
     let isPlaying = false;
@@ -55,6 +56,8 @@
     let playlistIOInstance = null;
     let playerReady = false;
     let pendingPlayIndex = null;
+    let holdPlayingUiUntilMs = 0;
+    let lastAutoScrollIndex = null;
 
     const STORAGE_KEY = 'ytAudioPlayer.settings';
     let notifySettingsUpdated = () => {};
@@ -395,6 +398,8 @@
           visibleIndicesVersion += 1;
           shuffleQueue.onQueueChanged();
         }
+
+        scheduleSpotifyArtworkPrefetchByIndices(visibleIndices);
       },
     });
 
@@ -464,6 +469,156 @@
 
     let trackListItemsCache = { version: -1, mode: '', items: [] };
 
+    let spotifyArtworkPrefetchTimer = null;
+    let spotifyArtworkPrefetchRunning = false;
+    let spotifyArtworkIndicesSnapshot = [];
+    let spotifyArtworkSession = 0;
+
+    let spotifyThumbUpdateRaf = 0;
+    /** @type {Map<number, string>} */
+    const spotifyThumbUpdates = new Map();
+
+    function isYouTubeThumbUrl(url) {
+      const u = String(url || '');
+      return u.includes('ytimg.com/') || u.includes('youtube.com/') || u.includes('youtu.be/');
+    }
+
+    function queueSpotifyThumbUpdate(idx, url) {
+      if (typeof idx !== 'number') return;
+      const u = String(url || '').trim();
+      if (!u) return;
+      spotifyThumbUpdates.set(idx, u);
+      if (spotifyThumbUpdateRaf) return;
+      spotifyThumbUpdateRaf = requestAnimationFrame(() => {
+        spotifyThumbUpdateRaf = 0;
+        for (const [i, nextUrl] of spotifyThumbUpdates.entries()) {
+          try { trackListView.updateThumbnail(i, nextUrl); } catch { /* ignore */ }
+        }
+        spotifyThumbUpdates.clear();
+      });
+    }
+
+    async function spotifyArtworkPrefetchTick(session) {
+      if (spotifyArtworkPrefetchRunning) return;
+      if (getPlayerMode() !== 'spotify') return;
+      if (session !== spotifyArtworkSession) return;
+      if (!spotifyAdapter || typeof spotifyAdapter.prefetchArtwork !== 'function') return;
+
+      // If thumbnails are disabled, don't do background work.
+      if (!trackDetailSettings || !trackDetailSettings.thumbnail) return;
+
+      const indices = Array.isArray(spotifyArtworkIndicesSnapshot) ? spotifyArtworkIndicesSnapshot : [];
+      if (!indices.length) return;
+
+      spotifyArtworkPrefetchRunning = true;
+      let hadError = false;
+      let hadErrorDelayMs = 0;
+
+      try {
+        /** @type {{ idx: number, id: string }[]} */
+        const pairs = [];
+        const unique = new Set();
+        const max = 40;
+
+        for (let i = 0; i < indices.length && unique.size < max; i += 1) {
+          const idx = indices[i];
+          const item = playlistItems[idx];
+          const id = item && item.spotifyId ? String(item.spotifyId).trim() : '';
+          if (!id || id === 'unmatched') continue;
+
+          // Skip if we already have a usable thumbnail (cached Spotify art or non-YouTube provided thumb).
+          try {
+            const track = buildTrackFromPlaylistItem(item);
+            const cached = (playerHost && typeof playerHost.getThumbnailUrl === 'function')
+              ? playerHost.getThumbnailUrl(track)
+              : undefined;
+            if (cached) continue;
+          } catch {
+            // ignore
+          }
+
+          const existing = (item && typeof item.thumbnail === 'string') ? item.thumbnail : '';
+          if (existing && !isYouTubeThumbUrl(existing)) continue;
+
+          if (!unique.has(id)) {
+            unique.add(id);
+            pairs.push({ idx, id });
+          }
+        }
+
+        if (!unique.size) return;
+
+        const ids = Array.from(unique);
+        let map = new Map();
+        try {
+          map = (typeof spotifyAdapter.prefetchArtworkMany === 'function')
+            ? await spotifyAdapter.prefetchArtworkMany(ids)
+            : new Map(await Promise.all(ids.map(async (id) => [id, await spotifyAdapter.prefetchArtwork(id).catch(() => undefined)])));
+        } catch (e) {
+          hadError = true;
+          hadErrorDelayMs = (e && typeof e.retryAfterMs === 'number') ? e.retryAfterMs : 0;
+        }
+
+        for (const { idx, id } of pairs) {
+          const item = playlistItems[idx];
+          if (!item) continue;
+
+          let url = '';
+          try {
+            const track = buildTrackFromPlaylistItem(item);
+            url = (playerHost && typeof playerHost.getThumbnailUrl === 'function')
+              ? (playerHost.getThumbnailUrl(track) || '')
+              : '';
+          } catch {
+            url = '';
+          }
+
+          if (!url && map && typeof map.get === 'function') {
+            url = map.get(id) || '';
+          }
+
+          if (url) queueSpotifyThumbUpdate(idx, url);
+        }
+      } finally {
+        spotifyArtworkPrefetchRunning = false;
+      }
+
+      // Continue fetching in small batches until we're done.
+      if (getPlayerMode() !== 'spotify') return;
+      if (session !== spotifyArtworkSession) return;
+      const delayMs = hadError
+        ? Math.max(2000, hadErrorDelayMs ? hadErrorDelayMs + 250 : 0)
+        : 500;
+      spotifyArtworkPrefetchTimer = setTimeout(() => {
+        spotifyArtworkPrefetchTimer = null;
+        void spotifyArtworkPrefetchTick(session);
+      }, delayMs);
+    }
+
+    function scheduleSpotifyArtworkPrefetchByIndices(indices) {
+      spotifyArtworkIndicesSnapshot = Array.isArray(indices) ? indices : [];
+
+      if (getPlayerMode() !== 'spotify') {
+        spotifyArtworkSession += 1;
+        if (spotifyArtworkPrefetchTimer) {
+          clearTimeout(spotifyArtworkPrefetchTimer);
+          spotifyArtworkPrefetchTimer = null;
+        }
+        return;
+      }
+
+      if (!spotifyAdapter || typeof spotifyAdapter.prefetchArtwork !== 'function') return;
+      if (!spotifyArtworkIndicesSnapshot.length) return;
+      if (!trackDetailSettings || !trackDetailSettings.thumbnail) return;
+      if (spotifyArtworkPrefetchTimer || spotifyArtworkPrefetchRunning) return;
+
+      const session = spotifyArtworkSession;
+      spotifyArtworkPrefetchTimer = setTimeout(() => {
+        spotifyArtworkPrefetchTimer = null;
+        void spotifyArtworkPrefetchTick(session);
+      }, 0);
+    }
+
     function getThumbnailUrlForItem(item) {
       const mode = getPlayerMode();
 
@@ -475,9 +630,15 @@
       }
 
       if (mode === 'spotify') {
-        // Keep whatever the playlist provides; don't fall back to YouTube thumbnails.
+        // Prefer cached Spotify album art via adapter; never use YouTube thumbnails in Spotify mode.
+        const cached = (playerHost && typeof playerHost.getThumbnailUrl === 'function')
+          ? playerHost.getThumbnailUrl(buildTrackFromPlaylistItem(item))
+          : undefined;
+        if (cached) return cached;
+
         const existing = (item && typeof item.thumbnail === 'string') ? item.thumbnail : '';
-        return existing || '';
+        if (existing && !isYouTubeThumbUrl(existing)) return existing;
+        return '';
       }
 
       // YouTube mode: keep playlist-provided thumbnails, but provide a safe fallback.
@@ -1235,12 +1396,14 @@
       if (playerHost) return;
       playerReady = false;
 
+      spotifyAdapter = new SpotifyAdapter({ auth: spotifyAuth });
+
       playerHost = new PlayerHost([
         // Let the adapter create its own mount element inside #player.
         // This avoids the YouTube API replacing the #player node itself.
         new YouTubeAdapter({ elementId: null, controls: 0, autoplay: false }),
         new HtmlVideoAdapter(),
-        new SpotifyAdapter({ auth: spotifyAuth })
+        spotifyAdapter
       ]);
 
       // Mount into the existing video pane element.
@@ -1318,21 +1481,56 @@
     }
 
     function onPlayerStateChange(state) {
+      const shouldAutoScroll = currentIndex !== lastAutoScrollIndex;
       if (state === 'ended') {
-        isPlaying = false;
-        updatePlayPauseButton();
-        focusActiveTrack({ scroll: false });
+        // Auto-advance: keep the UI in "playing" while the next track is loading
+        // to avoid flickering play/pause icons.
+        holdPlayingUiUntilMs = Date.now() + 2500;
+        const advanced = playNext({ keepPlayingUi: true });
+        if (!advanced) {
+          isPlaying = false;
+          updatePlayPauseButton();
+        } else {
+          isPlaying = true;
+          updatePlayPauseButton();
+        }
+        // Keep the active row visible, but don't steal focus from controls.
+        if (shouldAutoScroll) {
+          scrollActiveIntoView({ guardUserScroll: true });
+          lastAutoScrollIndex = currentIndex;
+        }
         spectrum.stop();
-        playNext();
       } else if (state === 'playing' || state === 'buffering') {
+        holdPlayingUiUntilMs = 0;
         isPlaying = true;
         updatePlayPauseButton();
-        focusActiveTrack({ scroll: false });
+        if (shouldAutoScroll) {
+          scrollActiveIntoView({ guardUserScroll: true });
+          lastAutoScrollIndex = currentIndex;
+        }
         spectrum.start();
       } else if (state === 'paused' || state === 'ready' || state === 'idle') {
+        // During auto-advance, Spotify can transiently report ready/paused.
+        // Keep the pause icon until we either start playing or the hold expires.
+        if (holdPlayingUiUntilMs && Date.now() < holdPlayingUiUntilMs) {
+          if (isPlaying) {
+            updatePlayPauseButton();
+            if (shouldAutoScroll) {
+              scrollActiveIntoView({ guardUserScroll: true });
+              lastAutoScrollIndex = currentIndex;
+            }
+            sidebar.maybeHideFromPlayerStateChange(state);
+            return;
+          }
+        }
+
+        holdPlayingUiUntilMs = 0;
         isPlaying = false;
         updatePlayPauseButton();
-        focusActiveTrack({ scroll: false });
+        if (shouldAutoScroll) {
+          scrollActiveIntoView({ guardUserScroll: true });
+          lastAutoScrollIndex = currentIndex;
+        }
         spectrum.stop();
       }
 
@@ -1392,8 +1590,8 @@
       trackListView.updateActiveTrackRow(previousIdx, nextIdx);
     }
 
-    function scrollActiveIntoView() {
-      trackListView.scrollActiveIntoView();
+    function scrollActiveIntoView(options = {}) {
+      trackListView.scrollActiveIntoView(options);
     }
 
     function focusActiveTrack(options = {}) {
@@ -1401,18 +1599,80 @@
     }
 
     function updateNowPlaying() {
-      const el = document.getElementById('nowPlaying');
-      if (!el) return;
-      if (currentIndex < 0 || !playlistItems[currentIndex]) {
-        el.textContent = '–';
-      } else {
-        el.textContent = playlistItems[currentIndex].title;
+      const titleEl = document.getElementById('nowPlaying');
+      if (!titleEl) return;
+
+      const barEl = document.getElementById('nowPlayingBar');
+      const artEl = document.getElementById('nowPlayingArtwork');
+
+      const item = (currentIndex >= 0 && playlistItems[currentIndex]) ? playlistItems[currentIndex] : null;
+      if (!item) {
+        titleEl.textContent = '–';
+        if (artEl) {
+          artEl.removeAttribute('src');
+          artEl.removeAttribute('srcset');
+        }
+        if (barEl) barEl.classList.add('no-art');
+        return;
+      }
+
+      titleEl.textContent = item.title;
+
+      const mode = getPlayerMode();
+      if (mode !== 'spotify' || !artEl) {
+        if (artEl) {
+          artEl.removeAttribute('src');
+          artEl.removeAttribute('srcset');
+        }
+        if (barEl) barEl.classList.add('no-art');
+
+        // Also clear the main Spotify artwork pane when leaving Spotify mode.
+        try { spotifyAdapter?.setArtworkUrl?.(''); } catch { /* ignore */ }
+        return;
+      }
+
+      const trackId = item && item.spotifyId ? String(item.spotifyId).trim() : '';
+      const track = buildTrackFromPlaylistItem(item);
+
+      const cached = (playerHost && typeof playerHost.getThumbnailUrl === 'function')
+        ? playerHost.getThumbnailUrl(track)
+        : undefined;
+      const existing = (item && typeof item.thumbnail === 'string') ? item.thumbnail : '';
+      const url = cached || ((existing && !isYouTubeThumbUrl(existing)) ? existing : '');
+
+      if (url) {
+        if (artEl.getAttribute('src') !== url) artEl.setAttribute('src', url);
+        if (barEl) barEl.classList.remove('no-art');
+
+        // Main video area replacement.
+        try { spotifyAdapter?.setArtworkUrl?.(url); } catch { /* ignore */ }
+        return;
+      }
+
+      // Nothing cached yet: hide art for now but kick off prefetch, then refresh.
+      artEl.removeAttribute('src');
+      artEl.removeAttribute('srcset');
+      if (barEl) barEl.classList.add('no-art');
+
+      try { spotifyAdapter?.setArtworkUrl?.(''); } catch { /* ignore */ }
+
+      if (spotifyAdapter && typeof spotifyAdapter.prefetchArtwork === 'function' && trackId && trackId !== 'unmatched') {
+        const idxAtCall = currentIndex;
+        void spotifyAdapter.prefetchArtwork(trackId)
+          .then((nextUrl) => {
+            if (!nextUrl) return;
+            if (getPlayerMode() !== 'spotify') return;
+            if (currentIndex !== idxAtCall) return;
+            updateNowPlaying();
+          })
+          .catch(() => {});
       }
     }
 
     function playIndex(idx, options = {}) {
       if (!playerHost || !playlistItems[idx]) return;
       const suppressShuffleHistoryRecord = !!options.suppressShuffleHistoryRecord;
+      const keepPlayingUi = !!options.keepPlayingUi;
       const playerState = getPlayerInfo().state;
       const sameIndex = currentIndex === idx;
       const targetVideoId = playlistItems[idx].videoId;
@@ -1512,7 +1772,7 @@
       return indices[targetPos];
     }
 
-    function playNext() {
+    function playNext(options = {}) {
       let nextIdx = -1;
       let fromHistory = false;
       if (shuffleQueue.isEnabled()) {
@@ -1523,8 +1783,13 @@
         nextIdx = getRelativeVisibleIndex(1);
       }
       if (nextIdx >= 0) {
-        playIndex(nextIdx, { suppressShuffleHistoryRecord: shuffleQueue.isEnabled() && fromHistory });
+        playIndex(nextIdx, {
+          suppressShuffleHistoryRecord: shuffleQueue.isEnabled() && fromHistory,
+          keepPlayingUi: !!options.keepPlayingUi,
+        });
+        return true;
       }
+      return false;
     }
 
     function playPrev() {
@@ -1753,7 +2018,7 @@
     });
 
     async function loadPlaylistFromServer(forceRefresh = false, playlistIdOverride = '') {
-      return playlistDataSource.loadPlaylistFromServer(forceRefresh, playlistIdOverride);
+      return playlistDataSource.loadPlaylistFromServer(Boolean(forceRefresh), playlistIdOverride);
     }
 
     function downloadCurrentPlaylist() {
@@ -1912,7 +2177,7 @@
     function isTextInputFocused() {
       const ae = document.activeElement;
       if (!ae) return false;
-      if (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA') return true;
+      if (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA' || ae.tagName === 'SELECT') return true;
       if (ae.isContentEditable) return true;
       return false;
     }

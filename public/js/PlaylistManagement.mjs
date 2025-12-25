@@ -15,6 +15,10 @@
       setSpotifyClientId = () => {}
     } = options;
 
+    const LAST_OPEN_SECTION_KEY = 'polaris.playlistio.lastOpenSectionId.v1';
+    const SPOTIFY_ARTWORK_CACHE_KEY = 'polaris.spotify.artwork.v1';
+    const SPOTIFY_ARTWORK_CACHE_TTL_MS = 1000 * 60 * 60 * 24 * 30; // keep in sync with SpotifyAdapter
+
     const state = {
       overlay: null,
       panel: null,
@@ -31,12 +35,15 @@
       panelBoundsHandler: null,
       sections: new Map(),
       openSectionId: null,
+      lastOpenedSectionId: null,
       settingsStatus: null,
       settingsPre: null,
       settingsResetBtn: null,
       settingsConfirmBox: null,
       settingsConfirmConfirmBtn: null,
       settingsConfirmCancelBtn: null,
+      cacheStatus: null,
+      cachePre: null,
       resettingSettings: false,
       serverAvailable: true,
       staticNotice: null,
@@ -47,6 +54,24 @@
       refreshSr: null,
       sidebarHiddenBeforeOpen: null
     };
+
+    function readLastOpenedSectionId() {
+      try {
+        const v = localStorage.getItem(LAST_OPEN_SECTION_KEY);
+        return typeof v === 'string' && v.trim().length ? v.trim() : '';
+      } catch {
+        return '';
+      }
+    }
+
+    function writeLastOpenedSectionId(sectionId) {
+      const v = String(sectionId || '').trim();
+      if (!v) return;
+      try { localStorage.setItem(LAST_OPEN_SECTION_KEY, v); } catch { /* ignore */ }
+    }
+
+    // Initialize last-opened state.
+    state.lastOpenedSectionId = readLastOpenedSectionId() || 'playlist';
 
     function applyPanelBounds(panelArg, overlayArg) {
       const panel = panelArg || state.panel;
@@ -154,6 +179,66 @@
       }
     }
 
+    function readSpotifyArtworkCacheRaw() {
+      try {
+        const raw = localStorage.getItem(SPOTIFY_ARTWORK_CACHE_KEY);
+        return typeof raw === 'string' ? raw : '';
+      } catch {
+        return '';
+      }
+    }
+
+    function parseSpotifyArtworkCache(raw) {
+      if (!raw) return {};
+      try {
+        const obj = JSON.parse(raw);
+        if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return {};
+        return obj;
+      } catch {
+        return {};
+      }
+    }
+
+    function refreshCacheStatsView() {
+      if (!state.cacheStatus) return;
+      const statusEl = state.cacheStatus;
+      const preEl = state.cachePre;
+
+      const raw = readSpotifyArtworkCacheRaw();
+      const cache = parseSpotifyArtworkCache(raw);
+
+      const keys = Object.keys(cache);
+      let fresh = 0;
+      let expired = 0;
+      const now = Date.now();
+
+      for (const k of keys) {
+        const entry = cache[k];
+        if (!entry || typeof entry !== 'object') continue;
+        const ts = Number(entry.ts) || 0;
+        const url = typeof entry.url === 'string' ? entry.url : '';
+        if (!url) continue;
+        if (ts && (now - ts) > SPOTIFY_ARTWORK_CACHE_TTL_MS) expired += 1;
+        else fresh += 1;
+      }
+
+      const approxBytes = raw ? raw.length : 0;
+      const approxKb = Math.round((approxBytes / 1024) * 10) / 10;
+
+      statusEl.textContent = `Spotify artwork cache: ${keys.length} entries (${fresh} fresh, ${expired} expired), ~${approxKb} KB in localStorage.`;
+      statusEl.style.color = '#a8b3c7';
+
+      if (preEl) {
+        if (!keys.length) {
+          preEl.textContent = '';
+          preEl.style.display = 'none';
+        } else {
+          preEl.textContent = raw;
+          preEl.style.display = 'block';
+        }
+      }
+    }
+
     function setSectionOpen(sectionId, options = {}) {
       const force = Boolean(options.force);
       if (!state.sections || state.sections.size === 0) return;
@@ -194,12 +279,17 @@
       });
 
       state.openSectionId = sectionId;
+      state.lastOpenedSectionId = sectionId;
+      writeLastOpenedSectionId(sectionId);
 
       if (sectionId === 'playlist' && state.input && state.overlay && state.overlay.style.display !== 'none') {
         state.input.focus({ preventScroll: true });
       }
       if (sectionId === 'settings') {
         refreshSettingsView();
+      }
+      if (sectionId === 'cache') {
+        refreshCacheStatsView();
       }
       if (sectionId === 'videoPlayer') {
         const section = state.sections.get('videoPlayer');
@@ -949,9 +1039,61 @@
       settingsSection.content.appendChild(settingsConfirmBox);
       settingsSection.content.appendChild(settingsPre);
 
+      const cacheSection = createAccordionSection({ id: 'cache', title: 'Cache' });
+
+      const cacheContent = cacheSection.content;
+      cacheContent.style.padding = '0.75rem 0.8rem 0.9rem';
+      cacheContent.style.gap = '0.6rem';
+
+      const cacheIntro = document.createElement('p');
+      cacheIntro.textContent = 'Local cache statistics for this browser.';
+      cacheIntro.style.margin = '0';
+      cacheIntro.style.fontSize = '0.8rem';
+      cacheIntro.style.color = '#a8b3c7';
+      cacheIntro.style.lineHeight = '1.5';
+
+      const cacheStatus = document.createElement('div');
+      cacheStatus.style.fontSize = '0.8rem';
+      cacheStatus.style.color = '#a8b3c7';
+      cacheStatus.style.lineHeight = '1.45';
+
+      const cachePre = document.createElement('pre');
+      cachePre.style.margin = '0';
+      cachePre.style.padding = '0.5rem 0.6rem';
+      cachePre.style.background = '#11141c';
+      cachePre.style.border = '1px solid #2b2f3a';
+      cachePre.style.borderRadius = '4px';
+      cachePre.style.fontSize = '0.72rem';
+      cachePre.style.lineHeight = '1.4';
+      cachePre.style.color = '#f5f7fa';
+      cachePre.style.whiteSpace = 'pre-wrap';
+      cachePre.style.wordBreak = 'break-word';
+      cachePre.style.display = 'none';
+      cachePre.style.maxHeight = '40vh';
+      cachePre.style.overflow = 'auto';
+
+      const cacheActions = document.createElement('div');
+      cacheActions.style.display = 'flex';
+      cacheActions.style.gap = '0.5rem';
+      cacheActions.style.alignItems = 'center';
+
+      const cacheRefreshBtn = document.createElement('button');
+      cacheRefreshBtn.type = 'button';
+      cacheRefreshBtn.textContent = 'Refresh';
+      styleSecondaryButton(cacheRefreshBtn);
+      cacheRefreshBtn.addEventListener('click', () => refreshCacheStatsView());
+
+      cacheActions.appendChild(cacheRefreshBtn);
+
+      cacheContent.appendChild(cacheIntro);
+      cacheContent.appendChild(cacheStatus);
+      cacheContent.appendChild(cacheActions);
+      cacheContent.appendChild(cachePre);
+
       accordion.appendChild(playlistSection.wrapper);
       accordion.appendChild(videoPlayerSection.wrapper);
       accordion.appendChild(settingsSection.wrapper);
+      accordion.appendChild(cacheSection.wrapper);
 
       panel.appendChild(header);
       panel.appendChild(accordion);
@@ -999,11 +1141,14 @@
       state.settingsConfirmBox = settingsConfirmBox;
       state.settingsConfirmConfirmBtn = settingsConfirmConfirmBtn;
       state.settingsConfirmCancelBtn = settingsConfirmCancelBtn;
+      state.cacheStatus = cacheStatus;
+      state.cachePre = cachePre;
       updateSettingsResetButtonState(true);
 
-      setSectionOpen('playlist', { force: true });
+      setSectionOpen(state.openSectionId || state.lastOpenedSectionId || 'playlist', { force: true });
       refreshHistoryList();
       refreshSettingsView();
+      refreshCacheStatsView();
       updateOverlayAvailability();
 
       return overlay;
@@ -1098,9 +1243,10 @@
       document.body.classList.remove('sidebar-hidden');
       updateOverlayAvailability();
       updateStatus('');
-      setSectionOpen('playlist', { force: true });
+      setSectionOpen(state.openSectionId || state.lastOpenedSectionId || 'playlist', { force: true });
       refreshHistoryList();
       refreshSettingsView();
+      refreshCacheStatsView();
       if (state.input) {
         const currentId = typeof getPlaylistId === 'function' ? getPlaylistId() : '';
         state.input.value = currentId || '';

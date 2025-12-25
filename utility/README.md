@@ -78,6 +78,36 @@ OAuth tokens are stored locally at `utility/.oauth-token.json`. Delete this file
 
 ---
 
+## Creating a Spotify playlist from `local-playlist.json`
+
+This repo can enrich playlist items with Spotify track IDs (see `spotifyId` fields in `public/local-playlist.json`). The script `utility/create-spotify-playlist.py` creates a public Spotify playlist from those IDs.
+
+### Prerequisites
+
+1. Create a Spotify app in the Spotify Developer Dashboard.
+2. Add a Redirect URI to the app settings. It must match **exactly** what you use on the CLI (host, port, and path — including trailing slashes; note: `localhost` and `127.0.0.1` are different):
+   - `http://localhost:8888/callback` (default)
+   - `http://127.0.0.1:8888/callback` (also fine, if you pass `--redirect-uri`)
+3. Create `.spotify.env` in the repo root:
+
+```bash
+clientID="<your-spotify-client-id>"
+```
+
+### Usage
+
+```bash
+python3 utility/create-spotify-playlist.py \
+   --json public/local-playlist.json \
+   --path user__wave_alternatives.items
+```
+
+If you are copying the auth URL from a terminal and hit errors like “Illegal scope”, re-run with `--copy-auth-url` (macOS) to copy the exact URL to your clipboard.
+
+By default it replaces any existing playlist with the same name (unfollows it) and creates a new public playlist using the JSON title. Progress is checkpointed in `utility/.spotify-playlist-checkpoint.json` so you can rerun to resume if you get rate-limited.
+
+---
+
 **Note:** YouTube API quotas apply. Creating a large playlist will consume quota for each inserted item.
 
 ## Checking video availability

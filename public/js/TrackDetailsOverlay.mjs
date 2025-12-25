@@ -41,6 +41,15 @@ export class TrackDetailsOverlay {
     this.onBeforeOpen = typeof onBeforeOpen === 'function' ? onBeforeOpen : () => {};
 
     this.visible = false;
+
+    this._lastPointerDownInsideTs = 0;
+    this._handleDocumentPointerDown = (event) => {
+      if (!this.visible) return;
+      if (!this.wrapperEl) return;
+      if (event.target instanceof Node && this.wrapperEl.contains(event.target)) {
+        this._lastPointerDownInsideTs = Date.now();
+      }
+    };
   }
 
   isVisible() {
@@ -138,8 +147,12 @@ export class TrackDetailsOverlay {
       });
     }
 
+    document.addEventListener('pointerdown', this._handleDocumentPointerDown, { capture: true, passive: true });
+    document.addEventListener('mousedown', this._handleDocumentPointerDown, { capture: true, passive: true });
+
     document.addEventListener('click', (event) => {
       if (!this.visible) return;
+      if (Date.now() - this._lastPointerDownInsideTs < 750) return;
       if (this.wrapperEl && this.wrapperEl.contains(event.target)) return;
       this.close();
     });
