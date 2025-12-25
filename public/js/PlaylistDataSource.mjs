@@ -178,6 +178,7 @@ export class PlaylistDataSource {
         await onLoadPlaylist({ playlistId, forceRefresh: Boolean(forceRefresh) });
       },
       onDownload: () => this.downloadCurrentPlaylist(),
+      getPlaylistItems: () => this.getPlaylistItems(),
       showAlert: this.showAlert,
     });
 

@@ -23,9 +23,68 @@
   import { TrackListView } from './TrackListView.mjs';
   import { TrackDetailsOverlay } from './TrackDetailsOverlay.mjs';
   import { PlaylistDataSource } from './PlaylistDataSource.mjs';
+  import { addYtEmbedError150, hasYtEmbedError150, removeYtEmbedError150 } from './ErrorLists.mjs';
 
   let playerHost;
   let spotifyAdapter = null;
+  let ytEmbedError150SkipTimer = null;
+  let ytEmbedError150SkipKey = '';
+  let ytEmbedError150CheckingVideoId = '';
+  let videoCheckOverlayEl = null;
+
+  function ensureVideoCheckOverlay() {
+    if (videoCheckOverlayEl) return videoCheckOverlayEl;
+    const container = document.getElementById('player-container');
+    if (!(container instanceof HTMLElement)) return null;
+
+    const overlay = document.createElement('div');
+    overlay.id = 'videoCheckOverlay';
+    overlay.setAttribute('aria-hidden', 'true');
+    overlay.style.position = 'absolute';
+    overlay.style.inset = '0';
+    overlay.style.display = 'none';
+    overlay.style.alignItems = 'center';
+    overlay.style.justifyContent = 'center';
+    overlay.style.background = '#000';
+    overlay.style.zIndex = '4';
+    overlay.style.pointerEvents = 'none';
+
+    const msg = document.createElement('div');
+    msg.textContent = 'Checking video';
+    msg.style.color = '#f5f7fa';
+    msg.style.fontSize = '1.05rem';
+    msg.style.fontWeight = '700';
+    msg.style.letterSpacing = '0.04em';
+    msg.style.textTransform = 'uppercase';
+    msg.style.opacity = '0.9';
+    overlay.appendChild(msg);
+
+    container.appendChild(overlay);
+    videoCheckOverlayEl = overlay;
+    return overlay;
+  }
+
+  function showVideoCheckOverlay() {
+    const el = ensureVideoCheckOverlay();
+    if (!el) return;
+    el.style.display = 'flex';
+    el.setAttribute('aria-hidden', 'false');
+  }
+
+  function hideVideoCheckOverlay() {
+    const el = videoCheckOverlayEl;
+    if (!el) return;
+    el.style.display = 'none';
+    el.setAttribute('aria-hidden', 'true');
+  }
+
+  function clearPendingYtEmbedError150Skip() {
+    if (ytEmbedError150SkipTimer !== null) {
+      clearTimeout(ytEmbedError150SkipTimer);
+      ytEmbedError150SkipTimer = null;
+    }
+    ytEmbedError150SkipKey = '';
+  }
     let playlistItems = [];
     let currentIndex = -1;
     let isPlaying = false;
@@ -1436,6 +1495,54 @@
       playerHost.on('ended', () => playNext());
       playerHost.on('error', (err) => {
         console.error('Player error:', err);
+
+        if (!err || typeof err !== 'object') return;
+        if (err.code !== 'YT_IFRAME_ERROR') return;
+        if (err.ytCode !== 150) return;
+
+        const dbg = (err && typeof err === 'object' && err.debug && typeof err.debug === 'object') ? err.debug : null;
+        if (dbg) {
+          const po = dbg.pageOrigin || '';
+          const ro = dbg.runtimeOrigin || '';
+          const io = dbg.iframeOriginParam || '';
+          const iso = dbg.iframeSrcOrigin || '';
+          console.warn(`YT 150 debug: pageOrigin=${po} runtimeOrigin=${ro} iframeOriginParam=${io} iframeSrcOrigin=${iso}`);
+        }
+
+        // ytCode 150: video cannot be played in an embedded player.
+        // Auto-skip after 3s, but avoid scheduling multiple skips for the same failure.
+        const idxAtError = currentIndex;
+        const requestedVideoId = (err.request && typeof err.request.videoId === 'string') ? err.request.videoId : '';
+        const currentVideoId = (playlistItems[idxAtError] && typeof playlistItems[idxAtError].videoId === 'string')
+          ? playlistItems[idxAtError].videoId
+          : '';
+        const videoId = (requestedVideoId || currentVideoId || '').trim();
+        const key = `${idxAtError}:${videoId || 'unknown'}`;
+
+        if (ytEmbedError150SkipTimer !== null && ytEmbedError150SkipKey === key) return;
+
+        clearPendingYtEmbedError150Skip();
+        ytEmbedError150SkipKey = key;
+        ytEmbedError150SkipTimer = setTimeout(() => {
+          ytEmbedError150SkipTimer = null;
+          ytEmbedError150SkipKey = '';
+
+          if (currentIndex !== idxAtError) return;
+          if (videoId) {
+            const stillVideoId = (playlistItems[currentIndex] && typeof playlistItems[currentIndex].videoId === 'string')
+              ? String(playlistItems[currentIndex].videoId).trim()
+              : '';
+            if (stillVideoId && stillVideoId !== videoId) return;
+          }
+
+          try {
+            const item = playlistItems[idxAtError];
+            const title = item?.userTitle || item?.title || '';
+            addYtEmbedError150({ videoId, userTitle: title });
+          } catch { /* ignore */ }
+
+          playNext();
+        }, 3000);
       });
     }
 
@@ -1514,6 +1621,19 @@
         holdPlayingUiUntilMs = 0;
         isPlaying = true;
         updatePlayPauseButton();
+
+        // If we were re-checking a previously blocked embed, a successful play means it's recovered.
+        if (ytEmbedError150CheckingVideoId) {
+          const currentVideoId = (playlistItems[currentIndex] && typeof playlistItems[currentIndex].videoId === 'string')
+            ? String(playlistItems[currentIndex].videoId).trim()
+            : '';
+          if (currentVideoId && currentVideoId === ytEmbedError150CheckingVideoId) {
+            ytEmbedError150CheckingVideoId = '';
+            hideVideoCheckOverlay();
+            try { removeYtEmbedError150(currentVideoId); } catch { /* ignore */ }
+          }
+        }
+
         if (shouldAutoScroll) {
           scrollActiveIntoView({ guardUserScroll: true });
           lastAutoScrollIndex = currentIndex;
@@ -1681,6 +1801,11 @@
 
     function playIndex(idx, options = {}) {
       if (!playerHost || !playlistItems[idx]) return;
+
+      clearPendingYtEmbedError150Skip();
+      ytEmbedError150CheckingVideoId = '';
+      hideVideoCheckOverlay();
+
       const suppressShuffleHistoryRecord = !!options.suppressShuffleHistoryRecord;
       const keepPlayingUi = !!options.keepPlayingUi;
       const playerState = getPlayerInfo().state;
@@ -1745,6 +1870,13 @@
       sidebar.suppressHide(5000);
 
       const mode = getPlayerMode();
+      if (mode === 'youtube') {
+        const id = String(videoId || '').trim();
+        if (id && hasYtEmbedError150(id)) {
+          ytEmbedError150CheckingVideoId = id;
+          showVideoCheckOverlay();
+        }
+      }
       if (mode === 'spotify') {
         void ensureSpotifySession({ promptIfMissing: true, promptLogin: true })
           .then((ok) => {

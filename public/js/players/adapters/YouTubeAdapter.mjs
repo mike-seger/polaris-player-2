@@ -70,8 +70,23 @@ export class YouTubeAdapter {
         ? e.message
         : 'YouTube player error';
 
-      console.warn('YouTubeAdapter: onError', { code, ytCode, message, detail: e });
-      this._em.emit("error", { code, ytCode, message, detail: e });
+      const debug = (this._yt && typeof this._yt.getDebugInfo === 'function')
+        ? this._yt.getDebugInfo()
+        : undefined;
+
+      if (debug && typeof debug === 'object') {
+        const po = debug.pageOrigin || '';
+        const ro = debug.runtimeOrigin || '';
+        const io = debug.iframeOriginParam || '';
+        const iso = debug.iframeSrcOrigin || '';
+        console.warn(
+          `YouTubeAdapter: onError code=${String(code)} ytCode=${String(ytCode)} pageOrigin=${po} runtimeOrigin=${ro} iframeOriginParam=${io} iframeSrcOrigin=${iso}`
+        );
+        if (debug.iframeSrc) console.warn('YouTubeAdapter: iframe src:', debug.iframeSrc);
+      }
+
+      console.warn('YouTubeAdapter: onError', { code, ytCode, message, debug, detail: e });
+      this._em.emit("error", { code, ytCode, message, debug, detail: e });
     });
 
     this._placeholder = makePlaceholderSvgDataUrl({

@@ -1,3 +1,5 @@
+  import { getYtEmbedError150Map, downloadTextAsFile } from './ErrorLists.mjs';
+
   function initPlaylistIO(options = {}) {
     const {
       triggerElement,
@@ -12,7 +14,8 @@
       getPlayerMode = () => 'youtube',
       setPlayerMode = () => {},
       getSpotifyClientId = () => '',
-      setSpotifyClientId = () => {}
+      setSpotifyClientId = () => {},
+      getPlaylistItems = () => []
     } = options;
 
     const LAST_OPEN_SECTION_KEY = 'polaris.playlistio.lastOpenSectionId.v1';
@@ -52,8 +55,124 @@
       refreshUploadIcon: null,
       refreshSyncIcon: null,
       refreshSr: null,
-      sidebarHiddenBeforeOpen: null
+      sidebarHiddenBeforeOpen: null,
+      errorListsCopyBtn: null,
+      errorListsSaveBtn: null,
+      errorListsTableBody: null,
+      errorListsOrderedRows: []
     };
+
+    function refreshErrorListsView() {
+      if (!state.errorListsTableBody) return;
+
+      const map = (() => {
+        try {
+          const m = getYtEmbedError150Map();
+          return (m && typeof m === 'object') ? m : {};
+        } catch {
+          return {};
+        }
+      })();
+
+      const playlist = (() => {
+        try {
+          const v = getPlaylistItems();
+          return Array.isArray(v) ? v : [];
+        } catch {
+          return [];
+        }
+      })();
+
+      /** @type {Array<{ videoId: string, userTitle: string }>} */
+      const ordered = [];
+      const seen = new Set();
+
+      for (const item of playlist) {
+        const videoId = item && typeof item.videoId === 'string' ? item.videoId.trim() : '';
+        if (!videoId) continue;
+        if (seen.has(videoId)) continue;
+        if (!(videoId in map)) continue;
+        seen.add(videoId);
+        const title = (typeof map[videoId] === 'string' && map[videoId])
+          ? map[videoId]
+          : (item?.userTitle || item?.title || '');
+        ordered.push({ videoId, userTitle: String(title || '') });
+      }
+
+      // Append any remaining IDs not present in the current playlist.
+      for (const [videoId, title] of Object.entries(map)) {
+        const id = String(videoId || '').trim();
+        if (!id || seen.has(id)) continue;
+        ordered.push({ videoId: id, userTitle: (typeof title === 'string') ? title : '' });
+      }
+
+      state.errorListsOrderedRows = ordered;
+      if (state.errorListsCopyBtn) state.errorListsCopyBtn.disabled = ordered.length === 0;
+      if (state.errorListsSaveBtn) state.errorListsSaveBtn.disabled = ordered.length === 0;
+
+      const body = state.errorListsTableBody;
+      body.textContent = '';
+      const makeCell = (text, opts = {}) => {
+        const el = document.createElement('div');
+        el.textContent = text;
+        el.style.padding = '0.35rem 0.45rem';
+        el.style.whiteSpace = 'nowrap';
+        el.style.overflow = 'hidden';
+        el.style.textOverflow = 'ellipsis';
+        if (opts.mono) {
+          el.style.fontFamily = 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace';
+        }
+        if (opts.alignRight) {
+          el.style.textAlign = 'right';
+          el.style.color = '#a8b3c7';
+        }
+        return el;
+      };
+
+      ordered.forEach((row, idx) => {
+        const r = document.createElement('div');
+        r.style.display = 'grid';
+        r.style.gridTemplateColumns = '2.5rem 6rem 1fr';
+        r.style.borderTop = '1px solid #2b2f3a';
+        r.appendChild(makeCell(String(idx + 1), { alignRight: true, mono: true }));
+        r.appendChild(makeCell(row.videoId, { mono: true }));
+        r.appendChild(makeCell(row.userTitle));
+        body.appendChild(r);
+      });
+    }
+
+    function buildErrorListTsvFromCurrentRows() {
+      const rows = Array.isArray(state.errorListsOrderedRows) ? state.errorListsOrderedRows : [];
+      const lines = ['videoId\tuserTitle'];
+      for (const r of rows) {
+        const videoId = String(r?.videoId || '').replace(/\r?\n/g, ' ').replace(/\t/g, ' ').trim();
+        const userTitle = String(r?.userTitle || '').replace(/\r?\n/g, ' ').replace(/\t/g, ' ').trimEnd();
+        if (!videoId) continue;
+        lines.push(`${videoId}\t${userTitle}`);
+      }
+      return lines.join('\n') + (lines.length ? '\n' : '');
+    }
+
+    async function copyTextToClipboard(text) {
+      const value = String(text || '');
+      if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+        await navigator.clipboard.writeText(value);
+        return true;
+      }
+      const ta = document.createElement('textarea');
+      ta.value = value;
+      ta.style.position = 'fixed';
+      ta.style.left = '-9999px';
+      ta.style.top = '0';
+      document.body.appendChild(ta);
+      try {
+        ta.focus();
+        ta.select();
+        return !!document.execCommand('copy');
+      } finally {
+        ta.remove();
+      }
+    }
 
     function readLastOpenedSectionId() {
       try {
@@ -1039,6 +1158,157 @@
       settingsSection.content.appendChild(settingsConfirmBox);
       settingsSection.content.appendChild(settingsPre);
 
+      const errorListsSection = createAccordionSection({ id: 'errorLists', title: 'Error Lists' });
+      const errorListsContent = errorListsSection.content;
+      errorListsContent.style.padding = '0.75rem 0.8rem 0.9rem';
+      errorListsContent.style.gap = '0.6rem';
+
+      const errorListsIntro = document.createElement('p');
+      errorListsIntro.textContent = 'Download lists of playback errors recorded in this browser.';
+      errorListsIntro.style.margin = '0';
+      errorListsIntro.style.fontSize = '0.8rem';
+      errorListsIntro.style.color = '#a8b3c7';
+      errorListsIntro.style.lineHeight = '1.5';
+
+      const errorListsTableWrap = document.createElement('div');
+      errorListsTableWrap.style.display = 'flex';
+      errorListsTableWrap.style.flexDirection = 'column';
+      errorListsTableWrap.style.gap = '0.5rem';
+
+      const errorListsTableActions = document.createElement('div');
+      errorListsTableActions.style.display = 'flex';
+      errorListsTableActions.style.flexDirection = 'row';
+      errorListsTableActions.style.gap = '0.45rem';
+      errorListsTableActions.style.alignSelf = 'flex-end';
+
+      const styleIconActionButton = (btn) => {
+        btn.type = 'button';
+        btn.style.width = '34px';
+        btn.style.height = '34px';
+        btn.style.minWidth = '34px';
+        btn.style.minHeight = '34px';
+        btn.style.display = 'inline-flex';
+        btn.style.alignItems = 'center';
+        btn.style.justifyContent = 'center';
+        btn.style.borderRadius = '6px';
+        btn.style.border = '1px solid #2b2f3a';
+        btn.style.background = '#1f2532';
+        btn.style.color = '#f5f7fa';
+        btn.style.cursor = 'pointer';
+        btn.style.padding = '0';
+        btn.addEventListener('mouseenter', () => {
+          btn.style.background = '#273043';
+          btn.style.borderColor = '#394150';
+        });
+        btn.addEventListener('mouseleave', () => {
+          btn.style.background = '#1f2532';
+          btn.style.borderColor = '#2b2f3a';
+        });
+      };
+
+      const makeIconSpan = (glyph) => {
+        const s = document.createElement('span');
+        s.className = 'icon';
+        s.textContent = glyph;
+        s.setAttribute('aria-hidden', 'true');
+        s.style.margin = '0';
+        s.style.fontSize = '20px';
+        s.style.width = '20px';
+        s.style.height = '20px';
+        s.style.lineHeight = '1';
+        return s;
+      };
+
+      const copyBtn = document.createElement('button');
+      copyBtn.setAttribute('aria-label', 'Copy table to clipboard as TSV');
+      copyBtn.title = 'Copy table to clipboard as TSV';
+      styleIconActionButton(copyBtn);
+      copyBtn.appendChild(makeIconSpan('content_copy'));
+      copyBtn.addEventListener('click', async () => {
+        try {
+          const tsv = buildErrorListTsvFromCurrentRows();
+          const ok = await copyTextToClipboard(tsv);
+          if (!ok) {
+            showAlert('Copy failed.');
+            return;
+          }
+          updateStatus('Copied TSV to clipboard.', 'success');
+        } catch (err) {
+          const msg = err && err.message ? err.message : String(err);
+          showAlert(`Failed to copy TSV: ${msg}`);
+        }
+      });
+
+      const saveBtn = document.createElement('button');
+      saveBtn.setAttribute('aria-label', 'Download table as TSV');
+      saveBtn.title = 'Download table as TSV';
+      styleIconActionButton(saveBtn);
+      saveBtn.appendChild(makeIconSpan('save'));
+      saveBtn.addEventListener('click', () => {
+        try {
+          const tsv = buildErrorListTsvFromCurrentRows();
+          downloadTextAsFile({
+            filename: 'yt-embed-error-150.tsv',
+            text: tsv,
+            mime: 'text/tab-separated-values'
+          });
+          updateStatus('Download started.', 'success');
+        } catch (err) {
+          const msg = err && err.message ? err.message : String(err);
+          showAlert(`Failed to download TSV: ${msg}`);
+        }
+      });
+
+      state.errorListsCopyBtn = copyBtn;
+      state.errorListsSaveBtn = saveBtn;
+
+      errorListsTableActions.appendChild(copyBtn);
+      errorListsTableActions.appendChild(saveBtn);
+
+      const errorListsTable = document.createElement('div');
+      errorListsTable.style.border = '1px solid #2b2f3a';
+      errorListsTable.style.borderRadius = '6px';
+      errorListsTable.style.overflow = 'hidden';
+      errorListsTable.style.background = '#11141c';
+      errorListsTable.style.fontSize = '12px';
+
+      const headerRow = document.createElement('div');
+      headerRow.style.display = 'grid';
+      headerRow.style.gridTemplateColumns = '2.5rem 6rem 1fr';
+      headerRow.style.background = '#141926';
+      headerRow.style.borderBottom = '1px solid #2b2f3a';
+
+      const makeHeader = (text) => {
+        const el = document.createElement('div');
+        el.textContent = text;
+        el.style.padding = '0.4rem 0.45rem';
+        el.style.fontSize = '12px';
+        el.style.fontWeight = '700';
+        el.style.letterSpacing = '0.05em';
+        el.style.textTransform = 'uppercase';
+        el.style.color = '#a8b3c7';
+        el.style.whiteSpace = 'nowrap';
+        return el;
+      };
+      headerRow.appendChild(makeHeader('#'));
+      headerRow.appendChild(makeHeader('videoId'));
+      headerRow.appendChild(makeHeader('userTitle'));
+
+      const body = document.createElement('div');
+      body.style.maxHeight = 'calc(4 * 2.2rem)';
+      body.style.overflowY = 'auto';
+      body.style.overflowX = 'hidden';
+
+      errorListsTable.appendChild(headerRow);
+      errorListsTable.appendChild(body);
+      state.errorListsTableBody = body;
+      refreshErrorListsView();
+
+      errorListsTableWrap.appendChild(errorListsTable);
+      errorListsTableWrap.appendChild(errorListsTableActions);
+      errorListsContent.appendChild(errorListsIntro);
+      errorListsContent.appendChild(errorListsTableWrap);
+
       const cacheSection = createAccordionSection({ id: 'cache', title: 'Cache' });
 
       const cacheContent = cacheSection.content;
@@ -1093,6 +1363,7 @@
       accordion.appendChild(playlistSection.wrapper);
       accordion.appendChild(videoPlayerSection.wrapper);
       accordion.appendChild(settingsSection.wrapper);
+      accordion.appendChild(errorListsSection.wrapper);
       accordion.appendChild(cacheSection.wrapper);
 
       panel.appendChild(header);
@@ -1246,6 +1517,7 @@
       setSectionOpen(state.openSectionId || state.lastOpenedSectionId || 'playlist', { force: true });
       refreshHistoryList();
       refreshSettingsView();
+      refreshErrorListsView();
       refreshCacheStatsView();
       if (state.input) {
         const currentId = typeof getPlaylistId === 'function' ? getPlaylistId() : '';

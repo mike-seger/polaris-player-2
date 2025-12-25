@@ -83,6 +83,8 @@ export class YTController {
     this.controls = controls;
     this.origin = origin;
 
+    this._warnedOriginMismatch = false;
+
     this._player = null;
     this._ready = false;
     this._initStarted = false;
@@ -99,6 +101,70 @@ export class YTController {
     // mount support
     this._mountContainer = null;
     this._mountDiv = null;
+  }
+
+  getDebugInfo() {
+    const pageOrigin = (window.location && window.location.origin)
+      ? window.location.origin
+      : `${window.location.protocol}//${window.location.host}`;
+
+    const configuredOrigin = (typeof this.origin === 'string') ? this.origin.trim() : '';
+    const runtimeOrigin = this._getRuntimeOrigin();
+
+    /** @type {string|undefined} */
+    let iframeSrc;
+    /** @type {string|undefined} */
+    let iframeOriginParam;
+    /** @type {string|undefined} */
+    let iframeSrcOrigin;
+
+    try {
+      const hostEl = document.getElementById(this.elementId);
+      const iframe = hostEl ? hostEl.querySelector('iframe') : null;
+      if (iframe && typeof iframe.getAttribute === 'function') {
+        iframeSrc = iframe.getAttribute('src') || undefined;
+        if (iframeSrc) {
+          try {
+            const u = new URL(iframeSrc);
+            iframeSrcOrigin = u.origin;
+            const p = u.searchParams.get('origin');
+            iframeOriginParam = p ? decodeURIComponent(p) : undefined;
+          } catch {
+            // ignore parsing errors
+          }
+        }
+      }
+    } catch {
+      // ignore DOM access errors
+    }
+
+    return {
+      pageOrigin,
+      configuredOrigin: configuredOrigin || undefined,
+      runtimeOrigin,
+      elementId: this.elementId || undefined,
+      iframeSrc,
+      iframeSrcOrigin,
+      iframeOriginParam,
+      lastLoadRequest: this._lastLoadRequest || undefined,
+    };
+  }
+
+  _getRuntimeOrigin() {
+    const runtimeOrigin = (window.location && window.location.origin)
+      ? window.location.origin
+      : `${window.location.protocol}//${window.location.host}`;
+
+    const configured = (typeof this.origin === 'string') ? this.origin.trim() : '';
+    if (configured && configured !== runtimeOrigin && !this._warnedOriginMismatch) {
+      this._warnedOriginMismatch = true;
+      console.warn('YTController: configured origin differs from page origin; using page origin', {
+        configured,
+        runtimeOrigin
+      });
+    }
+
+    return runtimeOrigin;
   }
 
   mount(container) {
@@ -278,11 +344,13 @@ export class YTController {
     const cleanedVideoId = (videoId || '').trim();
     if (!cleanedVideoId) return;
 
+    const runtimeOrigin = this._getRuntimeOrigin();
+
     this._lastLoadRequest = {
       videoId: cleanedVideoId,
       startSeconds: Number.isFinite(startSeconds) ? startSeconds : 0,
       autoplay: !!autoplay,
-      origin: this.origin || (window.location && window.location.origin) || undefined,
+      origin: runtimeOrigin || undefined,
       elementId: this.elementId || undefined,
     };
 
@@ -319,9 +387,7 @@ export class YTController {
     if (this._player) return;
     if (!initialVideoId) return;
 
-    const playerOrigin = this.origin || ((window.location && window.location.origin)
-      ? window.location.origin
-      : `${window.location.protocol}//${window.location.host}`);
+    const playerOrigin = this._getRuntimeOrigin();
 
     const onReady = () => {
       this._ready = true;
