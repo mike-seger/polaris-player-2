@@ -133,6 +133,87 @@
       redirectUri: undefined,
     });
 
+    function _safeSlug(value, maxLen = 24) {
+      const s = String(value || '').trim();
+      if (!s) return '';
+      const cleaned = s
+        .replace(/^https?:\/\//i, '')
+        .replace(/[^0-9A-Za-z._-]+/g, '-')
+        .replace(/-+/g, '-')
+        .replace(/^-|-$/g, '');
+      return cleaned.length > maxLen ? cleaned.slice(0, maxLen) : cleaned;
+    }
+
+    function _getOrCreateInstanceId() {
+      const key = 'polaris.instanceId.v1';
+      try {
+        const existing = localStorage.getItem(key);
+        if (existing && typeof existing === 'string' && existing.trim().length >= 6) {
+          return existing.trim();
+        }
+      } catch {
+        // ignore
+      }
+
+      let id = '';
+      try {
+        const bytes = new Uint8Array(5);
+        crypto.getRandomValues(bytes);
+        id = Array.from(bytes).map((b) => b.toString(16).padStart(2, '0')).join('');
+      } catch {
+        id = String(Math.floor(Math.random() * 1e10));
+      }
+
+      try {
+        localStorage.setItem(key, id);
+      } catch {
+        // ignore
+      }
+
+      return id;
+    }
+
+    function _detectOsTag() {
+      const ua = String(navigator.userAgent || '');
+      if (/iPhone|iPad|iPod/i.test(ua)) return 'iOS';
+      if (/Android/i.test(ua)) return 'Android';
+      if (/Macintosh|Mac OS X/i.test(ua)) return 'macOS';
+      if (/Windows/i.test(ua)) return 'Windows';
+      if (/Linux/i.test(ua)) return 'Linux';
+      return 'UnknownOS';
+    }
+
+    function _detectBrowserTag() {
+      const ua = String(navigator.userAgent || '');
+      // Order matters (Chrome on iOS includes "CriOS" and Safari tokens).
+      if (/CriOS\//i.test(ua)) return 'Chrome';
+      if (/FxiOS\//i.test(ua)) return 'Firefox';
+      if (/EdgiOS\//i.test(ua)) return 'Edge';
+      if (/OPiOS\//i.test(ua)) return 'Opera';
+      if (/Safari\//i.test(ua) && !/Chrome\//i.test(ua) && !/Chromium\//i.test(ua)) return 'Safari';
+      if (/Chrome\//i.test(ua) || /Chromium\//i.test(ua)) return 'Chrome';
+      return 'Browser';
+    }
+
+    function buildSpotifySdkName() {
+      // NOTE: Browsers do not allow reliable access to local IP address.
+      // Spotify clients also append their own labels (e.g. "this browser", "active").
+      // Keep our name focused on identity: OS + (hostname when useful) + stable instance id.
+      const rawHost = String(window.location.hostname || '').trim();
+      const hostIsUseless = !rawHost
+        || rawHost === 'localhost'
+        || rawHost === '127.0.0.1'
+        || rawHost === '::1';
+
+      const host = hostIsUseless ? '' : _safeSlug(rawHost, 18);
+      const os = _safeSlug(_detectOsTag(), 10);
+      const id = _safeSlug(_getOrCreateInstanceId(), 10);
+
+      const parts = [os, host, id].filter(Boolean);
+      const label = parts.join(' ');
+      return label ? `Polaris ${label}` : 'Polaris';
+    }
+
     let playlistVersion = 0;
     const shuffleQueue = new ShuffleQueue({
       enabled: typeof settings.shuffleEnabled === 'boolean' ? settings.shuffleEnabled : true,
@@ -1645,7 +1726,14 @@
       if (playerHost) return;
       playerReady = false;
 
-      spotifyAdapter = new SpotifyAdapter({ auth: spotifyAuth });
+      const spotifySdkName = buildSpotifySdkName();
+      console.log('[Spotify] SDK player name:', spotifySdkName, {
+        hostname: window.location.hostname,
+        hostnameSuppressed: ['localhost', '127.0.0.1', '::1', ''].includes(String(window.location.hostname || '').trim()),
+        os: _detectOsTag(),
+        browser: _detectBrowserTag(),
+      });
+      spotifyAdapter = new SpotifyAdapter({ auth: spotifyAuth, name: spotifySdkName });
 
       // When Spotify artwork becomes available (learned from SDK state), update the current row thumbnail ASAP.
       // We also invalidate the playlist->thumb cache so the next render uses the newly cached art.
