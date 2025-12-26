@@ -178,33 +178,7 @@
       return (mode === 'local' || mode === 'spotify') ? mode : 'youtube';
     }
 
-    function sanitizeLocalVideoBasename(name) {
-      return String(name || '')
-        .trim()
-        // Normalize common quote variants to straight apostrophe (') to match
-        // on-disk files that use ASCII apostrophes (encoded as %27).
-        .replace(/[\u2018\u2019]/g, "'")
-        .replace(/[\\/]/g, '_');
-    }
-
-    function buildLocalThumbnailUrlForItem(item) {
-      // const rawTitle = (item && typeof item.userTitle === 'string' && item.userTitle.trim().length)
-      //   ? item.userTitle
-      //   : (item && typeof item.title === 'string' ? item.title : '');
-      //const base = sanitizeLocalVideoBasename(rawTitle);
-      const base = 'vid_' + item.videoId;
-      return `${window.location.origin}/video/thumbnail/${base}.jpg`;
-      //if (!base) return '';
-      return `${window.location.origin}/video/thumbnail/${encodeURIComponent(base)}.jpg`;
-    }
-
     function buildLocalVideoUrlForItem(item) {
-      // const rawTitle = (item && typeof item.userTitle === 'string' && item.userTitle.trim().length)
-      //   ? item.userTitle
-      //   : (item && typeof item.title === 'string' ? item.title : '');
-      // const base = sanitizeLocalVideoBasename(rawTitle);
-      // return `${window.location.origin}/video/${encodeURIComponent(base)}.mp4`;
-
       const base = 'vid_' + item.videoId;
       return `${window.location.origin}/video/${base}.mp4`;
     }
@@ -728,7 +702,7 @@
       if (mode === 'local') {
         const localThumb = (playerHost && typeof playerHost.getThumbnailUrl === 'function')
           ? playerHost.getThumbnailUrl(buildTrackFromPlaylistItem(item))
-          : buildLocalThumbnailUrlForItem(item);
+          : '';
         return localThumb || '';
       }
 
