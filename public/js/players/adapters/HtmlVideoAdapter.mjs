@@ -27,14 +27,24 @@ export class HtmlVideoAdapter {
     this._el.controls = false;
 
     this._el.addEventListener("play", () => this._setState("playing"));
-    this._el.addEventListener("pause", () => this._setState(this._el.ended ? "ended" : "paused"));
+    this._el.addEventListener("pause", () => {
+      // Setting `src` / calling `load()` can synchronously trigger a `pause` event.
+      // If that happens while we're in `loading`, don't let it prevent the
+      // subsequent metadata events from transitioning us to `ready`.
+      if (this._state === "loading") return;
+      this._setState(this._el.ended ? "ended" : "paused");
+    });
     this._el.addEventListener("waiting", () => this._setState("buffering"));
     this._el.addEventListener("ended", () => { this._setState("ended"); this._em.emit("ended"); });
 
     const markReady = () => {
       // The UI relies on at least one "ready" transition to start its timers.
       // For <video>, metadata availability is a good proxy for being "ready".
-      if (this._state === "loading") this._setState("ready");
+      // Some browsers can fire a `pause` during `load()`; don't let that block
+      // the `ready` transition.
+      if (this._state !== "playing" && this._state !== "ended" && this._state !== "error") {
+        this._setState("ready");
+      }
     };
 
     const refreshDuration = () => {
@@ -158,7 +168,13 @@ export class HtmlVideoAdapter {
     }
 
     if (opts.autoplay !== false) {
-      try { await this._el.play(); } catch { /* ignore autoplay errors */ }
+      try {
+        await this._el.play();
+      } catch {
+        // If autoplay is blocked, still transition out of `loading` so the UI
+        // can display duration/position once metadata arrives.
+        this._setState("ready");
+      }
     } else {
       this._setState("ready");
     }
@@ -166,8 +182,29 @@ export class HtmlVideoAdapter {
     this._em.emit("capabilities", this.getCapabilities());
   }
 
-  async play() { try { await this._el.play(); } catch { /* ignore */ } }
-  async pause() { try { this._el.pause(); } catch { /* ignore */ } }
+  async play() {
+    try {
+      await this._el.play();
+    } catch {
+      /* ignore */
+    }
+    // Some browsers can delay/skip emitting `play`/`pause` events in odd edge cases.
+    // Keep state aligned with the element's actual properties.
+    if (!this._el.paused && !this._el.ended) {
+      this._setState("playing");
+    }
+  }
+
+  async pause() {
+    try {
+      this._el.pause();
+    } catch {
+      /* ignore */
+    }
+    if (this._state !== "loading" && this._el.paused && !this._el.ended) {
+      this._setState("paused");
+    }
+  }
 
   async stop() {
     try { this._el.pause(); } catch { /* ignore */ }
@@ -184,12 +221,33 @@ export class HtmlVideoAdapter {
   async setRate(r) { this._el.playbackRate = Number(r) || 1; }
 
   getInfo() {
+    // Derive the effective state from the element to avoid stale UI when events
+    // are delayed (common on iOS/Safari with inline media).
+    let effectiveState = this._state;
+    if (effectiveState !== "error") {
+      const hasSource = !!(this._el.currentSrc || this._el.src);
+      if (!hasSource) {
+        effectiveState = "idle";
+      } else if (this._el.ended) {
+        effectiveState = "ended";
+      } else if (this._el.paused) {
+        effectiveState = (this._state === "loading") ? "loading" : "paused";
+      } else {
+        // If we already decided we're buffering and the element isn't ready, keep buffering.
+        if (this._state === "buffering" && this._el.readyState < 3) {
+          effectiveState = "buffering";
+        } else {
+          effectiveState = "playing";
+        }
+      }
+    }
+
     const dur = Number.isFinite(this._el.duration) ? this._el.duration : NaN;
     const durMs = Number.isFinite(dur) && dur > 0
       ? Math.floor(dur * 1000)
       : (this._knownDurationMs ?? this._track?.durationMs);
     return {
-      state: this._state,
+      state: effectiveState,
       muted: !!this._el.muted,
       volume: clamp01(this._el.volume),
       rate: Number(this._el.playbackRate) || 1,

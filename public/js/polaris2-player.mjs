@@ -1166,6 +1166,11 @@
     let isSeekSwipeActive = false;
     let seekFeedbackHideTimer = null;
 
+    // Local playback: some browsers can lag/omit state transitions while time still advances.
+    // Track recent time progression to infer playing/paused for the play/pause button.
+    let lastLocalPositionMs = 0;
+    let lastLocalTimeAdvanceAt = 0;
+
     function setSeekFeedbackVisible(visible) {
       if (!seekSwipeLayer || !seekSwipeFeedback) return;
       if (visible) {
@@ -2120,20 +2125,45 @@
         }
       }
       const state = getPlayerInfo().state;
-      const activelyPlaying = state === 'playing' || state === 'buffering';
+      let activelyPlaying = state === 'playing' || state === 'buffering';
 
-      if (isPlaying !== activelyPlaying) {
-        isPlaying = activelyPlaying;
-        updatePlayPauseButton();
+      // Local mode fallback: if time has advanced recently, treat as playing.
+      if (!activelyPlaying && state !== 'paused' && getPlayerMode() === 'local') {
+        const now = Date.now();
+        if (lastLocalTimeAdvanceAt && (now - lastLocalTimeAdvanceAt) < 1100) {
+          activelyPlaying = true;
+        }
       }
 
-      if (activelyPlaying) {
-        sidebar.suppressHide(1500);
-        void playerHost.pause().catch(() => {});
-      } else {
-        sidebar.suppressHide(1500);
+      // Optimistically toggle the UI immediately; then reconcile with actual
+      // player state (some adapters can lag state events briefly).
+      const nextPlaying = !activelyPlaying;
+      isPlaying = nextPlaying;
+      updatePlayPauseButton();
+
+      sidebar.suppressHide(1500);
+      if (nextPlaying) {
         void playerHost.play().catch(() => {});
+      } else {
+        void playerHost.pause().catch(() => {});
       }
+
+      setTimeout(() => {
+        try {
+          const s = getPlayerInfo().state;
+          let playing = s === 'playing' || s === 'buffering';
+          if (!playing && s !== 'paused' && getPlayerMode() === 'local') {
+            const now = Date.now();
+            if (lastLocalTimeAdvanceAt && (now - lastLocalTimeAdvanceAt) < 1100) {
+              playing = true;
+            }
+          }
+          if (isPlaying !== playing) {
+            isPlaying = playing;
+            updatePlayPauseButton();
+          }
+        } catch { /* ignore */ }
+      }, 350);
       focusActiveTrack();
     }
 
@@ -2671,6 +2701,34 @@
         progressRange.value = 0;
         timeLabel.textContent = '00:00 / 00:00';
         return;
+      }
+
+      // Keep play/pause UI synced in local mode even if adapter state is stale.
+      if (getPlayerMode() === 'local' && !isProgressScrubbing && !holdPlayingUiUntilMs) {
+        try {
+          const info = getPlayerInfo();
+          const now = Date.now();
+          const posMs = Number(info?.time?.positionMs) || 0;
+
+          // Detect forward progress.
+          if (posMs > lastLocalPositionMs + 150) {
+            lastLocalTimeAdvanceAt = now;
+            lastLocalPositionMs = posMs;
+          } else if (posMs < lastLocalPositionMs - 500) {
+            // Seek/backwards jump: update baseline without marking as "playing".
+            lastLocalPositionMs = posMs;
+          }
+
+          let playing = info?.state === 'playing' || info?.state === 'buffering';
+          if (!playing && info?.state !== 'paused' && lastLocalTimeAdvanceAt && (now - lastLocalTimeAdvanceAt) < 1100) {
+            playing = true;
+          }
+
+          if (isPlaying !== playing) {
+            isPlaying = playing;
+            updatePlayPauseButton();
+          }
+        } catch { /* ignore */ }
       }
 
       const duration = getPlayerDurationSeconds();
