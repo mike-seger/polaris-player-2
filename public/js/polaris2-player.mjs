@@ -1427,6 +1427,42 @@
       return getPlayerInfo().activeTrackId || '';
     }
 
+    // End-of-track auto-advance can be reported via both a state transition and a separate
+    // `ended` event (e.g. YouTube). Debounce so we never advance twice for the same track.
+    let _lastEndedAdvanceKey = '';
+    let _lastEndedAdvanceAt = 0;
+
+    function _autoAdvanceFromEnded({ shouldAutoScroll = false } = {}) {
+      const now = Date.now();
+      const trackId = getActiveTrackId();
+      const key = `${currentIndex}:${trackId || ''}`;
+      if (key && key === _lastEndedAdvanceKey && now - _lastEndedAdvanceAt < 1500) {
+        return;
+      }
+      _lastEndedAdvanceKey = key;
+      _lastEndedAdvanceAt = now;
+
+      // Keep the UI in "playing" while the next track is loading to avoid flicker.
+      holdPlayingUiUntilMs = now + 2500;
+
+      const advanced = playNext({ keepPlayingUi: true });
+      if (!advanced) {
+        isPlaying = false;
+        updatePlayPauseButton();
+      } else {
+        isPlaying = true;
+        updatePlayPauseButton();
+      }
+
+      // Keep the active row visible, but don't steal focus from controls.
+      if (shouldAutoScroll) {
+        scrollActiveIntoView({ guardUserScroll: true });
+        lastAutoScrollIndex = currentIndex;
+      }
+
+      spectrum.stop();
+    }
+
     function seekToSeconds(seconds) {
       if (!playerHost) return;
       const s = Number(seconds);
@@ -1677,7 +1713,10 @@
         updateMediaSessionPositionState(true);
       });
       playerHost.on('time', () => updateMediaSessionPositionState(false));
-      playerHost.on('ended', () => playNext());
+      playerHost.on('ended', () => {
+        const shouldAutoScroll = currentIndex !== lastAutoScrollIndex;
+        _autoAdvanceFromEnded({ shouldAutoScroll });
+      });
       playerHost.on('error', (err) => {
         console.error('Player error:', err);
 
@@ -1785,23 +1824,7 @@
     function onPlayerStateChange(state) {
       const shouldAutoScroll = currentIndex !== lastAutoScrollIndex;
       if (state === 'ended') {
-        // Auto-advance: keep the UI in "playing" while the next track is loading
-        // to avoid flickering play/pause icons.
-        holdPlayingUiUntilMs = Date.now() + 2500;
-        const advanced = playNext({ keepPlayingUi: true });
-        if (!advanced) {
-          isPlaying = false;
-          updatePlayPauseButton();
-        } else {
-          isPlaying = true;
-          updatePlayPauseButton();
-        }
-        // Keep the active row visible, but don't steal focus from controls.
-        if (shouldAutoScroll) {
-          scrollActiveIntoView({ guardUserScroll: true });
-          lastAutoScrollIndex = currentIndex;
-        }
-        spectrum.stop();
+        _autoAdvanceFromEnded({ shouldAutoScroll });
       } else if (state === 'playing' || state === 'buffering') {
         holdPlayingUiUntilMs = 0;
         isPlaying = true;
@@ -2044,8 +2067,13 @@
         void ensureSpotifySession({ promptIfMissing: true, promptLogin: true })
           .then((ok) => {
             if (!ok) return;
-            return playerHost.load(buildTrackFromPlaylistItem(playlistItems[idx]), { autoplay: true })
-              .then(() => applyConfiguredVolumeToHost());
+            // Apply output volume before starting playback.
+            // Setting Spotify Connect volume shortly after autoplay can cause an audible hiccup
+            // (observed on iOS). Load without autoplay, set volume, then play.
+            return playerHost
+              .load(buildTrackFromPlaylistItem(playlistItems[idx]), { autoplay: false })
+              .then(() => applyConfiguredVolumeToHost())
+              .then(() => playerHost.play());
           })
           .catch((err) => console.error('Player load error:', err));
       } else {

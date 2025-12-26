@@ -211,6 +211,7 @@ export class SpotifyAdapter {
     this._externalSeekPendingMs = null;
     this._playbackRecoverTimer = null;
     this._playbackRecoverBackoffMs = 0;
+    this._playbackRecoverSnapshot = null;
 
     this._pollTimer = null;
     this._isPolling = false;
@@ -358,6 +359,16 @@ export class SpotifyAdapter {
 
   _schedulePlaybackRecovery(reason = '') {
     if (this._playbackRecoverTimer) return;
+
+    // Some environments emit transient playback errors while audio continues.
+    // Restarting playback in those cases causes an audible hiccup.
+    this._playbackRecoverSnapshot = {
+      at: Date.now(),
+      positionMs: Number(this._lastPollPositionMs) || 0,
+      durationMs: Number(this._lastPollDurationMs) || 0,
+      state: this._state && typeof this._state.state === 'string' ? this._state.state : '',
+    };
+
     const prev = Math.max(0, Number(this._playbackRecoverBackoffMs) || 0);
     const next = Math.min(120000, prev ? prev * 2 : 5000);
     const jitter = Math.floor(Math.random() * Math.min(1000, Math.max(200, next * 0.2)));
@@ -366,6 +377,25 @@ export class SpotifyAdapter {
 
     this._playbackRecoverTimer = setTimeout(() => {
       this._playbackRecoverTimer = null;
+
+      // If playback is still progressing, skip the recovery.
+      try {
+        const snap = this._playbackRecoverSnapshot;
+        const curState = this._state && typeof this._state.state === 'string' ? this._state.state : '';
+        const curPos = Number(this._lastPollPositionMs) || 0;
+
+        if (snap && (curState === 'playing' || curState === 'buffering')) {
+          const advancedMs = curPos - (Number(snap.positionMs) || 0);
+          if (advancedMs > 1500) {
+            this._playbackRecoverSnapshot = null;
+            this._playbackRecoverBackoffMs = 0;
+            return;
+          }
+        }
+      } catch {
+        // ignore and proceed
+      }
+
       void this._recoverPlayback(reason);
     }, waitMs);
   }

@@ -861,13 +861,25 @@ body.show-track-country:not(.no-wrap-lines) .track-country-flags {
     outline: none;
 }
 
+/* Override the global `button:focus` rule: track check buttons should not turn bright on focus. */
+.track-state-btn:focus {
+    color: inherit;
+}
+
+.track-state-btn[data-state="default"]:focus {
+    color: #3a4458;
+}
+
+.track-state-btn.is-checked:focus {
+    color: #7ddc8c;
+}
+
 .track-state-btn:focus-visible {
     outline: 2px solid #2b3446;
     outline-offset: 2px;
 }
 
-.track-state-btn[data-state="default"]:hover,
-.track-state-btn[data-state="default"]:focus {
+.track-state-btn[data-state="default"]:hover {
     color: #cbd4e4;
 }
 
@@ -878,6 +890,22 @@ body.show-track-country:not(.no-wrap-lines) .track-country-flags {
 .track-state-btn.is-checked:hover,
 .track-state-btn.is-checked:focus {
     color: #9af0a8;
+}
+
+/* Touch devices: avoid sticky :hover leaving the button highlighted after tap. */
+@media (hover: none) {
+    .track-state-btn:hover {
+        background: transparent;
+        color: inherit;
+    }
+
+    .track-state-btn[data-state="default"]:hover {
+        color: #3a4458;
+    }
+
+    .track-state-btn.is-checked:hover {
+        color: #7ddc8c;
+    }
 }
 
 .track-state-btn .icon {
