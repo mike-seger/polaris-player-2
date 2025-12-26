@@ -188,20 +188,25 @@
     }
 
     function buildLocalThumbnailUrlForItem(item) {
-      const rawTitle = (item && typeof item.userTitle === 'string' && item.userTitle.trim().length)
-        ? item.userTitle
-        : (item && typeof item.title === 'string' ? item.title : '');
-      const base = sanitizeLocalVideoBasename(rawTitle);
-      if (!base) return '';
+      // const rawTitle = (item && typeof item.userTitle === 'string' && item.userTitle.trim().length)
+      //   ? item.userTitle
+      //   : (item && typeof item.title === 'string' ? item.title : '');
+      //const base = sanitizeLocalVideoBasename(rawTitle);
+      const base = 'vid_' + item.videoId;
+      return `${window.location.origin}/video/thumbnail/${base}.jpg`;
+      //if (!base) return '';
       return `${window.location.origin}/video/thumbnail/${encodeURIComponent(base)}.jpg`;
     }
 
     function buildLocalVideoUrlForItem(item) {
-      const rawTitle = (item && typeof item.userTitle === 'string' && item.userTitle.trim().length)
-        ? item.userTitle
-        : (item && typeof item.title === 'string' ? item.title : '');
-      const base = sanitizeLocalVideoBasename(rawTitle);
-      return `${window.location.origin}/video/${encodeURIComponent(base)}.mp4`;
+      // const rawTitle = (item && typeof item.userTitle === 'string' && item.userTitle.trim().length)
+      //   ? item.userTitle
+      //   : (item && typeof item.title === 'string' ? item.title : '');
+      // const base = sanitizeLocalVideoBasename(rawTitle);
+      // return `${window.location.origin}/video/${encodeURIComponent(base)}.mp4`;
+
+      const base = 'vid_' + item.videoId;
+      return `${window.location.origin}/video/${base}.mp4`;
     }
 
     filterStateStore = new FilterStateStore({

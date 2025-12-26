@@ -101,7 +101,9 @@ export class HtmlVideoAdapter {
     const base = String(rawTitle || '')
       .trim()
       .replace(/[\u2018\u2019]/g, "'")
-      .replace(/[\\/]/g, '_');
+      .replace(/[\\/]/g, '_')
+      .replace(/[?]/g, '');
+
     if (!base) return undefined;
     return `${window.location.origin}/video/thumbnail/${encodeURIComponent(base)}.jpg`;
   }

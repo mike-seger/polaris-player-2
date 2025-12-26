@@ -1063,7 +1063,7 @@
       spotifyDeviceSelect.style.minWidth = '0';
 
       const spotifyDeviceHint = document.createElement('p');
-      spotifyDeviceHint.textContent = 'Routes Spotify audio to another device (e.g., Apple TV) via Spotify Connect.';
+      spotifyDeviceHint.textContent = 'Routes Spotify audio to another device.';
       spotifyDeviceHint.style.margin = '0';
       spotifyDeviceHint.style.fontSize = '0.75rem';
       spotifyDeviceHint.style.color = '#6c7488';
@@ -1102,13 +1102,6 @@
       spotifyVolumeValue.style.textAlign = 'right';
       spotifyVolumeValue.style.fontFamily = 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace';
       spotifyVolumeValue.style.color = '#a8b3c7';
-
-      const spotifyVolumeHint = document.createElement('p');
-      spotifyVolumeHint.textContent = 'Controls Spotify Connect device volume.';
-      spotifyVolumeHint.style.margin = '0';
-      spotifyVolumeHint.style.fontSize = '0.75rem';
-      spotifyVolumeHint.style.color = '#6c7488';
-      spotifyVolumeHint.style.lineHeight = '1.4';
 
       const readVolume01 = () => {
         try {
@@ -1268,7 +1261,6 @@
       spotifyVolumeControls.appendChild(spotifyVolumeRange);
       spotifyVolumeControls.appendChild(spotifyVolumeValue);
       spotifyVolumeRow.appendChild(spotifyVolumeControls);
-      spotifyVolumeRow.appendChild(spotifyVolumeHint);
       spotifyDeviceRow.appendChild(spotifyVolumeRow);
       spotifyDeviceRow.appendChild(spotifyDeviceStatus);
 
