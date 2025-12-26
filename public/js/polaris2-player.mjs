@@ -1512,9 +1512,16 @@
     // `ended` event (e.g. YouTube). Debounce so we never advance twice for the same track.
     let _lastEndedAdvanceKey = '';
     let _lastEndedAdvanceAt = 0;
+    let _suppressEndedAutoAdvanceUntilMs = 0;
 
     function _autoAdvanceFromEnded({ shouldAutoScroll = false } = {}) {
       const now = Date.now();
+      // After we advance, some players can still emit a late duplicate "ended" signal.
+      // If the index has already changed, the per-track debounce key may differ, causing a
+      // second advance (skipping the next track). A short global suppression window prevents that.
+      if (now < _suppressEndedAutoAdvanceUntilMs) {
+        return;
+      }
       const trackId = getActiveTrackId();
       const key = `${currentIndex}:${trackId || ''}`;
       if (key && key === _lastEndedAdvanceKey && now - _lastEndedAdvanceAt < 1500) {
@@ -1527,6 +1534,7 @@
       holdPlayingUiUntilMs = now + 2500;
 
       const advanced = playNext({ keepPlayingUi: true });
+      _suppressEndedAutoAdvanceUntilMs = now + 2000;
       if (!advanced) {
         isPlaying = false;
         updatePlayPauseButton();
