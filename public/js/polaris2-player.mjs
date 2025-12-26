@@ -2710,6 +2710,24 @@
     document.addEventListener('keydown', (e) => {
       if (isTextInputFocused()) return;
 
+      // PageUp/PageDown should scroll the playlist by pages from anywhere in the sidebar,
+      // unless a focused control (e.g., select/input) handles it.
+      if ((e.key === 'PageDown' || e.key === 'PageUp') && !e.defaultPrevented) {
+        const sidebarHidden = !!(document.body && document.body.classList && document.body.classList.contains('sidebar-hidden'));
+        if (!sidebarHidden && trackListContainerEl) {
+          const page = Math.max(60, Math.floor(trackListContainerEl.clientHeight * 0.9));
+          const delta = e.key === 'PageUp' ? -page : page;
+          try {
+            trackListContainerEl.scrollBy({ top: delta, left: 0, behavior: 'auto' });
+          } catch {
+            trackListContainerEl.scrollTop += delta;
+          }
+          e.preventDefault();
+          e.stopPropagation();
+          return;
+        }
+      }
+
       // Enter toggles the sidebar in/out, but don't steal Enter from controls
       // inside the sidebar (track list uses Enter to toggle completion).
       if (isEnterKey(e) && !e.defaultPrevented && !e.ctrlKey && !e.altKey && !e.metaKey) {
