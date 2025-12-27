@@ -1598,6 +1598,17 @@ body.sidebar-hidden #playerGestureLayer {
  * This block is intentionally at the end of the stylesheet so it wins in the cascade.
  */
 @media (max-width: 800px) and (max-aspect-ratio: 2/3) {
+    /* Rotate the entire app view in portrait and fill the available viewport. */
+    #sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: calc(var(--app-vh, 1vh) * 100);
+        height: 100vw;
+        transform-origin: top left;
+        transform: rotate(-90deg) translateX(-100%);
+    }
+
     #sidebarDrawer {
         padding: 0;
     }
