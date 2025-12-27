@@ -1358,7 +1358,7 @@ body.hide-track-check .track-state-btn {
     display: flex;
     align-items: center;
     gap: 0.35rem;
-    padding-bottom: 6px;
+    padding-bottom: 8px;
 }
 
 #progressRange {
@@ -1384,7 +1384,7 @@ body.hide-track-check .track-state-btn {
  */
 @media (hover: none) and (pointer: coarse) {
     #progressWrapper {
-        padding-left: 8px;
+        padding-left: 10px;
     }
 }
     border-radius: 50%;
@@ -1603,7 +1603,12 @@ body.sidebar-hidden #playerGestureLayer {
     }
 
     #progressWrapper {
-        margin-left: 12px;
+        margin-left: 15px;
+        margin-right: 10px;
+    }
+
+    #trackControls-buttons > .track-controls-group:first-child {
+        margin-left: 5px;
     }
 
     /* Panels touch, no rounding. */
