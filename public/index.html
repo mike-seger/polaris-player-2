@@ -7,7 +7,8 @@
     content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
   />
   <title>Polaris</title>
-  <link rel="preload" href="./player.woff2?v=2025-12-27-2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="./player-fill0.woff2?v=2025-12-27-4" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="./player-fill1.woff2?v=2025-12-27-4" as="font" type="font/woff2" crossorigin>
   <link rel="icon" type="image/png" sizes="32x32" href="./img/polaris-32x32.png" />
   <link rel="icon" type="image/png" sizes="16x16" href="./img/polaris-16x16.png" />
   <link rel="apple-touch-icon" sizes="180x180" href="./img/polaris-180x180.png" />
@@ -16,13 +17,71 @@
     // Prevent Material icon glyph names flashing before the font loads.
     document.documentElement.classList.remove('icons-ready');
   </script>
-  <link rel="stylesheet" href="style.css?v=2025-12-27-2">
+  <link rel="stylesheet" href="style.css?v=2025-12-27-4">
 </head>
 <body>
   <div id="sidebar">
     <!-- Video player -->
     <div id="player-container">
       <div id="player"></div>
+
+      <!-- Full-size invisible hit layer: only active when controls are hidden. -->
+      <div
+        id="centerControlsHit"
+        class="center-controls-hit"
+        aria-hidden="true"
+        data-visible="false"
+      ></div>
+
+      <!-- Edge nav targets: 30% square, invisible. -->
+      <button
+        id="centerEdgePrevBtn"
+        class="cco-edge cco-edge-left"
+        type="button"
+        aria-label="Previous track"
+        data-visible="false"
+      ></button>
+      <button
+        id="centerEdgeNextBtn"
+        class="cco-edge cco-edge-right"
+        type="button"
+        aria-label="Next track"
+        data-visible="false"
+      ></button>
+
+      <!-- Visible center controls (fade in/out). -->
+      <div
+        id="centerControlsPanel"
+        class="center-controls-panel"
+        aria-hidden="true"
+        data-visible="false"
+      >
+        <div class="cco-panel" aria-hidden="true">
+          <div class="cco-row">
+            <button id="centerPrevBtn" class="cco-btn" type="button" aria-label="Previous track">
+              <span class="icon" aria-hidden="true">skip_previous</span>
+            </button>
+            <button id="centerPlayPauseBtn" class="cco-btn" type="button" aria-label="Play/Pause">
+              <span class="icon" id="centerPlayPauseIcon" aria-hidden="true">play_arrow</span>
+            </button>
+            <button id="centerNextBtn" class="cco-btn" type="button" aria-label="Next track">
+              <span class="icon" aria-hidden="true">skip_next</span>
+            </button>
+          </div>
+
+          <div class="cco-row">
+            <label id="centerSidebarToggle" class="cco-toggle" aria-label="Toggle sidebar">
+              <input id="centerSidebarToggleInput" type="checkbox" aria-label="Sidebar visible" />
+              <span class="icon fill-0" aria-hidden="true">thumbnail_bar</span>
+            </label>
+          </div>
+
+          <div class="cco-progress" aria-hidden="true">
+            <input id="centerProgressRange" class="cco-progress-range" type="range" min="0" max="1000" value="0" />
+            <div id="centerTimeLabel" class="cco-time">00:00 / 00:00</div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <div id="sidebarDrawer">

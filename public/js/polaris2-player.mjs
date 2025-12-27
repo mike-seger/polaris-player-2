@@ -23,6 +23,7 @@
   import { TrackDetailsOverlay } from './TrackDetailsOverlay.mjs';
   import { PlaylistDataSource } from './PlaylistDataSource.mjs';
   import { addYtEmbedError150, hasYtEmbedError150, removeYtEmbedError150 } from './ErrorLists.mjs';
+  import { CenterControlsOverlay } from './CenterControlsOverlay.mjs';
 
   let playerHost;
   let ytAdapter = null;
@@ -31,6 +32,7 @@
   let ytEmbedError150SkipKey = '';
   let ytEmbedError150CheckingVideoId = '';
   let videoCheckOverlayEl = null;
+  let centerControlsOverlayController = null;
 
   function ensureVideoCheckOverlay() {
     if (videoCheckOverlayEl) return videoCheckOverlayEl;
@@ -427,6 +429,18 @@
     const playPauseIcon = document.getElementById('playPauseIcon');
     const trackControlsEl = document.getElementById('trackControls');
     const sidebarDrawer = document.getElementById('sidebarDrawer');
+    const playerContainerEl = document.getElementById('player-container');
+    const centerControlsHitEl = document.getElementById('centerControlsHit');
+    const centerControlsPanelEl = document.getElementById('centerControlsPanel');
+    const centerPrevBtn = document.getElementById('centerPrevBtn');
+    const centerPlayPauseBtn = document.getElementById('centerPlayPauseBtn');
+    const centerPlayPauseIcon = document.getElementById('centerPlayPauseIcon');
+    const centerNextBtn = document.getElementById('centerNextBtn');
+    const centerEdgePrevBtn = document.getElementById('centerEdgePrevBtn');
+    const centerEdgeNextBtn = document.getElementById('centerEdgeNextBtn');
+    const centerSidebarToggleInput = document.getElementById('centerSidebarToggleInput');
+    const centerProgressRange = document.getElementById('centerProgressRange');
+    const centerTimeLabel = document.getElementById('centerTimeLabel');
     const playlistHistorySelect = document.getElementById('playlistHistorySelect');
     const trackListContainerEl = document.getElementById('trackListContainer');
     const trackListEl = document.getElementById('trackList');
@@ -1810,6 +1824,8 @@
       if (!playerHost) return;
       if (currentIndex < 0 || !playlistItems[currentIndex]) return;
 
+      try { centerControlsOverlayController?.updateForMode?.(_nextMode); } catch { /* ignore */ }
+
       const doSwitchLoad = () => {
         const autoplay = !!isPlaying;
         isPlaying = false;
@@ -2088,9 +2104,19 @@
       if (isPlaying) {
         playPauseIcon.className = 'icon pause';
         playPauseIcon.textContent = 'pause';
+
+        if (centerPlayPauseIcon) {
+          centerPlayPauseIcon.className = 'icon pause';
+          centerPlayPauseIcon.textContent = 'pause';
+        }
       } else {
         playPauseIcon.className = 'icon play';
         playPauseIcon.textContent = 'play_arrow';
+
+        if (centerPlayPauseIcon) {
+          centerPlayPauseIcon.className = 'icon play';
+          centerPlayPauseIcon.textContent = 'play_arrow';
+        }
       }
     }
 
@@ -2418,11 +2444,47 @@
     document.getElementById('nextBtn').addEventListener('click', playNext);
     document.getElementById('prevBtn').addEventListener('click', playPrev);
 
+    // Center overlay controls: show on interaction and auto-hide.
+    if (centerControlsHitEl && centerControlsPanelEl && playerContainerEl && !centerControlsOverlayController) {
+      centerControlsOverlayController = new CenterControlsOverlay({
+        hitEl: centerControlsHitEl,
+        panelEl: centerControlsPanelEl,
+        playerContainerEl,
+        sidebarDrawerEl: sidebarDrawer,
+        hideAfterMs: 8000,
+        onPrev: () => playPrev(),
+        onNext: () => playNext(),
+        onTogglePlayback: () => togglePlayback(),
+        getPlayerMode: () => getPlayerMode(),
+        isSidebarHidden: () => (sidebar ? sidebar.isHidden() : document.body.classList.contains('sidebar-hidden')),
+        setSidebarHidden: (hidden, options) => {
+          if (sidebar) return sidebar.setHidden(hidden, options);
+          document.body.classList.toggle('sidebar-hidden', !!hidden);
+        },
+        buttons: {
+          prevBtn: centerPrevBtn,
+          playPauseBtn: centerPlayPauseBtn,
+          nextBtn: centerNextBtn,
+          edgePrevBtn: centerEdgePrevBtn,
+          edgeNextBtn: centerEdgeNextBtn,
+          sidebarToggleInput: centerSidebarToggleInput,
+        },
+      });
+      try { centerControlsOverlayController.setup(); } catch { /* ignore */ }
+    }
+
     // Initialize Media Session handlers once the UI is wired.
     try { setupMediaSessionHandlers(); } catch { /* ignore */ }
 
     if (timeLabel) {
       timeLabel.addEventListener('click', (event) => {
+        event.preventDefault();
+        focusActiveTrack({ scroll: true });
+      });
+    }
+
+    if (centerTimeLabel) {
+      centerTimeLabel.addEventListener('click', (event) => {
         event.preventDefault();
         focusActiveTrack({ scroll: true });
       });
@@ -3100,8 +3162,10 @@
 
     function updateProgressBar() {
       if (!playerHost) {
-        progressRange.value = 0;
-        timeLabel.textContent = '00:00 / 00:00';
+        if (progressRange) progressRange.value = 0;
+        if (centerProgressRange) centerProgressRange.value = 0;
+        if (timeLabel) timeLabel.textContent = '00:00 / 00:00';
+        if (centerTimeLabel) centerTimeLabel.textContent = '00:00 / 00:00';
         return;
       }
 
@@ -3137,21 +3201,30 @@
       const current = getPlayerCurrentTimeSeconds();
 
       if (!duration || !isFinite(duration) || duration <= 0) {
-        progressRange.value = 0;
-        timeLabel.textContent = `${formatTime(current)} / --:--`;
+        if (progressRange && !isProgressScrubbing) progressRange.value = 0;
+        if (centerProgressRange && !isProgressScrubbing) centerProgressRange.value = 0;
+        const text = `${formatTime(current)} / --:--`;
+        if (timeLabel) timeLabel.textContent = text;
+        if (centerTimeLabel) centerTimeLabel.textContent = text;
         return;
       }
 
       const frac = Math.max(0, Math.min(1, current / duration));
-      progressRange.value = Math.round(frac * 1000);
-      timeLabel.textContent = `${formatTime(current)} / ${formatTime(duration)}`;
+      if (!isProgressScrubbing) {
+        if (progressRange) progressRange.value = Math.round(frac * 1000);
+        if (centerProgressRange) centerProgressRange.value = Math.round(frac * 1000);
+      }
+      const text = `${formatTime(current)} / ${formatTime(duration)}`;
+      if (timeLabel) timeLabel.textContent = text;
+      if (centerTimeLabel) centerTimeLabel.textContent = text;
     }
 
-    function setProgressScrubbing(active) {
+    function setProgressScrubbing(active, valueRaw = null) {
       isProgressScrubbing = !!active;
       if (isProgressScrubbing) {
         sidebar.suppressHide(8000);
-        updateSeekFeedbackFromFraction(Number(progressRange.value) / 1000);
+        const v = (valueRaw == null) ? Number(progressRange?.value || 0) : Number(valueRaw);
+        updateSeekFeedbackFromFraction(v / 1000);
       }
       if (!isProgressScrubbing) {
         // Fade out once the user stops dragging.
@@ -3163,26 +3236,39 @@
 
     // On touch devices, dragging the range thumb can trigger YouTube state changes
     // (buffering/playing) and we must not treat those as outside taps.
-    progressRange.addEventListener('pointerdown', () => setProgressScrubbing(true), { passive: true });
-    progressRange.addEventListener('pointerup', clearProgressScrubbing, { passive: true });
-    progressRange.addEventListener('pointercancel', clearProgressScrubbing, { passive: true });
-    progressRange.addEventListener('touchstart', () => setProgressScrubbing(true), { passive: true });
-    progressRange.addEventListener('touchend', clearProgressScrubbing, { passive: true });
-    progressRange.addEventListener('touchcancel', clearProgressScrubbing, { passive: true });
-
-    progressRange.addEventListener('input', () => {
+    function _onProgressInput(valueRaw) {
       if (!playerHost) {
         return;
       }
       const duration = getPlayerDurationSeconds();
       if (!duration || !isFinite(duration) || duration <= 0) return;
-      const frac = Number(progressRange.value) / 1000;
+      const frac = Number(valueRaw) / 1000;
       const newTime = frac * duration;
       if (isProgressScrubbing) {
         sidebar.suppressHide(8000);
       }
       updateSeekFeedbackFromFraction(frac);
       seekToSeconds(newTime);
-    });
+    }
+
+    if (progressRange) {
+      progressRange.addEventListener('pointerdown', () => setProgressScrubbing(true, progressRange.value), { passive: true });
+      progressRange.addEventListener('pointerup', clearProgressScrubbing, { passive: true });
+      progressRange.addEventListener('pointercancel', clearProgressScrubbing, { passive: true });
+      progressRange.addEventListener('touchstart', () => setProgressScrubbing(true, progressRange.value), { passive: true });
+      progressRange.addEventListener('touchend', clearProgressScrubbing, { passive: true });
+      progressRange.addEventListener('touchcancel', clearProgressScrubbing, { passive: true });
+      progressRange.addEventListener('input', () => _onProgressInput(progressRange.value));
+    }
+
+    if (centerProgressRange) {
+      centerProgressRange.addEventListener('pointerdown', () => setProgressScrubbing(true, centerProgressRange.value), { passive: true });
+      centerProgressRange.addEventListener('pointerup', clearProgressScrubbing, { passive: true });
+      centerProgressRange.addEventListener('pointercancel', clearProgressScrubbing, { passive: true });
+      centerProgressRange.addEventListener('touchstart', () => setProgressScrubbing(true, centerProgressRange.value), { passive: true });
+      centerProgressRange.addEventListener('touchend', clearProgressScrubbing, { passive: true });
+      centerProgressRange.addEventListener('touchcancel', clearProgressScrubbing, { passive: true });
+      centerProgressRange.addEventListener('input', () => _onProgressInput(centerProgressRange.value));
+    }
 
     // TEMP: swipe gesture overlays/controllers removed during refactor.

@@ -50,6 +50,7 @@ skip_previous
 slow_motion_video
 sort_by_alpha
 table_eye
+thumbnail_bar
 thumb_down
 thumb_up
 tune

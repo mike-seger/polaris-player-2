@@ -6,6 +6,7 @@ INPUT_FONT_DEFAULT="${SCRIPT_DIR}/MaterialSymbolsRounded[FILL,GRAD,opsz,wght].tt
 NAMES_FILE_DEFAULT="${SCRIPT_DIR}/used-symbols-names.txt"
 OUTPUT_DIR_DEFAULT="${SCRIPT_DIR}/../public"
 PREVIEW_FILE_DEFAULT="${SCRIPT_DIR}/index.html"
+OUTPUT_NAME_DEFAULT="player"
 
 FILL_VALUE="0"
 GRAD_VALUE="0"
@@ -15,6 +16,7 @@ INPUT_FONT="$INPUT_FONT_DEFAULT"
 NAMES_FILE="$NAMES_FILE_DEFAULT"
 OUTPUT_DIR="$OUTPUT_DIR_DEFAULT"
 PREVIEW_FILE="$PREVIEW_FILE_DEFAULT"
+OUTPUT_NAME="$OUTPUT_NAME_DEFAULT"
 PYFTSUBSET_BIN="${PYFTSUBSET_BIN:-pyftsubset}"
 FONTTOOLS_BIN="${FONTTOOLS_BIN:-fonttools}"
 
@@ -33,6 +35,7 @@ Options:
   --font <path>         Override the source font file
   --names-file <path>   Override the glyph name list file
   --output-dir <path>   Override the output directory
+  --output-name <name>  Output base name (default: player)
   --preview-file <path> Override the generated preview HTML file
   --help                Show this help and exit
 
@@ -69,6 +72,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     --output-dir)
       OUTPUT_DIR="$2"
+      shift 2
+      ;;
+    --output-name)
+      OUTPUT_NAME="$2"
       shift 2
       ;;
     --preview-file)
@@ -154,7 +161,8 @@ subset_font() {
   echo "✔ created $output_file"
 }
 
-subset_font "woff2" "$OUTPUT_DIR/player.woff2"
+OUT_FILE_WOFF2="$OUTPUT_DIR/${OUTPUT_NAME}.woff2"
+subset_font "woff2" "$OUT_FILE_WOFF2"
 
 generate_preview_html() {
   local preview_file="$1"
@@ -162,7 +170,7 @@ generate_preview_html() {
   preview_dir="$(dirname "$preview_file")"
   mkdir -p "$preview_dir"
 
-  cat >"$preview_file" <<'EOF'
+  cat >"$preview_file" <<EOF
 <!doctype html>
 <html lang="en">
 <head>
@@ -174,7 +182,7 @@ generate_preview_html() {
       font-style: normal;
       font-weight: 400;
       font-display: swap;
-      src: url('../public/player.woff2') format('woff2');
+      src: url('../public/${OUTPUT_NAME}.woff2') format('woff2');
     }
 
     body {

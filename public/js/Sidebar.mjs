@@ -46,11 +46,13 @@ export class Sidebar {
     return document.body.classList.contains('sidebar-hidden');
   }
 
-  setHidden(hidden) {
+  setHidden(hidden, options = {}) {
     const wantsHidden = !!hidden;
 
+    const force = !!(options && options.force);
+
     // Temporarily disable all sidebar hiding calls.
-    if (this.disableHiding && wantsHidden) {
+    if (this.disableHiding && wantsHidden && !force) {
       return;
     }
 
@@ -176,7 +178,7 @@ export class Sidebar {
       this.sidebarMenuBtn.addEventListener('click', (event) => {
         event.preventDefault();
         event.stopPropagation();
-        this.setHidden(true);
+        this.setHidden(true, { force: true, source: 'menu' });
       });
     }
 
