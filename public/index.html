@@ -82,50 +82,31 @@
                   <span class="icon cancel" aria-hidden="true">cancel</span>
                 </button>
               </div>
-              <div class="details-toggle-wrapper" id="artistFilterWrapper">
+              <div class="details-toggle-wrapper" id="combinedFilterWrapper">
                 <button
-                  id="artistFilterBtn"
+                  id="combinedFilterBtn"
                   type="button"
-                  aria-label="Artist filter"
-                  title="Filter by artist"
+                  aria-label="Filters"
+                  title="Filters"
                   aria-haspopup="true"
                   aria-expanded="false"
-                  aria-controls="artistFilterOverlay"
+                  aria-controls="combinedFilterOverlay"
                 >
-                  <span class="icon artist" id="artistFilterIcon" aria-hidden="true">artist</span>
+                  <span class="icon filter_alt" id="combinedFilterIcon" aria-hidden="true">filter_alt</span>
                 </button>
                 <div
-                  id="artistFilterOverlay"
+                  id="combinedFilterOverlay"
                   class="track-details-overlay"
                   role="dialog"
                   aria-modal="false"
                   aria-hidden="true"
-                  aria-labelledby="artistFilterHeading"
+                  aria-labelledby="combinedFilterHeading"
                 >
+                  <div class="track-details-header" id="combinedFilterHeading">Filters</div>
+
                   <div class="track-details-header" id="artistFilterHeading">Artists</div>
                   <div id="artistFilterOptions"></div>
-                </div>
-              </div>
-              <div class="details-toggle-wrapper" id="countryFilterWrapper">
-                <button
-                  id="countryFilterBtn"
-                  type="button"
-                  aria-label="Country filter"
-                  title="Filter by country"
-                  aria-haspopup="true"
-                  aria-expanded="false"
-                  aria-controls="countryFilterOverlay"
-                >
-                  <span class="icon flag" id="countryFilterIcon" aria-hidden="true">flag</span>
-                </button>
-                <div
-                  id="countryFilterOverlay"
-                  class="track-details-overlay"
-                  role="dialog"
-                  aria-modal="false"
-                  aria-hidden="true"
-                  aria-labelledby="countryFilterHeading"
-                >
+
                   <div class="track-details-header" id="countryFilterHeading">Countries</div>
                   <div id="countryFilterOptions"></div>
                 </div>

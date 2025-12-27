@@ -13,6 +13,7 @@ content_copy
 delete
 download
 fast_forward
+filter_alt
 flag
 folder
 folder_open

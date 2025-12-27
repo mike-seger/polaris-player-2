@@ -276,21 +276,25 @@ export class ArtistFilterOverlay {
   }
 
   updateOptions() {
-    if (!this.buttonEl || !this.optionsEl) return;
+    if (!this.optionsEl) return;
 
     const { artists, counts } = this.collectCounts();
     this.optionsEl.innerHTML = '';
 
     if (!artists.length) {
-      this.buttonEl.disabled = true;
-      this.buttonEl.title = 'No artists detected';
+      if (this.buttonEl) {
+        this.buttonEl.disabled = true;
+        this.buttonEl.title = 'No artists detected';
+      }
       this.setFilters([]);
       this.updateButtonState();
       return;
     }
 
-    this.buttonEl.disabled = false;
-    this.buttonEl.title = 'Filter by artist';
+    if (this.buttonEl) {
+      this.buttonEl.disabled = false;
+      this.buttonEl.title = 'Filter by artist';
+    }
 
     const selectedKeys = new Set(this.getFilters().map((a) => this.normalizeArtistKey(a)).filter(Boolean));
 

@@ -235,21 +235,25 @@ export class CountryFilterOverlay {
   }
 
   updateOptions() {
-    if (!this.buttonEl || !this.optionsEl) return;
+    if (!this.optionsEl) return;
 
     const { codes, counts } = this.collectCounts();
     this.optionsEl.innerHTML = '';
 
     if (!codes.length) {
-      this.buttonEl.disabled = true;
-      this.buttonEl.title = 'No country tags available';
+      if (this.buttonEl) {
+        this.buttonEl.disabled = true;
+        this.buttonEl.title = 'No country tags available';
+      }
       this.setFilters([]);
       this.updateButtonState();
       return;
     }
 
-    this.buttonEl.disabled = false;
-    this.buttonEl.title = 'Filter by country';
+    if (this.buttonEl) {
+      this.buttonEl.disabled = false;
+      this.buttonEl.title = 'Filter by country';
+    }
 
     const selected = new Set(this.normalizeCountryFilterList(this.getFilters()));
 

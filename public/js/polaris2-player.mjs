@@ -18,6 +18,7 @@
   import { Sidebar } from './Sidebar.mjs';
   import { ArtistFilterOverlay } from './ArtistFilterOverlay.mjs';
   import { CountryFilterOverlay } from './CountryFilterOverlay.mjs';
+  import { CombinedFilterOverlay } from './CombinedFilterOverlay.mjs';
   import { computeFilteredIndices as computeFilteredIndicesPure } from './FilterEngine.mjs';
   import { getSortKeyForTitle } from './TrackParsing.mjs';
   import { TrackListView } from './TrackListView.mjs';
@@ -377,13 +378,10 @@
     const filterInputEl = document.getElementById('filterInput');
     const filterWrapper = document.getElementById('filterWrapper');
     const clearFilterBtn = document.getElementById('clearFilterBtn');
-    const artistFilterWrapper = document.getElementById('artistFilterWrapper');
-    const artistFilterBtn = document.getElementById('artistFilterBtn');
-    const artistFilterOverlay = document.getElementById('artistFilterOverlay');
+    const combinedFilterWrapper = document.getElementById('combinedFilterWrapper');
+    const combinedFilterBtn = document.getElementById('combinedFilterBtn');
+    const combinedFilterOverlay = document.getElementById('combinedFilterOverlay');
     const artistFilterOptions = document.getElementById('artistFilterOptions');
-    const countryFilterWrapper = document.getElementById('countryFilterWrapper');
-    const countryFilterBtn = document.getElementById('countryFilterBtn');
-    const countryFilterOverlay = document.getElementById('countryFilterOverlay');
     const countryFilterOptions = document.getElementById('countryFilterOptions');
     const fullscreenBtn = document.getElementById('fullscreenBtn');
     const fullscreenIcon = document.getElementById('fullscreenIcon');
@@ -542,6 +540,11 @@
       getFilterText: () => filterText,
       getArtistFilters: () => artistFilters,
       getCountryFilters: () => countryFilters,
+      getIsEffectivelyFiltering: () => {
+        const total = Array.isArray(playlistItems) ? playlistItems.length : 0;
+        const shown = Array.isArray(filteredIndices) ? filteredIndices.length : 0;
+        return total > 0 && shown < total;
+      },
       getFilteredIndices: () => filteredIndices,
       getSortAlphabetically: () => sortAlphabetically,
 
@@ -585,8 +588,7 @@
       allowScrollSelectors: [
         '#sidebarDrawer',
         '#trackListContainer',
-        '#artistFilterOverlay',
-        '#countryFilterOverlay',
+        '#combinedFilterOverlay',
         '.playlist-overlay-content',
         '#alertOverlay'
       ]
@@ -832,21 +834,14 @@
     }
 
     let trackDetailsOverlayController;
+    let combinedFilterOverlayController;
 
     const countryFilterOverlayController = new CountryFilterOverlay({
-      buttonEl: countryFilterBtn,
-      overlayEl: countryFilterOverlay,
-      wrapperEl: countryFilterWrapper,
+      buttonEl: null,
+      overlayEl: null,
+      wrapperEl: combinedFilterWrapper,
       optionsEl: countryFilterOptions,
       filterInputEl,
-      onBeforeOpen: () => {
-        if (trackDetailsOverlayController && trackDetailsOverlayController.isVisible()) {
-          trackDetailsOverlayController.close();
-        }
-        if (artistFilterOverlayController.isVisible()) {
-          artistFilterOverlayController.close();
-        }
-      },
       getPlaylistItems: () => playlistItems,
       getFilters: () => countryFilters,
       setFilters: (next) => {
@@ -856,6 +851,7 @@
       onFiltersChanged: () => {
         computeFilteredIndices();
         renderTrackList();
+        combinedFilterOverlayController?.updateButtonState?.();
       },
       normalizeIso3: (code) => normalizeIso3(code),
       normalizeCountryFilterList: (value) => normalizeCountryFilterList(value),
@@ -865,19 +861,11 @@
     });
 
     const artistFilterOverlayController = new ArtistFilterOverlay({
-      buttonEl: artistFilterBtn,
-      overlayEl: artistFilterOverlay,
-      wrapperEl: artistFilterWrapper,
+      buttonEl: null,
+      overlayEl: null,
+      wrapperEl: combinedFilterWrapper,
       optionsEl: artistFilterOptions,
       filterInputEl,
-      onBeforeOpen: () => {
-        if (trackDetailsOverlayController && trackDetailsOverlayController.isVisible()) {
-          trackDetailsOverlayController.close();
-        }
-        if (countryFilterOverlayController.isVisible()) {
-          countryFilterOverlayController.close();
-        }
-      },
       getPlaylistItems: () => playlistItems,
       getFilters: () => artistFilters,
       setFilters: (next) => {
@@ -887,14 +875,37 @@
       onFiltersChanged: (renderOptions = {}) => {
         computeFilteredIndices();
         renderTrackList(renderOptions);
+        combinedFilterOverlayController?.updateButtonState?.();
       },
       normalizeArtistName: (name) => normalizeArtistName(name),
       normalizeArtistKey: (name) => normalizeArtistKey(name),
       makeSortKey: (value) => makeSortKey(value),
     });
 
-    countryFilterOverlayController.setup();
-    artistFilterOverlayController.setup();
+    combinedFilterOverlayController = new CombinedFilterOverlay({
+      buttonEl: combinedFilterBtn,
+      overlayEl: combinedFilterOverlay,
+      wrapperEl: combinedFilterWrapper,
+      filterInputEl,
+      artistOptionsEl: artistFilterOptions,
+      countryOptionsEl: countryFilterOptions,
+
+      onBeforeOpen: () => {
+        if (trackDetailsOverlayController && trackDetailsOverlayController.isVisible()) {
+          trackDetailsOverlayController.close();
+        }
+      },
+
+      getArtistFilters: () => artistFilters,
+      getCountryFilters: () => countryFilters,
+
+      updateArtistOptions: () => artistFilterOverlayController.updateOptions(),
+      updateCountryOptions: () => countryFilterOverlayController.updateOptions(),
+
+      onArtistTypeaheadChar: (key) => artistFilterOverlayController.handleTypeaheadChar(key),
+      onCountryTypeaheadChar: (key) => countryFilterOverlayController.handleTypeaheadChar(key),
+    });
+    combinedFilterOverlayController.setup();
 
     trackDetailsOverlayController = new TrackDetailsOverlay({
       wrapperEl: trackDetailsWrapper,
@@ -923,11 +934,8 @@
       renderTrackList: (options) => renderTrackList(options),
 
       onBeforeOpen: () => {
-        if (artistFilterOverlayController.isVisible()) {
-          artistFilterOverlayController.close();
-        }
-        if (countryFilterOverlayController.isVisible()) {
-          countryFilterOverlayController.close();
+        if (combinedFilterOverlayController && combinedFilterOverlayController.isVisible()) {
+          combinedFilterOverlayController.close();
         }
       },
     });
@@ -941,12 +949,8 @@
           trackDetailsOverlayController.close({ focusButton: !handled });
           handled = true;
         }
-        if (artistFilterOverlayController.isVisible()) {
-          artistFilterOverlayController.close({ focusButton: !handled });
-          handled = true;
-        }
-        if (countryFilterOverlayController.isVisible()) {
-          countryFilterOverlayController.close({ focusButton: !handled });
+        if (combinedFilterOverlayController && combinedFilterOverlayController.isVisible()) {
+          combinedFilterOverlayController.close({ focusButton: !handled });
           handled = true;
         }
         if (handled) {
@@ -1089,11 +1093,15 @@
 
       countryFilters = [];
       countryFilterOverlayController.updateOptions();
-      countryFilterOverlayController.close();
+      combinedFilterOverlayController?.updateButtonState?.();
 
       artistFilters = [];
       artistFilterOverlayController.updateOptions();
-      artistFilterOverlayController.close();
+      combinedFilterOverlayController?.updateButtonState?.();
+
+      if (combinedFilterOverlayController && combinedFilterOverlayController.isVisible()) {
+        combinedFilterOverlayController.close();
+      }
 
       if (trackDetailStore) {
         ({ preferences: trackDetailSettings, sortAlphabetically } = trackDetailStore.resetInMemory());
@@ -1998,6 +2006,8 @@
         normalizeCountryFilterList,
         splitCountryCodes,
       });
+
+      combinedFilterOverlayController?.updateButtonState?.();
     }
 
     function getSortKeyForIndex(idx) {
@@ -2459,6 +2469,7 @@
       refreshFilterOverlays: () => {
         countryFilterOverlayController.updateOptions();
         artistFilterOverlayController.updateOptions();
+        combinedFilterOverlayController?.updateButtonState?.();
       },
 
       computeFilteredIndices: () => computeFilteredIndices(),
