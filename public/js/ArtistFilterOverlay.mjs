@@ -315,18 +315,6 @@ export class ArtistFilterOverlay {
 
     const headerRow = document.createElement('div');
     headerRow.className = 'track-details-option';
-    headerRow.dataset.role = 'all';
-
-    const allLabel = document.createElement('label');
-    allLabel.className = 'track-details-inline';
-    const allInput = document.createElement('input');
-    allInput.type = 'checkbox';
-    allInput.checked = selectedKeys.size === 0;
-    allInput.setAttribute('aria-label', 'All artists');
-    const allText = document.createElement('span');
-    allText.textContent = 'All';
-    allLabel.appendChild(allInput);
-    allLabel.appendChild(allText);
 
     const sortLabel = document.createElement('span');
     sortLabel.className = 'track-details-inline-label';
@@ -347,18 +335,9 @@ export class ArtistFilterOverlay {
     });
     sortSelect.value = this.sortMode;
 
-    headerRow.appendChild(allLabel);
     headerRow.appendChild(sortLabel);
     headerRow.appendChild(sortSelect);
     this.optionsEl.appendChild(headerRow);
-
-    allInput.addEventListener('change', () => {
-      if (!allInput.checked) return;
-      this.setFilters([]);
-      this.updateButtonState();
-      this.onFiltersChanged();
-      this.updateOptions();
-    });
 
     sortSelect.addEventListener('change', () => {
       this.sortMode = sortSelect.value === 'count' ? 'count' : 'az';

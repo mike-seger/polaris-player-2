@@ -387,7 +387,13 @@
     const combinedFilterWrapper = document.getElementById('combinedFilterWrapper');
     const combinedFilterBtn = document.getElementById('combinedFilterBtn');
     const combinedFilterOverlay = document.getElementById('combinedFilterOverlay');
+    const filtersResetBtn = document.getElementById('filtersResetBtn');
     const markedOnlyCheckbox = document.getElementById('markedOnlyCheckbox');
+    const artistResetBtn = document.getElementById('artistResetBtn');
+    const countryResetBtn = document.getElementById('countryResetBtn');
+    const markedFilterHeading = document.getElementById('markedFilterHeading');
+    const artistFilterHeading = document.getElementById('artistFilterHeading');
+    const countryFilterHeading = document.getElementById('countryFilterHeading');
     const artistFilterOptions = document.getElementById('artistFilterOptions');
     const countryFilterOptions = document.getElementById('countryFilterOptions');
     const fullscreenBtn = document.getElementById('fullscreenBtn');
@@ -2654,12 +2660,106 @@
 
     // Sorting is controlled via the Details overlay.
 
+    function syncFilterHeaderCheckboxes() {
+      if (markedOnlyCheckbox) markedOnlyCheckbox.checked = !!onlyMarked;
+    }
+
+    function clearArtistFiltersFromHeader() {
+      artistFilters = filterStateStore.clearArtistFilters();
+      artistFilterOverlayController?.updateOptions?.();
+      computeFilteredIndices();
+      renderTrackList({ preserveScroll: true });
+    }
+
+    function clearCountryFiltersFromHeader() {
+      countryFilters = filterStateStore.clearCountryFilters();
+      countryFilterOverlayController?.updateOptions?.();
+      computeFilteredIndices();
+      renderTrackList({ preserveScroll: true });
+    }
+
+    function toggleOnlyMarkedFromHeader() {
+      onlyMarked = filterStateStore.setOnlyMarked(!onlyMarked);
+      computeFilteredIndices();
+      renderTrackList({ preserveScroll: true });
+      syncFilterHeaderCheckboxes();
+    }
+
+    if (filtersResetBtn) {
+      filtersResetBtn.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+
+        filterInputEl.value = '';
+        filterText = filterStateStore.clearFilterText();
+        updateFilterWrapperClass();
+
+        onlyMarked = filterStateStore.clearOnlyMarked();
+        if (markedOnlyCheckbox) markedOnlyCheckbox.checked = false;
+
+        artistFilters = filterStateStore.clearArtistFilters();
+        countryFilters = filterStateStore.clearCountryFilters();
+
+        artistFilterOverlayController?.updateOptions?.();
+        countryFilterOverlayController?.updateOptions?.();
+
+        computeFilteredIndices();
+        renderTrackList({ preserveScroll: true });
+        syncFilterHeaderCheckboxes();
+      });
+    }
+
     if (markedOnlyCheckbox) {
-      markedOnlyCheckbox.checked = !!onlyMarked;
+      syncFilterHeaderCheckboxes();
       markedOnlyCheckbox.addEventListener('change', () => {
         onlyMarked = filterStateStore.setOnlyMarked(!!markedOnlyCheckbox.checked);
         computeFilteredIndices();
         renderTrackList({ preserveScroll: true });
+        syncFilterHeaderCheckboxes();
+      });
+    }
+
+    if (artistResetBtn) {
+      artistResetBtn.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        clearArtistFiltersFromHeader();
+      });
+    }
+
+    if (countryResetBtn) {
+      countryResetBtn.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        clearCountryFiltersFromHeader();
+      });
+    }
+
+    if (artistFilterHeading) {
+      artistFilterHeading.addEventListener('click', (event) => {
+        const targetEl = event.target instanceof Element ? event.target : null;
+        if (targetEl && targetEl.closest('button')) return;
+        if (Array.isArray(artistFilters) && artistFilters.length > 0) {
+          clearArtistFiltersFromHeader();
+        }
+      });
+    }
+
+    if (countryFilterHeading) {
+      countryFilterHeading.addEventListener('click', (event) => {
+        const targetEl = event.target instanceof Element ? event.target : null;
+        if (targetEl && targetEl.closest('button')) return;
+        if (Array.isArray(countryFilters) && countryFilters.length > 0) {
+          clearCountryFiltersFromHeader();
+        }
+      });
+    }
+
+    if (markedFilterHeading) {
+      markedFilterHeading.addEventListener('click', (event) => {
+        const targetEl = event.target instanceof Element ? event.target : null;
+        if (targetEl && targetEl.closest('input[type="checkbox"]')) return;
+        toggleOnlyMarkedFromHeader();
       });
     }
 

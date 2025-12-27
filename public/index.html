@@ -102,20 +102,28 @@
                   aria-hidden="true"
                   aria-labelledby="combinedFilterHeading"
                 >
-                  <div class="track-details-header" id="combinedFilterHeading">Filters</div>
+                  <div class="track-details-header" id="combinedFilterHeading">
+                    <span>Filters</span>
+                    <button id="filtersResetBtn" class="filters-reset-btn" type="button" aria-label="Reset filters" title="Reset filters">Reset</button>
+                  </div>
 
-                  <div class="track-details-header track-details-header-split" id="markedFilterHeading">
-                    <span>Marked</span>
-                    <label class="track-details-option track-details-option-compact">
-                      <input id="markedOnlyCheckbox" type="checkbox" />
-                      <span>Only</span>
+                  <div class="track-details-header track-details-header-inline" id="markedFilterHeading">
+                    <span>Marked Tracks</span>
+                    <label class="track-details-option track-details-option-compact" title="Only marked tracks">
+                      <input id="markedOnlyCheckbox" type="checkbox" aria-label="Only marked tracks" />
                     </label>
                   </div>
 
-                  <div class="track-details-header" id="artistFilterHeading">Artist</div>
+                  <div class="track-details-header track-details-header-inline" id="artistFilterHeading">
+                    <span>Artists</span>
+                    <button id="artistResetBtn" class="filters-reset-btn" type="button" aria-label="Reset artist filters" title="Reset artist filters">Reset</button>
+                  </div>
                   <div id="artistFilterOptions"></div>
 
-                  <div class="track-details-header" id="countryFilterHeading">Country</div>
+                  <div class="track-details-header track-details-header-inline" id="countryFilterHeading">
+                    <span>Countries</span>
+                    <button id="countryResetBtn" class="filters-reset-btn" type="button" aria-label="Reset country filters" title="Reset country filters">Reset</button>
+                  </div>
                   <div id="countryFilterOptions"></div>
                 </div>
               </div>
