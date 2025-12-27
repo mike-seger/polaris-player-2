@@ -5,6 +5,7 @@
   "type": "module",
   "main": "server.mjs",
   "scripts": {
+    "test": "node --test",
     "start": "node server.mjs",
     "dev": "nodemon server.mjs",
     "gen:iso3": "node utility/generate-iso3-to-iso2.mjs"

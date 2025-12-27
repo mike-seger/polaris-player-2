@@ -557,7 +557,7 @@
       getIsEffectivelyFiltering: () => {
         const total = Array.isArray(playlistItems) ? playlistItems.length : 0;
         const shown = Array.isArray(filteredIndices) ? filteredIndices.length : 0;
-        return total > 0 && shown < total;
+        return !!onlyMarked || (total > 0 && shown < total);
       },
       getFilteredIndices: () => filteredIndices,
       getSortAlphabetically: () => sortAlphabetically,
@@ -903,6 +903,12 @@
       filterInputEl,
       artistOptionsEl: artistFilterOptions,
       countryOptionsEl: countryFilterOptions,
+
+      getIsEffectivelyFiltering: () => {
+        const total = Array.isArray(playlistItems) ? playlistItems.length : 0;
+        const shown = Array.isArray(filteredIndices) ? filteredIndices.length : 0;
+        return !!onlyMarked || (total > 0 && shown < total);
+      },
 
       onBeforeOpen: () => {
         if (trackDetailsOverlayController && trackDetailsOverlayController.isVisible()) {
