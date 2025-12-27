@@ -339,6 +339,52 @@ export class YTController {
     }
   }
 
+  /**
+   * Best-effort: request a specific playback quality.
+   * Note: YouTube may ignore or override this depending on conditions.
+   * @param {string} quality
+   */
+  setPlaybackQuality(quality) {
+    if (!this._player || typeof this._player.setPlaybackQuality !== 'function') return;
+    const q = String(quality || '').trim();
+    if (!q) return;
+    try { this._player.setPlaybackQuality(q); } catch { /* ignore */ }
+  }
+
+  /** @returns {string} */
+  getPlaybackQuality() {
+    if (!this._player || typeof this._player.getPlaybackQuality !== 'function') return '';
+    try {
+      const q = this._player.getPlaybackQuality();
+      return typeof q === 'string' ? q : '';
+    } catch {
+      return '';
+    }
+  }
+
+  /** @returns {string[]} */
+  getAvailableQualityLevels() {
+    if (!this._player || typeof this._player.getAvailableQualityLevels !== 'function') return [];
+    try {
+      const levels = this._player.getAvailableQualityLevels();
+      return Array.isArray(levels) ? levels.filter((x) => typeof x === 'string') : [];
+    } catch {
+      return [];
+    }
+  }
+
+  /**
+   * Best-effort: request an iframe player size.
+   * (May be overridden by CSS sizing rules.)
+   */
+  setSize(width, height) {
+    if (!this._player || typeof this._player.setSize !== 'function') return;
+    const w = Number(width);
+    const h = Number(height);
+    if (!Number.isFinite(w) || !Number.isFinite(h)) return;
+    try { this._player.setSize(w, h); } catch { /* ignore */ }
+  }
+
   load(videoId, options = {}) {
     const { startSeconds = 0, autoplay = true } = options || {};
     const cleanedVideoId = (videoId || '').trim();

@@ -52,6 +52,8 @@ export class YouTubeAdapter {
 
     this._timeTimer = null;
 
+    this._coverOptimized = false;
+
     this._yt = new YTController(options);
     this._yt.onReady(() => {
       this._emitCaps();
@@ -187,6 +189,35 @@ export class YouTubeAdapter {
       time: { positionMs: posMs, durationMs: durMs, bufferedMs: undefined },
       activeTrackId: this._track?.id
     };
+  }
+
+  /**
+   * When the YouTube iframe is fully covered (e.g., mobile full-width sidebar),
+   * we can reduce GPU/CPU pressure by asking YouTube to stream/render a lower
+   * *video* quality. Audio settings are not modified.
+   *
+   * Best-effort: the IFrame API may ignore the request or adapt over time.
+   */
+  setCoverOptimization(covered) {
+    const next = !!covered;
+    if (next === this._coverOptimized) return;
+    this._coverOptimized = next;
+
+    if (next) {
+      // Prefer a modest low video quality. Avoid forcing the absolute lowest unless needed.
+      // YouTube may still keep high-quality audio depending on the stream.
+      const levels = this._yt.getAvailableQualityLevels();
+      const preferred = ['small', 'tiny'];
+      const pick = preferred.find((q) => levels.includes(q)) || 'small';
+      this._yt.setPlaybackQuality(pick);
+      // Best-effort size hint; may be overridden by CSS.
+      this._yt.setSize(1, 1);
+      return;
+    }
+
+    // Restore adaptive/default behavior.
+    this._yt.setPlaybackQuality('default');
+    this._yt.setSize(320, 200);
   }
 
   async dispose() {

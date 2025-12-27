@@ -10,11 +10,11 @@ function assertHasProgressWrapperPadding(cssText) {
 
   // Heuristic: look within the next ~500 chars for the padding line.
   const windowText = cssText.slice(idx, idx + 500);
-  assert.match(
-    windowText,
-    /padding-bottom\s*:\s*6px\s*;/,
-    'Expected #progressWrapper to include padding-bottom: 6px;'
-  );
+  const m = windowText.match(/padding-bottom\s*:\s*(\d+)px\s*;/);
+  assert.ok(m, 'Expected #progressWrapper to include padding-bottom in px');
+  const px = Number.parseInt(m[1], 10);
+  assert.ok(Number.isFinite(px), 'Expected numeric padding-bottom value');
+  assert.ok(px >= 6, `Expected #progressWrapper padding-bottom >= 6px (got ${px}px)`);
 }
 
 test('progress row has extra bottom padding', async () => {

@@ -27,6 +27,7 @@
   import { addYtEmbedError150, hasYtEmbedError150, removeYtEmbedError150 } from './ErrorLists.mjs';
 
   let playerHost;
+  let ytAdapter = null;
   let spotifyAdapter = null;
   let ytEmbedError150SkipTimer = null;
   let ytEmbedError150SkipKey = '';
@@ -1806,10 +1807,11 @@
         // ignore
       }
 
+      ytAdapter = new YouTubeAdapter({ elementId: null, controls: 0, autoplay: false });
       playerHost = new PlayerHost([
         // Let the adapter create its own mount element inside #player.
         // This avoids the YouTube API replacing the #player node itself.
-        new YouTubeAdapter({ elementId: null, controls: 0, autoplay: false }),
+        ytAdapter,
         new HtmlVideoAdapter(),
         spotifyAdapter
       ]);
@@ -1838,6 +1840,9 @@
         setupMediaSessionHandlers();
         updateMediaSessionMetadata();
         updateMediaSessionPositionState(true);
+
+        // Track changes can switch adapters; refresh cover optimization.
+        try { applyCoveredYouTubeOptimization(); } catch { /* ignore */ }
       });
       playerHost.on('time', () => updateMediaSessionPositionState(false));
       playerHost.on('ended', () => {
@@ -2399,6 +2404,37 @@
 
     sidebar.setup();
 
+    // When the sidebar fully covers the player (mobile portrait full-width sidebar),
+    // request a lower YouTube video quality to reduce decode/render pressure.
+    const fullWidthSidebarMq = window.matchMedia('(max-width: 800px) and (max-aspect-ratio: 2/3)');
+    function applyCoveredYouTubeOptimization() {
+      const isFullWidthSidebarProfile = !!(fullWidthSidebarMq && fullWidthSidebarMq.matches);
+      const sidebarHidden = document.body.classList.contains('sidebar-hidden');
+      const isCovered = isFullWidthSidebarProfile && !sidebarHidden;
+
+      if (!ytAdapter || typeof ytAdapter.setCoverOptimization !== 'function') return;
+
+      // Only apply if YouTube is currently active.
+      const activeKind = playerHost?.getMediaPane?.()?.kind;
+      const isYouTubeActive = (playerHost && playerHost.active && playerHost.active === ytAdapter)
+        || (activeKind === 'iframe');
+      if (!isYouTubeActive) {
+        ytAdapter.setCoverOptimization(false);
+        return;
+      }
+
+      ytAdapter.setCoverOptimization(isCovered);
+    }
+    if (fullWidthSidebarMq && typeof fullWidthSidebarMq.addEventListener === 'function') {
+      fullWidthSidebarMq.addEventListener('change', () => {
+        try { applyCoveredYouTubeOptimization(); } catch { /* ignore */ }
+      });
+    } else if (fullWidthSidebarMq && typeof fullWidthSidebarMq.addListener === 'function') {
+      fullWidthSidebarMq.addListener(() => {
+        try { applyCoveredYouTubeOptimization(); } catch { /* ignore */ }
+      });
+    }
+
     // When the sidebar is shown/hidden (via tap layer, Enter binding, auto-hide, etc)
     // move focus to a sensible target so keyboard shortcuts keep working.
     let _lastSidebarHidden = document.body.classList.contains('sidebar-hidden');
@@ -2414,8 +2450,12 @@
       } else {
         focusTrackControls();
       }
+
+      try { applyCoveredYouTubeOptimization(); } catch { /* ignore */ }
     });
     sidebarClassObserver.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+
+    try { applyCoveredYouTubeOptimization(); } catch { /* ignore */ }
 
     if (shuffleBtn) {
       shuffleBtn.addEventListener('click', () => {
