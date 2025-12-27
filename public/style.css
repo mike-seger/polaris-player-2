@@ -1619,11 +1619,14 @@ body.hide-track-check .track-state-btn {
 }
 
 .center-controls-panel .cco-progress-range {
-    width: 100%;
+    --cco-track-h: 27px;
+    width: calc(100% - var(--cco-track-h));
     flex: 1;
     appearance: none;
     margin-top: 15px;
-    height: 27px;
+    margin-left: auto;
+    margin-right: auto;
+    height: var(--cco-track-h);
     border-radius: 999px;
     --cco-progress-pct: 0%;
     background: linear-gradient(
