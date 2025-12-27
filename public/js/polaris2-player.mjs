@@ -105,6 +105,7 @@
 
     let filterStateStore = null;
     let filterText = '';
+    let onlyMarked = false;
     let artistFilters = [];
     let countryFilters = [];
     let filteredIndices = [];
@@ -270,7 +271,7 @@
       getSettings: () => settings,
       saveSettings: (patch) => saveSettings(patch)
     });
-    ({ filterText, artistFilters, countryFilters } = filterStateStore.snapshot());
+    ({ filterText, onlyMarked, artistFilters, countryFilters } = filterStateStore.snapshot());
 
     trackDetailStore = new TrackDetailSettingsStore({
       defaults: DEFAULT_TRACK_DETAILS,
@@ -334,6 +335,11 @@
       const current = getTrackStateForPlaylist(playlistId, videoId);
       const next = current === TRACK_STATE_CHECKED ? TRACK_STATE_DEFAULT : TRACK_STATE_CHECKED;
       setTrackStateForPlaylist(playlistId, videoId, next);
+
+      if (onlyMarked) {
+        computeFilteredIndices();
+        renderTrackList({ preserveScroll: true });
+      }
       return next;
     }
 
@@ -381,6 +387,7 @@
     const combinedFilterWrapper = document.getElementById('combinedFilterWrapper');
     const combinedFilterBtn = document.getElementById('combinedFilterBtn');
     const combinedFilterOverlay = document.getElementById('combinedFilterOverlay');
+    const markedOnlyCheckbox = document.getElementById('markedOnlyCheckbox');
     const artistFilterOptions = document.getElementById('artistFilterOptions');
     const countryFilterOptions = document.getElementById('countryFilterOptions');
     const fullscreenBtn = document.getElementById('fullscreenBtn');
@@ -538,6 +545,7 @@
       getCurrentIndex: () => currentIndex,
 
       getFilterText: () => filterText,
+      getOnlyMarked: () => onlyMarked,
       getArtistFilters: () => artistFilters,
       getCountryFilters: () => countryFilters,
       getIsEffectivelyFiltering: () => {
@@ -2007,6 +2015,15 @@
         splitCountryCodes,
       });
 
+      if (onlyMarked) {
+        const activePlaylistId = getActivePlaylistId();
+        filteredIndices = (filteredIndices || []).filter((idx) => {
+          const item = playlistItems && playlistItems[idx];
+          const videoId = item && item.videoId;
+          return !!(videoId && isTrackChecked(activePlaylistId, videoId));
+        });
+      }
+
       combinedFilterOverlayController?.updateButtonState?.();
     }
 
@@ -2636,6 +2653,15 @@
     // TrackDetailsOverlay event wiring is handled by TrackDetailsOverlay.setup().
 
     // Sorting is controlled via the Details overlay.
+
+    if (markedOnlyCheckbox) {
+      markedOnlyCheckbox.checked = !!onlyMarked;
+      markedOnlyCheckbox.addEventListener('change', () => {
+        onlyMarked = filterStateStore.setOnlyMarked(!!markedOnlyCheckbox.checked);
+        computeFilteredIndices();
+        renderTrackList({ preserveScroll: true });
+      });
+    }
 
     // filter
     filterInputEl.addEventListener('input', () => {

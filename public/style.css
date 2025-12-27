@@ -779,6 +779,7 @@ body.no-thumbs .track-title {
     min-width: 0;
     display: flex;
     flex-direction: column;
+    justify-content: center;
     gap: 0.1rem;
 }
 
@@ -822,14 +823,17 @@ body.no-thumbs .track-title {
 .track-country-flags {
     position: absolute;
     right: 0;
-    bottom: 0;
+    top: 50%;
     z-index: 3;
     pointer-events: auto;
     font-size: 18px;
     line-height: 1;
     display: none;
     gap: 2px;
+    flex-direction: column;
     align-items: center;
+    justify-content: center;
+    transform: translateY(-50%);
 }
 
 .track-country-flag {
@@ -839,7 +843,9 @@ body.no-thumbs .track-title {
     user-select: none;
 }
 
-body.show-track-country:not(.no-wrap-lines) .track-artist-line.has-flags {
+body.show-track-country:not(.no-wrap-lines) .title.has-country-flags {
+    position: relative;
+    align-self: stretch;
     padding-right: var(--track-country-flags-space, 1.6rem);
 }
 
@@ -1063,6 +1069,19 @@ body.spectrum-hidden #spectrumCanvas {
     margin-bottom: 0.15rem;
 }
 
+.track-details-header-split {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.track-details-option-compact {
+    padding: 0.1rem 0.25rem;
+    min-height: 1.2rem;
+    font-weight: 500;
+}
+
 /* Combined filters: lighter title bar for the top header. */
 #combinedFilterOverlay #combinedFilterHeading {
     background: var(--color-hover);
@@ -1148,6 +1167,7 @@ body.hide-track-number .track-number {
 body.no-wrap-lines .title {
     flex-direction: row;
     align-items: baseline;
+    justify-content: flex-start;
     gap: 0.35rem;
     white-space: nowrap;
     overflow: hidden;

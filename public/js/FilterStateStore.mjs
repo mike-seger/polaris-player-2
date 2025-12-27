@@ -6,6 +6,7 @@ export class FilterStateStore {
     const settings = this.getSettings() || {};
 
     this.filterText = (typeof settings.filterText === 'string') ? settings.filterText : '';
+    this.onlyMarked = !!settings.onlyMarked;
     this.artistFilters = Array.isArray(settings.artistFilters)
       ? this.normalizeArtistFilterList(settings.artistFilters)
       : [];
@@ -29,6 +30,7 @@ export class FilterStateStore {
   snapshot() {
     return {
       filterText: this.filterText,
+      onlyMarked: !!this.onlyMarked,
       artistFilters: this.artistFilters.slice(),
       countryFilters: this.countryFilters.slice(),
       artistFilterOverlayVisible: this.artistFilterOverlayVisible,
@@ -46,6 +48,16 @@ export class FilterStateStore {
 
   clearFilterText() {
     return this.setFilterText('');
+  }
+
+  setOnlyMarked(value) {
+    this.onlyMarked = !!value;
+    this.saveSettings({ onlyMarked: this.onlyMarked });
+    return this.onlyMarked;
+  }
+
+  clearOnlyMarked() {
+    return this.setOnlyMarked(false);
   }
 
   setArtistFilters(next) {
@@ -71,6 +83,7 @@ export class FilterStateStore {
 
   resetInMemory() {
     this.filterText = '';
+    this.onlyMarked = false;
     this.artistFilters = [];
     this.countryFilters = [];
     this.artistFilterOverlayVisible = false;

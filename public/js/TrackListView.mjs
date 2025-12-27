@@ -13,6 +13,7 @@ export class TrackListView {
       getCurrentIndex,
 
       getFilterText,
+      getOnlyMarked,
       getArtistFilters,
       getCountryFilters,
       getFilteredIndices,
@@ -47,6 +48,7 @@ export class TrackListView {
     this.getCurrentIndex = getCurrentIndex;
 
     this.getFilterText = getFilterText;
+    this.getOnlyMarked = typeof getOnlyMarked === 'function' ? getOnlyMarked : () => false;
     this.getArtistFilters = getArtistFilters;
     this.getCountryFilters = getCountryFilters;
     this.getFilteredIndices = getFilteredIndices;
@@ -355,10 +357,12 @@ export class TrackListView {
     this.trackRowElements = new Map();
 
     const filterText = this.getFilterText();
+    const onlyMarked = !!this.getOnlyMarked();
     const artistFilters = this.getArtistFilters();
     const countryFilters = this.getCountryFilters();
 
     const hasFilter = (filterText || '').trim().length > 0
+      || onlyMarked
       || (Array.isArray(artistFilters) && artistFilters.length > 0)
       || (Array.isArray(countryFilters) && countryFilters.length > 0);
 
@@ -511,11 +515,10 @@ export class TrackListView {
           flagsWrap.appendChild(flagSpan);
         });
 
-        const spacePx = flagEntries.length * 18 + Math.max(0, flagEntries.length - 1) * 2 + 6;
-        artistLine.style.setProperty('--track-country-flags-space', `${spacePx}px`);
-
-        artistLine.classList.add('has-flags');
-        artistLine.appendChild(flagsWrap);
+        const spacePx = 18 + 6;
+        textWrap.style.setProperty('--track-country-flags-space', `${spacePx}px`);
+        textWrap.classList.add('has-country-flags');
+        textWrap.appendChild(flagsWrap);
       }
 
       if (parts.artist) {
