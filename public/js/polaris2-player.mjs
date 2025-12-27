@@ -94,7 +94,7 @@
       thumbnail: true,
       wrapLines: true,
       country: true,
-      checkTrack: true,
+      checkTrack: false,
       sortAZ: false
     });
     let trackDetailSettings = { ...DEFAULT_TRACK_DETAILS };

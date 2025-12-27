@@ -31,7 +31,7 @@ html:not(.icons-ready) .icon {
     --player-controls-height: 24px;
     --player-min-slider-width: 160px;
     --player-scale: 1;
-    --track-thumb-width: 60px;
+    --track-thumb-width: 51px;
     --track-row-base-height: var(--track-thumb-width);
     --track-row-padding: 0.25rem;
     --track-row-padding-compact: 0.15rem;
