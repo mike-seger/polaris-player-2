@@ -1608,19 +1608,21 @@ body.hide-track-check .track-state-btn {
 .center-controls-panel .cco-progress {
     margin-top: 14px;
     margin-bottom: 15px;
-    padding: 14px 18px;
+    width: min(72vw, 560px);
+    padding: 15px 15px 25px 15px;
     display: flex;
     flex-direction: column;
     align-items: stretch;
-    gap: 10px;
+    gap: 0;
     border-radius: 999px;
     background: rgba(0, 0, 0, 0.35);
 }
 
 .center-controls-panel .cco-progress-range {
-    width: min(72vw, 560px);
+    width: 100%;
     flex: 1;
     appearance: none;
+    margin-top: 15px;
     height: 27px;
     border-radius: 999px;
     --cco-progress-pct: 0%;
@@ -1634,7 +1636,6 @@ body.hide-track-check .track-state-btn {
     );
     outline: none;
     padding: 0;
-    margin: 0;
 }
 
 .center-controls-panel .cco-progress-range::-webkit-slider-thumb {

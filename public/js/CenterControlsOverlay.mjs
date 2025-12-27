@@ -60,8 +60,9 @@ export class CenterControlsOverlay {
     if (b.prevBtn) b.prevBtn.addEventListener('click', (e) => this._wrapClick(e, () => this.onPrev()));
     if (b.playPauseBtn) b.playPauseBtn.addEventListener('click', (e) => this._wrapClick(e, () => this.onTogglePlayback()));
     if (b.nextBtn) b.nextBtn.addEventListener('click', (e) => this._wrapClick(e, () => this.onNext()));
-    if (b.edgePrevBtn) b.edgePrevBtn.addEventListener('click', (e) => this._wrapClick(e, () => this.onPrev()));
-    if (b.edgeNextBtn) b.edgeNextBtn.addEventListener('click', (e) => this._wrapClick(e, () => this.onNext()));
+    // Edge buttons should never reveal the rest of the overlay.
+    if (b.edgePrevBtn) b.edgePrevBtn.addEventListener('click', (e) => this._wrapEdgeClick(e, () => this.onPrev()));
+    if (b.edgeNextBtn) b.edgeNextBtn.addEventListener('click', (e) => this._wrapEdgeClick(e, () => this.onNext()));
 
     if (b.sidebarToggleInput) {
       try {
@@ -197,6 +198,12 @@ export class CenterControlsOverlay {
     try { fn(); } catch { /* ignore */ }
   }
 
+  _wrapEdgeClick(event, fn) {
+    try { if (event) event.preventDefault(); } catch { /* ignore */ }
+    try { if (event) event.stopPropagation(); } catch { /* ignore */ }
+    try { fn(); } catch { /* ignore */ }
+  }
+
   _armHideTimer() {
     this._clearHideTimer();
     if (!this.hideAfterMs) return;
@@ -216,6 +223,9 @@ export class CenterControlsOverlay {
     if (!event || event.defaultPrevented) return;
     const t = (event.target instanceof Element) ? event.target : null;
     if (!t) return;
+
+    // Never reveal controls due to interactions on the invisible edge nav targets.
+    if (t.closest('.cco-edge')) return;
 
     // Ignore interactions inside the sidebar drawer and overlays.
     if (this.sidebarDrawerEl && this.sidebarDrawerEl.contains(t)) return;
@@ -243,6 +253,9 @@ export class CenterControlsOverlay {
 
     const t = (event.target instanceof Element) ? event.target : null;
     if (!t) return;
+
+    // Don't reveal controls due to hover/move inside edge nav targets.
+    if (t.closest('.cco-edge')) return;
 
     // Ignore hover inside drawers/overlays.
     if (this.sidebarDrawerEl && this.sidebarDrawerEl.contains(t)) return;
