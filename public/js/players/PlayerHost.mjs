@@ -177,6 +177,13 @@ export class PlayerHost {
     // stop old adapter (best effort)
     if (this.active) {
       try { await this.active.stop(); } catch { /* ignore */ }
+      try {
+        if (typeof this.active.deactivate === 'function') {
+          await this.active.deactivate();
+        }
+      } catch {
+        /* ignore */
+      }
       // Make sure inactive players are not visible.
       this._setAdapterVisible(this.active, false);
     }
@@ -188,6 +195,14 @@ export class PlayerHost {
     // Ensure only the selected player is visible.
     for (const a of this.adapters) {
       this._setAdapterVisible(a, a === this.active);
+    }
+
+    try {
+      if (typeof this.active.activate === 'function') {
+        await this.active.activate();
+      }
+    } catch {
+      /* ignore */
     }
 
     // bridge adapter events to host events (UI can subscribe once)

@@ -112,6 +112,8 @@
  * @property {() => PlaybackInfo} getInfo
  * @property {(event: string, fn: Function) => (() => void)} on
  * @property {() => MediaPane} getMediaPane
+ * @property {() => (Promise<void>|void)=} activate
+ * @property {() => (Promise<void>|void)=} deactivate
  * @property {() => Promise<void>} dispose
  */
 

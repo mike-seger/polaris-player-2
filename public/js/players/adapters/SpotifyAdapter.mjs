@@ -162,6 +162,9 @@ export class SpotifyAdapter {
     this._auth = auth;
     this._sdkName = name;
 
+    this._isActive = false;
+    this._lifecycleRev = 0;
+
     this._em = new Emitter();
 
     this._container = null;
@@ -245,6 +248,41 @@ export class SpotifyAdapter {
 
     /** @type {Set<string>} */
     this._skipArtworkCacheIds = new Set();
+  }
+
+  async activate() {
+    this._isActive = true;
+  }
+
+  async deactivate() {
+    this._isActive = false;
+    this._lifecycleRev += 1;
+
+    this._stopPolling();
+    this._pendingPlay = null;
+    this._endedFired = false;
+    this._inactivePollCount = 0;
+
+    // Best-effort stop + disconnect the Web Playback SDK device.
+    // This removes the browser player from the user's active Connect devices,
+    // so other devices won't keep routing audio here after leaving Spotify mode.
+    try { await this._player?.pause?.(); } catch { /* ignore */ }
+    try { await this._player?.disconnect?.(); } catch { /* ignore */ }
+
+    this._player = null;
+    this._deviceId = '';
+    this._ensureReadyPromise = null;
+
+    try { this.setArtworkUrl(''); } catch { /* ignore */ }
+    try {
+      if (this._statusEl) {
+        this._statusEl.style.display = '';
+        this._statusEl.textContent = 'Spotify disconnected.';
+      }
+    } catch { /* ignore */ }
+
+    this._setState('idle');
+    this._em.emit('capabilities', this.getCapabilities());
   }
 
   setPreferredOutputDeviceId(deviceId) {
@@ -784,6 +822,7 @@ export class SpotifyAdapter {
 
   async _ensureReady() {
     if (!this._auth) throw new Error('SpotifyAuth not configured.');
+    if (!this._isActive) throw new Error('Spotify adapter is inactive.');
 
     // Serialize SDK initialization: concurrent calls can create multiple Players, which can
     // drastically increase DRM license requests and lead to 429s / playback failures.
@@ -792,7 +831,11 @@ export class SpotifyAdapter {
       if (this._player && this._deviceId) return;
     }
 
+    const rev = this._lifecycleRev;
     this._ensureReadyPromise = (async () => {
+      if (!this._isActive || this._lifecycleRev !== rev) {
+        throw new Error('Spotify adapter init cancelled.');
+      }
 
       // Make sure we can refresh/obtain a token.
       await this._auth.getAccessToken();
@@ -815,21 +858,29 @@ export class SpotifyAdapter {
       });
 
       player.addListener('initialization_error', ({ message }) => {
+        if (!this._isActive || this._lifecycleRev !== rev) return;
         this._setError('INIT_ERROR', message);
       });
       player.addListener('authentication_error', ({ message }) => {
+        if (!this._isActive || this._lifecycleRev !== rev) return;
         this._setError('AUTH_ERROR', message);
       });
       player.addListener('account_error', ({ message }) => {
+        if (!this._isActive || this._lifecycleRev !== rev) return;
         // Most commonly: user is not Premium.
         this._setError('ACCOUNT_ERROR', message);
       });
       player.addListener('playback_error', ({ message }) => {
+        if (!this._isActive || this._lifecycleRev !== rev) return;
         this._setError('PLAYBACK_ERROR', message);
         this._schedulePlaybackRecovery(message || 'playback_error');
       });
 
       player.addListener('ready', ({ device_id }) => {
+        if (!this._isActive || this._lifecycleRev !== rev) {
+          try { player.disconnect(); } catch { /* ignore */ }
+          return;
+        }
         this._deviceId = device_id || '';
         this._setState('ready');
         if (this._statusEl) this._statusEl.textContent = 'Spotify connected.';
@@ -840,6 +891,7 @@ export class SpotifyAdapter {
       });
 
       player.addListener('not_ready', () => {
+        if (!this._isActive || this._lifecycleRev !== rev) return;
         this._deviceId = '';
         this._setState('error');
         if (this._statusEl) this._statusEl.textContent = 'Spotify disconnected.';
@@ -850,6 +902,7 @@ export class SpotifyAdapter {
       });
 
       player.addListener('player_state_changed', (s) => {
+        if (!this._isActive || this._lifecycleRev !== rev) return;
         if (!s) return;
 
         // The Web Playback SDK provides album images in state; use it to populate our artwork cache
@@ -899,6 +952,12 @@ export class SpotifyAdapter {
         }
       });
 
+      // Only publish the player if we're still active.
+      if (!this._isActive || this._lifecycleRev !== rev) {
+        try { await player.disconnect(); } catch { /* ignore */ }
+        throw new Error('Spotify adapter init cancelled.');
+      }
+
       this._player = player;
       this._setState('loading');
 
@@ -907,10 +966,20 @@ export class SpotifyAdapter {
         throw new Error('Spotify player connect() failed.');
       }
 
+      if (!this._isActive || this._lifecycleRev !== rev) {
+        try { await player.disconnect(); } catch { /* ignore */ }
+        throw new Error('Spotify adapter init cancelled.');
+      }
+
       // Wait briefly for device id.
       for (let i = 0; i < 50; i += 1) {
         if (this._deviceId) break;
         await delay(50);
+      }
+
+      if (!this._isActive || this._lifecycleRev !== rev) {
+        try { await player.disconnect(); } catch { /* ignore */ }
+        throw new Error('Spotify adapter init cancelled.');
       }
 
       if (!this._deviceId) {
