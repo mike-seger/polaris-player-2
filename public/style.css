@@ -1607,6 +1607,7 @@ body.hide-track-check .track-state-btn {
 /* Larger progress row (mirrors sidebar but scaled up) */
 .center-controls-panel .cco-progress {
     margin-top: 14px;
+    margin-bottom: 15px;
     padding: 14px 18px;
     display: flex;
     flex-direction: column;
@@ -1622,7 +1623,15 @@ body.hide-track-check .track-state-btn {
     appearance: none;
     height: 27px;
     border-radius: 999px;
-    background: #2f3646;
+    --cco-progress-pct: 0%;
+    background: linear-gradient(
+        to right,
+        color-mix(in srgb, var(--color-text) 40%, transparent) 0%,
+        color-mix(in srgb, var(--color-text) 40%, transparent)
+            var(--cco-progress-pct),
+        color-mix(in srgb, #2f3646 60%, transparent) var(--cco-progress-pct),
+        color-mix(in srgb, #2f3646 60%, transparent) 100%
+    );
     outline: none;
     padding: 0;
     margin: 0;
@@ -1651,19 +1660,19 @@ body.hide-track-check .track-state-btn {
 .center-controls-panel .cco-progress-range::-webkit-slider-runnable-track {
     height: 27px;
     border-radius: 999px;
-    background: #2f3646;
+    background: transparent;
 }
 
 .center-controls-panel .cco-progress-range::-moz-range-track {
     height: 27px;
     border-radius: 999px;
-    background: #2f3646;
+    background: color-mix(in srgb, #2f3646 60%, transparent);
 }
 
 .center-controls-panel .cco-progress-range::-moz-range-progress {
     height: 27px;
     border-radius: 999px;
-    background: #2f3646;
+    background: color-mix(in srgb, var(--color-text) 40%, transparent);
 }
 
 .center-controls-panel .cco-time {
@@ -1671,6 +1680,8 @@ body.hide-track-check .track-state-btn {
     opacity: 0.9;
     text-align: center;
     user-select: none;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+        "Liberation Mono", "Courier New", monospace;
 }
 
 

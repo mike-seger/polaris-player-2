@@ -3214,6 +3214,10 @@
         if (progressRange) progressRange.value = Math.round(frac * 1000);
         if (centerProgressRange) centerProgressRange.value = Math.round(frac * 1000);
       }
+
+      if (centerProgressRange) {
+        try { centerProgressRange.style.setProperty('--cco-progress-pct', `${Math.round(frac * 100)}%`); } catch { /* ignore */ }
+      }
       const text = `${formatTime(current)} / ${formatTime(duration)}`;
       if (timeLabel) timeLabel.textContent = text;
       if (centerTimeLabel) centerTimeLabel.textContent = text;
@@ -3244,6 +3248,11 @@
       if (!duration || !isFinite(duration) || duration <= 0) return;
       const frac = Number(valueRaw) / 1000;
       const newTime = frac * duration;
+
+      if (centerProgressRange) {
+        try { centerProgressRange.style.setProperty('--cco-progress-pct', `${Math.round(frac * 100)}%`); } catch { /* ignore */ }
+      }
+
       if (isProgressScrubbing) {
         sidebar.suppressHide(8000);
       }
