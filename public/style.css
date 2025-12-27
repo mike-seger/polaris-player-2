@@ -701,6 +701,19 @@ input[type="checkbox"] {
     color: var(--color-text);
 }
 
+#trackList li.is-filtered-out {
+    opacity: 0.45;
+    cursor: default;
+}
+
+#trackList li.is-filtered-out:hover {
+    background: transparent;
+}
+
+#trackList li.is-filtered-out.active {
+    opacity: 0.85;
+}
+
 #trackList li:last-child {
     border-bottom: none;
 }

@@ -95,6 +95,7 @@
       wrapLines: true,
       country: true,
       checkTrack: false,
+      showFiltered: false,
       sortAZ: false
     });
     let trackDetailSettings = { ...DEFAULT_TRACK_DETAILS };
@@ -397,6 +398,7 @@
     const detailWrapLinesCheckbox = document.getElementById('detailWrapLines');
     const detailCountryCheckbox = document.getElementById('detailCountry');
     const detailCheckTrackCheckbox = document.getElementById('detailCheckTrack');
+    const detailShowFilteredCheckbox = document.getElementById('detailShowFiltered');
     const detailSortAZCheckbox = document.getElementById('detailSortAZ');
     const detailCheckboxMap = {
       trackNumber: detailTrackNumberCheckbox,
@@ -404,6 +406,7 @@
       wrapLines: detailWrapLinesCheckbox,
       country: detailCountryCheckbox,
       checkTrack: detailCheckTrackCheckbox,
+      showFiltered: detailShowFilteredCheckbox,
       sortAZ: detailSortAZCheckbox
     };
     const progressRange = document.getElementById('progressRange');

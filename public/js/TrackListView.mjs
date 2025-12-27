@@ -363,21 +363,39 @@ export class TrackListView {
       || (Array.isArray(countryFilters) && countryFilters.length > 0);
 
     const playlistItems = this.getPlaylistItems();
-    let indices = hasFilter ? (this.getFilteredIndices() || []).slice() : playlistItems.map((_, i) => i);
-    if (this.getSortAlphabetically()) {
-      indices = this.getSortedIndices(indices);
-    }
+    const allIndices = playlistItems.map((_, i) => i);
+    const rawFiltered = hasFilter ? (this.getFilteredIndices() || []).slice() : allIndices.slice();
 
-    this.onVisibleIndicesComputed(indices.slice());
+    let playableIndices = rawFiltered;
+    if (this.getSortAlphabetically()) {
+      playableIndices = this.getSortedIndices(playableIndices);
+    }
 
     const currentIndex = this.getCurrentIndex();
     const activePlaylistId = this.getActivePlaylistId();
     const trackDetailSettings = this.getTrackDetailSettings();
+    const showFiltered = !!(hasFilter && trackDetailSettings && trackDetailSettings.showFiltered);
 
-    indices.forEach((realIdx, displayIdx) => {
+    let displayIndices = showFiltered ? allIndices.slice() : playableIndices.slice();
+    if (showFiltered && this.getSortAlphabetically()) {
+      displayIndices = this.getSortedIndices(displayIndices);
+    }
+
+    // Navigation/shuffle should only consider playable (filtered-in) tracks.
+    this.onVisibleIndicesComputed(playableIndices.slice());
+
+    const playableSet = showFiltered ? new Set(playableIndices) : null;
+
+    displayIndices.forEach((realIdx, displayIdx) => {
       const item = playlistItems[realIdx];
       const li = document.createElement('li');
       if (realIdx === currentIndex) li.classList.add('active');
+
+      const isFilteredOut = !!(showFiltered && playableSet && !playableSet.has(realIdx));
+      if (isFilteredOut) {
+        li.classList.add('is-filtered-out');
+        li.setAttribute('aria-disabled', 'true');
+      }
 
       const rawTitle = item.userTitle ? item.userTitle : item.title;
       const primaryArtist = splitArtists(rawTitle, this.normalizeArtistName)[0] || '';
@@ -413,6 +431,23 @@ export class TrackListView {
         img.loading = 'lazy';
         img.decoding = 'async';
         this._applyThumbnailStyles(img, img.src);
+
+        // When a row is filtered-out (disabled), allow clicking artwork to open the video
+        // without selecting/playing it in the app.
+        if (isFilteredOut) {
+          img.style.cursor = 'pointer';
+          img.addEventListener('click', (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            const playlistId = this.getActivePlaylistId();
+            const baseUrl = `https://www.youtube.com/watch?v=${encodeURIComponent(item.videoId)}`;
+            const url = playlistId
+              ? `${baseUrl}&list=${encodeURIComponent(playlistId)}`
+              : baseUrl;
+            window.open(url, '_blank', 'noopener');
+          });
+        }
+
         li.appendChild(img);
       }
 
@@ -497,6 +532,7 @@ export class TrackListView {
       this.trackRowElements.set(realIdx, li);
 
       li.addEventListener('click', () => {
+        if (isFilteredOut) return;
         this.onPlayIndex(realIdx);
       });
 
