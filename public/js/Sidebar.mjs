@@ -3,7 +3,6 @@ export class Sidebar {
     const {
       sidebarMenuBtn = null,
       sidebarDrawer = null,
-      playerGestureLayer = null,
       isInteractionBlockingHide = () => false,
       isAutoHideEnabled = () => true,
       allowScrollSelectors = [],
@@ -11,10 +10,12 @@ export class Sidebar {
 
     this.sidebarMenuBtn = sidebarMenuBtn;
     this.sidebarDrawer = sidebarDrawer;
-    this.playerGestureLayer = playerGestureLayer;
     this.isInteractionBlockingHide = isInteractionBlockingHide;
     this.isAutoHideEnabled = (typeof isAutoHideEnabled === 'function') ? isAutoHideEnabled : (() => true);
     this.allowScrollSelectors = Array.isArray(allowScrollSelectors) ? allowScrollSelectors : [];
+
+    // TEMP: during main-panel gesture refactor, do not allow the sidebar to auto-hide.
+    this.disableHiding = true;
 
     this.SIDEBAR_AUTO_HIDE_MS = 80000;
     this.sidebarInactivityInterval = null;
@@ -47,6 +48,12 @@ export class Sidebar {
 
   setHidden(hidden) {
     const wantsHidden = !!hidden;
+
+    // Temporarily disable all sidebar hiding calls.
+    if (this.disableHiding && wantsHidden) {
+      return;
+    }
+
     document.body.classList.toggle('sidebar-hidden', wantsHidden);
     document.body.classList.remove('sidebar-collapsed');
     if (wantsHidden) {
@@ -58,6 +65,7 @@ export class Sidebar {
   }
 
   maybeHideFromPlayerStateChange(playerState) {
+    if (this.disableHiding) return;
     if (!this.isAutoHideEnabled()) return;
     if (this.isHidden()) return;
     if (this.isInteractionBlockingHide()) return;
@@ -88,6 +96,10 @@ export class Sidebar {
   }
 
   ensureInactivityInterval() {
+    if (this.disableHiding) {
+      this.clearInactivityInterval();
+      return;
+    }
     if (!this.isAutoHideEnabled()) {
       this.clearInactivityInterval();
       return;
@@ -154,6 +166,11 @@ export class Sidebar {
   setup() {
     this.installIOSTouchScrollLock();
 
+    // Always ensure visible while hiding is disabled.
+    if (this.disableHiding) {
+      try { this.setHidden(false); } catch { /* ignore */ }
+    }
+
     // Menu button hides the sidebar.
     if (this.sidebarMenuBtn) {
       this.sidebarMenuBtn.addEventListener('click', (event) => {
@@ -215,24 +232,6 @@ export class Sidebar {
       this.setHidden(true);
     };
     document.addEventListener('focusin', hideFromIframeFocus, { capture: true });
-
-    // When hidden, a tap/click on the video shows the sidebar.
-    if (this.playerGestureLayer) {
-      const showFromVideo = (event) => {
-        if (!this.isHidden()) return;
-        event.preventDefault();
-        event.stopPropagation();
-        // In fullscreen, revealing the sidebar is itself a player-surface interaction.
-        // Don't immediately auto-hide again on the next player state poll/change.
-        this.suppressHide(5000);
-        this.lastPointerTs = 0;
-        this.lastPointerWasInDrawer = false;
-        this.lastPointerWasInPlayer = false;
-        this.setHidden(false);
-      };
-      this.playerGestureLayer.addEventListener('pointerdown', showFromVideo, { passive: false });
-      this.playerGestureLayer.addEventListener('click', showFromVideo, { passive: false });
-    }
 
     // Any interaction while visible resets the inactivity timer.
     const bumpPointer = (event) => {

@@ -23,11 +23,6 @@
     <!-- Video player -->
     <div id="player-container">
       <div id="player"></div>
-      <div id="playerGestureLayer" aria-hidden="true"></div>
-      <div id="trackSwipeLayer" aria-hidden="true"></div>
-      <div id="seekSwipeLayer" aria-hidden="true">
-        <div id="seekSwipeFeedback" aria-hidden="true">0%</div>
-      </div>
     </div>
 
     <div id="sidebarDrawer">
@@ -186,6 +181,10 @@
                 <label class="track-details-option" for="detailThumbnail">
                   <input type="checkbox" id="detailThumbnail" />
                   <span>Thumbnail</span>
+                </label>
+                <label class="track-details-option" for="detailNoAudio">
+                  <input type="checkbox" id="detailNoAudio" />
+                  <span>No audio</span>
                 </label>
                 <label class="track-details-option" for="detailWrapLines">
                   <input type="checkbox" id="detailWrapLines" />

@@ -1828,7 +1828,8 @@
     function openOverlay() {
       const overlay = ensureOverlay();
       state.lastFocused = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-      state.sidebarHiddenBeforeOpen = document.body.classList.contains('sidebar-hidden');
+      // TEMP: sidebar hiding is disabled during main-panel gesture refactor.
+      state.sidebarHiddenBeforeOpen = false;
       overlay.style.display = 'flex';
       applyPanelBounds();
       overlay.setAttribute('aria-hidden', 'false');
@@ -1866,9 +1867,8 @@
       state.loading = false;
       setLoading(false);
       updateStatus('');
-      if (typeof state.sidebarHiddenBeforeOpen === 'boolean') {
-        document.body.classList.toggle('sidebar-hidden', state.sidebarHiddenBeforeOpen);
-      }
+      // TEMP: do not re-hide the sidebar.
+      document.body.classList.remove('sidebar-hidden');
       state.sidebarHiddenBeforeOpen = null;
       if (state.lastFocused && typeof state.lastFocused.focus === 'function') {
         state.lastFocused.focus({ preventScroll: true });

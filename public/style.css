@@ -1429,84 +1429,11 @@ body.hide-track-check .track-state-btn {
     position: fixed;
     inset: 0;
     padding: 0;
-    --track-swipe-layer-width: 15%;
     display: flex;
     justify-content: center;
     align-items: center;
     background: var(--color-bg);
     z-index: 1;
-}
-
-#playerGestureLayer {
-    position: absolute;
-    inset: 0;
-    z-index: 5;
-    display: none;
-    background: transparent;
-    /* Tap/click layer used to show the sidebar when hidden. */
-    touch-action: manipulation;
-    pointer-events: none;
-}
-
-/* Center swipe area: captures up/down swipes for prev/next. */
-#trackSwipeLayer {
-    position: absolute;
-    top: 10%;
-    bottom: 20%;
-    width: var(--track-swipe-layer-width);
-    left: auto;
-    right: 0;
-    z-index: 6;
-    background: transparent;
-    pointer-events: auto;
-    touch-action: none;
-}
-
-/* Bottom seek area: horizontal swipes behave like the progress thumb. */
-#seekSwipeLayer {
-    position: absolute;
-    left: 0;
-    right: 0;
-    top: 0;
-    height: calc(var(--app-vh, 1vh) * 15);
-    z-index: 6;
-    background: transparent;
-    pointer-events: auto;
-    touch-action: none;
-}
-
-#seekSwipeFeedback {
-    position: fixed;
-    left: auto;
-    right: calc(var(--track-swipe-layer-width) * 0.5);
-    top: 50%;
-    transform: translate(50%, -50%);
-    color: var(--color-accent);
-    font-weight: 700;
-    font-size: calc(var(--app-vh, 1vh) * 9);
-    line-height: 1;
-    pointer-events: none;
-    user-select: none;
-    z-index: 7;
-    opacity: 0;
-    transition: opacity 500ms ease;
-}
-
-#seekSwipeLayer.is-active #seekSwipeFeedback {
-    opacity: 1;
-}
-
-/* When the sidebar is hidden, a simple tap/click on the video should show it.
-   Disable iframe pointer events so YouTube doesn't swallow that tap. */
-body.sidebar-hidden #playerGestureLayer {
-    display: block;
-    pointer-events: auto;
-    /* Only a left-edge vertical stripe should unhide the sidebar. */
-    left: 0;
-    top: 15%;
-    bottom: 15%;
-    right: auto;
-    width: min(var(--sidebar-drawer-width), 35vw);
 }
 
 

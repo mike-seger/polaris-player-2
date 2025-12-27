@@ -7,8 +7,6 @@
   import { PlaylistHistoryStore } from './PlaylistHistoryStore.mjs';
   import { FilterStateStore } from './FilterStateStore.mjs';
   import { TrackDetailSettingsStore } from './TrackDetailSettingsStore.mjs';
-  import { SeekSwipeController } from './SeekSwipeController.mjs';
-  import { TrackSwipeController } from './TrackSwipeController.mjs';
   import { getFlagEmojiForIso3 } from './CountryFlags.mjs';
   import { initPlaylistIO } from './PlaylistManagement.mjs';
   import { Spectrum } from './Spectrum.mjs';
@@ -94,6 +92,7 @@
     const DEFAULT_TRACK_DETAILS = Object.freeze({
       trackNumber: true,
       thumbnail: true,
+      noAudio: false,
       wrapLines: true,
       country: true,
       checkTrack: false,
@@ -407,6 +406,7 @@
     const trackDetailsOverlay = document.getElementById('trackDetailsOverlay');
     const detailTrackNumberCheckbox = document.getElementById('detailTrackNumber');
     const detailThumbnailCheckbox = document.getElementById('detailThumbnail');
+    const detailNoAudioCheckbox = document.getElementById('detailNoAudio');
     const detailWrapLinesCheckbox = document.getElementById('detailWrapLines');
     const detailCountryCheckbox = document.getElementById('detailCountry');
     const detailCheckTrackCheckbox = document.getElementById('detailCheckTrack');
@@ -415,6 +415,7 @@
     const detailCheckboxMap = {
       trackNumber: detailTrackNumberCheckbox,
       thumbnail: detailThumbnailCheckbox,
+      noAudio: detailNoAudioCheckbox,
       wrapLines: detailWrapLinesCheckbox,
       country: detailCountryCheckbox,
       checkTrack: detailCheckTrackCheckbox,
@@ -425,11 +426,7 @@
     const timeLabel = document.getElementById('timeLabel');
     const playPauseIcon = document.getElementById('playPauseIcon');
     const trackControlsEl = document.getElementById('trackControls');
-    const playerGestureLayer = document.getElementById('playerGestureLayer');
     const sidebarDrawer = document.getElementById('sidebarDrawer');
-    const trackSwipeLayer = document.getElementById('trackSwipeLayer');
-    const seekSwipeLayer = document.getElementById('seekSwipeLayer');
-    const seekSwipeFeedback = document.getElementById('seekSwipeFeedback');
     const playlistHistorySelect = document.getElementById('playlistHistorySelect');
     const trackListContainerEl = document.getElementById('trackListContainer');
     const trackListEl = document.getElementById('trackList');
@@ -445,11 +442,89 @@
       return Math.max(0, Math.min(1, n));
     }
 
-    function applyConfiguredVolumeToHost() {
+    let _noAudioEnabled = false;
+    let _noAudioRestore = null; // { muted: boolean, volume: number }
+
+    function _readNoAudioPreference() {
+      return !!(trackDetailSettings && trackDetailSettings.noAudio);
+    }
+
+    async function _enforceNoAudioIfEnabled() {
+      if (!_noAudioEnabled) return;
       if (!playerHost) return;
       const caps = playerHost.getCapabilities();
-      if (!caps || !caps.canSetVolume) return;
-      void playerHost.setVolume(getConfiguredVolume01()).catch(() => {});
+      if (caps && caps.canMute) {
+        await playerHost.setMuted(true).catch(() => {});
+      } else if (caps && caps.canSetVolume) {
+        await playerHost.setVolume(0).catch(() => {});
+      }
+    }
+
+    async function _restoreAudioIfPossible() {
+      if (!playerHost) return;
+      const restore = _noAudioRestore;
+      const caps = playerHost.getCapabilities();
+
+      const wantsMuted = restore && typeof restore.muted === 'boolean' ? restore.muted : false;
+      const wantsVolume = restore && typeof restore.volume === 'number' && isFinite(restore.volume)
+        ? Math.max(0, Math.min(1, restore.volume))
+        : getConfiguredVolume01();
+
+      if (caps && caps.canMute) {
+        await playerHost.setMuted(wantsMuted).catch(() => {});
+      }
+
+      if (!wantsMuted && caps && caps.canSetVolume) {
+        await playerHost.setVolume(wantsVolume).catch(() => {});
+      }
+    }
+
+    function _syncNoAudioFromPreferences({ source = 'unknown' } = {}) {
+      const next = _readNoAudioPreference();
+      const prev = _noAudioEnabled;
+      _noAudioEnabled = next;
+
+      if (prev === next) {
+        if (next) void _enforceNoAudioIfEnabled();
+        return;
+      }
+
+      if (next) {
+        // Capture current audio state once so we can restore when turning it off.
+        try {
+          const info = playerHost ? playerHost.getInfo() : null;
+          const muted = !!info?.muted;
+          const volume = (typeof info?.volume === 'number' && isFinite(info.volume)) ? info.volume : getConfiguredVolume01();
+          _noAudioRestore = { muted, volume };
+        } catch {
+          _noAudioRestore = { muted: false, volume: getConfiguredVolume01() };
+        }
+        void _enforceNoAudioIfEnabled();
+        return;
+      }
+
+      // Turning off: restore prior state if we have it.
+      void _restoreAudioIfPossible().finally(() => {
+        _noAudioRestore = null;
+      });
+      void source;
+    }
+
+    function applyConfiguredVolumeToHost() {
+      if (!playerHost) return Promise.resolve(false);
+      const caps = playerHost.getCapabilities();
+      if (!caps || !caps.canSetVolume) {
+        // Still enforce "No audio" even for adapters without volume.
+        if (_noAudioEnabled) return _enforceNoAudioIfEnabled().then(() => false);
+        return Promise.resolve(false);
+      }
+
+      const v = getConfiguredVolume01();
+      return playerHost
+        .setVolume(v)
+        .catch(() => {})
+        .then(() => _enforceNoAudioIfEnabled())
+        .then(() => true);
     }
 
     async function ensureSpotifySession({ promptIfMissing = false, promptLogin = false } = {}) {
@@ -597,8 +672,7 @@
     const sidebar = new Sidebar({
       sidebarMenuBtn,
       sidebarDrawer,
-      playerGestureLayer,
-      isInteractionBlockingHide: () => isProgressScrubbing || isSeekSwipeActive,
+      isInteractionBlockingHide: () => isProgressScrubbing,
       isAutoHideEnabled: () => document.body.classList.contains('is-fullscreen'),
       allowScrollSelectors: [
         '#sidebarDrawer',
@@ -941,8 +1015,12 @@
         trackDetailSettings = next;
         return trackDetailSettings;
       },
-      persistPreferences: () => {
-        trackDetailSettings = trackDetailStore.setPreferences(trackDetailSettings);
+      persistPreferences: (next) => {
+        // Persist the preferences the overlay just set.
+        trackDetailSettings = trackDetailStore.setPreferences(next);
+
+        // Always sync audio enforcement from current preferences.
+        _syncNoAudioFromPreferences({ source: 'track-details-overlay' });
         return trackDetailSettings;
       },
 
@@ -961,6 +1039,9 @@
       },
     });
     trackDetailsOverlayController.setup();
+
+    // Initialize "No audio" state from persisted preferences.
+    _noAudioEnabled = _readNoAudioPreference();
 
     document.addEventListener('keydown', (event) => {
       if (event.key === 'Escape') {
@@ -1276,7 +1357,6 @@
     }
 
     let isProgressScrubbing = false;
-    let isSeekSwipeActive = false;
     let seekFeedbackHideTimer = null;
 
     // Local playback: some browsers can lag/omit state transitions while time still advances.
@@ -1285,25 +1365,16 @@
     let lastLocalTimeAdvanceAt = 0;
 
     function setSeekFeedbackVisible(visible) {
-      if (!seekSwipeLayer || !seekSwipeFeedback) return;
-      if (visible) {
-        seekSwipeLayer.classList.add('is-active');
-        return;
-      }
-      // Don't hide while an active seek gesture is still running.
-      if (isSeekSwipeActive || isProgressScrubbing) return;
-      seekSwipeLayer.classList.remove('is-active');
+      void visible;
+      // TEMP: seek swipe overlay removed.
     }
 
     function updateSeekFeedbackFromFraction(frac) {
-      if (!seekSwipeLayer || !seekSwipeFeedback) return;
-      const clamped = Math.max(0, Math.min(1, Number(frac)));
-      seekSwipeFeedback.textContent = `${Math.round(clamped * 100)}%`;
-      setSeekFeedbackVisible(true);
+      void frac;
+      // TEMP: seek swipe overlay removed.
     }
 
     function scheduleSeekFeedbackFadeOut(delayMs = 0) {
-      if (!seekSwipeLayer || !seekSwipeFeedback) return;
       if (seekFeedbackHideTimer) {
         clearTimeout(seekFeedbackHideTimer);
         seekFeedbackHideTimer = null;
@@ -1840,6 +1911,9 @@
         setupMediaSessionHandlers();
         updateMediaSessionMetadata();
         updateMediaSessionPositionState(true);
+
+        // Ensure "No audio" remains enforced across adapter switches.
+        void _enforceNoAudioIfEnabled();
 
         // Track changes can switch adapters; refresh cover optimization.
         try { applyCoveredYouTubeOptimization(); } catch { /* ignore */ }
@@ -3111,50 +3185,4 @@
       seekToSeconds(newTime);
     });
 
-    // Center vertical swipe area: up/down swipe for prev/next.
-    (function setupCenterSwipeGestures() {
-      if (!trackSwipeLayer) return;
-
-      const centerSwipeController = new TrackSwipeController({
-        layerEl: trackSwipeLayer,
-        minDyPx: 60,
-        maxDtMs: 900,
-        verticalBias: 1.2,
-        shouldIgnoreStart: (eventTarget) => {
-          if (isProgressScrubbing) return true;
-          if (sidebarDrawer && eventTarget instanceof Node && sidebarDrawer.contains(eventTarget)) return true;
-          if (progressRange && eventTarget instanceof Node && progressRange.contains(eventTarget)) return true;
-          return false;
-        },
-        onNext: () => playNext(),
-        onPrev: () => playPrev()
-      });
-
-      centerSwipeController.attach();
-    })();
-
-    // Bottom seek stripe: horizontal swipe maps to absolute timeline position.
-    (function setupSeekSwipeGestures() {
-      if (!seekSwipeLayer) return;
-
-      const seekSwipeController = new SeekSwipeController({
-        layerEl: seekSwipeLayer,
-        isBlocked: () => isProgressScrubbing,
-        getDuration: () => getPlayerDurationSeconds(),
-        getCurrentTime: () => getPlayerCurrentTimeSeconds(),
-        seekTo: (seconds, allowSeekAhead) => {
-          void allowSeekAhead;
-          seekToSeconds(seconds);
-        },
-        setActive: (active) => {
-          isSeekSwipeActive = !!active;
-          seekSwipeLayer.classList.toggle('is-active', !!active);
-        },
-        onFeedbackFraction: (frac) => {
-          updateSeekFeedbackFromFraction(frac);
-        },
-        suppressSidebarHide: (ms) => sidebar.suppressHide(ms)
-      });
-
-      seekSwipeController.attach();
-    })();
+    // TEMP: swipe gesture overlays/controllers removed during refactor.

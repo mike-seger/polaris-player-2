@@ -21,6 +21,8 @@ forward_30
 forward_5
 fullscreen
 fullscreen_exit
+left_panel_close
+left_panel_open
 list
 list_alt
 list_alt_check
