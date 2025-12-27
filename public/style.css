@@ -1375,7 +1375,18 @@ body.hide-track-check .track-state-btn {
 #progressRange::-webkit-slider-thumb {
     appearance: none;
     width: 18px;
+    touch-action: pan-y;
     height: 18px;
+
+/*
+ * iOS Chrome/Safari: edge-swipe from the left can trigger back-navigation.
+ * Keep the scrubber row slightly inset so drags don't start at x=0.
+ */
+@media (hover: none) and (pointer: coarse) {
+    #progressWrapper {
+        padding-left: 8px;
+    }
+}
     border-radius: 50%;
     background: var(--color-accent);
     cursor: pointer;
@@ -1589,6 +1600,10 @@ body.sidebar-hidden #playerGestureLayer {
 @media (max-width: 800px) and (max-aspect-ratio: 2/3) {
     #sidebarDrawer {
         padding: 0;
+    }
+
+    #progressWrapper {
+        margin-left: 12px;
     }
 
     /* Panels touch, no rounding. */
