@@ -32,7 +32,7 @@ html:not(.icons-ready) .icon {
     --player-min-slider-width: 160px;
     --player-scale: 1;
     --track-thumb-width: 60px;
-    --track-row-base-height: calc(var(--track-thumb-width) * 0.5625);
+    --track-row-base-height: var(--track-thumb-width);
     --track-row-padding: 0.25rem;
     --track-row-padding-compact: 0.15rem;
     --track-row-min-height: calc(var(--track-row-base-height) + var(--track-row-padding) * 2);
@@ -707,9 +707,10 @@ input[type="checkbox"] {
 
 #trackList img {
     width: var(--track-thumb-width);
-    height: var(--track-row-base-height);
+    height: var(--track-thumb-width);
     flex-shrink: 0;
     object-fit: cover;
+    object-position: center;
     border-radius: 6px;
     background: var(--color-hover);
     display: block;
@@ -752,6 +753,7 @@ body.no-thumbs .track-title {
     align-items: center;
     justify-content: flex-end;
     padding-top: 0.05rem;
+    padding-right: 6px;
 }
 
 .track-number[role="button"] {
