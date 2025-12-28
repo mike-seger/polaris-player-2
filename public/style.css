@@ -1511,7 +1511,9 @@ body.hide-track-check .track-state-btn {
     --center-overlay-icon-size: 30px;
     --cco-overlay-scale: 1;
     --cco-btn-scale: 1;
-    --cco-trackinfo-font-scale: 2.5;
+    /* Track info (under the center slider): scale title/artist independently. */
+    --cco-trackinfo-title-scale: 1.8; /* 2.5x reduced by 25% */
+    --cco-trackinfo-artist-scale: 1.6; /* +100% */
 
     opacity: 0;
     /* Keep click-through outside the actual controls. */
@@ -1737,7 +1739,15 @@ body.hide-track-check .track-state-btn {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    font-size: calc(1em * var(--cco-trackinfo-font-scale));
+}
+
+.center-controls-panel .cco-trackinfo .track-title {
+    font-size: calc(14px * var(--cco-trackinfo-title-scale));
+}
+
+.center-controls-panel .cco-trackinfo .track-artist-line,
+.center-controls-panel .cco-trackinfo .track-artist {
+    font-size: calc(12px * var(--cco-trackinfo-artist-scale));
 }
 
 .center-controls-panel .cco-time {
@@ -1894,7 +1904,8 @@ body.hide-track-check .track-state-btn {
     .center-controls-panel {
         --cco-overlay-scale: 0.7;
         --cco-btn-scale: 0.6;
-        --cco-trackinfo-font-scale: 1.5;
+        --cco-trackinfo-title-scale: 1.275; /* 1.5x reduced by 15% */
+        --cco-trackinfo-artist-scale: 1.2; /* +70% */
     }
 
     /* In "video-first" mode we rotate the UI; width should track viewport height, not width. */
