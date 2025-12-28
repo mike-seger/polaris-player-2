@@ -372,17 +372,27 @@
 
     function syncCenterTrackInfo() {
       const titleEl = document.getElementById('centerTrackTitle');
-      const artistEl = document.getElementById('centerTrackArtist');
       const artistLineEl = document.getElementById('centerTrackArtistLine');
+      const artistEl = document.getElementById('centerTrackArtist');
       if (!(titleEl instanceof HTMLElement)) return;
-      if (!(artistEl instanceof HTMLElement)) return;
-      if (!(artistLineEl instanceof HTMLElement)) return;
+
+      const artistContainerEl = (artistLineEl instanceof HTMLElement)
+        ? artistLineEl
+        : (artistEl instanceof HTMLElement && artistEl.parentElement instanceof HTMLElement)
+            ? artistEl.parentElement
+            : null;
 
       const item = (currentIndex >= 0 && playlistItems[currentIndex]) ? playlistItems[currentIndex] : null;
       if (!item) {
         titleEl.textContent = '–';
-        artistEl.textContent = '';
-        artistLineEl.style.display = 'none';
+        if (artistEl instanceof HTMLElement) {
+          artistEl.textContent = '';
+        } else if (artistLineEl instanceof HTMLElement) {
+          artistLineEl.textContent = '';
+        }
+        if (artistContainerEl instanceof HTMLElement) {
+          artistContainerEl.style.display = 'none';
+        }
         return;
       }
 
@@ -395,8 +405,14 @@
       const artistText = parts.artist || '';
 
       titleEl.textContent = titleText;
-      artistEl.textContent = artistText;
-      artistLineEl.style.display = artistText ? '' : 'none';
+      if (artistEl instanceof HTMLElement) {
+        artistEl.textContent = artistText;
+      } else if (artistLineEl instanceof HTMLElement) {
+        artistLineEl.textContent = artistText;
+      }
+      if (artistContainerEl instanceof HTMLElement) {
+        artistContainerEl.style.display = artistText ? '' : 'none';
+      }
     }
 
     function toggleTrackStateForPlaylist(playlistId, videoId) {
