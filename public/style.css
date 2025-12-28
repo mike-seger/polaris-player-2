@@ -1637,10 +1637,10 @@ body.hide-track-check .track-state-btn {
 
 /* Larger progress row (mirrors sidebar but scaled up) */
 .center-controls-panel .cco-progress {
-    margin-top: 14px;
-    margin-bottom: 15px;
+    margin-top: 0;
+    margin-bottom: 0;
     width: min(72vw, 560px);
-    padding: 15px 15px 25px 15px;
+    padding: calc(15px * 0.7) calc(15px * 0.7) calc(25px * 0.7) calc(15px * 0.7);
     display: flex;
     flex-direction: column;
     align-items: stretch;
@@ -1652,8 +1652,11 @@ body.hide-track-check .track-state-btn {
 }
 
 .center-controls-panel .cco-progress-range {
-    --cco-track-h: calc(27px * 0.7);
+    /* Scale the slider in mobile mode via --cco-overlay-scale. */
+    --cco-track-h: calc(27px * 0.7 * var(--cco-overlay-scale));
     --cco-thumb-d: calc(var(--cco-track-h) * 2);
+    --cco-track-r: calc((var(--cco-track-h) / 2) * 0.7);
+    --cco-thumb-r: calc((var(--cco-thumb-d) / 2) * 0.7);
     width: calc(100% - (var(--cco-track-h) * 2));
     flex: 1;
     appearance: none;
@@ -1661,7 +1664,7 @@ body.hide-track-check .track-state-btn {
     margin-left: auto;
     margin-right: auto;
     height: var(--cco-track-h);
-    border-radius: 999px;
+    border-radius: var(--cco-track-r);
     --cco-progress-pct: 0%;
     --cco-track-empty: color-mix(in srgb, #2f3646 75%, var(--color-text) 25%);
     background: linear-gradient(
@@ -1681,7 +1684,7 @@ body.hide-track-check .track-state-btn {
     appearance: none;
     width: var(--cco-thumb-d);
     height: var(--cco-thumb-d);
-    border-radius: 50%;
+    border-radius: var(--cco-thumb-r);
     background: var(--color-text);
     cursor: pointer;
     margin-top: calc((var(--cco-track-h) - var(--cco-thumb-d)) / 2);
@@ -1691,7 +1694,7 @@ body.hide-track-check .track-state-btn {
 .center-controls-panel .cco-progress-range::-moz-range-thumb {
     width: var(--cco-thumb-d);
     height: var(--cco-thumb-d);
-    border-radius: 50%;
+    border-radius: var(--cco-thumb-r);
     background: var(--color-text);
     cursor: pointer;
     border: none;
@@ -1699,19 +1702,19 @@ body.hide-track-check .track-state-btn {
 
 .center-controls-panel .cco-progress-range::-webkit-slider-runnable-track {
     height: var(--cco-track-h);
-    border-radius: 999px;
+    border-radius: var(--cco-track-r);
     background: transparent;
 }
 
 .center-controls-panel .cco-progress-range::-moz-range-track {
     height: var(--cco-track-h);
-    border-radius: 999px;
+    border-radius: var(--cco-track-r);
     background: color-mix(in srgb, var(--cco-track-empty) 60%, transparent);
 }
 
 .center-controls-panel .cco-progress-range::-moz-range-progress {
     height: var(--cco-track-h);
-    border-radius: 999px;
+    border-radius: var(--cco-track-r);
     background: color-mix(in srgb, var(--color-text) 40%, transparent);
 }
 
