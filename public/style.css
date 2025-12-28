@@ -1456,7 +1456,8 @@ body.hide-track-check .track-state-btn {
 
 /* Player between control groups */
 #player-container {
-    position: fixed;
+    /* Avoid iOS Safari fixed-position bugs when an ancestor is transformed (portrait mode rotates #sidebar). */
+    position: absolute;
     inset: 0;
     padding: 0;
     display: flex;
@@ -1501,6 +1502,8 @@ body.hide-track-check .track-state-btn {
 
     /* Default icon size; JS will update based on safe overlay height. */
     --center-overlay-icon-size: 50px;
+    --cco-overlay-scale: 1;
+    --cco-btn-scale: 1;
 
     opacity: 0;
     pointer-events: none;
@@ -1526,8 +1529,8 @@ body.hide-track-check .track-state-btn {
 }
 
 .center-controls-panel .cco-btn {
-    width: calc(var(--center-overlay-icon-size) + 22px);
-    height: calc(var(--center-overlay-icon-size) + 22px);
+    width: calc((var(--center-overlay-icon-size) + 22px) * var(--cco-btn-scale));
+    height: calc((var(--center-overlay-icon-size) + 22px) * var(--cco-btn-scale));
     border-radius: 999px;
     border: 0;
     background: rgba(40, 40, 40, 0.65);
@@ -1543,8 +1546,8 @@ body.hide-track-check .track-state-btn {
 
 .center-controls-panel .cco-toggle {
     position: relative;
-    width: calc(var(--center-overlay-icon-size) + 22px);
-    height: calc(var(--center-overlay-icon-size) + 22px);
+    width: calc((var(--center-overlay-icon-size) + 22px) * var(--cco-btn-scale));
+    height: calc((var(--center-overlay-icon-size) + 22px) * var(--cco-btn-scale));
     border-radius: 999px;
     border: 0;
     background: rgba(40, 40, 40, 0.65);
@@ -1570,7 +1573,7 @@ body.hide-track-check .track-state-btn {
 
 .center-controls-panel .cco-toggle .icon {
     margin: 0;
-    font-size: var(--center-overlay-icon-size);
+    font-size: calc(var(--center-overlay-icon-size) * var(--cco-btn-scale));
     line-height: 1;
     opacity: 0.6;
 }
@@ -1585,7 +1588,7 @@ body.hide-track-check .track-state-btn {
 
 .center-controls-panel .cco-btn .icon {
     margin: 0;
-    font-size: var(--center-overlay-icon-size);
+    font-size: calc(var(--center-overlay-icon-size) * var(--cco-btn-scale));
     line-height: 1;
 }
 
@@ -1628,8 +1631,8 @@ body.hide-track-check .track-state-btn {
     flex-direction: column;
     align-items: stretch;
     gap: 0;
-    /* Match the curvature of the circular control buttons. */
-    border-radius: calc((var(--center-overlay-icon-size) + 22px) / 2);
+    /* Match the curvature of the circular control buttons (including mobile scaling). */
+    border-radius: calc(((var(--center-overlay-icon-size) + 22px) * var(--cco-btn-scale)) / 2);
     background: rgba(40, 40, 40, 0.65);
     overflow: hidden;
 }
@@ -1699,7 +1702,7 @@ body.hide-track-check .track-state-btn {
 }
 
 .center-controls-panel .cco-time {
-    font-size: calc(1.05rem * 2);
+    font-size: calc(1.05rem * 2 * var(--cco-overlay-scale));
     opacity: 0.9;
     text-align: center;
     user-select: none;
@@ -1802,25 +1805,23 @@ body.hide-track-check .track-state-btn {
     /* Rotate the entire app view in portrait and fill the available viewport. */
     #sidebar {
         position: fixed;
-        top: 0;
-        left: 0;
+        top: 50%;
+        left: 50%;
         width: calc(var(--app-vh, 1vh) * 100);
         height: 100vw;
-        transform-origin: top left;
-        transform: rotate(-90deg) translateX(-100%);
+        transform-origin: center;
+        transform: translate(-50%, -50%) rotate(-90deg);
     }
 
     #sidebarDrawer {
         padding: 0;
     }
 
-    /* Mobile mode: scale center overlay typography down ~30%. */
+    /* Mobile mode: scale typography (time label) down ~30%, and shrink the circular buttons ~40%.
+       Button scaling includes the diameter (and thus perceived radius/curvature). */
     .center-controls-panel {
-        --center-overlay-icon-size: calc(var(--center-overlay-icon-size) * 0.7);
-    }
-
-    .center-controls-panel .cco-time {
-        font-size: calc(1.05rem * 2 * 0.7);
+        --cco-overlay-scale: 0.7;
+        --cco-btn-scale: 0.6;
     }
 
     #progressWrapper {

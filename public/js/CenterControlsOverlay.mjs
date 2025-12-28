@@ -46,6 +46,10 @@ export class CenterControlsOverlay {
     this._bodyClassObs = null;
     this._lastHoverShowAt = 0;
 
+    this._mode = '';
+    this._baseSafeTop = 0;
+    this._baseSafeBottom = 0;
+
     this._boundOnPointer = (e) => this._onPointerEvent(e);
     this._boundOnPointerMove = (e) => this._onPointerMove(e);
     this._boundOnKeydown = (e) => this._onKeydown(e);
@@ -129,16 +133,14 @@ export class CenterControlsOverlay {
     if (!(this.hitEl instanceof HTMLElement)) return;
     const m = String(mode || '').trim().toLowerCase();
 
-    // Respect YouTube's own UI stripes; other modes can use the full height.
-    const safeTop = (m === 'youtube') ? 70 : 0;
-    const safeBottom = (m === 'youtube') ? 155 : 0;
+    this._mode = m;
 
-    this.hitEl.style.setProperty('--center-overlay-safe-top', `${safeTop}px`);
-    this.hitEl.style.setProperty('--center-overlay-safe-bottom', `${safeBottom}px`);
-    if (this.playerContainerEl instanceof HTMLElement) {
-      this.playerContainerEl.style.setProperty('--center-overlay-safe-top', `${safeTop}px`);
-      this.playerContainerEl.style.setProperty('--center-overlay-safe-bottom', `${safeBottom}px`);
-    }
+    // Respect YouTube's own UI stripes; other modes can use the full height.
+    // NOTE: On some mobile layouts (notably iOS Safari with rotated/portrait hacks),
+    // these bands can consume too much of the available height. We clamp them in
+    // updateLayout() so the overlay stays visually centered.
+    this._baseSafeTop = (m === 'youtube') ? 70 : 0;
+    this._baseSafeBottom = (m === 'youtube') ? 155 : 0;
 
     // Let callers style based on adapter if desired.
     try { document.body.dataset.activeAdapter = (m || 'youtube'); } catch { /* ignore */ }
@@ -150,7 +152,37 @@ export class CenterControlsOverlay {
     if (!(this.hitEl instanceof HTMLElement)) return;
     if (!(this.panelEl instanceof HTMLElement)) return;
 
-    // Icon sizing based on actual overlay height.
+    // Apply safe-area bands, but drop them if they'd leave too little vertical room.
+    // This keeps the center overlay centered on small/tall mobile viewports.
+    let containerHeight = 0;
+    try {
+      const el = (this.playerContainerEl instanceof HTMLElement) ? this.playerContainerEl : this.hitEl;
+      containerHeight = el.getBoundingClientRect().height;
+    } catch { containerHeight = 0; }
+
+    let safeTop = Number(this._baseSafeTop) || 0;
+    let safeBottom = Number(this._baseSafeBottom) || 0;
+
+    // If the remaining usable space would be tiny, ignore the band constraints.
+    // (e.g., iPhone portrait/rotated layout)
+    const MIN_USABLE_CENTER_PX = 260;
+    if (containerHeight && (containerHeight - safeTop - safeBottom) < MIN_USABLE_CENTER_PX) {
+      safeTop = 0;
+      safeBottom = 0;
+    }
+
+    try {
+      this.hitEl.style.setProperty('--center-overlay-safe-top', `${safeTop}px`);
+      this.hitEl.style.setProperty('--center-overlay-safe-bottom', `${safeBottom}px`);
+    } catch { /* ignore */ }
+    if (this.playerContainerEl instanceof HTMLElement) {
+      try {
+        this.playerContainerEl.style.setProperty('--center-overlay-safe-top', `${safeTop}px`);
+        this.playerContainerEl.style.setProperty('--center-overlay-safe-bottom', `${safeBottom}px`);
+      } catch { /* ignore */ }
+    }
+
+    // Icon sizing based on actual overlay height (after safe-area is applied).
     let h = 0;
     try { h = this.hitEl.getBoundingClientRect().height; } catch { h = 0; }
 
