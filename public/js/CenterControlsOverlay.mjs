@@ -184,12 +184,17 @@ export class CenterControlsOverlay {
     if (!(this.hitEl instanceof HTMLElement)) return;
     if (!(this.panelEl instanceof HTMLElement)) return;
     const next = !!visible;
-    if (this._visible === next) {
+    const v = next ? 'true' : 'false';
+
+    // Keep DOM state authoritative: if attributes drift (e.g., from DOM mutations),
+    // re-sync even when our internal flag already matches.
+    const needsSync = (this.hitEl.dataset.visible !== v) || (this.panelEl.dataset.visible !== v);
+    if (this._visible === next && !needsSync) {
       if (next) this._armHideTimer();
       return;
     }
+
     this._visible = next;
-    const v = next ? 'true' : 'false';
     this.hitEl.dataset.visible = v;
     this.panelEl.dataset.visible = v;
     this.hitEl.setAttribute('aria-hidden', next ? 'false' : 'true');
@@ -378,6 +383,19 @@ export class CenterControlsOverlay {
     // Don't show overlay for pure modifier presses.
     const key = String(event.key || '');
     if (!key) return;
+
+    // X hides the overlay immediately (same behavior as middle-click).
+    if (key === 'x' || key === 'X') {
+      try {
+        if (event.cancelable) event.preventDefault();
+        if (typeof event.stopImmediatePropagation === 'function') event.stopImmediatePropagation();
+        event.stopPropagation();
+      } catch { /* ignore */ }
+      this._clearHideTimer();
+      this.setVisible(false);
+      try { this.onIdleHide(); } catch { /* ignore */ }
+      return;
+    }
 
     this.noteActivity();
   }

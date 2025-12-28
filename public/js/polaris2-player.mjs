@@ -3061,6 +3061,36 @@
     }
 
     document.addEventListener('keydown', (e) => {
+      // X hides the center controls immediately (even if focus is in the sidebar
+      // or on invisible edge buttons). Mimics middle-click behavior.
+      if (!e.defaultPrevented && !e.metaKey && !e.ctrlKey && !e.altKey && (e.key === 'x' || e.key === 'X')) {
+        try { centerControlsOverlayController?.setVisible?.(false); } catch { /* ignore */ }
+        try {
+          if (centerControlsHitEl) centerControlsHitEl.dataset.visible = 'false';
+          if (centerControlsPanelEl) {
+            centerControlsPanelEl.dataset.visible = 'false';
+            centerControlsPanelEl.setAttribute('aria-hidden', 'true');
+          }
+          if (centerEdgePrevBtn) centerEdgePrevBtn.dataset.visible = 'false';
+          if (centerEdgeNextBtn) centerEdgeNextBtn.dataset.visible = 'false';
+        } catch { /* ignore */ }
+
+        if (isAppFullscreen()) {
+          try { hideCursor(); } catch { /* ignore */ }
+          try { clearCursorIdleTimer(); } catch { /* ignore */ }
+          try {
+            if (sidebar && !sidebar.isHidden()) sidebar.setHidden(true, { force: true, source: 'x-hide' });
+          } catch { /* ignore */ }
+        }
+
+        try {
+          e.preventDefault();
+          e.stopPropagation();
+          if (typeof e.stopImmediatePropagation === 'function') e.stopImmediatePropagation();
+        } catch { /* ignore */ }
+        return;
+      }
+
       if (isTextInputFocused()) return;
 
       // PageUp/PageDown should scroll the playlist by pages from anywhere in the sidebar,
