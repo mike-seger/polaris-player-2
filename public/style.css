@@ -102,7 +102,7 @@ html:not(.icons-ready) .icon {
 html {
     height: 100%;
     overscroll-behavior: none;
-    background: var(--color-bg);
+    background: #000;
 }
 
 body {
@@ -119,7 +119,7 @@ body {
     right: 0;
     bottom: 0;
     overscroll-behavior: none;
-    background: var(--color-bg);
+    background: #000;
     color: var(--color-text);
 
     /* Prevent accidental selection during swipe/drag gestures (esp. iOS). */
@@ -188,6 +188,15 @@ input[type="text"]:focus-visible {
     body {
         min-height: 100dvh;
         height: 100dvh;
+    }
+}
+
+/* Prefer a stable viewport height on mobile to avoid visible bands during
+   iOS Safari toolbar show/hide transitions. */
+@supports (height: 100svh) {
+    body {
+        min-height: 100svh;
+        height: 100svh;
     }
 }
 
@@ -1463,7 +1472,7 @@ body.hide-track-check .track-state-btn {
     display: flex;
     justify-content: center;
     align-items: center;
-    background: var(--color-bg);
+    background: #000;
     z-index: 1;
 }
 
@@ -1489,36 +1498,35 @@ body.hide-track-check .track-state-btn {
 
 .center-controls-panel {
     position: absolute;
-    left: 50%;
-    top: calc(
-        var(--center-overlay-safe-top, 0px) +
-            (
-                100% - var(--center-overlay-safe-top, 0px) -
-                    var(--center-overlay-safe-bottom, 0px)
-            ) / 2
-    );
-    transform: translate(-50%, -50%);
+    left: 0;
+    right: 0;
+    top: var(--center-overlay-safe-top, 0px);
+    bottom: var(--center-overlay-safe-bottom, 0px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
     z-index: 4;
 
     /* Default icon size; JS will update based on safe overlay height. */
-    --center-overlay-icon-size: 50px;
+    --center-overlay-icon-size: 30px;
     --cco-overlay-scale: 1;
     --cco-btn-scale: 1;
 
     opacity: 0;
+    /* Keep click-through outside the actual controls. */
     pointer-events: none;
     transition: opacity 300ms ease;
 }
 
 .center-controls-panel[data-visible="true"] {
     opacity: 1;
-    pointer-events: auto;
 }
 
 .center-controls-panel .cco-panel {
     display: flex;
     flex-direction: column;
     gap: 18px;
+    pointer-events: auto;
 }
 
 .center-controls-panel .cco-row {
@@ -1526,6 +1534,12 @@ body.hide-track-check .track-state-btn {
     align-items: center;
     justify-content: center;
     gap: 14px;
+}
+
+/* Controls row: on larger screens, keep the sidebar toggle on its own line above the playback buttons. */
+.center-controls-panel .cco-row-controls {
+    flex-wrap: wrap;
+    row-gap: 14px;
 }
 
 .center-controls-panel .cco-btn {
@@ -1802,15 +1816,48 @@ body.hide-track-check .track-state-btn {
  * This block is intentionally at the end of the stylesheet so it wins in the cascade.
  */
 @media (max-width: 800px) and (max-aspect-ratio: 2/3) {
-    /* Rotate the entire app view in portrait and fill the available viewport. */
+    /* Portrait/mobile:
+       - When sidebar is visible, keep UI unrotated.
+       - Only rotate -90deg when the sidebar is hidden (video-first mode).
+    */
     #sidebar {
         position: fixed;
+        inset: 0;
+        width: 100vw;
+        height: 100svh;
+        transform: none;
+        transform-origin: center;
+    }
+
+    @supports not (height: 100svh) {
+        #sidebar {
+            height: 100dvh;
+        }
+    }
+
+    @supports not (height: 100dvh) {
+        #sidebar {
+            height: calc(var(--app-vh, 1vh) * 100);
+        }
+    }
+
+    body.sidebar-hidden #sidebar {
         top: 50%;
         left: 50%;
-        width: calc(var(--app-vh, 1vh) * 100);
+        right: auto;
+        bottom: auto;
+        /* Prefer CSS dynamic viewport height to avoid iOS/toolbar measurement drift. */
+        width: 100dvh;
         height: 100vw;
         transform-origin: center;
         transform: translate(-50%, -50%) rotate(-90deg);
+    }
+
+    /* Fallback for browsers without dvh support. */
+    @supports not (width: 100dvh) {
+        body.sidebar-hidden #sidebar {
+            width: calc(var(--app-vh, 1vh) * 100);
+        }
     }
 
     #sidebarDrawer {
@@ -1822,6 +1869,15 @@ body.hide-track-check .track-state-btn {
     .center-controls-panel {
         --cco-overlay-scale: 0.7;
         --cco-btn-scale: 0.6;
+    }
+
+    /* Mobile portrait: keep controls in one row; put toggle after Next with a button-width gap. */
+    .center-controls-panel .cco-row-controls {
+        flex-wrap: nowrap;
+    }
+
+    .center-controls-panel .cco-time {
+        font-size: calc(0.65rem * 2 * var(--cco-overlay-scale));
     }
 
     #progressWrapper {

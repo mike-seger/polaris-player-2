@@ -3319,6 +3319,70 @@
       seekToSeconds(newTime);
     }
 
+    function _setRangeValueFromClientPoint(rangeEl, clientX, clientY) {
+      if (!(rangeEl instanceof HTMLInputElement)) return;
+      if (rangeEl.type !== 'range') return;
+      let rect;
+      try { rect = rangeEl.getBoundingClientRect(); } catch { return; }
+      if (!rect || !isFinite(rect.width) || !isFinite(rect.height) || rect.width <= 0 || rect.height <= 0) return;
+
+      const min = Number(rangeEl.min || 0);
+      const max = Number(rangeEl.max || 1000);
+      const span = (isFinite(max - min) && (max - min) > 0) ? (max - min) : 1000;
+
+      // Heuristic: treat tall sliders as vertical (useful when the whole UI is rotated).
+      const isVertical = rect.height > (rect.width * 1.2);
+      let frac;
+      if (isVertical) {
+        frac = (rect.bottom - clientY) / rect.height;
+      } else {
+        frac = (clientX - rect.left) / rect.width;
+      }
+      frac = Math.max(0, Math.min(1, frac));
+      const next = Math.round(min + (frac * span));
+
+      try {
+        rangeEl.value = String(next);
+        // Trigger existing input handler path.
+        rangeEl.dispatchEvent(new Event('input', { bubbles: true }));
+      } catch { /* ignore */ }
+    }
+
+    function _installMobileRangeDragFix(rangeEl) {
+      if (!(rangeEl instanceof HTMLInputElement)) return;
+      if (rangeEl.type !== 'range') return;
+
+      let dragging = false;
+
+      const onTouchStart = (event) => {
+        if (!event) return;
+        const touch = event.touches && event.touches[0];
+        if (!touch) return;
+        dragging = true;
+        _setRangeValueFromClientPoint(rangeEl, touch.clientX, touch.clientY);
+        // Prevent page scroll from stealing the gesture.
+        try { if (event.cancelable) event.preventDefault(); } catch { /* ignore */ }
+      };
+
+      const onTouchMove = (event) => {
+        if (!dragging) return;
+        const touch = event.touches && event.touches[0];
+        if (!touch) return;
+        _setRangeValueFromClientPoint(rangeEl, touch.clientX, touch.clientY);
+        try { if (event.cancelable) event.preventDefault(); } catch { /* ignore */ }
+      };
+
+      const onTouchEnd = () => {
+        dragging = false;
+      };
+
+      // Use non-passive so we can preventDefault and keep the gesture.
+      rangeEl.addEventListener('touchstart', onTouchStart, { passive: false });
+      rangeEl.addEventListener('touchmove', onTouchMove, { passive: false });
+      rangeEl.addEventListener('touchend', onTouchEnd, { passive: true });
+      rangeEl.addEventListener('touchcancel', onTouchEnd, { passive: true });
+    }
+
     if (progressRange) {
       progressRange.addEventListener('pointerdown', () => setProgressScrubbing(true, progressRange.value), { passive: true });
       progressRange.addEventListener('pointerup', clearProgressScrubbing, { passive: true });
@@ -3327,6 +3391,7 @@
       progressRange.addEventListener('touchend', clearProgressScrubbing, { passive: true });
       progressRange.addEventListener('touchcancel', clearProgressScrubbing, { passive: true });
       progressRange.addEventListener('input', () => _onProgressInput(progressRange.value));
+      _installMobileRangeDragFix(progressRange);
     }
 
     if (centerProgressRange) {
@@ -3337,6 +3402,7 @@
       centerProgressRange.addEventListener('touchend', clearProgressScrubbing, { passive: true });
       centerProgressRange.addEventListener('touchcancel', clearProgressScrubbing, { passive: true });
       centerProgressRange.addEventListener('input', () => _onProgressInput(centerProgressRange.value));
+      _installMobileRangeDragFix(centerProgressRange);
       centerProgressRange.addEventListener('keydown', (event) => {
         if (!event || event.defaultPrevented) return;
         if (event.metaKey || event.ctrlKey || event.altKey) return;

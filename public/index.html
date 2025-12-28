@@ -6,6 +6,8 @@
     name="viewport"
     content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
   />
+  <meta name="color-scheme" content="dark" />
+  <meta name="theme-color" content="#000000" />
   <title>Polaris</title>
   <link rel="preload" href="./player-fill0.woff2?v=2025-12-27-4" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="./player-fill1.woff2?v=2025-12-27-4" as="font" type="font/woff2" crossorigin>
@@ -57,14 +59,12 @@
         data-visible="false"
       >
         <div class="cco-panel" aria-hidden="true">
-          <div class="cco-row">
+          <div class="cco-row cco-row-controls">
             <label id="centerSidebarToggle" class="cco-toggle" aria-label="Toggle sidebar">
               <input id="centerSidebarToggleInput" type="checkbox" aria-label="Sidebar visible" />
               <span class="icon fill-0" aria-hidden="true">thumbnail_bar</span>
             </label>
-          </div>
 
-          <div class="cco-row">
             <button id="centerPrevBtn" class="cco-btn" type="button" aria-label="Previous track">
               <span class="icon" aria-hidden="true">skip_previous</span>
             </button>

@@ -58,6 +58,19 @@ export class CenterControlsOverlay {
     this._boundOnSidebarToggleChange = (e) => this._onSidebarToggleChange(e);
   }
 
+  _isMobileMode() {
+    // Keep this aligned with the CSS “portrait/mobile” breakpoint used for the full-width sidebar.
+    // Also treat coarse-pointer devices as mobile-ish for safer layout defaults.
+    try {
+      if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return false;
+      const portraitMobile = window.matchMedia('(max-width: 800px) and (max-aspect-ratio: 2/3)').matches;
+      const coarsePointer = window.matchMedia('(hover: none) and (pointer: coarse)').matches;
+      return portraitMobile || coarsePointer;
+    } catch {
+      return false;
+    }
+  }
+
   setup() {
     if (!(this.hitEl instanceof HTMLElement)) return;
     if (!(this.panelEl instanceof HTMLElement)) return;
@@ -139,8 +152,10 @@ export class CenterControlsOverlay {
     // NOTE: On some mobile layouts (notably iOS Safari with rotated/portrait hacks),
     // these bands can consume too much of the available height. We clamp them in
     // updateLayout() so the overlay stays visually centered.
-    this._baseSafeTop = (m === 'youtube') ? 70 : 0;
-    this._baseSafeBottom = (m === 'youtube') ? 155 : 0;
+    const isMobile = this._isMobileMode();
+    const ytSafeScale = isMobile ? 0.1 : 1;
+    this._baseSafeTop = (m === 'youtube') ? Math.round(70 * ytSafeScale) : 0;
+    this._baseSafeBottom = (m === 'youtube') ? Math.round(155 * ytSafeScale) : 0;
 
     // Let callers style based on adapter if desired.
     try { document.body.dataset.activeAdapter = (m || 'youtube'); } catch { /* ignore */ }
