@@ -3307,6 +3307,16 @@
       centerProgressRange.addEventListener('touchend', clearProgressScrubbing, { passive: true });
       centerProgressRange.addEventListener('touchcancel', clearProgressScrubbing, { passive: true });
       centerProgressRange.addEventListener('input', () => _onProgressInput(centerProgressRange.value));
+      centerProgressRange.addEventListener('keydown', (event) => {
+        if (!event || event.defaultPrevented) return;
+        if (event.metaKey || event.ctrlKey || event.altKey) return;
+        if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
+          event.preventDefault();
+          event.stopPropagation();
+          if (event.key === 'ArrowUp') playPrev();
+          else playNext();
+        }
+      });
     }
 
     // TEMP: swipe gesture overlays/controllers removed during refactor.

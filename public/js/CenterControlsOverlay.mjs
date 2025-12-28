@@ -236,6 +236,23 @@ export class CenterControlsOverlay {
     const t = (event.target instanceof Element) ? event.target : null;
     if (!t) return;
 
+    // Middle-click hides the controls immediately (with transition).
+    // Use pointerdown so it works reliably across browsers.
+    const isMiddleClick = (typeof event.button === 'number') && event.button === 1;
+    if (isMiddleClick) {
+      if (t.closest('#player-container') || t.closest('#player') || t.closest('#cursorWakeOverlay') || (this.panelEl instanceof HTMLElement && this.panelEl.contains(t))) {
+        try {
+          if (event.cancelable) event.preventDefault();
+          if (typeof event.stopImmediatePropagation === 'function') event.stopImmediatePropagation();
+          event.stopPropagation();
+        } catch { /* ignore */ }
+        this._clearHideTimer();
+        this.setVisible(false);
+        try { this.onIdleHide(); } catch { /* ignore */ }
+      }
+      return;
+    }
+
     // Never reveal controls due to interactions on the invisible edge nav targets.
     if (t.closest('.cco-edge')) {
       this._noteActivity({ showOverlay: false });
@@ -279,6 +296,18 @@ export class CenterControlsOverlay {
 
     const t = (event.target instanceof Element) ? event.target : null;
     if (!t) return;
+
+    // When hidden, don't reveal controls due to movement inside the panel region.
+    // The panel stays in layout even when hidden (opacity/pointer-events), so we can
+    // use its bounding box as an exclusion zone.
+    if (!this._visible && this.panelEl instanceof HTMLElement && typeof event.clientX === 'number' && typeof event.clientY === 'number') {
+      try {
+        const r = this.panelEl.getBoundingClientRect();
+        if (event.clientX >= r.left && event.clientX <= r.right && event.clientY >= r.top && event.clientY <= r.bottom) {
+          return;
+        }
+      } catch { /* ignore */ }
+    }
 
     // Don't reveal controls due to hover/move inside edge nav targets.
     if (t.closest('.cco-edge')) {

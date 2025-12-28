@@ -1530,7 +1530,7 @@ body.hide-track-check .track-state-btn {
     height: calc(var(--center-overlay-icon-size) + 22px);
     border-radius: 999px;
     border: 0;
-    background: rgba(0, 0, 0, 0.35);
+    background: rgba(40, 40, 40, 0.65);
     padding: 0;
     display: inline-flex;
     align-items: center;
@@ -1547,7 +1547,7 @@ body.hide-track-check .track-state-btn {
     height: calc(var(--center-overlay-icon-size) + 22px);
     border-radius: 999px;
     border: 0;
-    background: rgba(0, 0, 0, 0.35);
+    background: rgba(40, 40, 40, 0.65);
     padding: 0;
     display: inline-flex;
     align-items: center;
@@ -1629,7 +1629,7 @@ body.hide-track-check .track-state-btn {
     align-items: stretch;
     gap: 0;
     border-radius: 999px;
-    background: rgba(0, 0, 0, 0.35);
+    background: rgba(40, 40, 40, 0.65);
 }
 
 .center-controls-panel .cco-progress-range {
