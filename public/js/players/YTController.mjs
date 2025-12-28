@@ -9,6 +9,17 @@ const STATES = Object.freeze({
 
 let iframeApiPromise = null;
 
+// A conservative “minimum overlay” configuration.
+// Note: YouTube may still show overlays (big play icon, end screens, branding) regardless.
+const DEFAULT_PLAYER_VARS_MIN = Object.freeze({
+  playsinline: 1,
+  disablekb: 1,
+  iv_load_policy: 3,
+  modestbranding: 1,
+  rel: 0,
+  fs: 0,
+});
+
 function loadYouTubeIframeApi() {
   if (window.YT && typeof window.YT.Player === 'function') {
     return Promise.resolve();
@@ -75,6 +86,7 @@ export class YTController {
       autoplay = false,
       controls = 0,
       origin = null,
+      playerVars = null,
     } = options;
 
     this.STATES = STATES;
@@ -82,6 +94,7 @@ export class YTController {
     this.autoplay = autoplay;
     this.controls = controls;
     this.origin = origin;
+    this.playerVars = (playerVars && typeof playerVars === 'object') ? playerVars : null;
 
     this._warnedOriginMismatch = false;
 
@@ -461,9 +474,11 @@ export class YTController {
       width: '320',
       videoId: initialVideoId,
       playerVars: {
+        ...DEFAULT_PLAYER_VARS_MIN,
+        ...(this.playerVars || null),
         autoplay: this.autoplay ? 1 : 0,
         controls: this.controls,
-        origin: playerOrigin
+        origin: playerOrigin,
       },
       events: {
         onReady,

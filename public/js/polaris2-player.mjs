@@ -2703,6 +2703,14 @@
         focusActivePlayerPane();
       } else {
         focusTrackControls();
+
+        // When the user reveals the sidebar, ensure the currently playing track
+        // is visible and centered in the list.
+        try {
+          requestAnimationFrame(() => {
+            try { scrollActiveIntoView({ guardUserScroll: false }); } catch { /* ignore */ }
+          });
+        } catch { /* ignore */ }
       }
 
       try { applyCoveredYouTubeOptimization(); } catch { /* ignore */ }
