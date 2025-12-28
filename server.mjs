@@ -509,8 +509,12 @@ app.use(express.static(path.join(__dirname, 'public'), {
   etag: true,
   maxAge: 0,
   setHeaders: (res, filePath) => {
-    if (/\.(html|mjs|js|css)$/i.test(filePath)) {
-      res.setHeader('Cache-Control', 'no-store');
+    // iOS Safari can be particularly aggressive about caching when navigating
+    // back/forward or resuming a tab. These headers bias hard toward revalidation.
+    if (/\.(html|mjs|js|css|json)$/i.test(filePath)) {
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
     }
   }
 }));

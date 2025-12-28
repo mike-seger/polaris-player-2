@@ -74,11 +74,22 @@
             <button id="centerNextBtn" class="cco-btn" type="button" aria-label="Next track">
               <span class="icon" aria-hidden="true">skip_next</span>
             </button>
+
+            <button id="centerMarkBtn" class="cco-btn" type="button" aria-label="Mark track" aria-pressed="false">
+              <span class="icon fill-0" id="centerMarkIcon" aria-hidden="true">circle</span>
+            </button>
           </div>
 
           <div class="cco-progress" aria-hidden="true">
             <div id="centerTimeLabel" class="cco-time">00:00 / 00:00</div>
             <input id="centerProgressRange" class="cco-progress-range" type="range" min="0" max="1000" value="0" />
+
+            <span id="centerTrackInfo" class="title cco-trackinfo" aria-hidden="true">
+              <span id="centerTrackArtistLine" class="track-artist-line">
+                <span id="centerTrackArtist" class="track-artist"></span>
+              </span>
+              <span id="centerTrackTitle" class="track-title"></span>
+            </span>
           </div>
         </div>
       </div>

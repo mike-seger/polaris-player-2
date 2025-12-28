@@ -14,6 +14,7 @@ export class CenterControlsOverlay {
       onPrev = () => {},
       onNext = () => {},
       onTogglePlayback = () => {},
+      onToggleMarkTrack = () => {},
       getPlayerMode = () => 'youtube',
       isSidebarHidden = () => false,
       setSidebarHidden = (_hidden, _options) => {},
@@ -33,6 +34,7 @@ export class CenterControlsOverlay {
     this.onPrev = onPrev;
     this.onNext = onNext;
     this.onTogglePlayback = onTogglePlayback;
+    this.onToggleMarkTrack = onToggleMarkTrack;
 
     this.getPlayerMode = getPlayerMode;
     this.isSidebarHidden = isSidebarHidden;
@@ -82,6 +84,7 @@ export class CenterControlsOverlay {
     if (b.prevBtn) b.prevBtn.addEventListener('click', (e) => this._wrapClick(e, () => this.onPrev()));
     if (b.playPauseBtn) b.playPauseBtn.addEventListener('click', (e) => this._wrapClick(e, () => this.onTogglePlayback()));
     if (b.nextBtn) b.nextBtn.addEventListener('click', (e) => this._wrapClick(e, () => this.onNext()));
+    if (b.markBtn) b.markBtn.addEventListener('click', (e) => this._wrapClick(e, () => this.onToggleMarkTrack()));
     // Edge buttons should never reveal the rest of the overlay.
     if (b.edgePrevBtn) b.edgePrevBtn.addEventListener('click', (e) => this._wrapEdgeClick(e, () => this.onPrev()));
     if (b.edgeNextBtn) b.edgeNextBtn.addEventListener('click', (e) => this._wrapEdgeClick(e, () => this.onNext()));

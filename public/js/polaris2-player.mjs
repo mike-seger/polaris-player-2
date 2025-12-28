@@ -18,7 +18,7 @@
   import { CountryFilterOverlay } from './CountryFilterOverlay.mjs';
   import { CombinedFilterOverlay } from './CombinedFilterOverlay.mjs';
   import { computeFilteredIndices as computeFilteredIndicesPure } from './FilterEngine.mjs';
-  import { getSortKeyForTitle } from './TrackParsing.mjs';
+  import { getSortKeyForTitle, splitTrackDisplayText } from './TrackParsing.mjs';
   import { TrackListView } from './TrackListView.mjs';
   import { TrackDetailsOverlay } from './TrackDetailsOverlay.mjs';
   import { PlaylistDataSource } from './PlaylistDataSource.mjs';
@@ -332,11 +332,80 @@
       return state;
     }
 
+    function syncCenterMarkTrackButton() {
+      const btn = document.getElementById('centerMarkBtn');
+      const icon = document.getElementById('centerMarkIcon');
+      if (!(btn instanceof HTMLElement)) return;
+      if (!(icon instanceof HTMLElement)) return;
+
+      const activePlaylistId = getActivePlaylistId();
+      const activeItem = (currentIndex >= 0 && playlistItems[currentIndex]) ? playlistItems[currentIndex] : null;
+      const videoId = activeItem && activeItem.videoId ? String(activeItem.videoId) : '';
+      const checked = !!(activePlaylistId && videoId && isTrackChecked(activePlaylistId, videoId));
+
+      try {
+        if (!activePlaylistId || !videoId) {
+          btn.setAttribute('aria-disabled', 'true');
+          btn.setAttribute('aria-pressed', 'false');
+          btn.setAttribute('aria-label', 'Mark track');
+          btn.title = 'Mark track';
+          icon.className = 'icon fill-0 circle';
+          icon.textContent = 'circle';
+          return;
+        }
+
+        btn.removeAttribute('aria-disabled');
+        btn.setAttribute('aria-pressed', checked ? 'true' : 'false');
+        if (checked) {
+          btn.setAttribute('aria-label', 'Mark video as incomplete');
+          btn.title = 'Mark video as incomplete';
+          icon.className = 'icon fill-0 check-circle';
+          icon.textContent = 'check_circle';
+        } else {
+          btn.setAttribute('aria-label', 'Mark video as completed');
+          btn.title = 'Mark video as completed';
+          icon.className = 'icon fill-0 circle';
+          icon.textContent = 'circle';
+        }
+      } catch { /* ignore */ }
+    }
+
+    function syncCenterTrackInfo() {
+      const titleEl = document.getElementById('centerTrackTitle');
+      const artistEl = document.getElementById('centerTrackArtist');
+      const artistLineEl = document.getElementById('centerTrackArtistLine');
+      if (!(titleEl instanceof HTMLElement)) return;
+      if (!(artistEl instanceof HTMLElement)) return;
+      if (!(artistLineEl instanceof HTMLElement)) return;
+
+      const item = (currentIndex >= 0 && playlistItems[currentIndex]) ? playlistItems[currentIndex] : null;
+      if (!item) {
+        titleEl.textContent = '–';
+        artistEl.textContent = '';
+        artistLineEl.style.display = 'none';
+        return;
+      }
+
+      const rawTitle = (typeof item.userTitle === 'string' && item.userTitle.trim().length)
+        ? item.userTitle
+        : (item.title || '');
+
+      const parts = splitTrackDisplayText(rawTitle);
+      const titleText = parts.title || rawTitle || '';
+      const artistText = parts.artist || '';
+
+      titleEl.textContent = titleText;
+      artistEl.textContent = artistText;
+      artistLineEl.style.display = artistText ? '' : 'none';
+    }
+
     function toggleTrackStateForPlaylist(playlistId, videoId) {
       if (!playlistId || !videoId) return TRACK_STATE_DEFAULT;
       const current = getTrackStateForPlaylist(playlistId, videoId);
       const next = current === TRACK_STATE_CHECKED ? TRACK_STATE_DEFAULT : TRACK_STATE_CHECKED;
       setTrackStateForPlaylist(playlistId, videoId, next);
+
+      try { syncCenterMarkTrackButton(); } catch { /* ignore */ }
 
       if (onlyMarked) {
         computeFilteredIndices();
@@ -436,6 +505,8 @@
     const centerPlayPauseBtn = document.getElementById('centerPlayPauseBtn');
     const centerPlayPauseIcon = document.getElementById('centerPlayPauseIcon');
     const centerNextBtn = document.getElementById('centerNextBtn');
+    const centerMarkBtn = document.getElementById('centerMarkBtn');
+    const centerMarkIcon = document.getElementById('centerMarkIcon');
     const centerEdgePrevBtn = document.getElementById('centerEdgePrevBtn');
     const centerEdgeNextBtn = document.getElementById('centerEdgeNextBtn');
     const centerSidebarToggleInput = document.getElementById('centerSidebarToggleInput');
@@ -2184,6 +2255,8 @@
     }
 
     function updateNowPlaying() {
+      try { syncCenterMarkTrackButton(); } catch { /* ignore */ }
+      try { syncCenterTrackInfo(); } catch { /* ignore */ }
       const titleEl = document.getElementById('nowPlaying');
       const barEl = document.getElementById('nowPlayingBar');
       const artEl = document.getElementById('nowPlayingArtwork');
@@ -2473,6 +2546,14 @@
         onPrev: () => playPrev(),
         onNext: () => playNext(),
         onTogglePlayback: () => togglePlayback(),
+        onToggleMarkTrack: () => {
+          const activePlaylistId = getActivePlaylistId();
+          const activeItem = (currentIndex >= 0 && playlistItems[currentIndex]) ? playlistItems[currentIndex] : null;
+          if (!activePlaylistId || !activeItem || !activeItem.videoId) return;
+          toggleTrackStateForPlaylist(activePlaylistId, activeItem.videoId);
+          renderTrackList({ preserveScroll: true });
+          syncCenterMarkTrackButton();
+        },
         getPlayerMode: () => getPlayerMode(),
         isSidebarHidden: () => (sidebar ? sidebar.isHidden() : document.body.classList.contains('sidebar-hidden')),
         setSidebarHidden: (hidden, options) => {
@@ -2483,6 +2564,7 @@
           prevBtn: centerPrevBtn,
           playPauseBtn: centerPlayPauseBtn,
           nextBtn: centerNextBtn,
+          markBtn: centerMarkBtn,
           edgePrevBtn: centerEdgePrevBtn,
           edgeNextBtn: centerEdgeNextBtn,
           sidebarToggleInput: centerSidebarToggleInput,
@@ -2490,6 +2572,8 @@
       });
       try { centerControlsOverlayController.setup(); } catch { /* ignore */ }
     }
+
+    try { syncCenterMarkTrackButton(); } catch { /* ignore */ }
 
     // Initialize Media Session handlers once the UI is wired.
     try { setupMediaSessionHandlers(); } catch { /* ignore */ }

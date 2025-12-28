@@ -1718,6 +1718,26 @@ body.hide-track-check .track-state-btn {
     background: color-mix(in srgb, var(--color-text) 40%, transparent);
 }
 
+/* Playlist-style track info shown under the center overlay slider. */
+.center-controls-panel .cco-trackinfo {
+    width: calc(100% - (var(--cco-track-h) * 2));
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 10px;
+    text-align: center;
+    align-items: center;
+}
+
+.center-controls-panel .cco-trackinfo .track-title,
+.center-controls-panel .cco-trackinfo .track-artist-line {
+    width: 100%;
+    max-width: 100%;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
 .center-controls-panel .cco-time {
     font-size: calc(1.05rem * 2 * var(--cco-overlay-scale));
     opacity: 0.9;
@@ -1872,6 +1892,11 @@ body.hide-track-check .track-state-btn {
     .center-controls-panel {
         --cco-overlay-scale: 0.7;
         --cco-btn-scale: 0.6;
+    }
+
+    /* In "video-first" mode we rotate the UI; width should track viewport height, not width. */
+    body.sidebar-hidden .center-controls-panel .cco-progress {
+        width: min(calc(72vh * 0.8), calc(560px * 0.8));
     }
 
     /* Mobile portrait: keep controls in one row; put toggle after Next with a button-width gap. */
