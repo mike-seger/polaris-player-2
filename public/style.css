@@ -1511,6 +1511,7 @@ body.hide-track-check .track-state-btn {
     --center-overlay-icon-size: 30px;
     --cco-overlay-scale: 1;
     --cco-btn-scale: 1;
+    --cco-trackinfo-font-scale: 2.5;
 
     opacity: 0;
     /* Keep click-through outside the actual controls. */
@@ -1736,6 +1737,7 @@ body.hide-track-check .track-state-btn {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    font-size: calc(1em * var(--cco-trackinfo-font-scale));
 }
 
 .center-controls-panel .cco-time {
@@ -1892,11 +1894,12 @@ body.hide-track-check .track-state-btn {
     .center-controls-panel {
         --cco-overlay-scale: 0.7;
         --cco-btn-scale: 0.6;
+        --cco-trackinfo-font-scale: 1.5;
     }
 
     /* In "video-first" mode we rotate the UI; width should track viewport height, not width. */
     body.sidebar-hidden .center-controls-panel .cco-progress {
-        width: min(calc(72vh * 0.8), calc(560px * 0.8));
+        width: min(calc(72vh * 0.8 * 0.92), calc(560px * 0.8 * 0.92));
     }
 
     /* Mobile portrait: keep controls in one row; put toggle after Next with a button-width gap. */
