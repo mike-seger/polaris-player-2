@@ -266,7 +266,11 @@
 
     function buildLocalVideoUrlForItem(item) {
       const base = 'vid_' + item.videoId;
-      return `${window.location.origin}/video/${base}.mp4`;
+      try {
+        return new URL(`./video/${encodeURIComponent(base)}.mp4`, window.location.href).toString();
+      } catch {
+        return `./video/${encodeURIComponent(base)}.mp4`;
+      }
     }
 
     filterStateStore = new FilterStateStore({
@@ -1796,6 +1800,8 @@
       const track = getCurrentTrackForMediaSession();
       if (!track) return;
 
+      const isFileProtocol = (window.location && window.location.protocol === 'file:');
+
       // Prefer PlayerHost-derived thumbnail so Spotify can use cached/learned art.
       let artUrl = '';
       try {
@@ -1813,7 +1819,7 @@
       const item = playlistItems[currentIndex] || {};
       const artist = String(item.artist || item.channel || item.uploader || '').trim();
 
-      const artwork = artUrl
+      const artwork = (!isFileProtocol && artUrl)
         ? [
             { src: buildAbsoluteUrl(artUrl), sizes: '96x96', type: 'image/png' },
             { src: buildAbsoluteUrl(artUrl), sizes: '192x192', type: 'image/png' },

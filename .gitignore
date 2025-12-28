@@ -25,3 +25,4 @@ __pycache__
 
 # Optional: ignore local debug overrides if people create them
 .vscode/*.local.json
+/dist

@@ -36,6 +36,18 @@ npm run dev
 python3 utility/no_cache_server.py --port 8080 --directory public --bind 127.0.0.1
 ```
 
+## build a file://-friendly bundle
+
+Browsers block ES modules (and often fonts) when opening `public/index.html` directly via `file://`.
+If you want a local, single-folder build you can open from disk, build `dist/`:
+
+```zsh
+npm run build:file
+
+# then open (file://):
+open dist/index.html
+```
+
 ## offline spectrum cache (winamp-style)
 
 The UI can display a tiny spectrum bar graph (between the transport buttons and the A↕Z icon). Because browser audio access to YouTube is restricted, this spectrum is generated **offline** and cached per `videoId`.

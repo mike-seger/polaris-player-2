@@ -1,0 +1,135 @@
+import fs from 'fs/promises';
+import path from 'path';
+import * as esbuild from 'esbuild-wasm';
+
+const repoRoot = process.cwd();
+const publicDir = path.join(repoRoot, 'public');
+const distDir = path.join(repoRoot, 'dist');
+const distAssetsDir = path.join(distDir, 'assets');
+const distVideoDir = path.join(distDir, 'video');
+
+async function pathExists(p) {
+  try {
+    await fs.access(p);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function copyIfExists(from, to) {
+  if (!(await pathExists(from))) return;
+  await fs.cp(from, to, { recursive: true });
+}
+
+async function rmIfExists(p) {
+  if (!(await pathExists(p))) return;
+  await fs.rm(p, { recursive: true, force: true });
+}
+
+async function ensureDir(p) {
+  await fs.mkdir(p, { recursive: true });
+}
+
+function buildDistIndexHtml(sourceHtml) {
+  let html = String(sourceHtml);
+
+  // Remove the file:// warning overlay/scripts from the build output.
+  html = html.replace(/\s*<style>[\s\S]*?#fileSchemeWarning[\s\S]*?<\/style>\s*/m, '\n');
+  html = html.replace(/\s*<script>\s*\/\/ Running this app from file:\/\/[\s\S]*?<\/script>\s*/m, '\n');
+  html = html.replace(/\s*<div id="fileSchemeWarning"[\s\S]*?<\/div>\s*/m, '\n');
+
+  // Drop font preloads (fonts are inlined into the bundled CSS).
+  html = html.replace(/\s*<link[^>]*rel="preload"[^>]*player-fill[01]\.woff2[^>]*>\s*/g, '\n');
+
+  // Point to bundled assets.
+  html = html.replace(/<link rel="stylesheet"[^>]*href="style\.css[^"]*"\s*>/i, '<link rel="stylesheet" href="./assets/style.css">');
+  html = html.replace(/<script type="module"[^>]*src="\.\/js\/bootstrap\.mjs[^"]*"\s*><\/script>/i, '<script src="./assets/app.js"></script>');
+
+  return html;
+}
+
+async function main() {
+  // In Node, esbuild-wasm starts a long-lived service automatically.
+  // initialize() is optional; calling it with no options is safe.
+  await esbuild.initialize();
+
+  // IMPORTANT: preserve dist/video (large local media) across builds.
+  await ensureDir(distDir);
+  await rmIfExists(distAssetsDir);
+  await rmIfExists(path.join(distDir, 'img'));
+  await rmIfExists(path.join(distDir, 'api'));
+  await rmIfExists(path.join(distDir, 'index.html'));
+  await ensureDir(distAssetsDir);
+
+  // Bundle JS to a single non-module file.
+  await esbuild.build({
+    entryPoints: [path.join(publicDir, 'js', 'bootstrap-file.mjs')],
+    bundle: true,
+    format: 'iife',
+    platform: 'browser',
+    target: ['es2019'],
+    outfile: path.join(distAssetsDir, 'app.js'),
+    minify: true,
+    sourcemap: false,
+    logLevel: 'info',
+    loader: {
+      '.json': 'json',
+    },
+  });
+
+  // Bundle CSS and inline fonts so file:// works.
+  await esbuild.build({
+    entryPoints: [path.join(publicDir, 'style.css')],
+    bundle: true,
+    outfile: path.join(distAssetsDir, 'style.css'),
+    minify: true,
+    sourcemap: false,
+    logLevel: 'info',
+    loader: {
+      '.woff2': 'dataurl',
+      '.woff': 'dataurl',
+      '.ttf': 'dataurl',
+      '.otf': 'dataurl',
+    },
+  });
+
+  // Copy static assets needed by the HTML.
+  await copyIfExists(path.join(publicDir, 'img'), path.join(distDir, 'img'));
+  // Do NOT overwrite dist/video if it already exists.
+  if (!(await pathExists(distVideoDir))) {
+    await copyIfExists(path.join(publicDir, 'video'), distVideoDir);
+  }
+  await copyIfExists(path.join(publicDir, 'api'), path.join(distDir, 'api'));
+
+  // Favicons / misc static files referenced by index.html.
+  const passthroughFiles = [
+    'polaris.ico',
+    'droid-sans-mono.woff2',
+    'player-fill0.woff2',
+    'player-fill1.woff2',
+    'player.woff2',
+    'roboto-mono-400.woff2',
+    'local-playlist.json',
+    'spotify-callback.html',
+  ];
+  for (const name of passthroughFiles) {
+    const from = path.join(publicDir, name);
+    if (await pathExists(from)) {
+      await fs.copyFile(from, path.join(distDir, name));
+    }
+  }
+
+  // Write dist/index.html
+  const srcIndex = await fs.readFile(path.join(publicDir, 'index.html'), 'utf8');
+  const distIndex = buildDistIndexHtml(srcIndex);
+  await fs.writeFile(path.join(distDir, 'index.html'), distIndex, 'utf8');
+
+  console.log(`\nBuilt file-friendly bundle: ${distDir}`);
+  console.log('Open dist/index.html (file://) in your browser.');
+}
+
+main().catch((err) => {
+  console.error(err);
+  process.exitCode = 1;
+});

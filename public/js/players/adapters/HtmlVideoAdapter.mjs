@@ -110,7 +110,11 @@ export class HtmlVideoAdapter {
     const videoId = track && typeof track.id === 'string' ? track.id.trim() : '';
     if (!videoId) return undefined;
     const base = `vid_${videoId}`;
-    return `${window.location.origin}/video/thumbnail/${encodeURIComponent(base)}.jpg`;
+    try {
+      return new URL(`./video/thumbnail/${encodeURIComponent(base)}.jpg`, window.location.href).toString();
+    } catch {
+      return `./video/thumbnail/${encodeURIComponent(base)}.jpg`;
+    }
   }
 
   mount(container) {

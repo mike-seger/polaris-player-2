@@ -20,9 +20,8 @@
     font-style: normal;
     font-weight: 400;
     font-display: swap;
-    src: url("/droid-sans-mono.woff2?v=1") format("woff2");
+    src: url('./droid-sans-mono.woff2?v=1') format('woff2');
 }
-
 html:not(.icons-ready) .icon {
     visibility: hidden;
 }

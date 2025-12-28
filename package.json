@@ -8,6 +8,7 @@
     "test": "node --test",
     "start": "node server.mjs",
     "dev": "nodemon server.mjs",
+    "build:file": "node build-file.mjs",
     "gen:iso3": "node utility/generate-iso3-to-iso2.mjs"
   },
   "dependencies": {
@@ -16,6 +17,7 @@
     "node-fetch": "^3.3.2"
   },
   "devDependencies": {
+    "esbuild-wasm": "^0.27.2",
     "iso-3166-1": "^2.1.1",
     "nodemon": "^3.1.0"
   },

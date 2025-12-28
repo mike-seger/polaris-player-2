@@ -278,6 +278,21 @@ export class PlaylistDataSource {
       return cached;
     }
 
+    // File-builds may embed the local playlist data directly into the bundle.
+    // This avoids `fetch()` failures under file://.
+    try {
+      const embedded = /** @type {any} */ (globalThis).__POLARIS_LOCAL_PLAYLIST_LIBRARY__;
+      if (embedded && typeof embedded === 'object') {
+        this.setLocalPlaylistLibrary(embedded);
+        if (this.getUseLocalMode()) {
+          this.updatePlaylistHistorySelect((this.getSettings().playlistId || ''));
+        }
+        return embedded;
+      }
+    } catch {
+      // ignore
+    }
+
     try {
       const resp = await fetch(this.localPlaylistPath, { cache: 'no-store' });
       if (!resp.ok) {
