@@ -1628,8 +1628,10 @@ body.hide-track-check .track-state-btn {
     flex-direction: column;
     align-items: stretch;
     gap: 0;
-    border-radius: 999px;
+    /* Match the curvature of the circular control buttons. */
+    border-radius: calc((var(--center-overlay-icon-size) + 22px) / 2);
     background: rgba(40, 40, 40, 0.65);
+    overflow: hidden;
 }
 
 .center-controls-panel .cco-progress-range {
@@ -1810,6 +1812,15 @@ body.hide-track-check .track-state-btn {
 
     #sidebarDrawer {
         padding: 0;
+    }
+
+    /* Mobile mode: scale center overlay typography down ~30%. */
+    .center-controls-panel {
+        --center-overlay-icon-size: calc(var(--center-overlay-icon-size) * 0.7);
+    }
+
+    .center-controls-panel .cco-time {
+        font-size: calc(1.05rem * 2 * 0.7);
     }
 
     #progressWrapper {
