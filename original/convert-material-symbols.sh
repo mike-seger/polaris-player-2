@@ -8,6 +8,12 @@ OUTPUT_DIR_DEFAULT="${SCRIPT_DIR}/../public"
 PREVIEW_FILE_DEFAULT="${SCRIPT_DIR}/index.html"
 OUTPUT_NAME_DEFAULT="player"
 
+TIME_FONT_FAMILY_DEFAULT="Roboto+Mono"
+TIME_FONT_WEIGHT_DEFAULT="400"
+TIME_FONT_ORIG_BASENAME_DEFAULT="roboto-mono-400"
+TIME_FONT_TTF_DEFAULT="${SCRIPT_DIR}/DroidSansMono.ttf"
+TIME_FONT_WOFF2_BASENAME_DEFAULT="droid-sans-mono"
+
 FILL_VALUE="0"
 GRAD_VALUE="0"
 OPSZ_VALUE="24"
@@ -17,6 +23,15 @@ NAMES_FILE="$NAMES_FILE_DEFAULT"
 OUTPUT_DIR="$OUTPUT_DIR_DEFAULT"
 PREVIEW_FILE="$PREVIEW_FILE_DEFAULT"
 OUTPUT_NAME="$OUTPUT_NAME_DEFAULT"
+
+DOWNLOAD_TIME_FONT="0"
+TIME_FONT_FAMILY="$TIME_FONT_FAMILY_DEFAULT"
+TIME_FONT_WEIGHT="$TIME_FONT_WEIGHT_DEFAULT"
+TIME_FONT_ORIG_BASENAME="$TIME_FONT_ORIG_BASENAME_DEFAULT"
+TIME_FONT_TTF="$TIME_FONT_TTF_DEFAULT"
+TIME_FONT_WOFF2_BASENAME="$TIME_FONT_WOFF2_BASENAME_DEFAULT"
+BUILD_TIME_FONT="0"
+
 PYFTSUBSET_BIN="${PYFTSUBSET_BIN:-pyftsubset}"
 FONTTOOLS_BIN="${FONTTOOLS_BIN:-fonttools}"
 
@@ -37,6 +52,13 @@ Options:
   --output-dir <path>   Override the output directory
   --output-name <name>  Output base name (default: player)
   --preview-file <path> Override the generated preview HTML file
+  --download-time-font  Download Roboto Mono WOFF2 for time labels (into original/ and public/)
+  --time-font-family    Google Fonts family (default: Roboto+Mono)
+  --time-font-weight    Google Fonts weight (default: 400)
+  --time-font-basename  Base name for downloaded woff2 (default: roboto-mono-400)
+  --build-time-font     Build a time-label WOFF2 from a local TTF (into original/ and public/)
+  --time-font-ttf       Path to a local TTF for time font (default: original/DroidSansMono.ttf)
+  --time-font-woff2     Base name for built time font woff2 (default: droid-sans-mono)
   --help                Show this help and exit
 
 Example:
@@ -82,6 +104,34 @@ while [[ $# -gt 0 ]]; do
       PREVIEW_FILE="$2"
       shift 2
       ;;
+    --download-time-font)
+      DOWNLOAD_TIME_FONT="1"
+      shift 1
+      ;;
+    --time-font-family)
+      TIME_FONT_FAMILY="$2"
+      shift 2
+      ;;
+    --time-font-weight)
+      TIME_FONT_WEIGHT="$2"
+      shift 2
+      ;;
+    --time-font-basename)
+      TIME_FONT_ORIG_BASENAME="$2"
+      shift 2
+      ;;
+    --build-time-font)
+      BUILD_TIME_FONT="1"
+      shift 1
+      ;;
+    --time-font-ttf)
+      TIME_FONT_TTF="$2"
+      shift 2
+      ;;
+    --time-font-woff2)
+      TIME_FONT_WOFF2_BASENAME="$2"
+      shift 2
+      ;;
     --help|-h)
       usage
       exit 0
@@ -93,6 +143,71 @@ while [[ $# -gt 0 ]]; do
       ;;
   esac
 done
+
+download_google_woff2() {
+  local family="$1"
+  local weight="$2"
+  local out_original="$3"
+  local out_public="$4"
+
+  if ! command -v curl >/dev/null 2>&1; then
+    echo "Error: curl is required to download Google Fonts." >&2
+    exit 1
+  fi
+
+  # Fetch CSS and extract the first woff2 URL. Google Fonts varies by user-agent.
+  local css_url="https://fonts.googleapis.com/css2?family=${family}:wght@${weight}&display=swap"
+  local css
+  local ua_chrome="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36"
+  local ua_firefox="Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:121.0) Gecko/20100101 Firefox/121.0"
+
+  css="$(curl -fsSL -H "User-Agent: ${ua_chrome}" -H 'Accept: text/css,*/*;q=0.1' "$css_url")"
+  local woff2_url
+  woff2_url="$(printf '%s' "$css" | grep -oE 'https://fonts\.gstatic\.com/[^)]*\.woff2' | head -n 1)"
+
+  if [[ -z "${woff2_url}" ]]; then
+    css="$(curl -fsSL -H "User-Agent: ${ua_firefox}" -H 'Accept: text/css,*/*;q=0.1' "$css_url")"
+    woff2_url="$(printf '%s' "$css" | grep -oE 'https://fonts\.gstatic\.com/[^)]*\.woff2' | head -n 1)"
+  fi
+
+  if [[ -z "${woff2_url}" ]]; then
+    echo "Error: could not extract woff2 url from Google Fonts CSS." >&2
+    echo "CSS url: $css_url" >&2
+    exit 1
+  fi
+
+  mkdir -p "$(dirname "$out_original")" "$(dirname "$out_public")"
+  curl -fsSL -o "$out_original" "$woff2_url"
+  cp -f "$out_original" "$out_public"
+  echo "✔ downloaded time font to $out_original"
+  echo "✔ copied time font to $out_public"
+}
+
+build_time_font_woff2() {
+  local in_ttf="$1"
+  local out_original="$2"
+  local out_public="$3"
+
+  if [[ ! -f "$in_ttf" ]]; then
+    echo "Error: time font TTF not found at $in_ttf" >&2
+    exit 1
+  fi
+
+  mkdir -p "$(dirname "$out_original")" "$(dirname "$out_public")"
+
+  # Only the characters used in time labels.
+  local text_payload="0123456789: /--"
+
+  "$PYFTSUBSET_BIN" "$in_ttf" \
+    --text="$text_payload" \
+    --flavor=woff2 \
+    --no-hinting \
+    --output-file="$out_original"
+
+  cp -f "$out_original" "$out_public"
+  echo "✔ built time font to $out_original"
+  echo "✔ copied time font to $out_public"
+}
 
 if ! command -v "$PYFTSUBSET_BIN" >/dev/null 2>&1; then
   echo "Error: pyftsubset is required but not found in PATH." >&2
@@ -163,6 +278,18 @@ subset_font() {
 
 OUT_FILE_WOFF2="$OUTPUT_DIR/${OUTPUT_NAME}.woff2"
 subset_font "woff2" "$OUT_FILE_WOFF2"
+
+if [[ "$DOWNLOAD_TIME_FONT" == "1" ]]; then
+  TIME_FONT_ORIG_FILE="$SCRIPT_DIR/${TIME_FONT_ORIG_BASENAME}.woff2"
+  TIME_FONT_PUBLIC_FILE="$OUTPUT_DIR/${TIME_FONT_ORIG_BASENAME}.woff2"
+  download_google_woff2 "$TIME_FONT_FAMILY" "$TIME_FONT_WEIGHT" "$TIME_FONT_ORIG_FILE" "$TIME_FONT_PUBLIC_FILE"
+fi
+
+if [[ "$BUILD_TIME_FONT" == "1" ]]; then
+  TIME_FONT_ORIG_FILE="$SCRIPT_DIR/${TIME_FONT_WOFF2_BASENAME}.woff2"
+  TIME_FONT_PUBLIC_FILE="$OUTPUT_DIR/${TIME_FONT_WOFF2_BASENAME}.woff2"
+  build_time_font_woff2 "$TIME_FONT_TTF" "$TIME_FONT_ORIG_FILE" "$TIME_FONT_PUBLIC_FILE"
+fi
 
 generate_preview_html() {
   local preview_file="$1"

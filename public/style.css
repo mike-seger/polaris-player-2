@@ -15,6 +15,14 @@
     src: url('./player-fill1.woff2?v=2025-12-27-4') format('woff2');
 }
 
+@font-face {
+    font-family: 'Polaris Time Mono';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url("/droid-sans-mono.woff2?v=1") format("woff2");
+}
+
 html:not(.icons-ready) .icon {
     visibility: hidden;
 }
@@ -768,8 +776,11 @@ body.no-thumbs .track-title {
     color: var(--color-text-muted);
     flex-shrink: 0;
     font-weight: 400;
-    font-family: "SF Mono", ui-monospace, Menlo, Monaco, Consolas,
+    font-family: 'Polaris Time Mono', "Arial Monospaced MT", "DejaVu Sans Mono",
+        ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
         "Liberation Mono", "Courier New", monospace;
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1, "zero" 0;
     line-height: 1.2;
     display: flex;
     align-items: center;
@@ -1435,8 +1446,11 @@ body.hide-track-check .track-state-btn {
     color: var(--color-text-muted);
     min-width: 80px;
     text-align: right;
-    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    font-family: 'Polaris Time Mono', "Arial Monospaced MT", "DejaVu Sans Mono",
+        ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
         "Liberation Mono", "Courier New", monospace;
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1, "zero" 0;
     cursor: pointer;
 }
 
@@ -1558,7 +1572,7 @@ body.hide-track-check .track-state-btn {
     margin: 0;
     font-size: var(--center-overlay-icon-size);
     line-height: 1;
-    opacity: 0.75;
+    opacity: 0.6;
 }
 
 .center-controls-panel .cco-toggle input:checked + .icon {
@@ -1619,7 +1633,8 @@ body.hide-track-check .track-state-btn {
 }
 
 .center-controls-panel .cco-progress-range {
-    --cco-track-h: 27px;
+    --cco-track-h: calc(27px * 0.7);
+    --cco-thumb-d: calc(var(--cco-track-h) * 2);
     width: calc(100% - var(--cco-track-h));
     flex: 1;
     appearance: none;
@@ -1643,18 +1658,18 @@ body.hide-track-check .track-state-btn {
 
 .center-controls-panel .cco-progress-range::-webkit-slider-thumb {
     appearance: none;
-    width: 54px;
-    height: 54px;
+    width: var(--cco-thumb-d);
+    height: var(--cco-thumb-d);
     border-radius: 50%;
     background: var(--color-text);
     cursor: pointer;
-    margin-top: -13.5px;
+    margin-top: calc((var(--cco-track-h) - var(--cco-thumb-d)) / 2);
     border: none;
 }
 
 .center-controls-panel .cco-progress-range::-moz-range-thumb {
-    width: 54px;
-    height: 54px;
+    width: var(--cco-thumb-d);
+    height: var(--cco-thumb-d);
     border-radius: 50%;
     background: var(--color-text);
     cursor: pointer;
@@ -1662,19 +1677,19 @@ body.hide-track-check .track-state-btn {
 }
 
 .center-controls-panel .cco-progress-range::-webkit-slider-runnable-track {
-    height: 27px;
+    height: var(--cco-track-h);
     border-radius: 999px;
     background: transparent;
 }
 
 .center-controls-panel .cco-progress-range::-moz-range-track {
-    height: 27px;
+    height: var(--cco-track-h);
     border-radius: 999px;
     background: color-mix(in srgb, #2f3646 60%, transparent);
 }
 
 .center-controls-panel .cco-progress-range::-moz-range-progress {
-    height: 27px;
+    height: var(--cco-track-h);
     border-radius: 999px;
     background: color-mix(in srgb, var(--color-text) 40%, transparent);
 }
@@ -1684,8 +1699,11 @@ body.hide-track-check .track-state-btn {
     opacity: 0.9;
     text-align: center;
     user-select: none;
-    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    font-family: 'Polaris Time Mono', "Arial Monospaced MT", "DejaVu Sans Mono",
+        ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
         "Liberation Mono", "Courier New", monospace;
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1, "zero" 0;
 }
 
 

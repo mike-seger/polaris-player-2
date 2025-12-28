@@ -3028,7 +3028,12 @@
     function isTextInputFocused() {
       const ae = document.activeElement;
       if (!ae) return false;
-      if (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA' || ae.tagName === 'SELECT') return true;
+      if (ae.tagName === 'TEXTAREA' || ae.tagName === 'SELECT') return true;
+      if (ae.tagName === 'INPUT') {
+        const type = String(ae.getAttribute('type') || '').toLowerCase();
+        return type === '' || type === 'text' || type === 'search' || type === 'email' || type === 'number'
+          || type === 'password' || type === 'url' || type === 'tel';
+      }
       if (ae.isContentEditable) return true;
       return false;
     }
