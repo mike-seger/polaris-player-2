@@ -1416,6 +1416,7 @@
     function ensureCursorWakeOverlay() {
       if (_cursorWakeOverlay) return _cursorWakeOverlay;
       const el = document.createElement('div');
+      el.id = 'cursorWakeOverlay';
       el.setAttribute('aria-hidden', 'true');
       el.style.position = 'fixed';
       el.style.inset = '0';
@@ -1518,10 +1519,13 @@
       }
       _lastAppFullscreen = fs;
 
-      if (fs) {
-        startFullscreenCursorAutoHide();
-      } else {
+      // Cursor hide/show in fullscreen is driven by the center overlay idle timer.
+      if (!fs) {
         stopFullscreenCursorAutoHide();
+      } else {
+        // Ensure visible on entry; idle hide happens via overlay.
+        showCursor();
+        clearCursorIdleTimer();
       }
     }
 
@@ -2451,7 +2455,21 @@
         panelEl: centerControlsPanelEl,
         playerContainerEl,
         sidebarDrawerEl: sidebarDrawer,
-        hideAfterMs: 8000,
+        hideAfterMs: 5000,
+        onActivity: () => {
+          // Unify fullscreen cursor behavior with overlay visibility.
+          if (!isAppFullscreen()) return;
+          try { showCursor(); } catch { /* ignore */ }
+          try { clearCursorIdleTimer(); } catch { /* ignore */ }
+        },
+        onIdleHide: () => {
+          // When overlay idles out, also hide cursor + sidebar in fullscreen.
+          if (!isAppFullscreen()) return;
+          try { hideCursor(); } catch { /* ignore */ }
+          try {
+            if (sidebar && !sidebar.isHidden()) sidebar.setHidden(true, { force: true, source: 'fullscreen-idle' });
+          } catch { /* ignore */ }
+        },
         onPrev: () => playPrev(),
         onNext: () => playNext(),
         onTogglePlayback: () => togglePlayback(),
@@ -3152,7 +3170,7 @@
 
     function startProgressTimer() {
       if (progressInterval) return;
-      progressInterval = setInterval(updateProgressBar, 500);
+      progressInterval = setInterval(updateProgressBar, 200);
     }
 
     function formatTime(seconds) {
@@ -3169,6 +3187,9 @@
       if (!playerHost) {
         if (progressRange) progressRange.value = 0;
         if (centerProgressRange) centerProgressRange.value = 0;
+        if (centerProgressRange) {
+          try { centerProgressRange.style.setProperty('--cco-progress-pct', '0%'); } catch { /* ignore */ }
+        }
         if (timeLabel) timeLabel.textContent = '00:00 / 00:00';
         if (centerTimeLabel) centerTimeLabel.textContent = '00:00 / 00:00';
         return;
@@ -3208,6 +3229,9 @@
       if (!duration || !isFinite(duration) || duration <= 0) {
         if (progressRange && !isProgressScrubbing) progressRange.value = 0;
         if (centerProgressRange && !isProgressScrubbing) centerProgressRange.value = 0;
+        if (centerProgressRange) {
+          try { centerProgressRange.style.setProperty('--cco-progress-pct', '0%'); } catch { /* ignore */ }
+        }
         const text = `${formatTime(current)} / --:--`;
         if (timeLabel) timeLabel.textContent = text;
         if (centerTimeLabel) centerTimeLabel.textContent = text;
@@ -3221,7 +3245,7 @@
       }
 
       if (centerProgressRange) {
-        try { centerProgressRange.style.setProperty('--cco-progress-pct', `${Math.round(frac * 100)}%`); } catch { /* ignore */ }
+        try { centerProgressRange.style.setProperty('--cco-progress-pct', `${(frac * 100).toFixed(2)}%`); } catch { /* ignore */ }
       }
       const text = `${formatTime(current)} / ${formatTime(duration)}`;
       if (timeLabel) timeLabel.textContent = text;
@@ -3255,7 +3279,7 @@
       const newTime = frac * duration;
 
       if (centerProgressRange) {
-        try { centerProgressRange.style.setProperty('--cco-progress-pct', `${Math.round(frac * 100)}%`); } catch { /* ignore */ }
+        try { centerProgressRange.style.setProperty('--cco-progress-pct', `${(frac * 100).toFixed(2)}%`); } catch { /* ignore */ }
       }
 
       if (isProgressScrubbing) {

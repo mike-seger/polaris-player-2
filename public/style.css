@@ -1635,7 +1635,7 @@ body.hide-track-check .track-state-btn {
 .center-controls-panel .cco-progress-range {
     --cco-track-h: calc(27px * 0.7);
     --cco-thumb-d: calc(var(--cco-track-h) * 2);
-    width: calc(100% - var(--cco-track-h));
+    width: calc(100% - (var(--cco-track-h) * 2));
     flex: 1;
     appearance: none;
     margin-top: 15px;
@@ -1644,13 +1644,15 @@ body.hide-track-check .track-state-btn {
     height: var(--cco-track-h);
     border-radius: 999px;
     --cco-progress-pct: 0%;
+    --cco-track-empty: color-mix(in srgb, #2f3646 75%, var(--color-text) 25%);
     background: linear-gradient(
         to right,
         color-mix(in srgb, var(--color-text) 40%, transparent) 0%,
         color-mix(in srgb, var(--color-text) 40%, transparent)
             var(--cco-progress-pct),
-        color-mix(in srgb, #2f3646 60%, transparent) var(--cco-progress-pct),
-        color-mix(in srgb, #2f3646 60%, transparent) 100%
+        color-mix(in srgb, var(--cco-track-empty) 60%, transparent)
+            var(--cco-progress-pct),
+        color-mix(in srgb, var(--cco-track-empty) 60%, transparent) 100%
     );
     outline: none;
     padding: 0;
@@ -1685,7 +1687,7 @@ body.hide-track-check .track-state-btn {
 .center-controls-panel .cco-progress-range::-moz-range-track {
     height: var(--cco-track-h);
     border-radius: 999px;
-    background: color-mix(in srgb, #2f3646 60%, transparent);
+    background: color-mix(in srgb, var(--cco-track-empty) 60%, transparent);
 }
 
 .center-controls-panel .cco-progress-range::-moz-range-progress {

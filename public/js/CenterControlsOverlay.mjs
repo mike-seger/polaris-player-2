@@ -8,7 +8,9 @@ export class CenterControlsOverlay {
       panelEl,
       playerContainerEl,
       sidebarDrawerEl,
-      hideAfterMs = 8000,
+      hideAfterMs = 5000,
+      onActivity = () => {},
+      onIdleHide = () => {},
       onPrev = () => {},
       onNext = () => {},
       onTogglePlayback = () => {},
@@ -24,6 +26,9 @@ export class CenterControlsOverlay {
     this.sidebarDrawerEl = sidebarDrawerEl;
 
     this.hideAfterMs = Math.max(0, hideAfterMs || 0);
+
+    this.onActivity = onActivity;
+    this.onIdleHide = onIdleHide;
 
     this.onPrev = onPrev;
     this.onNext = onNext;
@@ -165,8 +170,14 @@ export class CenterControlsOverlay {
   }
 
   noteActivity() {
-    this.setVisible(true);
-    this._armHideTimer();
+    this._noteActivity({ showOverlay: true });
+  }
+
+  _noteActivity(options = {}) {
+    const showOverlay = options && options.showOverlay !== false;
+    try { this.onActivity(); } catch { /* ignore */ }
+    if (showOverlay) this.setVisible(true);
+    else this._armHideTimer();
   }
 
   setVisible(visible) {
@@ -209,6 +220,7 @@ export class CenterControlsOverlay {
     if (!this.hideAfterMs) return;
     this._hideTimer = setTimeout(() => {
       this.setVisible(false);
+      try { this.onIdleHide(); } catch { /* ignore */ }
     }, this.hideAfterMs);
   }
 
@@ -225,16 +237,31 @@ export class CenterControlsOverlay {
     if (!t) return;
 
     // Never reveal controls due to interactions on the invisible edge nav targets.
-    if (t.closest('.cco-edge')) return;
+    if (t.closest('.cco-edge')) {
+      this._noteActivity({ showOverlay: false });
+      return;
+    }
 
     // Ignore interactions inside the sidebar drawer and overlays.
-    if (this.sidebarDrawerEl && this.sidebarDrawerEl.contains(t)) return;
-    if (t.closest('#alertOverlay')) return;
-    if (t.closest('#playlistIOOverlay') || t.closest('.playlist-overlay-content')) return;
-    if (t.closest('.track-details-overlay')) return;
+    if (this.sidebarDrawerEl && this.sidebarDrawerEl.contains(t)) {
+      this._noteActivity({ showOverlay: false });
+      return;
+    }
+    if (t.closest('#alertOverlay')) {
+      this._noteActivity({ showOverlay: false });
+      return;
+    }
+    if (t.closest('#playlistIOOverlay') || t.closest('.playlist-overlay-content')) {
+      this._noteActivity({ showOverlay: false });
+      return;
+    }
+    if (t.closest('.track-details-overlay')) {
+      this._noteActivity({ showOverlay: false });
+      return;
+    }
 
     // Only show when interacting with the player surface.
-    if (t.closest('#player-container') || t.closest('#player')) {
+    if (t.closest('#player-container') || t.closest('#player') || t.closest('#cursorWakeOverlay')) {
       if (!this._visible) {
         // When hidden: don't let the interaction fall through (best-effort).
         try {
@@ -249,21 +276,41 @@ export class CenterControlsOverlay {
 
   _onPointerMove(event) {
     if (!event || event.defaultPrevented) return;
-    if (this._visible) return;
 
     const t = (event.target instanceof Element) ? event.target : null;
     if (!t) return;
 
     // Don't reveal controls due to hover/move inside edge nav targets.
-    if (t.closest('.cco-edge')) return;
+    if (t.closest('.cco-edge')) {
+      this._noteActivity({ showOverlay: false });
+      return;
+    }
 
     // Ignore hover inside drawers/overlays.
-    if (this.sidebarDrawerEl && this.sidebarDrawerEl.contains(t)) return;
-    if (t.closest('#alertOverlay')) return;
-    if (t.closest('#playlistIOOverlay') || t.closest('.playlist-overlay-content')) return;
-    if (t.closest('.track-details-overlay')) return;
+    if (this.sidebarDrawerEl && this.sidebarDrawerEl.contains(t)) {
+      this._noteActivity({ showOverlay: false });
+      return;
+    }
+    if (t.closest('#alertOverlay')) {
+      this._noteActivity({ showOverlay: false });
+      return;
+    }
+    if (t.closest('#playlistIOOverlay') || t.closest('.playlist-overlay-content')) {
+      this._noteActivity({ showOverlay: false });
+      return;
+    }
+    if (t.closest('.track-details-overlay')) {
+      this._noteActivity({ showOverlay: false });
+      return;
+    }
 
-    if (!(t.closest('#player-container') || t.closest('#player'))) return;
+    if (!(t.closest('#player-container') || t.closest('#player') || t.closest('#cursorWakeOverlay'))) return;
+
+    // If already visible, treat movement as activity to keep it visible.
+    if (this._visible) {
+      this._noteActivity({ showOverlay: false });
+      return;
+    }
 
     // Throttle hover-triggered reveals.
     const now = Date.now();
