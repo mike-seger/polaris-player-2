@@ -1512,8 +1512,9 @@ body.hide-track-check .track-state-btn {
     --cco-overlay-scale: 1;
     --cco-btn-scale: 1;
     /* Track info (under the center slider): scale title/artist independently. */
-    --cco-trackinfo-title-scale: 1.8; /* 2.5x reduced by 25% */
-    --cco-trackinfo-artist-scale: 1.6; /* +100% */
+    --cco-trackinfo-time-scale: 1.3;
+    --cco-trackinfo-title-scale: 1.8;
+    --cco-trackinfo-artist-scale: 1.6;
 
     opacity: 0;
     /* Keep click-through outside the actual controls. */
@@ -1751,7 +1752,7 @@ body.hide-track-check .track-state-btn {
 }
 
 .center-controls-panel .cco-time {
-    font-size: calc(1.05rem * 2 * var(--cco-overlay-scale));
+    font-size: calc(13px * var(--cco-trackinfo-time-scale));
     opacity: 0.9;
     text-align: center;
     user-select: none;
@@ -1761,8 +1762,6 @@ body.hide-track-check .track-state-btn {
     font-variant-numeric: tabular-nums;
     font-feature-settings: "tnum" 1, "zero" 0;
 }
-
-
 
 #player {
     width: 100%;
@@ -1902,10 +1901,7 @@ body.hide-track-check .track-state-btn {
     /* Mobile mode: scale typography (time label) down ~30%, and shrink the circular buttons ~40%.
        Button scaling includes the diameter (and thus perceived radius/curvature). */
     .center-controls-panel {
-        --cco-overlay-scale: 0.7;
         --cco-btn-scale: 0.6;
-        --cco-trackinfo-title-scale: 1.275; /* 1.5x reduced by 15% */
-        --cco-trackinfo-artist-scale: 1.2; /* +70% */
     }
 
     /* In "video-first" mode we rotate the UI; width should track viewport height, not width. */
@@ -1916,10 +1912,6 @@ body.hide-track-check .track-state-btn {
     /* Mobile portrait: keep controls in one row; put toggle after Next with a button-width gap. */
     .center-controls-panel .cco-row-controls {
         flex-wrap: nowrap;
-    }
-
-    .center-controls-panel .cco-time {
-        font-size: calc(0.65rem * 2 * var(--cco-overlay-scale));
     }
 
     #progressWrapper {
