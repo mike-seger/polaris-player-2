@@ -1515,6 +1515,9 @@ body.hide-track-check .track-state-btn {
     --cco-trackinfo-time-scale: 1.3;
     --cco-trackinfo-title-scale: 1.8;
     --cco-trackinfo-artist-scale: 1.6;
+    --cco-trackinfo-artist-fontsize: 19px;
+    --cco-trackinfo-time-fontsize: 17px;
+    --cco-trackinfo-title-fontsize: 25px;
 
     opacity: 0;
     /* Keep click-through outside the actual controls. */
@@ -1743,16 +1746,16 @@ body.hide-track-check .track-state-btn {
 }
 
 .center-controls-panel .cco-trackinfo .track-title {
-    font-size: calc(14px * var(--cco-trackinfo-title-scale));
+    font-size: var(--cco-trackinfo-title-fontsize);
 }
 
 .center-controls-panel .cco-trackinfo .track-artist-line,
 .center-controls-panel .cco-trackinfo .track-artist {
-    font-size: calc(12px * var(--cco-trackinfo-artist-scale));
+    font-size: var(--cco-trackinfo-artist-fontsize);
 }
 
 .center-controls-panel .cco-time {
-    font-size: calc(13px * var(--cco-trackinfo-time-scale));
+    font-size: var(--cco-trackinfo-time-fontsize);
     opacity: 0.9;
     text-align: center;
     user-select: none;

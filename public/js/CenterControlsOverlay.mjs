@@ -85,7 +85,7 @@ export class CenterControlsOverlay {
     if (b.playPauseBtn) b.playPauseBtn.addEventListener('click', (e) => this._wrapClick(e, () => this.onTogglePlayback()));
     if (b.nextBtn) b.nextBtn.addEventListener('click', (e) => this._wrapClick(e, () => this.onNext()));
     if (b.markBtn) b.markBtn.addEventListener('click', (e) => this._wrapClick(e, () => this.onToggleMarkTrack()));
-    // Edge buttons should never reveal the rest of the overlay.
+    // Edge buttons should also reveal the overlay.
     if (b.edgePrevBtn) b.edgePrevBtn.addEventListener('click', (e) => this._wrapEdgeClick(e, () => this.onPrev()));
     if (b.edgeNextBtn) b.edgeNextBtn.addEventListener('click', (e) => this._wrapEdgeClick(e, () => this.onNext()));
 
@@ -267,6 +267,7 @@ export class CenterControlsOverlay {
   _wrapEdgeClick(event, fn) {
     try { if (event) event.preventDefault(); } catch { /* ignore */ }
     try { if (event) event.stopPropagation(); } catch { /* ignore */ }
+    this.noteActivity();
     try { fn(); } catch { /* ignore */ }
   }
 
@@ -308,9 +309,9 @@ export class CenterControlsOverlay {
       return;
     }
 
-    // Never reveal controls due to interactions on the invisible edge nav targets.
+    // Edge nav targets should also reveal the overlay.
     if (t.closest('.cco-edge')) {
-      this._noteActivity({ showOverlay: false });
+      this.noteActivity();
       return;
     }
 
