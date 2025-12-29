@@ -542,9 +542,9 @@
     const alert = createAlert({ overlayEl: alertOverlay, messageEl: alertMessageEl, closeBtn: alertCloseBtn });
 
     function getConfiguredVolume01() {
-      const v = settings && typeof settings.volume01 === 'number' ? settings.volume01 : undefined;
-      const n = typeof v === 'number' && isFinite(v) ? v : 0.3;
-      return Math.max(0, Math.min(1, n));
+      // Always maximize element volume.
+      // Note: this does NOT change Android system/media stream volume; it only sets the HTMLMediaElement gain (0..1).
+      return 1;
     }
 
     let _noAudioEnabled = false;
@@ -571,9 +571,7 @@
       const caps = playerHost.getCapabilities();
 
       const wantsMuted = restore && typeof restore.muted === 'boolean' ? restore.muted : false;
-      const wantsVolume = restore && typeof restore.volume === 'number' && isFinite(restore.volume)
-        ? Math.max(0, Math.min(1, restore.volume))
-        : getConfiguredVolume01();
+      const wantsVolume = getConfiguredVolume01();
 
       if (caps && caps.canMute) {
         await playerHost.setMuted(wantsMuted).catch(() => {});
@@ -599,8 +597,8 @@
         try {
           const info = playerHost ? playerHost.getInfo() : null;
           const muted = !!info?.muted;
-          const volume = (typeof info?.volume === 'number' && isFinite(info.volume)) ? info.volume : getConfiguredVolume01();
-          _noAudioRestore = { muted, volume };
+          // We always restore to max volume when unmuting.
+          _noAudioRestore = { muted, volume: getConfiguredVolume01() };
         } catch {
           _noAudioRestore = { muted: false, volume: getConfiguredVolume01() };
         }
@@ -2857,14 +2855,11 @@
       },
 
       getOutputVolume01: () => {
-        const v = settings && typeof settings.volume01 === 'number' ? settings.volume01 : 0.3;
-        const n = typeof v === 'number' && isFinite(v) ? v : 0.3;
-        return Math.max(0, Math.min(1, n));
+        return 1;
       },
       setOutputVolume01: (v01) => {
-        const n = Number(v01);
-        const clamped = isFinite(n) ? Math.max(0, Math.min(1, n)) : 0.3;
-        saveSettings({ volume01: clamped });
+        void v01;
+        saveSettings({ volume01: 1 });
         try { applyConfiguredVolumeToHost(); } catch { /* ignore */ }
       },
     });
