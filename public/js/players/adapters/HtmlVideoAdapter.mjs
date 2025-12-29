@@ -22,7 +22,10 @@ export class HtmlVideoAdapter {
 
     this._container = null;
     this._el = document.createElement("video");
-    this._el.preload = "auto";
+    // Helps suppress the browser/WebView default poster/glyph between source switches.
+    // Use a 1x1 transparent GIF poster so there's always a poster.
+    this._el.poster = "data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==";
+    this._el.preload = "metadata";
     this._el.playsInline = true;
     this._el.controls = false;
 
