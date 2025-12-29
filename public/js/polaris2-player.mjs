@@ -1349,7 +1349,21 @@
 
     // viewport height adjustments for mobile browsers with dynamic toolbars
     function updateViewportHeight() {
-      const vh = (window.visualViewport ? window.visualViewport.height : window.innerHeight) * 0.01;
+      // In Android WebView, visualViewport.height can transiently report 0, which would
+      // collapse any `height: calc(var(--app-vh, 1vh) * 100)` layouts to 0px.
+      const vv = window.visualViewport;
+      const vvH = vv && typeof vv.height === 'number' ? vv.height : 0;
+      const innerH = typeof window.innerHeight === 'number' ? window.innerHeight : 0;
+
+      // Prefer visualViewport when it looks sane; otherwise fall back to innerHeight.
+      const baseH = (vvH >= 100 ? vvH : innerH);
+      if (!baseH || baseH < 100) {
+        // Let CSS fallback (`var(--app-vh, 1vh)`) apply.
+        document.documentElement.style.removeProperty('--app-vh');
+        return;
+      }
+
+      const vh = baseH * 0.01;
       document.documentElement.style.setProperty('--app-vh', `${vh}px`);
     }
 
