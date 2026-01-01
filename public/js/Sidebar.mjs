@@ -178,7 +178,7 @@ export class Sidebar {
       this.sidebarMenuBtn.addEventListener('click', (event) => {
         event.preventDefault();
         event.stopPropagation();
-        this.setHidden(true, { force: true, source: 'menu' });
+        this.setHidden(true, { force: true });
       });
     }
 
