@@ -1480,8 +1480,9 @@ body.hide-track-check .track-state-btn {
 
 .center-controls-hit {
     position: absolute;
-    left: 0;
-    right: 0;
+    left: var(--cco-available-left, 0px);
+    width: var(--cco-available-width, 100%);
+    right: auto;
     top: var(--center-overlay-safe-top, 0px);
     bottom: var(--center-overlay-safe-bottom, 0px);
     min-height: 300px;
@@ -1497,8 +1498,9 @@ body.hide-track-check .track-state-btn {
 
 .center-controls-panel {
     position: absolute;
-    left: 0;
-    right: 0;
+    left: var(--cco-available-left, 0px);
+    width: var(--cco-available-width, 100%);
+    right: auto;
     top: var(--center-overlay-safe-top, 0px);
     bottom: var(--center-overlay-safe-bottom, 0px);
     display: flex;
@@ -1510,6 +1512,13 @@ body.hide-track-check .track-state-btn {
     --center-overlay-icon-size: 30px;
     --cco-overlay-scale: 1;
     --cco-btn-scale: 1;
+    /* Position/title cluster scale (40% smaller). */
+    --cco-bottom-scale: 0.6;
+    /* Progress pill width (used for button positioning too). */
+    --cco-progress-w: min(
+        calc(var(--cco-available-width, 100%) * 0.72),
+        calc(560px * var(--cco-bottom-scale))
+    );
     /* Track info (under the center slider): scale title/artist independently. */
     --cco-trackinfo-time-scale: 1.3;
     --cco-trackinfo-title-scale: 1.8;
@@ -1517,6 +1526,11 @@ body.hide-track-check .track-state-btn {
     --cco-trackinfo-artist-fontsize: 19px;
     --cco-trackinfo-time-fontsize: 17px;
     --cco-trackinfo-title-fontsize: 25px;
+
+    /* Apply bottom scale via font-size vars (avoid transform blur). */
+    --cco-trackinfo-artist-fontsize: calc(19px * var(--cco-bottom-scale));
+    --cco-trackinfo-time-fontsize: calc(17px * var(--cco-bottom-scale));
+    --cco-trackinfo-title-fontsize: calc(25px * var(--cco-bottom-scale));
 
     opacity: 0;
     /* Keep click-through outside the actual controls. */
@@ -1529,9 +1543,9 @@ body.hide-track-check .track-state-btn {
 }
 
 .center-controls-panel .cco-panel {
-    display: flex;
-    flex-direction: column;
-    gap: 18px;
+    position: relative;
+    width: 100%;
+    height: 100%;
     pointer-events: auto;
     min-width: 0;
 }
@@ -1543,10 +1557,63 @@ body.hide-track-check .track-state-btn {
     gap: 14px;
 }
 
-/* Controls row: on larger screens, keep the sidebar toggle on its own line above the playback buttons. */
+/* The controls row is a structural wrapper; we position individual controls absolutely. */
 .center-controls-panel .cco-row-controls {
-    flex-wrap: wrap;
-    row-gap: 14px;
+    display: contents;
+}
+
+/* Remove visible prev/next buttons from the center overlay. */
+#centerPrevBtn,
+#centerNextBtn {
+    display: none;
+}
+
+/* Center play button in the available (middle) area. */
+#centerPlayPauseBtn {
+    position: absolute;
+    /* Middle third hit zone: [1/3 .. 2/3] of the available width. */
+    left: calc(100% / 3);
+    width: calc(100% / 3);
+
+     /* Same vertical geometry as edge zones (15% top/bottom => 70% height),
+         but clamp to the top of the bottom pill so the pill remains interactive. */
+     top: calc(100% * 0.15);
+     height: calc(100% * 0.7);
+     max-height: calc(var(--cco-pill-top, 100%) - (100% * 0.15));
+
+    /* Completely invisible (no icon), but still hit-testable. */
+    transform: none;
+    border-radius: 0;
+    background: rgba(255, 255, 255, 0.001);
+    opacity: 1;
+}
+
+#centerPlayPauseBtn .icon {
+    display: none;
+}
+
+/* Bottom progress/title cluster (scaled down) centered with 10px margin. */
+.center-controls-panel .cco-progress {
+    position: absolute;
+    left: 50%;
+    /* Position relative to the actual video bottom (panel bottom is inset by --center-overlay-safe-bottom). */
+    bottom: calc(10px - var(--center-overlay-safe-bottom, 0px));
+    transform: translateX(-50%);
+    width: var(--cco-progress-w);
+}
+
+/* Place sidebar toggle left of the progress pill, and mark button right of it (20px gap). */
+#centerSidebarToggle {
+    position: absolute;
+    bottom: calc(10px - var(--center-overlay-safe-bottom, 0px));
+    left: calc(50% - (var(--cco-progress-w) / 2) - 20px);
+    transform: translateX(-100%);
+}
+
+#centerMarkBtn {
+    position: absolute;
+    bottom: calc(10px - var(--center-overlay-safe-bottom, 0px));
+    left: calc(50% + (var(--cco-progress-w) / 2) + 20px);
 }
 
 .center-controls-panel .cco-btn {
@@ -1613,43 +1680,50 @@ body.hide-track-check .track-state-btn {
     line-height: 1;
 }
 
-/* Invisible 30% square prev/next targets at edges */
+/* Invisible prev/next targets: each 1/3 of available width, with 15% top/bottom margins.
+   These remain active at all times (even when the visible overlay UI is hidden). */
 .cco-edge {
     position: absolute;
-    z-index: 4;
-    width: min(30vw, 30vh);
-    height: min(30vw, 30vh);
+    z-index: 10;
+    width: calc(var(--cco-available-width, 100%) / 3);
     top: calc(
         var(--center-overlay-safe-top, 0px) +
             (
-                100% - var(--center-overlay-safe-top, 0px) -
-                    var(--center-overlay-safe-bottom, 0px)
-            ) / 2
+                (100% - var(--center-overlay-safe-top, 0px) - var(--center-overlay-safe-bottom, 0px)) * 0.15
+            )
     );
-    transform: translateY(-50%);
-    opacity: 0;
-    background: transparent;
+    height: calc(
+        (100% - var(--center-overlay-safe-top, 0px) - var(--center-overlay-safe-bottom, 0px)) * 0.7
+    );
+    transform: none;
+    /* Keep effectively invisible but still hit-testable on all browsers. */
+    opacity: 1;
+    background: rgba(255, 255, 255, 0.001);
     border: 0;
     padding: 0;
     pointer-events: auto;
+    touch-action: manipulation;
 }
 
 .cco-edge-left {
-    left: 0;
+    left: var(--cco-available-left, 0px);
 }
 
 .cco-edge-right {
-    right: 0;
+    left: calc(var(--cco-available-left, 0px) + (var(--cco-available-width, 100%) * 2 / 3));
+    right: auto;
 }
 
 /* Larger progress row (mirrors sidebar but scaled up) */
 .center-controls-panel .cco-progress {
     margin-top: 0;
     margin-bottom: 0;
-    width: min(72vw, 560px);
     min-width: 0;
     box-sizing: border-box;
-    padding: calc(15px * 0.7) calc(15px * 0.7) calc(25px * 0.7) calc(15px * 0.7);
+    padding: calc(15px * 0.7 * var(--cco-bottom-scale))
+        calc(15px * 0.7 * var(--cco-bottom-scale))
+        calc(25px * 0.7 * var(--cco-bottom-scale))
+        calc(15px * 0.7 * var(--cco-bottom-scale));
     display: flex;
     flex-direction: column;
     align-items: stretch;
@@ -1662,14 +1736,14 @@ body.hide-track-check .track-state-btn {
 
 .center-controls-panel .cco-progress-range {
     /* Scale the slider in mobile mode via --cco-overlay-scale. */
-    --cco-track-h: calc(27px * 0.7 * var(--cco-overlay-scale));
+    --cco-track-h: calc(27px * 0.7 * var(--cco-overlay-scale) * var(--cco-bottom-scale));
     --cco-thumb-d: calc(var(--cco-track-h) * 2);
     --cco-track-r: calc((var(--cco-track-h) / 2) * 0.7);
     --cco-thumb-r: calc((var(--cco-thumb-d) / 2) * 0.7);
     width: calc(100% - (var(--cco-track-h) * 2));
     flex: 1;
     appearance: none;
-    margin-top: 15px;
+    margin-top: calc(15px * var(--cco-bottom-scale));
     margin-left: auto;
     margin-right: auto;
     height: var(--cco-track-h);
@@ -1734,7 +1808,7 @@ body.hide-track-check .track-state-btn {
     min-width: 0;
     margin-left: auto;
     margin-right: auto;
-    margin-top: 10px;
+    margin-top: calc(10px * var(--cco-bottom-scale));
     text-align: center;
     align-items: center;
 }

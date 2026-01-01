@@ -52,12 +52,36 @@ export class CenterControlsOverlay {
     this._baseSafeTop = 0;
     this._baseSafeBottom = 0;
 
+    this._availableLeft = 0;
+    this._availableWidth = 0;
+    this._canShowPanel = true;
+
+    this._pillTopInPanelPx = null;
+
     this._boundOnPointer = (e) => this._onPointerEvent(e);
     this._boundOnPointerMove = (e) => this._onPointerMove(e);
     this._boundOnKeydown = (e) => this._onKeydown(e);
     this._boundOnFocusIn = (e) => this._onFocusIn(e);
     this._boundOnResize = () => this.updateLayout();
     this._boundOnSidebarToggleChange = (e) => this._onSidebarToggleChange(e);
+
+    this._boundOnEdgePrevPointerDown = (e) => this._onEdgePointerDown(e, 'prev');
+    this._boundOnEdgeNextPointerDown = (e) => this._onEdgePointerDown(e, 'next');
+  }
+
+  _onEdgePointerDown(event, which) {
+    try {
+      if (event && event.cancelable) event.preventDefault();
+      if (event && typeof event.stopImmediatePropagation === 'function') event.stopImmediatePropagation();
+      if (event) event.stopPropagation();
+    } catch { /* ignore */ }
+
+    this.noteActivity();
+    if (which === 'prev') {
+      try { this.onPrev(); } catch { /* ignore */ }
+    } else {
+      try { this.onNext(); } catch { /* ignore */ }
+    }
   }
 
   _isMobileMode() {
@@ -85,9 +109,9 @@ export class CenterControlsOverlay {
     if (b.playPauseBtn) b.playPauseBtn.addEventListener('click', (e) => this._wrapClick(e, () => this.onTogglePlayback()));
     if (b.nextBtn) b.nextBtn.addEventListener('click', (e) => this._wrapClick(e, () => this.onNext()));
     if (b.markBtn) b.markBtn.addEventListener('click', (e) => this._wrapClick(e, () => this.onToggleMarkTrack()));
-    // Edge buttons should also reveal the overlay.
-    if (b.edgePrevBtn) b.edgePrevBtn.addEventListener('click', (e) => this._wrapEdgeClick(e, () => this.onPrev()));
-    if (b.edgeNextBtn) b.edgeNextBtn.addEventListener('click', (e) => this._wrapEdgeClick(e, () => this.onNext()));
+    // Edge buttons: always-active hit zones. Use pointerdown for reliability across browsers.
+    if (b.edgePrevBtn) b.edgePrevBtn.addEventListener('pointerdown', this._boundOnEdgePrevPointerDown, { passive: false });
+    if (b.edgeNextBtn) b.edgeNextBtn.addEventListener('pointerdown', this._boundOnEdgeNextPointerDown, { passive: false });
 
     if (b.sidebarToggleInput) {
       try {
@@ -134,6 +158,12 @@ export class CenterControlsOverlay {
     if (b.sidebarToggleInput) {
       try { b.sidebarToggleInput.removeEventListener('change', this._boundOnSidebarToggleChange); } catch { /* ignore */ }
     }
+    if (b.edgePrevBtn) {
+      try { b.edgePrevBtn.removeEventListener('pointerdown', this._boundOnEdgePrevPointerDown); } catch { /* ignore */ }
+    }
+    if (b.edgeNextBtn) {
+      try { b.edgeNextBtn.removeEventListener('pointerdown', this._boundOnEdgeNextPointerDown); } catch { /* ignore */ }
+    }
     if (this._resizeObs) {
       try { this._resizeObs.disconnect(); } catch { /* ignore */ }
       this._resizeObs = null;
@@ -178,6 +208,31 @@ export class CenterControlsOverlay {
       containerHeight = el.getBoundingClientRect().height;
     } catch { containerHeight = 0; }
 
+    // Compute the horizontal "available" region: the remaining player width not covered by the sidebar drawer.
+    // The sidebar drawer is fixed-position and visually covers the left portion of the player.
+    let containerWidth = 0;
+    try {
+      const el = (this.playerContainerEl instanceof HTMLElement) ? this.playerContainerEl : this.hitEl;
+      containerWidth = el.getBoundingClientRect().width;
+    } catch { containerWidth = 0; }
+
+    let sidebarWidth = 0;
+    try {
+      const sidebarHidden = !!this.isSidebarHidden();
+      if (!sidebarHidden && this.sidebarDrawerEl instanceof HTMLElement) {
+        sidebarWidth = this.sidebarDrawerEl.getBoundingClientRect().width;
+      }
+    } catch { sidebarWidth = 0; }
+
+    const availableLeft = Math.max(0, Math.round(sidebarWidth || 0));
+    const availableWidth = Math.max(0, Math.round((containerWidth || 0) - availableLeft));
+    this._availableLeft = availableLeft;
+    this._availableWidth = availableWidth;
+
+    // Hide the visible overlay UI entirely when the remaining space is too narrow.
+    // Keep edge hit-zones active at all times.
+    this._canShowPanel = !availableWidth || availableWidth >= 400;
+
     let safeTop = Number(this._baseSafeTop) || 0;
     let safeBottom = Number(this._baseSafeBottom) || 0;
 
@@ -192,12 +247,35 @@ export class CenterControlsOverlay {
     try {
       this.hitEl.style.setProperty('--center-overlay-safe-top', `${safeTop}px`);
       this.hitEl.style.setProperty('--center-overlay-safe-bottom', `${safeBottom}px`);
+      this.hitEl.style.setProperty('--cco-available-left', `${availableLeft}px`);
+      this.hitEl.style.setProperty('--cco-available-width', availableWidth ? `${availableWidth}px` : '100%');
     } catch { /* ignore */ }
     if (this.playerContainerEl instanceof HTMLElement) {
       try {
         this.playerContainerEl.style.setProperty('--center-overlay-safe-top', `${safeTop}px`);
         this.playerContainerEl.style.setProperty('--center-overlay-safe-bottom', `${safeBottom}px`);
+        this.playerContainerEl.style.setProperty('--cco-available-left', `${availableLeft}px`);
+        this.playerContainerEl.style.setProperty('--cco-available-width', availableWidth ? `${availableWidth}px` : '100%');
       } catch { /* ignore */ }
+    }
+    try {
+      this.panelEl.style.setProperty('--cco-available-left', `${availableLeft}px`);
+      this.panelEl.style.setProperty('--cco-available-width', availableWidth ? `${availableWidth}px` : '100%');
+    } catch { /* ignore */ }
+
+    // If too narrow, force the visible overlay UI hidden and keep the player surface interactive.
+    if (!this._canShowPanel) {
+      this._clearHideTimer();
+      this._visible = false;
+      try {
+        // Ensure the visible panel is hidden.
+        this.panelEl.dataset.visible = 'false';
+        this.panelEl.setAttribute('aria-hidden', 'true');
+        // Ensure the full-size hit layer does NOT intercept player interactions.
+        this.hitEl.dataset.visible = 'true';
+        this.hitEl.setAttribute('aria-hidden', 'true');
+      } catch { /* ignore */ }
+      return;
     }
 
     // Icon sizing based on actual overlay height (after safe-area is applied).
@@ -207,6 +285,21 @@ export class CenterControlsOverlay {
     // Target: 1/6 of overlay height, clamped.
     const iconPx = Math.round(Math.max(32, Math.min(64, (h || 300) / 6)));
     this.panelEl.style.setProperty('--center-overlay-icon-size', `${iconPx}px`);
+
+    // Expose the top of the bottom pill (progress/title cluster) so CSS can size the middle play hit zone.
+    try {
+      const pillEl = this.panelEl.querySelector('.cco-progress');
+      const panelRect = this.panelEl.getBoundingClientRect();
+      if (pillEl instanceof HTMLElement && panelRect && panelRect.height) {
+        const pillRect = pillEl.getBoundingClientRect();
+        const pillTop = Math.max(0, Math.min(panelRect.height, Math.round(pillRect.top - panelRect.top)));
+        this.panelEl.style.setProperty('--cco-pill-top', `${pillTop}px`);
+        this._pillTopInPanelPx = pillTop;
+        if (this.playerContainerEl instanceof HTMLElement) {
+          try { this.playerContainerEl.style.setProperty('--cco-pill-top', `${pillTop}px`); } catch { /* ignore */ }
+        }
+      }
+    } catch { /* ignore */ }
 
     // Keep toggle in sync (checked=true means sidebar visible).
     const hidden = !!this.isSidebarHidden();
@@ -233,6 +326,20 @@ export class CenterControlsOverlay {
   setVisible(visible) {
     if (!(this.hitEl instanceof HTMLElement)) return;
     if (!(this.panelEl instanceof HTMLElement)) return;
+
+    // If the visible UI is disabled due to narrow width, keep it hidden.
+    if (!!visible && !this._canShowPanel) {
+      this._clearHideTimer();
+      this._visible = false;
+      try {
+        this.panelEl.dataset.visible = 'false';
+        this.panelEl.setAttribute('aria-hidden', 'true');
+        // Don't block interactions with the player surface.
+        this.hitEl.dataset.visible = 'true';
+        this.hitEl.setAttribute('aria-hidden', 'true');
+      } catch { /* ignore */ }
+      return;
+    }
     const next = !!visible;
     const v = next ? 'true' : 'false';
 
@@ -251,8 +358,7 @@ export class CenterControlsOverlay {
     this.panelEl.setAttribute('aria-hidden', next ? 'false' : 'true');
 
     const b = this.buttons || {};
-    if (b.edgePrevBtn) b.edgePrevBtn.dataset.visible = v;
-    if (b.edgeNextBtn) b.edgeNextBtn.dataset.visible = v;
+    // Edge hit-zones should remain active at all times.
 
     if (next) this.updateLayout();
   }
@@ -335,6 +441,54 @@ export class CenterControlsOverlay {
 
     // Only show when interacting with the player surface.
     if (t.closest('#player-container') || t.closest('#player') || t.closest('#cursorWakeOverlay')) {
+      // If the click falls inside the middle third zone, toggle play/pause.
+      // This is active at all times (even when the visible overlay UI is hidden).
+      // Avoid interfering with clicks on the visible overlay UI itself.
+      if (this.panelEl instanceof HTMLElement && !this.panelEl.contains(t)) {
+        try {
+          const containerEl = (this.playerContainerEl instanceof HTMLElement) ? this.playerContainerEl : this.hitEl;
+          const rect = containerEl.getBoundingClientRect();
+          const x = typeof event.clientX === 'number' ? event.clientX : null;
+          const y = typeof event.clientY === 'number' ? event.clientY : null;
+          if (rect && x !== null && y !== null) {
+            const safeTop = Number(this._baseSafeTop) || 0;
+            const safeBottom = Number(this._baseSafeBottom) || 0;
+            const safeH = Math.max(0, rect.height - safeTop - safeBottom);
+
+            const availLeft = Number(this._availableLeft) || 0;
+            const availW = Number(this._availableWidth) || rect.width;
+            const x0 = rect.left + availLeft;
+            const x1 = x0 + availW;
+
+            const midL = x0 + (availW / 3);
+            const midR = x0 + (availW * 2 / 3);
+
+            const zoneTop = rect.top + safeTop + (safeH * 0.15);
+            let zoneBottom = rect.top + safeTop + (safeH * 0.85);
+            if (typeof this._pillTopInPanelPx === 'number') {
+              const panelRect = this.panelEl.getBoundingClientRect();
+              const pillTopAbs = panelRect.top + this._pillTopInPanelPx;
+              zoneBottom = Math.min(zoneBottom, pillTopAbs);
+            }
+
+            const inMiddle = x >= midL && x <= midR && x >= x0 && x <= x1;
+            const inY = y >= zoneTop && y <= zoneBottom;
+            if (inMiddle && inY) {
+              // Best-effort prevent the click from reaching the underlying player.
+              try {
+                if (event.cancelable) event.preventDefault();
+                if (typeof event.stopImmediatePropagation === 'function') event.stopImmediatePropagation();
+                event.stopPropagation();
+              } catch { /* ignore */ }
+
+              this.noteActivity();
+              try { this.onTogglePlayback(); } catch { /* ignore */ }
+              return;
+            }
+          }
+        } catch { /* ignore */ }
+      }
+
       if (!this._visible) {
         // When hidden: don't let the interaction fall through (best-effort).
         try {
