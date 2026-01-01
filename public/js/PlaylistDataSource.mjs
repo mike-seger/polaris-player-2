@@ -416,13 +416,13 @@ export class PlaylistDataSource {
         const url = new URL(uri, window.location.href).toString();
         const resp = await fetch(url, { cache: 'no-store' });
         if (!resp.ok) {
-          this.showAlert('Failed to load local playlist file.');
+          this.showAlert(`Failed to load local playlist file (${resp.status}).\n${uri}`);
           return undefined;
         }
         entry = await resp.json();
       } catch (error) {
-        console.error('Failed to load local playlist file:', error);
-        this.showAlert('Local playlist data is unavailable.');
+        console.error('Failed to load local playlist file:', { uri, error });
+        this.showAlert(`Local playlist data is unavailable.\n${uri}`);
         return undefined;
       }
     }
