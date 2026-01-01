@@ -437,7 +437,9 @@ export class PlaylistDataSource {
     this.resetVisibleIndices();
 
     this.refreshFilterOverlays();
-    this.saveSettings({ playlistId: targetId });
+    // Persist the local playlist URI so local media URLs can resolve relative to it.
+    // This is important when switching modes or when playlist library entries are stale.
+    this.saveSettings({ playlistId: targetId, localPlaylistUri: uri });
 
     const savedMap = this.getCurrentVideoMap();
     const storedVideoId = savedMap[targetId];

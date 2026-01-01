@@ -265,6 +265,10 @@
     function buildLocalVideoUrlForItem(item) {
       const activePlaylistId = (settings && typeof settings.playlistId === 'string') ? settings.playlistId.trim() : '';
 
+      const preferredLocalPlaylistUri = (settings && typeof settings.localPlaylistUri === 'string' && settings.localPlaylistUri.trim().length)
+        ? settings.localPlaylistUri.trim()
+        : '';
+
       const playlistEntry = (Array.isArray(playlistLibrary) && activePlaylistId)
         ? (playlistLibrary.find((e) => e && typeof e === 'object' && e.id === activePlaylistId) || null)
         : null;
@@ -287,8 +291,9 @@
       const base = 'vid_' + chosenId;
       try {
         const baseUrl = (() => {
-          if (!playlistUri) return new URL('./video/', window.location.href);
-          const playlistUrl = new URL(playlistUri, window.location.href);
+          const effectivePlaylistUri = preferredLocalPlaylistUri || playlistUri;
+          if (!effectivePlaylistUri) return new URL('./video/', window.location.href);
+          const playlistUrl = new URL(effectivePlaylistUri, window.location.href);
           return new URL('./', playlistUrl);
         })();
         return new URL(`${encodeURIComponent(base)}.mp4`, baseUrl).toString();
@@ -1275,7 +1280,7 @@
 
       const uri = (typeof meta.uri === 'string' && meta.uri.trim().length)
         ? meta.uri.trim()
-        : cleanedId;
+        : (inferredType === 'polaris' ? `./video/${cleanedId}.json` : cleanedId);
 
       const fetchedAt = (typeof meta.fetchedAt === 'string' && meta.fetchedAt.trim().length)
         ? meta.fetchedAt.trim()
@@ -1972,7 +1977,7 @@
           : (mode === 'spotify')
             ? { kind: 'spotify', trackId: spotifyId || 'unmatched' }
             : { kind: 'youtube', videoId },
-        ...(mode === 'spotify' && itemArtwork ? { artworkUrl: itemArtwork } : {}),
+        ...((mode === 'spotify' && itemArtwork) ? { artworkUrl: itemArtwork } : {}),
       };
     }
 

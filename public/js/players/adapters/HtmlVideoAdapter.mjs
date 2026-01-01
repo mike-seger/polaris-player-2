@@ -114,6 +114,14 @@ export class HtmlVideoAdapter {
     if (!videoId) return undefined;
     const base = `vid_${videoId}`;
     try {
+      const mediaUrl = track?.source?.url;
+      if (typeof mediaUrl === 'string' && mediaUrl.trim().length) {
+        const resolved = new URL(mediaUrl, window.location.href);
+        const baseDir = new URL('./', resolved);
+        return new URL(`thumbnail/${encodeURIComponent(base)}.jpg`, baseDir).toString();
+      }
+
+      // Fallback (legacy): thumbnails under ./video/thumbnail
       return new URL(`./video/thumbnail/${encodeURIComponent(base)}.jpg`, window.location.href).toString();
     } catch {
       return `./video/thumbnail/${encodeURIComponent(base)}.jpg`;

@@ -136,10 +136,15 @@ export class PlaylistLibraryStore {
       if (seen.has(id)) continue;
       seen.add(id);
 
+      // Back-compat: older settings may only have an id/title. For polaris/local playlists
+      // that means the default/legacy location is under ./video/<id>.json.
+      // For non-polaris entries, keep using the id as the default URI.
+      const defaultUri = (type === 'polaris') ? `./video/${id}.json` : id;
+
       cleaned.push({
         id,
         title: title || id,
-        uri: uri || id,
+        uri: uri || defaultUri,
         fetchedAt,
         default: isDefault,
         type,
