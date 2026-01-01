@@ -5,11 +5,20 @@ import './OverlayShared.mjs';
 import './CountryFlags.mjs';
 import './PlaylistManagement.mjs';
 
-// Embed local playlist library for file:// builds (avoids fetch() restrictions).
-import localPlaylistLibrary from '../local-playlist.json';
+// Embed default playlist index for file:// builds.
+import defaultPlaylistIndex from '../video/default-playlists.json';
 try {
   // eslint-disable-next-line no-undef
-  globalThis.__POLARIS_LOCAL_PLAYLIST_LIBRARY__ = localPlaylistLibrary;
+  globalThis.__POLARIS_DEFAULT_PLAYLIST_INDEX__ = defaultPlaylistIndex;
+} catch {
+  // ignore
+}
+
+// Embed default playlist library (per-playlist files) for file:// builds.
+import defaultPlaylistLibrary from '../video/default-playlist-library.json';
+try {
+  // eslint-disable-next-line no-undef
+  globalThis.__POLARIS_DEFAULT_PLAYLIST_LIBRARY__ = defaultPlaylistLibrary;
 } catch {
   // ignore
 }

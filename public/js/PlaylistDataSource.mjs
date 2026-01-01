@@ -5,6 +5,9 @@ export class PlaylistDataSource {
       playlistEndpoint,
       localPlaylistPath,
 
+      defaultPlaylistIndexPath,
+      syncDefaultPlaylists,
+
       spectrum,
 
       initPlaylistIO,
@@ -73,6 +76,9 @@ export class PlaylistDataSource {
     this.statusEndpoint = statusEndpoint;
     this.playlistEndpoint = playlistEndpoint;
     this.localPlaylistPath = localPlaylistPath;
+
+    this.defaultPlaylistIndexPath = defaultPlaylistIndexPath || './video/default-playlists.json';
+    this.syncDefaultPlaylists = typeof syncDefaultPlaylists === 'function' ? syncDefaultPlaylists : async (_defaults) => {};
 
     this.spectrum = spectrum;
 
@@ -234,7 +240,8 @@ export class PlaylistDataSource {
       instance.setServerAvailability(false);
     }
 
-    this.ensureLocalPlaylistData()
+    // Ensure defaults are available in the selector even when we enter local mode later.
+    this.ensureDefaultPlaylistsSynced()
       .then(() => this.updatePlaylistHistorySelect((this.getSettings().playlistId || '')))
       .catch(() => {});
   }
@@ -273,56 +280,109 @@ export class PlaylistDataSource {
   }
 
   async ensureLocalPlaylistData() {
+    // Only used as a file:// fallback.
     const cached = this.getLocalPlaylistLibrary();
-    if (cached) {
-      return cached;
-    }
+    if (cached) return cached;
 
-    // File-builds may embed the local playlist data directly into the bundle.
-    // This avoids `fetch()` failures under file://.
+    // Prefer the new embedded default playlist library (per-playlist files).
     try {
-      const embedded = /** @type {any} */ (globalThis).__POLARIS_LOCAL_PLAYLIST_LIBRARY__;
-      if (embedded && typeof embedded === 'object') {
-        this.setLocalPlaylistLibrary(embedded);
-        if (this.getUseLocalMode()) {
-          this.updatePlaylistHistorySelect((this.getSettings().playlistId || ''));
-        }
-        return embedded;
+      const embeddedDefaultLib = /** @type {any} */ (globalThis).__POLARIS_DEFAULT_PLAYLIST_LIBRARY__;
+      if (embeddedDefaultLib && typeof embeddedDefaultLib === 'object') {
+        this.setLocalPlaylistLibrary(embeddedDefaultLib);
+        return embeddedDefaultLib;
       }
     } catch {
       // ignore
     }
 
+    // Backward compatibility: older file builds may embed the legacy monolithic map.
     try {
-      const resp = await fetch(this.localPlaylistPath, { cache: 'no-store' });
-      if (!resp.ok) {
-        console.error('Failed to load local playlist file:', resp.status);
-        return null;
+      const embeddedLegacy = /** @type {any} */ (globalThis).__POLARIS_LOCAL_PLAYLIST_LIBRARY__;
+      if (embeddedLegacy && typeof embeddedLegacy === 'object') {
+        this.setLocalPlaylistLibrary(embeddedLegacy);
+        return embeddedLegacy;
       }
-      const data = await resp.json();
-      this.setLocalPlaylistLibrary(data);
-
-      if (this.getUseLocalMode()) {
-        this.updatePlaylistHistorySelect((this.getSettings().playlistId || ''));
-      }
-
-      return data;
-    } catch (error) {
-      console.error('Failed to load local playlist file:', error);
-      return null;
+    } catch {
+      // ignore
     }
+
+    return null;
+  }
+
+  async ensureDefaultPlaylistsSynced() {
+    let defaults = null;
+
+    // File-builds may embed the default playlist index directly.
+    try {
+      const embeddedIndex = /** @type {any} */ (globalThis).__POLARIS_DEFAULT_PLAYLIST_INDEX__;
+      if (Array.isArray(embeddedIndex)) {
+        defaults = embeddedIndex;
+      }
+    } catch {
+      // ignore
+    }
+
+    if (!defaults) {
+      try {
+        const resp = await fetch(this.defaultPlaylistIndexPath, { cache: 'no-store' });
+        if (resp && resp.ok) {
+          const data = await resp.json();
+          if (Array.isArray(data)) defaults = data;
+        }
+      } catch {
+        // ignore
+      }
+    }
+
+    // As a last resort, derive defaults from the embedded/legacy monolithic library map.
+    if (!defaults) {
+      try {
+        const lib = await this.ensureLocalPlaylistData();
+        if (lib && typeof lib === 'object' && !Array.isArray(lib)) {
+          defaults = Object.entries(lib).map(([id, entry]) => {
+            const title = (entry && typeof entry === 'object' && typeof entry.title === 'string' && entry.title.trim().length)
+              ? entry.title.trim()
+              : id;
+            const fetchedAt = (entry && typeof entry === 'object' && typeof entry.fetchedAt === 'string')
+              ? entry.fetchedAt
+              : '';
+            return {
+              id,
+              title,
+              uri: `./video/${id}.json`,
+              fetchedAt,
+              default: true,
+              type: 'polaris',
+            };
+          });
+        }
+      } catch {
+        // ignore
+      }
+    }
+
+    if (defaults && Array.isArray(defaults) && defaults.length) {
+      try { await this.syncDefaultPlaylists(defaults); } catch { /* ignore */ }
+    }
+
+    if (this.getUseLocalMode()) {
+      try { this.updatePlaylistHistorySelect((this.getSettings().playlistId || '')); } catch { /* ignore */ }
+    }
+
+    return defaults;
   }
 
   async loadPlaylistFromLocal(playlistIdOverride = '') {
-    const library = await this.ensureLocalPlaylistData();
-    if (!library || typeof library !== 'object') {
-      this.showAlert('Local playlist data is unavailable.');
-      return undefined;
-    }
+    await this.ensureDefaultPlaylistsSynced();
 
-    const availableIds = Object.keys(library);
+    const list = this.getPlaylistHistory();
+    const localEntries = Array.isArray(list)
+      ? list.filter((e) => e && typeof e === 'object' && e.type === 'polaris')
+      : [];
+
+    const availableIds = localEntries.map((e) => e.id).filter(Boolean);
     if (!availableIds.length) {
-      this.showAlert('Local playlist file does not contain any playlists.');
+      this.showAlert('No local playlists available.');
       return undefined;
     }
 
@@ -330,21 +390,48 @@ export class PlaylistDataSource {
     const override = typeof playlistIdOverride === 'string' ? playlistIdOverride.trim() : '';
     const fallback = typeof settings.playlistId === 'string' ? settings.playlistId.trim() : '';
     let targetId = override || fallback;
-    if (!targetId || !library[targetId]) {
+    if (!targetId || !availableIds.includes(targetId)) {
       targetId = availableIds[0];
     }
 
-    const entry = library[targetId];
-    if (!entry || typeof entry !== 'object') {
-      this.showAlert('Selected playlist is not available in local data.');
-      return undefined;
+    const meta = localEntries.find((e) => e.id === targetId) || null;
+    const uri = (meta && typeof meta.uri === 'string' && meta.uri.trim().length)
+      ? meta.uri.trim()
+      : `./video/${targetId}.json`;
+
+    let entry = null;
+
+    // Prefer embedded/legacy library map (works under file://), else fetch the per-playlist JSON.
+    try {
+      const embedded = await this.ensureLocalPlaylistData();
+      if (embedded && typeof embedded === 'object' && !Array.isArray(embedded) && embedded[targetId]) {
+        entry = embedded[targetId];
+      }
+    } catch {
+      // ignore
     }
 
-    const playlistTitle = (typeof entry.title === 'string' && entry.title.trim().length)
+    if (!entry) {
+      try {
+        const url = new URL(uri, window.location.href).toString();
+        const resp = await fetch(url, { cache: 'no-store' });
+        if (!resp.ok) {
+          this.showAlert('Failed to load local playlist file.');
+          return undefined;
+        }
+        entry = await resp.json();
+      } catch (error) {
+        console.error('Failed to load local playlist file:', error);
+        this.showAlert('Local playlist data is unavailable.');
+        return undefined;
+      }
+    }
+
+    const playlistTitle = (entry && typeof entry.title === 'string' && entry.title.trim().length)
       ? entry.title.trim()
       : targetId;
 
-    this.setPlaylistItems(Array.isArray(entry.items) ? entry.items.slice() : []);
+    this.setPlaylistItems(entry && Array.isArray(entry.items) ? entry.items.slice() : []);
     this.bumpPlaylistVersion();
     this.shuffleQueue.resetAll();
     this.resetVisibleIndices();
@@ -367,7 +454,12 @@ export class PlaylistDataSource {
     this.renderTrackList();
     this.updateNowPlaying();
     this.updatePlayPauseButton();
-    this.addPlaylistToHistory(targetId, playlistTitle);
+    this.addPlaylistToHistory(targetId, playlistTitle, {
+      uri,
+      fetchedAt: (entry && typeof entry.fetchedAt === 'string') ? entry.fetchedAt : (meta && meta.fetchedAt) || '',
+      type: 'polaris',
+      default: meta ? !!meta.default : false,
+    });
     this.updateUrlPlaylistParam(targetId);
 
     const currentIndex = this.getCurrentIndex();
@@ -467,13 +559,24 @@ export class PlaylistDataSource {
       this.playIndex(currentIndex);
     }
 
-    this.addPlaylistToHistory(resolvedPlaylistId, playlistTitle);
+    this.addPlaylistToHistory(resolvedPlaylistId, playlistTitle, {
+      uri: targetId,
+      fetchedAt: (typeof data.fetchedAt === 'string') ? data.fetchedAt : new Date().toISOString(),
+      type: 'youtube',
+      default: false,
+    });
     this.updateUrlPlaylistParam(resolvedPlaylistId);
 
     return resolvedPlaylistId;
   }
 
   async initialize({ startupPlaylistId } = {}) {
+    try {
+      await this.ensureDefaultPlaylistsSynced();
+    } catch (error) {
+      console.warn('Failed to sync default playlists:', error);
+    }
+
     const available = await this.checkServerAvailability();
 
     this.setupPlaylistOverlay({

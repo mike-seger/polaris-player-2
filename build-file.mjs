@@ -49,10 +49,61 @@ function buildDistIndexHtml(sourceHtml) {
   return html;
 }
 
+async function generateDefaultPlaylistLibrary() {
+  // For file:// builds we can't fetch playlist JSON files at runtime reliably.
+  // Instead, embed a map of default playlistId -> playlist JSON into the bundle.
+  const indexPath = path.join(publicDir, 'video', 'default-playlists.json');
+  if (!(await pathExists(indexPath))) return;
+
+  let defaults;
+  try {
+    defaults = JSON.parse(await fs.readFile(indexPath, 'utf8'));
+  } catch {
+    return;
+  }
+  if (!Array.isArray(defaults)) return;
+
+  /**
+   * Convert a default playlist entry uri like './video/sub/abc.json'
+   * into an absolute filesystem path rooted under public/.
+   */
+  const uriToPublicPath = (uri) => {
+    const u = String(uri || '').trim();
+    if (!u) return null;
+    if (/^https?:\/\//i.test(u)) return null;
+    const rel = u.startsWith('./') ? u.slice(2) : u;
+    const normalized = rel.replace(/\\/g, '/');
+    if (normalized.startsWith('../') || normalized.includes('/../')) return null;
+    return path.join(publicDir, normalized);
+  };
+
+  const out = {};
+  for (const entry of defaults) {
+    if (!entry || typeof entry !== 'object') continue;
+    const id = String(entry.id || '').trim();
+    const uri = String(entry.uri || '').trim();
+    if (!id || !uri) continue;
+    const fsPath = uriToPublicPath(uri);
+    if (!fsPath || !(await pathExists(fsPath))) continue;
+
+    try {
+      out[id] = JSON.parse(await fs.readFile(fsPath, 'utf8'));
+    } catch {
+      // ignore invalid playlist files
+    }
+  }
+
+  const outPath = path.join(publicDir, 'video', 'default-playlist-library.json');
+  await fs.writeFile(outPath, JSON.stringify(out, null, 2) + '\n', 'utf8');
+}
+
 async function main() {
   // In Node, esbuild-wasm starts a long-lived service automatically.
   // initialize() is optional; calling it with no options is safe.
   await esbuild.initialize();
+
+  // Ensure the file:// bundle can embed default playlists.
+  await generateDefaultPlaylistLibrary();
 
   // IMPORTANT: preserve dist/video (large local media) across builds.
   await ensureDir(distDir);
@@ -110,7 +161,6 @@ async function main() {
     'player-fill1.woff2',
     'player.woff2',
     'roboto-mono-400.woff2',
-    'local-playlist.json',
     'spotify-callback.html',
   ];
   for (const name of passthroughFiles) {

@@ -4,7 +4,7 @@
   import { SpotifyAdapter } from './players/adapters/SpotifyAdapter.mjs';
   import { SpotifyAuth } from './players/SpotifyAuth.mjs';
   import { SettingsStore } from './SettingsStore.mjs';
-  import { PlaylistHistoryStore } from './PlaylistHistoryStore.mjs';
+  import { PlaylistLibraryStore } from './PlaylistLibraryStore.mjs';
   import { FilterStateStore } from './FilterStateStore.mjs';
   import { TrackDetailSettingsStore } from './TrackDetailSettingsStore.mjs';
   import { getFlagEmojiForIso3 } from './CountryFlags.mjs';
@@ -232,13 +232,11 @@
     const STATUS_ENDPOINT = `${API_BASE_PATH}/api/status`;
     const PLAYLIST_ENDPOINT = `${API_BASE_PATH}/api/playlist`;
     const LOCAL_PLAYLIST_PATH = './local-playlist.json';
-    const PLAYLIST_HISTORY_LIMIT = 25;
-    const playlistHistoryStore = new PlaylistHistoryStore({
-      limit: PLAYLIST_HISTORY_LIMIT,
+    const playlistLibraryStore = new PlaylistLibraryStore({
       getSettings: () => settings,
       saveSettings: (patch) => saveSettings(patch)
     });
-    let playlistHistory = playlistHistoryStore.get();
+    let playlistLibrary = playlistLibraryStore.get();
     const TRACK_STATE_DEFAULT = 'default';
     const TRACK_STATE_CHECKED = 'checked';
     const urlParams = new URLSearchParams(window.location.search);
@@ -265,9 +263,35 @@
     }
 
     function buildLocalVideoUrlForItem(item) {
-      const base = 'vid_' + item.videoId;
+      const activePlaylistId = (settings && typeof settings.playlistId === 'string') ? settings.playlistId.trim() : '';
+
+      const playlistEntry = (Array.isArray(playlistLibrary) && activePlaylistId)
+        ? (playlistLibrary.find((e) => e && typeof e === 'object' && e.id === activePlaylistId) || null)
+        : null;
+
+      const playlistUri = (playlistEntry && playlistEntry.type === 'polaris' && typeof playlistEntry.uri === 'string' && playlistEntry.uri.trim().length)
+        ? playlistEntry.uri.trim()
+        : '';
+
+      const videoId = (item && (typeof item.videoId === 'string' || typeof item.videoId === 'number'))
+        ? String(item.videoId).trim()
+        : '';
+      const spotifyId = (item && (typeof item.spotifyId === 'string' || typeof item.spotifyId === 'number'))
+        ? String(item.spotifyId).trim()
+        : '';
+      const fallbackId = (item && (typeof item.id === 'string' || typeof item.id === 'number'))
+        ? String(item.id).trim()
+        : '';
+
+      const chosenId = videoId || spotifyId || fallbackId || 'unmatched';
+      const base = 'vid_' + chosenId;
       try {
-        return new URL(`./video/${encodeURIComponent(base)}.mp4`, window.location.href).toString();
+        const baseUrl = (() => {
+          if (!playlistUri) return new URL('./video/', window.location.href);
+          const playlistUrl = new URL(playlistUri, window.location.href);
+          return new URL('./', playlistUrl);
+        })();
+        return new URL(`${encodeURIComponent(base)}.mp4`, baseUrl).toString();
       } catch {
         return `./video/${encodeURIComponent(base)}.mp4`;
       }
@@ -1165,18 +1189,10 @@
     });
 
     function getLocalPlaylistOptions() {
-      const library = localPlaylistLibrary;
-      if (!library || typeof library !== 'object' || Array.isArray(library)) return [];
-
-      const options = [];
-      Object.entries(library).forEach(([id, entry]) => {
-        if (!id) return;
-        const title = (entry && typeof entry === 'object' && typeof entry.title === 'string' && entry.title.trim().length)
-          ? entry.title.trim()
-          : id;
-        options.push({ id, title });
-      });
-
+      const list = Array.isArray(playlistLibrary) ? playlistLibrary : [];
+      const options = list
+        .filter((e) => e && typeof e === 'object' && e.type === 'polaris')
+        .map((e) => ({ id: e.id, title: e.title || e.id }));
       options.sort((a, b) => a.title.localeCompare(b.title, undefined, { sensitivity: 'base' }));
       return options;
     }
@@ -1209,7 +1225,9 @@
       const useLocalOptions = useLocalMode && localOptions.length > 0;
       const options = useLocalOptions
         ? localOptions
-        : playlistHistory.map((entry) => ({ id: entry.id, title: entry.title }));
+        : (Array.isArray(playlistLibrary) ? playlistLibrary : [])
+          .filter((e) => e && typeof e === 'object' && e.type !== 'polaris')
+          .map((entry) => ({ id: entry.id, title: entry.title }));
 
       if (!options.length) {
         playlistHistorySelect.disabled = true;
@@ -1242,28 +1260,57 @@
       }
     }
 
-    function addPlaylistToHistory(id, title) {
-      if (!id) return;
-      playlistHistoryStore.add(id, title);
-      playlistHistory = playlistHistoryStore.get();
-      updatePlaylistHistorySelect(id);
+    function addPlaylistToHistory(id, title, meta = {}) {
+      const cleanedId = String(id || '').trim();
+      if (!cleanedId) return;
+      const cleanedTitle = String(title || '').trim() || cleanedId;
+
+      const inferredType = (() => {
+        const raw = String(meta.type || '').trim().toLowerCase();
+        if (raw === 'polaris' || raw === 'youtube' || raw === 'spotify') return raw;
+        if (useLocalMode) return 'polaris';
+        const mode = getPlayerMode();
+        return mode === 'spotify' ? 'spotify' : 'youtube';
+      })();
+
+      const uri = (typeof meta.uri === 'string' && meta.uri.trim().length)
+        ? meta.uri.trim()
+        : cleanedId;
+
+      const fetchedAt = (typeof meta.fetchedAt === 'string' && meta.fetchedAt.trim().length)
+        ? meta.fetchedAt.trim()
+        : new Date().toISOString();
+
+      const entry = {
+        id: cleanedId,
+        title: cleanedTitle,
+        uri,
+        fetchedAt,
+        default: !!meta.default,
+        type: inferredType,
+      };
+
+      playlistLibraryStore.upsert(entry);
+      playlistLibrary = playlistLibraryStore.get();
+      updatePlaylistHistorySelect(cleanedId);
     }
 
     function removePlaylistFromHistory(id) {
-      if (!id) return;
-      playlistHistoryStore.remove(id);
-      playlistHistory = playlistHistoryStore.get();
+      const cleanedId = String(id || '').trim();
+      if (!cleanedId) return;
+      playlistLibraryStore.remove(cleanedId);
+      playlistLibrary = playlistLibraryStore.get();
       const patch = {};
       const map = getCurrentVideoMap();
-      if (map[id]) {
+      if (map[cleanedId]) {
         const nextMap = { ...map };
-        delete nextMap[id];
+        delete nextMap[cleanedId];
         patch.currentVideoMap = nextMap;
       }
       const itemStates = getPlaylistItemStateMap();
-      if (itemStates[id]) {
+      if (itemStates[cleanedId]) {
         const nextStates = { ...itemStates };
-        delete nextStates[id];
+        delete nextStates[cleanedId];
         patch.playlistItemStates = nextStates;
       }
       if (Object.keys(patch).length) {
@@ -1281,8 +1328,8 @@
       }
 
       settings = settingsStore.get();
-      playlistHistoryStore.replace([], { persist: false });
-      playlistHistory = playlistHistoryStore.get();
+      playlistLibraryStore.replace([], { persist: false });
+      playlistLibrary = playlistLibraryStore.get();
       updatePlaylistHistorySelect('');
 
       shuffleQueue.setEnabled(true);
@@ -2749,6 +2796,11 @@
       playlistEndpoint: PLAYLIST_ENDPOINT,
       localPlaylistPath: LOCAL_PLAYLIST_PATH,
 
+      syncDefaultPlaylists: async (defaults) => {
+        playlistLibrary = playlistLibraryStore.syncDefaults(defaults);
+        return playlistLibrary;
+      },
+
       spectrum,
 
       initPlaylistIO,
@@ -2783,7 +2835,7 @@
         return playlistIOInstance;
       },
 
-      getPlaylistHistory: () => playlistHistory,
+      getPlaylistHistory: () => playlistLibrary,
       removePlaylistFromHistory: (id) => removePlaylistFromHistory(id),
       resetUserSettings: () => resetStoredSettings(),
       showAlert,
