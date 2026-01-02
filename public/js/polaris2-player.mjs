@@ -127,7 +127,7 @@
     let mediaSessionInitialized = false;
     let lastMediaPositionUpdateAt = 0;
 
-    const STORAGE_KEY = 'ytAudioPlayer.settings';
+    const STORAGE_KEY = 'PolarisPlayer.settings';
     let notifySettingsUpdated = () => {};
     const settingsStore = new SettingsStore(STORAGE_KEY, { onChange: () => notifySettingsUpdated() });
     let settings = settingsStore.load();
@@ -671,7 +671,7 @@
       try { spotifyAuth.setClientId(clientId); } catch { /* ignore */ }
 
       if (!clientId) {
-        alert.show('Spotify mode requires a Spotify Client ID. Add it in Playlist → Video Player → Spotify Client ID (stored in ytAudioPlayer.settings.spotifyClientId).');
+        alert.show('Spotify mode requires a Spotify Client ID. Add it in Playlist → Video Player → Spotify Client ID (stored in PolarisPlayer.settings.spotifyClientId).');
         return false;
       }
 

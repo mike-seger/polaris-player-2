@@ -25,7 +25,7 @@
 
       function loadSpotifyClientIdFromSettings() {
         try {
-          var raw = localStorage.getItem('ytAudioPlayer.settings');
+          var raw = localStorage.getItem('PolarisPlayer.settings');
           if (!raw) return '';
           var obj = JSON.parse(raw);
           if (!obj || typeof obj !== 'object') return '';
@@ -89,7 +89,7 @@
 
         var clientId = loadSpotifyClientIdFromSettings();
         if (!clientId) {
-          setStatus('<p>Spotify login failed: missing Client ID (ytAudioPlayer.settings.spotifyClientId).</p>');
+          setStatus('<p>Spotify login failed: missing Client ID (PolarisPlayer.settings.spotifyClientId).</p>');
           return;
         }
 
