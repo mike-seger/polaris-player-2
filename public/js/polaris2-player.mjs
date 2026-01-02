@@ -231,7 +231,6 @@
     const API_BASE_PATH = window.location.hostname.endsWith('polaris.net128.com') ? '/u2b' : '.';
     const STATUS_ENDPOINT = `${API_BASE_PATH}/api/status`;
     const PLAYLIST_ENDPOINT = `${API_BASE_PATH}/api/playlist`;
-    const LOCAL_PLAYLIST_PATH = './local-playlist.json';
     const playlistLibraryStore = new PlaylistLibraryStore({
       getSettings: () => settings,
       saveSettings: (patch) => saveSettings(patch)
@@ -2799,7 +2798,6 @@
     const playlistDataSource = new PlaylistDataSource({
       statusEndpoint: STATUS_ENDPOINT,
       playlistEndpoint: PLAYLIST_ENDPOINT,
-      localPlaylistPath: LOCAL_PLAYLIST_PATH,
 
       syncDefaultPlaylists: async (defaults) => {
         playlistLibrary = playlistLibraryStore.syncDefaults(defaults);

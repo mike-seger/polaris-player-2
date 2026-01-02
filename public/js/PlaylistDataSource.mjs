@@ -3,8 +3,6 @@ export class PlaylistDataSource {
     const {
       statusEndpoint,
       playlistEndpoint,
-      localPlaylistPath,
-
       defaultPlaylistIndexPath,
       syncDefaultPlaylists,
 
@@ -75,7 +73,6 @@ export class PlaylistDataSource {
 
     this.statusEndpoint = statusEndpoint;
     this.playlistEndpoint = playlistEndpoint;
-    this.localPlaylistPath = localPlaylistPath;
 
     this.defaultPlaylistIndexPath = defaultPlaylistIndexPath || './video/default-playlists.json';
     this.syncDefaultPlaylists = typeof syncDefaultPlaylists === 'function' ? syncDefaultPlaylists : async (_defaults) => {};
