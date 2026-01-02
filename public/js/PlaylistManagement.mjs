@@ -287,7 +287,7 @@
           preEl.textContent = text;
           preEl.style.display = 'block';
         }
-        statusEl.textContent = 'Saved in localStorage as ytAudioPlayer.settings.';
+        statusEl.textContent = 'Saved in localStorage as PolarisPlayer.settings.';
         statusEl.style.color = '#a8b3c7';
         updateSettingsResetButtonState(false);
       } catch (error) {
@@ -1302,7 +1302,7 @@
       settingsSection.content.style.minHeight = '0';
 
       const settingsIntro = document.createElement('p');
-      settingsIntro.textContent = 'Inspect the current ytAudioPlayer.settings.';
+      settingsIntro.textContent = 'Inspect the current PolarisPlayer.settings.';
       settingsIntro.style.margin = '0';
       settingsIntro.style.fontSize = '0.8rem';
       settingsIntro.style.color = '#a8b3c7';
@@ -1378,7 +1378,7 @@
       settingsConfirmBox.style.borderRadius = '6px';
 
       const settingsConfirmMessage = document.createElement('p');
-      settingsConfirmMessage.textContent = 'Reset stored settings? This clears ytAudioPlayer.settings from localStorage.';
+      settingsConfirmMessage.textContent = 'Reset stored settings? This clears PolarisPlayer.settings from localStorage.';
       settingsConfirmMessage.style.margin = '0';
       settingsConfirmMessage.style.fontSize = '0.8rem';
       settingsConfirmMessage.style.color = '#f5f7fa';
