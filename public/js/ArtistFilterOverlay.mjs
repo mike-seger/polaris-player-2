@@ -314,7 +314,14 @@ export class ArtistFilterOverlay {
       : artists;
 
     const headerRow = document.createElement('div');
-    headerRow.className = 'track-details-option';
+    headerRow.className = 'track-details-option track-details-option-header';
+
+    const resetBtn = document.createElement('button');
+    resetBtn.type = 'button';
+    resetBtn.className = 'filters-reset-btn';
+    resetBtn.textContent = 'Reset';
+    resetBtn.setAttribute('aria-label', 'Reset artist filters');
+    resetBtn.title = 'Reset artist filters';
 
     const sortLabel = document.createElement('span');
     sortLabel.className = 'track-details-inline-label';
@@ -336,9 +343,19 @@ export class ArtistFilterOverlay {
     });
     sortSelect.value = this.sortMode;
 
+    headerRow.appendChild(resetBtn);
     headerRow.appendChild(sortLabel);
     headerRow.appendChild(sortSelect);
     this.optionsEl.appendChild(headerRow);
+
+    resetBtn.addEventListener('click', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      this.setFilters([]);
+      this.updateButtonState();
+      this.onFiltersChanged({ preserveScroll: true });
+      this.updateOptions();
+    });
 
     sortSelect.addEventListener('change', () => {
       this.sortMode = sortSelect.value === 'count' ? 'count' : 'az';

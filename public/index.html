@@ -178,17 +178,20 @@
                       </label>
                     </div>
 
-                    <div class="track-details-header track-details-header-inline" id="artistFilterHeading">
-                      <span>Artists</span>
-                      <button id="artistResetBtn" class="filters-reset-btn" type="button" aria-label="Reset artist filters" title="Reset artist filters">Reset</button>
+                    <div class="track-details-header track-details-header-inline" id="combinedFilterListHeading">
+                      <select id="combinedFilterListSelect" class="combined-filter-list-select" name="combinedFilterList" aria-label="Filter list">
+                        <option value="artist">Artists</option>
+                        <option value="country">Countries</option>
+                      </select>
                     </div>
-                    <div id="artistFilterOptions"></div>
 
-                    <div class="track-details-header track-details-header-inline" id="countryFilterHeading">
-                      <span>Countries</span>
-                      <button id="countryResetBtn" class="filters-reset-btn" type="button" aria-label="Reset country filters" title="Reset country filters">Reset</button>
+                    <div id="artistFilterSection">
+                      <div id="artistFilterOptions"></div>
                     </div>
-                    <div id="countryFilterOptions"></div>
+
+                    <div id="countryFilterSection" hidden>
+                      <div id="countryFilterOptions"></div>
+                    </div>
                   </div>
                 </div>
               </div>

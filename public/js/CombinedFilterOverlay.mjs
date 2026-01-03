@@ -11,6 +11,10 @@ export class CombinedFilterOverlay {
       wrapperEl = null,
       filterInputEl = null,
 
+      listSelectEl = null,
+      artistSectionEl = null,
+      countrySectionEl = null,
+
       artistOptionsEl = null,
       countryOptionsEl = null,
 
@@ -35,6 +39,10 @@ export class CombinedFilterOverlay {
 
     this.artistOptionsEl = artistOptionsEl;
     this.countryOptionsEl = countryOptionsEl;
+
+    this.listSelectEl = listSelectEl;
+    this.artistSectionEl = artistSectionEl;
+    this.countrySectionEl = countrySectionEl;
 
     this.onBeforeOpen = typeof onBeforeOpen === 'function' ? onBeforeOpen : () => {};
 
@@ -71,6 +79,32 @@ export class CombinedFilterOverlay {
     this.removeKeydownHandler = null;
   }
 
+  _applyActiveListVisibility() {
+    const list = this.activeList === 'country' ? 'country' : 'artist';
+
+    if (this.artistSectionEl) this.artistSectionEl.hidden = list !== 'artist';
+    if (this.countrySectionEl) this.countrySectionEl.hidden = list !== 'country';
+
+    if (this.listSelectEl) {
+      const nextValue = list;
+      if (this.listSelectEl.value !== nextValue) {
+        this.listSelectEl.value = nextValue;
+      }
+    }
+  }
+
+  setActiveList(list) {
+    const next = list === 'country' ? 'country' : 'artist';
+    if (this.activeList === next) {
+      this._applyActiveListVisibility();
+      return;
+    }
+    this.activeList = next;
+    this._applyActiveListVisibility();
+    const activeEl = this.activeList === 'country' ? this.countryOptionsEl : this.artistOptionsEl;
+    if (activeEl) scheduleScrollFirstSelectedOptionIntoView(activeEl);
+  }
+
   isVisible() {
     return !!this.visible;
   }
@@ -98,11 +132,11 @@ export class CombinedFilterOverlay {
     const t = target instanceof Element ? target : null;
     if (!t) return;
     if (this.artistOptionsEl && this.artistOptionsEl.contains(t)) {
-      this.activeList = 'artist';
+      this.setActiveList('artist');
       return;
     }
     if (this.countryOptionsEl && this.countryOptionsEl.contains(t)) {
-      this.activeList = 'country';
+      this.setActiveList('country');
     }
   }
 
@@ -118,8 +152,9 @@ export class CombinedFilterOverlay {
     this.visible = true;
     this.updateButtonState();
 
-    if (this.artistOptionsEl) scheduleScrollFirstSelectedOptionIntoView(this.artistOptionsEl);
-    if (this.countryOptionsEl) scheduleScrollFirstSelectedOptionIntoView(this.countryOptionsEl);
+    this._applyActiveListVisibility();
+    const activeEl = this.activeList === 'country' ? this.countryOptionsEl : this.artistOptionsEl;
+    if (activeEl) scheduleScrollFirstSelectedOptionIntoView(activeEl);
   }
 
   close(options = {}) {
@@ -165,6 +200,12 @@ export class CombinedFilterOverlay {
       });
     }
 
+    if (this.listSelectEl) {
+      this.listSelectEl.addEventListener('change', () => {
+        this.setActiveList(this.listSelectEl.value);
+      });
+    }
+
     document.addEventListener('pointerdown', this._handleDocumentPointerDown, { capture: true, passive: true });
     document.addEventListener('mousedown', this._handleDocumentPointerDown, { capture: true, passive: true });
     document.addEventListener('click', this.handleOutsideClick);
@@ -183,6 +224,8 @@ export class CombinedFilterOverlay {
         },
       });
     }
+
+    this._applyActiveListVisibility();
 
     this.updateButtonState();
   }

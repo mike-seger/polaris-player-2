@@ -274,7 +274,14 @@ export class CountryFilterOverlay {
     })();
 
     const headerRow = document.createElement('div');
-    headerRow.className = 'track-details-option';
+    headerRow.className = 'track-details-option track-details-option-header';
+
+    const resetBtn = document.createElement('button');
+    resetBtn.type = 'button';
+    resetBtn.className = 'filters-reset-btn';
+    resetBtn.textContent = 'Reset';
+    resetBtn.setAttribute('aria-label', 'Reset country filters');
+    resetBtn.title = 'Reset country filters';
 
     const sortLabel = document.createElement('span');
     sortLabel.className = 'track-details-inline-label';
@@ -296,9 +303,19 @@ export class CountryFilterOverlay {
     });
     sortSelect.value = this.sortMode;
 
+    headerRow.appendChild(resetBtn);
     headerRow.appendChild(sortLabel);
     headerRow.appendChild(sortSelect);
     this.optionsEl.appendChild(headerRow);
+
+    resetBtn.addEventListener('click', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      this.setFilters([]);
+      this.updateButtonState();
+      this.onFiltersChanged({ preserveScroll: true });
+      this.updateOptions();
+    });
 
     sortSelect.addEventListener('change', () => {
       this.sortMode = sortSelect.value === 'count' ? 'count' : 'az';

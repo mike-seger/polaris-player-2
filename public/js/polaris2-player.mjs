@@ -550,11 +550,10 @@
     const combinedFilterOverlay = document.getElementById('combinedFilterOverlay');
     const filtersResetBtn = document.getElementById('filtersResetBtn');
     const markedOnlyCheckbox = document.getElementById('markedOnlyCheckbox');
-    const artistResetBtn = document.getElementById('artistResetBtn');
-    const countryResetBtn = document.getElementById('countryResetBtn');
     const markedFilterHeading = document.getElementById('markedFilterHeading');
-    const artistFilterHeading = document.getElementById('artistFilterHeading');
-    const countryFilterHeading = document.getElementById('countryFilterHeading');
+    const combinedFilterListSelect = document.getElementById('combinedFilterListSelect');
+    const artistFilterSection = document.getElementById('artistFilterSection');
+    const countryFilterSection = document.getElementById('countryFilterSection');
     const artistFilterOptions = document.getElementById('artistFilterOptions');
     const countryFilterOptions = document.getElementById('countryFilterOptions');
     const fullscreenBtn = document.getElementById('fullscreenBtn');
@@ -1166,6 +1165,9 @@
       overlayEl: combinedFilterOverlay,
       wrapperEl: combinedFilterWrapper,
       filterInputEl,
+      listSelectEl: combinedFilterListSelect,
+      artistSectionEl: artistFilterSection,
+      countrySectionEl: countryFilterSection,
       artistOptionsEl: artistFilterOptions,
       countryOptionsEl: countryFilterOptions,
 
@@ -3157,42 +3159,6 @@
         computeFilteredIndices();
         renderTrackList({ preserveScroll: true });
         syncFilterHeaderCheckboxes();
-      });
-    }
-
-    if (artistResetBtn) {
-      artistResetBtn.addEventListener('click', (event) => {
-        event.preventDefault();
-        event.stopPropagation();
-        clearArtistFiltersFromHeader();
-      });
-    }
-
-    if (countryResetBtn) {
-      countryResetBtn.addEventListener('click', (event) => {
-        event.preventDefault();
-        event.stopPropagation();
-        clearCountryFiltersFromHeader();
-      });
-    }
-
-    if (artistFilterHeading) {
-      artistFilterHeading.addEventListener('click', (event) => {
-        const targetEl = event.target instanceof Element ? event.target : null;
-        if (targetEl && targetEl.closest('button')) return;
-        if (Array.isArray(artistFilters) && artistFilters.length > 0) {
-          clearArtistFiltersFromHeader();
-        }
-      });
-    }
-
-    if (countryFilterHeading) {
-      countryFilterHeading.addEventListener('click', (event) => {
-        const targetEl = event.target instanceof Element ? event.target : null;
-        if (targetEl && targetEl.closest('button')) return;
-        if (Array.isArray(countryFilters) && countryFilters.length > 0) {
-          clearCountryFiltersFromHeader();
-        }
       });
     }
 
