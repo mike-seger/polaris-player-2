@@ -164,9 +164,17 @@ export class YTController {
   }
 
   _getRuntimeOrigin() {
+    // Under file://, browsers use an opaque "null" origin. Passing an origin to
+    // the YouTube iframe API in that context can trigger noisy postMessage errors.
+    if (window.location && window.location.protocol === 'file:') return undefined;
+
     const runtimeOrigin = (window.location && window.location.origin)
       ? window.location.origin
       : `${window.location.protocol}//${window.location.host}`;
+
+    // Some environments report the file scheme origin as the literal string "null".
+    // Treat it as unset so we omit the origin playerVar.
+    if (runtimeOrigin === 'null') return undefined;
 
     const configured = (typeof this.origin === 'string') ? this.origin.trim() : '';
     if (configured && configured !== runtimeOrigin && !this._warnedOriginMismatch) {
@@ -478,7 +486,7 @@ export class YTController {
         ...(this.playerVars || null),
         autoplay: this.autoplay ? 1 : 0,
         controls: this.controls,
-        origin: playerOrigin,
+        ...(playerOrigin ? { origin: playerOrigin } : null),
       },
       events: {
         onReady,

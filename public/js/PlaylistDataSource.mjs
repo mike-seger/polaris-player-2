@@ -252,6 +252,16 @@ export class PlaylistDataSource {
   }
 
   async checkServerAvailability() {
+    // Under file://, fetch() to local paths is blocked by browser CORS.
+    try {
+      if (window && window.location && window.location.protocol === 'file:') {
+        this.spectrum.disable();
+        return false;
+      }
+    } catch {
+      // ignore
+    }
+
     try {
       const resp = await fetch(this.statusEndpoint, { cache: 'no-store' });
       if (!resp || !resp.ok) {
@@ -295,17 +305,6 @@ export class PlaylistDataSource {
       if (embeddedDefaultLib && typeof embeddedDefaultLib === 'object') {
         this.setLocalPlaylistLibrary(embeddedDefaultLib);
         return embeddedDefaultLib;
-      }
-    } catch {
-      // ignore
-    }
-
-    // Backward compatibility: older file builds may embed the legacy monolithic map.
-    try {
-      const embeddedLegacy = /** @type {any} */ (globalThis).__POLARIS_LOCAL_PLAYLIST_LIBRARY__;
-      if (embeddedLegacy && typeof embeddedLegacy === 'object') {
-        this.setLocalPlaylistLibrary(embeddedLegacy);
-        return embeddedLegacy;
       }
     } catch {
       // ignore

@@ -240,6 +240,25 @@
     // Local player availability (optional). If missing/false, keep the option disabled.
     let hasLocalMedia = false;
     async function refreshLocalPlayerAvailability() {
+      const isFileScheme = (window && window.location && window.location.protocol === 'file:');
+
+      // file:// builds embed this at build time because fetch() is blocked.
+      try {
+        const embedded = /** @type {any} */ (globalThis).__POLARIS_LOCAL_PLAYER_CONFIG__;
+        if (embedded && typeof embedded === 'object') {
+          hasLocalMedia = !!(embedded.hasLocalMedia === true);
+          return hasLocalMedia;
+        }
+      } catch {
+        // ignore
+      }
+
+      // Under file://, never try to fetch local JSON (blocked by browser CORS).
+      if (isFileScheme) {
+        hasLocalMedia = false;
+        return hasLocalMedia;
+      }
+
       try {
         const url = new URL('./video/local-player.json', window.location.href).toString();
         const resp = await fetch(url, { cache: 'no-store' });

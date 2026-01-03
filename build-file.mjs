@@ -44,7 +44,15 @@ function buildDistIndexHtml(sourceHtml) {
 
   // Point to bundled assets.
   html = html.replace(/<link rel="stylesheet"[^>]*href="style\.css[^"]*"\s*>/i, '<link rel="stylesheet" href="./assets/style.css">');
-  html = html.replace(/<script type="module"[^>]*src="\.\/js\/bootstrap\.mjs[^"]*"\s*><\/script>/i, '<script src="./assets/app.js"></script>');
+
+  // For file:// builds, load local-player config via a plain script tag (fetch() is blocked).
+  // This script sets globalThis.__POLARIS_LOCAL_PLAYER_CONFIG__.
+  const appScriptTag = '<script src="./assets/app.js"></script>';
+  const localPlayerScriptTag = '<script src="./video/local-player.js"></script>';
+  html = html.replace(
+    /<script type="module"[^>]*src="\.\/js\/bootstrap\.mjs[^"]*"\s*><\/script>/i,
+    `${localPlayerScriptTag}\n  ${appScriptTag}`
+  );
 
   return html;
 }
@@ -97,6 +105,47 @@ async function generateDefaultPlaylistLibrary() {
   await fs.writeFile(outPath, JSON.stringify(out, null, 2) + '\n', 'utf8');
 }
 
+async function generateLocalPlayerEmbeddedConfig() {
+  // file:// builds cannot fetch local JSON due to browser CORS restrictions.
+  // Create a stable generated file that bootstrap-file.mjs can always import.
+  const inPath = path.join(publicDir, 'video', 'local-player.json');
+  const outPath = path.join(publicDir, 'video', 'local-player-embedded.json');
+
+  let hasLocalMedia = false;
+  try {
+    if (await pathExists(inPath)) {
+      const raw = await fs.readFile(inPath, 'utf8');
+      const data = JSON.parse(raw);
+      hasLocalMedia = !!(data && typeof data === 'object' && data.hasLocalMedia === true);
+    }
+  } catch {
+    hasLocalMedia = false;
+  }
+
+  await fs.writeFile(outPath, JSON.stringify({ hasLocalMedia }, null, 2) + '\n', 'utf8');
+}
+
+async function generateLocalPlayerJsConfig() {
+  // file:// builds cannot fetch local JSON due to browser CORS restrictions.
+  // Generate a tiny JS file that sets a global config object.
+  const inPath = path.join(publicDir, 'video', 'local-player.json');
+  const outPath = path.join(publicDir, 'video', 'local-player.js');
+
+  let hasLocalMedia = false;
+  try {
+    if (await pathExists(inPath)) {
+      const raw = await fs.readFile(inPath, 'utf8');
+      const data = JSON.parse(raw);
+      hasLocalMedia = !!(data && typeof data === 'object' && data.hasLocalMedia === true);
+    }
+  } catch {
+    hasLocalMedia = false;
+  }
+
+  const js = `globalThis.__POLARIS_LOCAL_PLAYER_CONFIG__ = ${JSON.stringify({ hasLocalMedia })};\n`;
+  await fs.writeFile(outPath, js, 'utf8');
+}
+
 async function main() {
   // In Node, esbuild-wasm starts a long-lived service automatically.
   // initialize() is optional; calling it with no options is safe.
@@ -104,6 +153,8 @@ async function main() {
 
   // Ensure the file:// bundle can embed default playlists.
   await generateDefaultPlaylistLibrary();
+  await generateLocalPlayerEmbeddedConfig();
+  await generateLocalPlayerJsConfig();
 
   // IMPORTANT: preserve dist/video (large local media) across builds.
   await ensureDir(distDir);
@@ -151,6 +202,18 @@ async function main() {
   if (!(await pathExists(distVideoDir))) {
     await copyIfExists(path.join(publicDir, 'video'), distVideoDir);
   }
+
+  // Even when dist/video is preserved (large local media), keep local-player config fresh.
+  try {
+    await ensureDir(distVideoDir);
+    const srcLocalPlayerJs = path.join(publicDir, 'video', 'local-player.js');
+    if (await pathExists(srcLocalPlayerJs)) {
+      await fs.copyFile(srcLocalPlayerJs, path.join(distVideoDir, 'local-player.js'));
+    }
+  } catch {
+    // ignore copy errors
+  }
+
   await copyIfExists(path.join(publicDir, 'api'), path.join(distDir, 'api'));
 
   // Favicons / misc static files referenced by index.html.
