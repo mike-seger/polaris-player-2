@@ -322,6 +322,7 @@ export class ArtistFilterOverlay {
 
     const sortSelect = document.createElement('select');
     sortSelect.className = 'track-details-select';
+    sortSelect.name = 'artistSortMode';
     sortSelect.setAttribute('aria-label', 'Sort artists');
     const sortOptions = [
       { value: 'az', label: 'a-z' },
@@ -354,6 +355,7 @@ export class ArtistFilterOverlay {
 
       const input = document.createElement('input');
       input.type = 'checkbox';
+      input.name = 'artistFilter';
       input.checked = selectedKeys.has(key);
       input.value = artist;
 

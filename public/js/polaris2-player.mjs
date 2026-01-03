@@ -2,6 +2,7 @@
   import { YouTubeAdapter } from './players/adapters/YouTubeAdapter.mjs';
   import { HtmlVideoAdapter } from './players/adapters/HtmlVideoAdapter.mjs';
   import { SpotifyAdapter } from './players/adapters/SpotifyAdapter.mjs';
+  import { LazySpotifyAdapter } from './players/adapters/LazySpotifyAdapter.mjs';
   import { SpotifyAuth } from './players/SpotifyAuth.mjs';
   import { SettingsStore } from './SettingsStore.mjs';
   import { PlaylistLibraryStore } from './PlaylistLibraryStore.mjs';
@@ -2071,14 +2072,12 @@
       if (playerHost) return;
       playerReady = false;
 
-      const spotifySdkName = buildSpotifySdkName();
-      console.log('[Spotify] SDK player name:', spotifySdkName, {
-        hostname: window.location.hostname,
-        hostnameSuppressed: ['localhost', '127.0.0.1', '::1', ''].includes(String(window.location.hostname || '').trim()),
-        os: _detectOsTag(),
-        browser: _detectBrowserTag(),
+      // Lazily construct SpotifyAdapter only when Spotify is actually used.
+      // This avoids noisy startup logging and unnecessary initialization work.
+      spotifyAdapter = new LazySpotifyAdapter(() => {
+        const spotifySdkName = buildSpotifySdkName();
+        return new SpotifyAdapter({ auth: spotifyAuth, name: spotifySdkName });
       });
-      spotifyAdapter = new SpotifyAdapter({ auth: spotifyAuth, name: spotifySdkName });
 
       // When Spotify artwork becomes available (learned from SDK state), update the current row thumbnail ASAP.
       // We also invalidate the playlist->thumb cache so the next render uses the newly cached art.

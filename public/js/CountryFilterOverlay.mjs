@@ -282,6 +282,7 @@ export class CountryFilterOverlay {
 
     const sortSelect = document.createElement('select');
     sortSelect.className = 'track-details-select';
+    sortSelect.name = 'countrySortMode';
     sortSelect.setAttribute('aria-label', 'Sort countries');
     const sortOptions = [
       { value: 'az', label: 'a-z' },
@@ -311,6 +312,7 @@ export class CountryFilterOverlay {
 
       const input = document.createElement('input');
       input.type = 'checkbox';
+      input.name = 'countryFilter';
       input.checked = selected.has(code);
       input.value = code;
 

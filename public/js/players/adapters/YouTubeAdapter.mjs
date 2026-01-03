@@ -109,7 +109,6 @@ export class YouTubeAdapter {
 
   mount(container) {
     this._yt.mount(container);
-    this._yt.init();
   }
 
   unmount() { this._yt.unmount?.(); }
