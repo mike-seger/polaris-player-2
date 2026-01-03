@@ -67,6 +67,7 @@ html:not(.icons-ready) .icon {
     --color-text: #f5f7fa;
     --color-text-muted: #a8b3c7;
     --color-hover: #1f2531;
+    --color-hover-button-bg: rgba(94, 105, 140, 0.137);
     --color-active: #28344d;
     --color-accent: #cc0000;
     --playlist-manager-button-size: 34px;
@@ -528,7 +529,7 @@ input[type="checkbox"] {
 }
 
 .filter-wrapper {
-    margin-top: 8px;
+    margin-top: 7px;
     position: relative;
     flex: 1;
 }
@@ -551,7 +552,7 @@ input[type="checkbox"] {
 
 #combinedFilterBtn:hover,
 #combinedFilterBtn:focus {
-    background: transparent;
+    background-color: var(--color-hover-button-bg);
 }
 
 #combinedFilterBtn:disabled {
@@ -1323,21 +1324,13 @@ body.hide-track-check .track-state-btn {
 }
 
 #trackControls-buttons button:hover {
-    color: var(--color-accent);
-}
-
-#thumbToggleBtn:hover span {
-    color: var(--color-accent);
+    background-color: var(--color-hover-button-bg);
 }
 
 /* Touch devices: avoid sticky :hover leaving buttons "selected" after tap. */
 @media (hover: none) {
     #trackControls-buttons button:hover {
-        color: var(--color-text);
-    }
-
-    #thumbToggleBtn:hover span {
-        color: inherit;
+        background-color: transparent;
     }
 }
 
