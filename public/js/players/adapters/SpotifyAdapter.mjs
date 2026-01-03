@@ -177,7 +177,7 @@ export class SpotifyAdapter {
     this._root.style.alignSelf = 'stretch';
     this._root.style.boxSizing = 'border-box';
 
-    this._placeholderArtworkUrl = './img/spotify-icon.png';
+    this._placeholderArtworkUrl = './img/music-icon.png';
 
     this._artImg = document.createElement('img');
     this._artImg.alt = '';

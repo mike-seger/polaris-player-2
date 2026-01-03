@@ -97,7 +97,7 @@ export class TrackListView {
     img.style.borderRadius = '6px';
     img.style.background = 'var(--color-hover)';
 
-    const isSpotifyPlaceholder = u.includes('/img/spotify-icon.png') || u.endsWith('spotify-icon.png');
+    const isSpotifyPlaceholder = u.includes('/img/music-icon.png') || u.endsWith('music-icon.png');
     if (isSpotifyPlaceholder) {
       img.style.objectFit = 'contain';
       img.classList.add('spotify-placeholder-thumb');

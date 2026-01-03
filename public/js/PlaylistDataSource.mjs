@@ -3,6 +3,8 @@ export class PlaylistDataSource {
     const {
       statusEndpoint,
       playlistEndpoint,
+
+      getHasLocalMedia,
       defaultPlaylistIndexPath,
       syncDefaultPlaylists,
 
@@ -73,6 +75,8 @@ export class PlaylistDataSource {
 
     this.statusEndpoint = statusEndpoint;
     this.playlistEndpoint = playlistEndpoint;
+
+    this.getHasLocalMedia = typeof getHasLocalMedia === 'function' ? getHasLocalMedia : () => false;
 
     this.defaultPlaylistIndexPath = defaultPlaylistIndexPath || './video/default-playlists.json';
     this.syncDefaultPlaylists = typeof syncDefaultPlaylists === 'function' ? syncDefaultPlaylists : async (_defaults) => {};
@@ -177,6 +181,10 @@ export class PlaylistDataSource {
         if (typeof this.saveSettings === 'function') {
           this.saveSettings({ playerMode: next });
         }
+      },
+
+      getHasLocalMedia: () => {
+        try { return !!this.getHasLocalMedia(); } catch { return false; }
       },
       getSpotifyClientId: () => {
         const settings = this.getSettings();

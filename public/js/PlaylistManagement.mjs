@@ -13,6 +13,7 @@
       resetUserSettings = () => {},
       getPlayerMode = () => 'youtube',
       setPlayerMode = () => {},
+      getHasLocalMedia = () => false,
       getSpotifyClientId = () => '',
       setSpotifyClientId = () => {},
       listSpotifyDevices = async () => [],
@@ -895,6 +896,12 @@
       const optSpotify = document.createElement('option');
       optSpotify.value = 'spotify';
       optSpotify.textContent = 'Spotify player (Premium)';
+
+      const localEnabled = (() => {
+        try { return !!getHasLocalMedia(); } catch { return false; }
+      })();
+      optLocal.disabled = !localEnabled;
+
       playerSelect.appendChild(optYoutube);
       playerSelect.appendChild(optLocal);
       playerSelect.appendChild(optSpotify);
@@ -906,6 +913,11 @@
 
       playerSelect.addEventListener('change', () => {
         const next = (playerSelect.value === 'local' || playerSelect.value === 'spotify') ? playerSelect.value : 'youtube';
+        if (next === 'local' && optLocal.disabled) {
+          playerSelect.value = 'youtube';
+          try { setPlayerMode('youtube'); } catch { /* ignore */ }
+          return;
+        }
         try { setPlayerMode(next); } catch { /* ignore */ }
         try {
           const section = state.sections.get('videoPlayer');
@@ -1139,6 +1151,13 @@
 
       renderSpotifyVolume();
 
+      const spotifyVolumeWarning = document.createElement('p');
+      spotifyVolumeWarning.textContent = 'Attention increasing the volume may directly set the amplifier volume and may blast your speakers if set to 100%.';
+      spotifyVolumeWarning.style.margin = '0';
+      spotifyVolumeWarning.style.fontSize = '0.75rem';
+      spotifyVolumeWarning.style.color = '#6c7488';
+      spotifyVolumeWarning.style.lineHeight = '1.4';
+
       const spotifyDeviceStatus = document.createElement('p');
       spotifyDeviceStatus.textContent = '';
       spotifyDeviceStatus.style.margin = '0';
@@ -1261,6 +1280,7 @@
       spotifyVolumeControls.appendChild(spotifyVolumeRange);
       spotifyVolumeControls.appendChild(spotifyVolumeValue);
       spotifyVolumeRow.appendChild(spotifyVolumeControls);
+      spotifyVolumeRow.appendChild(spotifyVolumeWarning);
       spotifyDeviceRow.appendChild(spotifyVolumeRow);
       spotifyDeviceRow.appendChild(spotifyDeviceStatus);
 

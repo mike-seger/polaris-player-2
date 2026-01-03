@@ -757,7 +757,7 @@ input[type="checkbox"] {
 
 /* Spotify placeholder icon is square; keep it fully contained in the 16:9 slot. */
 #trackList img.spotify-placeholder-thumb,
-#trackList img[src*="spotify-icon.png"] {
+#trackList img[src*="music-icon.png"] {
     object-fit: contain;
 }
 

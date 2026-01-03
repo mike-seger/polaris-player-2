@@ -236,6 +236,28 @@
       saveSettings: (patch) => saveSettings(patch)
     });
     let playlistLibrary = playlistLibraryStore.get();
+
+    // Local player availability (optional). If missing/false, keep the option disabled.
+    let hasLocalMedia = false;
+    async function refreshLocalPlayerAvailability() {
+      try {
+        const url = new URL('./video/local-player.json', window.location.href).toString();
+        const resp = await fetch(url, { cache: 'no-store' });
+        if (!resp || !resp.ok) {
+          hasLocalMedia = false;
+          return hasLocalMedia;
+        }
+        const data = await resp.json().catch(() => null);
+        hasLocalMedia = !!(data && typeof data === 'object' && data.hasLocalMedia === true);
+        return hasLocalMedia;
+      } catch {
+        hasLocalMedia = false;
+        return hasLocalMedia;
+      }
+    }
+    // Resolve availability before initializing the Playlist overlay so the Local option
+    // can be enabled/disabled correctly on first render.
+    const localPlayerAvailabilityPromise = refreshLocalPlayerAvailability();
     const TRACK_STATE_DEFAULT = 'default';
     const TRACK_STATE_CHECKED = 'checked';
     const urlParams = new URLSearchParams(window.location.search);
@@ -569,9 +591,26 @@
     const spectrumCanvas = document.getElementById('spectrumCanvas');
     const alert = createAlert({ overlayEl: alertOverlay, messageEl: alertMessageEl, closeBtn: alertCloseBtn });
 
+    function getSpotifyOutputVolume01() {
+      try {
+        const raw = (settings && typeof settings.spotifyVolume01 === 'number')
+          ? settings.spotifyVolume01
+          : (settings && typeof settings.volume01 === 'number')
+            ? settings.volume01
+            : NaN;
+        const v = Number(raw);
+        if (!Number.isFinite(v)) return 0.3;
+        return Math.max(0, Math.min(1, v));
+      } catch {
+        return 0.3;
+      }
+    }
+
     function getConfiguredVolume01() {
       // Always maximize element volume.
       // Note: this does NOT change Android system/media stream volume; it only sets the HTMLMediaElement gain (0..1).
+      const mode = getPlayerMode();
+      if (mode === 'spotify') return getSpotifyOutputVolume01();
       return 1;
     }
 
@@ -2799,6 +2838,8 @@
       statusEndpoint: STATUS_ENDPOINT,
       playlistEndpoint: PLAYLIST_ENDPOINT,
 
+      getHasLocalMedia: () => hasLocalMedia,
+
       syncDefaultPlaylists: async (defaults) => {
         playlistLibrary = playlistLibraryStore.syncDefaults(defaults);
         return playlistLibrary;
@@ -2910,11 +2951,13 @@
       },
 
       getOutputVolume01: () => {
-        return 1;
+        return getSpotifyOutputVolume01();
       },
       setOutputVolume01: (v01) => {
-        void v01;
-        saveSettings({ volume01: 1 });
+        const v = Number(v01);
+        const next = Number.isFinite(v) ? Math.max(0, Math.min(1, v)) : 0.3;
+        // Persist for Spotify output volume (and keep a legacy alias).
+        saveSettings({ spotifyVolume01: next, volume01: next });
         try { applyConfiguredVolumeToHost(); } catch { /* ignore */ }
       },
     });
@@ -3022,9 +3065,11 @@
       return playlistDataSource.loadPlaylistFromLocal(playlistIdOverride);
     }
 
-    const dataSourceReadyPromise = playlistDataSource.initialize({
-      startupPlaylistId: initialPlaylistId || settings.playlistId || ''
-    });
+    const dataSourceReadyPromise = Promise.resolve(localPlayerAvailabilityPromise)
+      .catch(() => false)
+      .then(() => playlistDataSource.initialize({
+        startupPlaylistId: initialPlaylistId || settings.playlistId || ''
+      }));
 
     if (shouldResetSettingsFromQuery) {
       resetStoredSettings();
