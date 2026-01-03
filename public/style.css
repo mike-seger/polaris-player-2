@@ -269,6 +269,15 @@ body.sidebar-hidden #sidebarDrawer {
     margin-bottom: 0.4rem;
 }
 
+/* Visually unify the three sidebar sections into one continuous panel.
+   Keep rounding only at the top and bottom, and use the same border line
+   as the outer border for separators. */
+#topControlsPanel {
+    border-radius: 8px 8px 0 0;
+    margin-bottom: 0;
+    border-bottom: none;
+}
+
 .pc-body {
     display: flex;
     flex-direction: column;
@@ -660,6 +669,11 @@ input[type="checkbox"] {
     z-index: 1;
 }
 
+#trackListContainer {
+    border-radius: 0 0 8px 8px;
+    border-top: 1px solid var(--color-border-strong);
+}
+
 #trackListContainer:focus {
     outline: none;
     box-shadow: none;
@@ -974,6 +988,13 @@ body.show-track-country:not(.no-wrap-lines) .track-country-flags {
     border-radius: 8px;
     position: relative;
     z-index: 150;
+}
+
+#trackControls {
+    border-radius: 0;
+    margin-bottom: 0;
+    border-top: none;
+    border-bottom: none;
 }
 
 
@@ -2017,8 +2038,12 @@ body.hide-track-check .track-state-btn {
     #topControlsPanel,
     #trackControls {
         border: none;
-        border-bottom: 1px solid var(--color-border);
         margin-bottom: 0;
+    }
+
+    /* Top two sections are a single visual panel; only separate before the list. */
+    #trackControls {
+        border-bottom: 1px solid var(--color-border-strong);
     }
 
     #trackListContainer {
