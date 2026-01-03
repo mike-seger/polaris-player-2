@@ -12,7 +12,7 @@ test('TrackDetailSettingsStore persists noAudio boolean', () => {
     wrapLines: true,
     country: true,
     checkTrack: false,
-    showFiltered: false,
+    showExcluded: false,
     sortAZ: false,
   };
 

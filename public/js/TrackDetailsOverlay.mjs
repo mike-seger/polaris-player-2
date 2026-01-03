@@ -164,7 +164,7 @@ export class TrackDetailsOverlay {
         const next = { ...current, [key]: checkbox.checked };
         this.setPreferences(next);
 
-        const shouldRerenderList = key === 'thumbnail' || key === 'showFiltered';
+        const shouldRerenderList = key === 'thumbnail' || key === 'showExcluded';
         this.applyPreferences({ refreshThumbnails: shouldRerenderList, preserveScroll: true });
 
         this.persistPreferences(next);

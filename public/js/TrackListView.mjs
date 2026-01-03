@@ -378,24 +378,24 @@ export class TrackListView {
     const currentIndex = this.getCurrentIndex();
     const activePlaylistId = this.getActivePlaylistId();
     const trackDetailSettings = this.getTrackDetailSettings();
-    const showFiltered = !!(hasFilter && trackDetailSettings && trackDetailSettings.showFiltered);
+    const showExcluded = !!(hasFilter && trackDetailSettings && trackDetailSettings.showExcluded);
 
-    let displayIndices = showFiltered ? allIndices.slice() : playableIndices.slice();
-    if (showFiltered && this.getSortAlphabetically()) {
+    let displayIndices = showExcluded ? allIndices.slice() : playableIndices.slice();
+    if (showExcluded && this.getSortAlphabetically()) {
       displayIndices = this.getSortedIndices(displayIndices);
     }
 
     // Navigation/shuffle should only consider playable (filtered-in) tracks.
     this.onVisibleIndicesComputed(playableIndices.slice());
 
-    const playableSet = showFiltered ? new Set(playableIndices) : null;
+    const playableSet = showExcluded ? new Set(playableIndices) : null;
 
     displayIndices.forEach((realIdx, displayIdx) => {
       const item = playlistItems[realIdx];
       const li = document.createElement('li');
       if (realIdx === currentIndex) li.classList.add('active');
 
-      const isFilteredOut = !!(showFiltered && playableSet && !playableSet.has(realIdx));
+      const isFilteredOut = !!(showExcluded && playableSet && !playableSet.has(realIdx));
       if (isFilteredOut) {
         li.classList.add('is-filtered-out');
         li.setAttribute('aria-disabled', 'true');
