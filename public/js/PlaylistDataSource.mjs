@@ -435,6 +435,10 @@ export class PlaylistDataSource {
       ? entry.title.trim()
       : targetId;
 
+    const localMediaBaseUri = (entry && typeof entry.localMediaBaseUri === 'string')
+      ? String(entry.localMediaBaseUri || '').trim()
+      : '';
+
     this.setPlaylistItems(entry && Array.isArray(entry.items) ? entry.items.slice() : []);
     this.bumpPlaylistVersion();
     this.shuffleQueue.resetAll();
@@ -443,7 +447,7 @@ export class PlaylistDataSource {
     this.refreshFilterOverlays();
     // Persist the local playlist URI so local media URLs can resolve relative to it.
     // This is important when switching modes or when playlist library entries are stale.
-    this.saveSettings({ playlistId: targetId, localPlaylistUri: uri });
+    this.saveSettings({ playlistId: targetId, localPlaylistUri: uri, localMediaBaseUri });
 
     const savedMap = this.getCurrentVideoMap();
     const storedVideoId = savedMap[targetId];
@@ -541,7 +545,10 @@ export class PlaylistDataSource {
       (typeof data.playlistTitle === 'string' && data.playlistTitle.trim().length ? data.playlistTitle.trim() : '') ||
       resolvedPlaylistId;
 
-    this.saveSettings({ playlistId: resolvedPlaylistId });
+    const localMediaBaseUri = (data && typeof data.localMediaBaseUri === 'string')
+      ? String(data.localMediaBaseUri || '').trim()
+      : '';
+    this.saveSettings({ playlistId: resolvedPlaylistId, localMediaBaseUri });
 
     const savedMap = this.getCurrentVideoMap();
     const storedVideoId = savedMap[resolvedPlaylistId];

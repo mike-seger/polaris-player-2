@@ -366,6 +366,14 @@
     function buildLocalVideoUrlForItem(item) {
       const activePlaylistId = (settings && typeof settings.playlistId === 'string') ? settings.playlistId.trim() : '';
 
+      const localMediaBaseUri = (settings && typeof settings.localMediaBaseUri === 'string')
+        ? settings.localMediaBaseUri.trim()
+        : '';
+
+      const dbgPlayerCmds = (() => {
+        try { return typeof window !== 'undefined' && !!window.__POLARIS_DEBUG_PLAYER_COMMANDS__; } catch { return false; }
+      })();
+
       const preferredLocalPlaylistUri = (settings && typeof settings.localPlaylistUri === 'string' && settings.localPlaylistUri.trim().length)
         ? settings.localPlaylistUri.trim()
         : '';
@@ -391,13 +399,52 @@
       const chosenId = videoId || spotifyId || fallbackId || 'unmatched';
       const base = 'vid_' + chosenId;
       try {
-        const baseUrl = (() => {
+        const playlistDirUrl = (() => {
           const effectivePlaylistUri = preferredLocalPlaylistUri || playlistUri;
           if (!effectivePlaylistUri) return new URL('./video/', window.location.href);
           const playlistUrl = new URL(effectivePlaylistUri, window.location.href);
           return new URL('./', playlistUrl);
         })();
-        return new URL(`${encodeURIComponent(base)}.mp4`, baseUrl).toString();
+
+        const mediaDirUrl = (() => {
+          const raw = String(localMediaBaseUri || '').trim();
+          if (!raw || raw === '.' || raw === './') return playlistDirUrl;
+
+          // Absolute path (from origin) when it starts with '/'.
+          if (raw.startsWith('/')) {
+            const asDir = raw.endsWith('/') ? raw : `${raw}/`;
+            return new URL(asDir, window.location.href);
+          }
+
+          // Otherwise relative to the playlist directory.
+          const asDir = raw.endsWith('/') ? raw : `${raw}/`;
+          return new URL(asDir, playlistDirUrl);
+        })();
+
+        const outUrl = new URL(`${encodeURIComponent(base)}.mp4`, mediaDirUrl).toString();
+
+        // Debug: log resolved base once per playlist/base combination.
+        try {
+          if (dbgPlayerCmds) {
+            const eff = (preferredLocalPlaylistUri || playlistUri || '').trim();
+            const key = `${activePlaylistId}|${eff}|${localMediaBaseUri}`;
+            if (window.__POLARIS_LOCAL_MEDIA_DEBUG_KEY__ !== key) {
+              window.__POLARIS_LOCAL_MEDIA_DEBUG_KEY__ = key;
+              console.debug('[polaris] local media base resolved', {
+                playlistId: activePlaylistId,
+                localPlaylistUri: eff,
+                localMediaBaseUri,
+                playlistDir: playlistDirUrl.toString(),
+                mediaDir: mediaDirUrl.toString(),
+                sampleVideoId: videoId,
+                sampleUrl: outUrl,
+                sampleThumbBase: new URL('./thumbnail/', mediaDirUrl).toString(),
+              });
+            }
+          }
+        } catch { /* ignore */ }
+
+        return outUrl;
       } catch {
         return `./video/${encodeURIComponent(base)}.mp4`;
       }
