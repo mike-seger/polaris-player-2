@@ -2035,7 +2035,8 @@
       const startMs = parseTimecodeToMs(item?.start) ?? 0;
       const endRaw = parseTimecodeToMs(item?.end);
       const endMs = (typeof endRaw === 'number' && endRaw > startMs) ? endRaw : undefined;
-      const isClip = startMs > 0 || typeof endMs === 'number';
+      const hasExplicitStart = item && item.start != null && String(item.start).trim() !== '';
+      const isClip = hasExplicitStart || typeof endMs === 'number';
       return { startMs, endMs, isClip };
     }
 
