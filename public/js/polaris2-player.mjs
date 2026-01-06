@@ -222,12 +222,72 @@
 
     let playlistVersion = 0;
     const shuffleQueue = new ShuffleQueue({
-      enabled: typeof settings.shuffleEnabled === 'boolean' ? settings.shuffleEnabled : true,
+      enabled: typeof settings.shuffleEnabled === 'boolean' ? settings.shuffleEnabled : false,
       getQueueIndices: () => (Array.isArray(visibleIndices) && visibleIndices.length)
         ? visibleIndices
         : playlistItems.map((_, idx) => idx),
       getQueueVersion: () => visibleIndicesVersion,
-      getCurrentIndex: () => currentIndex
+      getCurrentIndex: () => currentIndex,
+      // Keep chapter sequences (single backing video split into clips) in-order when shuffling.
+      // We only group *consecutive* clip items that share the same videoId.
+      getShuffleBlocks: (queueIndices, currentIdx) => {
+        const indices = Array.isArray(queueIndices) ? queueIndices.slice() : [];
+        if (!indices.length) return { immediate: [], blocks: [] };
+
+        const getClipGroupKey = (idx) => {
+          const it = (idx >= 0 && idx < playlistItems.length) ? playlistItems[idx] : null;
+          const vid = it && it.videoId ? String(it.videoId).trim() : '';
+          if (!vid) return `idx:${idx}`;
+          const clip = getClipWindowMsForItem(it);
+          if (!clip.isClip) return `idx:${idx}`;
+          return `clip:${vid}`;
+        };
+
+        /** @type {number[][]} */
+        const blocks = [];
+        let currentBlock = [];
+        let currentKey = '';
+        for (const idx of indices) {
+          const k = getClipGroupKey(idx);
+          if (!currentBlock.length) {
+            currentBlock = [idx];
+            currentKey = k;
+            continue;
+          }
+          if (k === currentKey && k.startsWith('clip:')) {
+            currentBlock.push(idx);
+          } else {
+            blocks.push(currentBlock);
+            currentBlock = [idx];
+            currentKey = k;
+          }
+        }
+        if (currentBlock.length) blocks.push(currentBlock);
+
+        // Extract the "after current" part of the active clip-block so shuffle next() stays gapless.
+        const immediate = [];
+        /** @type {number[][]} */
+        const remainingBlocks = [];
+        for (const b of blocks) {
+          const pos = b.indexOf(currentIdx);
+          if (pos === -1) {
+            remainingBlocks.push(b);
+            continue;
+          }
+
+          const before = b.slice(0, pos);
+          const after = b.slice(pos + 1);
+          if (after.length) immediate.push(...after);
+          if (before.length) remainingBlocks.push(before);
+        }
+
+        // Also remove the current index from any remaining blocks (defensive).
+        for (let i = 0; i < remainingBlocks.length; i += 1) {
+          remainingBlocks[i] = remainingBlocks[i].filter((x) => x !== currentIdx);
+        }
+
+        return { immediate, blocks: remainingBlocks };
+      }
     });
     const API_BASE_PATH = window.location.hostname.endsWith('polaris.net128.com') ? '/u2b' : '.';
     const STATUS_ENDPOINT = `${API_BASE_PATH}/api/status`;
@@ -1397,7 +1457,7 @@
       playlistLibrary = playlistLibraryStore.get();
       updatePlaylistHistorySelect('');
 
-      shuffleQueue.setEnabled(true);
+      shuffleQueue.setEnabled(false);
       updateShuffleButtonState();
 
       filterText = '';
@@ -2834,9 +2894,27 @@
       let nextIdx = -1;
       let fromHistory = false;
       if (shuffleQueue.isEnabled()) {
-        const choice = shuffleQueue.next();
-        nextIdx = choice.index;
-        fromHistory = choice.fromHistory;
+        // Never randomize within a contiguous same-videoId sequence.
+        // If the natural next item shares the same videoId, keep playback sequential.
+        try {
+          const cur = (currentIndex >= 0 && currentIndex < playlistItems.length) ? playlistItems[currentIndex] : null;
+          const curVid = cur && cur.videoId ? String(cur.videoId).trim() : '';
+          const naturalNext = getRelativeVisibleIndex(1);
+          const nat = (naturalNext >= 0 && naturalNext < playlistItems.length) ? playlistItems[naturalNext] : null;
+          const natVid = nat && nat.videoId ? String(nat.videoId).trim() : '';
+          if (curVid && natVid && curVid === natVid) {
+            nextIdx = naturalNext;
+            fromHistory = false;
+          } else {
+            const choice = shuffleQueue.next();
+            nextIdx = choice.index;
+            fromHistory = choice.fromHistory;
+          }
+        } catch {
+          const choice = shuffleQueue.next();
+          nextIdx = choice.index;
+          fromHistory = choice.fromHistory;
+        }
       } else {
         nextIdx = getRelativeVisibleIndex(1);
       }
@@ -3732,6 +3810,82 @@
           if (isPlaying !== playing) {
             isPlaying = playing;
             updatePlayPauseButton();
+          }
+        } catch { /* ignore */ }
+      }
+
+      // Safety net for chapter playlists (gapless mode): if we ever miss the end boundary
+      // (e.g. due to transient YT state glitches) the UI can get "stuck" at the end of a clip
+      // because we clamp clip-relative time. If the absolute playback position has clearly moved
+      // past the current clip's end, sync the *UI index only* forward to the clip that contains
+      // the current position. Do NOT seek/reload (keeps playback gapless).
+      if (!isProgressScrubbing && !holdPlayingUiUntilMs && (getPlayerMode() === 'youtube' || getPlayerMode() === 'local')) {
+        try {
+          // Only do this when no filters are active; otherwise "next" semantics are ambiguous.
+          const hasFilters = !!(String(filterText || '').trim().length)
+            || !!(onlyMarked)
+            || (Array.isArray(artistFilters) && artistFilters.length)
+            || (Array.isArray(countryFilters) && countryFilters.length);
+          if (!hasFilters && currentIndex >= 0 && currentIndex < playlistItems.length) {
+            const info = getPlayerInfo();
+            const posMs = Number(info?.time?.positionMs) || 0;
+            const curItem = playlistItems[currentIndex];
+            const curClip = getClipWindowMsForItem(curItem);
+            const curEndMs = (typeof curClip.endMs === 'number') ? curClip.endMs : undefined;
+
+            if (typeof curEndMs === 'number' && curEndMs > 0 && posMs >= (curEndMs + 800)) {
+              const curVid = curItem && curItem.videoId ? String(curItem.videoId).trim() : '';
+              if (curVid) {
+                let idx = currentIndex;
+                while (idx + 1 < playlistItems.length) {
+                  const nextItem = playlistItems[idx + 1];
+                  const nextVid = nextItem && nextItem.videoId ? String(nextItem.videoId).trim() : '';
+                  if (!nextVid || nextVid !== curVid) break;
+
+                  const clip = getClipWindowMsForItem(nextItem);
+                  const startMs = Math.max(0, Math.floor(Number(clip.startMs) || 0));
+                  const endMs = (typeof clip.endMs === 'number') ? clip.endMs : undefined;
+
+                  // Advance while we've clearly passed the previous clip's end.
+                  idx += 1;
+
+                  // If this clip has an end and we're already past it, keep scanning.
+                  if (typeof endMs === 'number' && endMs > 0 && posMs >= (endMs + 250)) {
+                    continue;
+                  }
+                  // If we're before this clip's start (shouldn't happen in normal forward play), stop.
+                  if (posMs + 250 < startMs) {
+                    break;
+                  }
+                  break;
+                }
+
+                if (idx !== currentIndex) {
+                  const dbg = (typeof window !== 'undefined' && !!window.__POLARIS_DEBUG_PLAYER_COMMANDS__);
+                  if (dbg) {
+                    console.debug('[polaris] clip UI resync (no seek)', {
+                      from: currentIndex,
+                      to: idx,
+                      posMs,
+                      curEndMs,
+                      videoId: curVid,
+                    });
+                  }
+
+                  const previousIdx = currentIndex;
+                  currentIndex = idx;
+
+                  if (!trackListView.hasRow(currentIndex)) {
+                    renderTrackList();
+                  } else {
+                    updateActiveTrackRow(previousIdx, currentIndex);
+                  }
+                  updateNowPlaying();
+                  try { updateMediaSessionMetadata(); } catch { /* ignore */ }
+                  try { updateMediaSessionPositionState(true); } catch { /* ignore */ }
+                }
+              }
+            }
           }
         } catch { /* ignore */ }
       }

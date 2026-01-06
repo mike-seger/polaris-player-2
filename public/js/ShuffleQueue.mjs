@@ -4,11 +4,13 @@ export class ShuffleQueue {
     getQueueIndices,
     getQueueVersion,
     getCurrentIndex,
+    getShuffleBlocks,
   } = {}) {
     this.enabled = !!enabled;
     this.getQueueIndices = typeof getQueueIndices === 'function' ? getQueueIndices : () => [];
     this.getQueueVersion = typeof getQueueVersion === 'function' ? getQueueVersion : () => 0;
     this.getCurrentIndex = typeof getCurrentIndex === 'function' ? getCurrentIndex : () => -1;
+    this.getShuffleBlocks = typeof getShuffleBlocks === 'function' ? getShuffleBlocks : null;
 
     this.bag = [];
     this.bagVersion = -1;
@@ -33,6 +35,49 @@ export class ShuffleQueue {
   resetBag() {
     const queue = this.getQueueIndices();
     const currentIndex = this.getCurrentIndex();
+
+    // Optional: allow callers to keep specific sequences in-order by shuffling blocks.
+    // `getShuffleBlocks(queueIndices, currentIndex)` should return:
+    // { immediate?: number[], blocks?: number[][] }
+    // - immediate: indices to play next (in exact order)
+    // - blocks: arrays of indices that should stay contiguous and in order
+    let planned = null;
+    try {
+      planned = this.getShuffleBlocks ? this.getShuffleBlocks(queue || [], currentIndex) : null;
+    } catch {
+      planned = null;
+    }
+
+    const immediate = Array.isArray(planned?.immediate) ? planned.immediate.slice() : [];
+    const blocks = Array.isArray(planned?.blocks) ? planned.blocks.slice() : null;
+
+    if (blocks && blocks.length) {
+      // Shuffle blocks, then flatten.
+      for (let i = blocks.length - 1; i > 0; i -= 1) {
+        const j = Math.floor(Math.random() * (i + 1));
+        const tmp = blocks[i];
+        blocks[i] = blocks[j];
+        blocks[j] = tmp;
+      }
+
+      const out = [];
+      const pushIdx = (idx) => {
+        if (idx === currentIndex) return;
+        if (typeof idx !== 'number' || idx < 0) return;
+        out.push(idx);
+      };
+
+      immediate.forEach(pushIdx);
+      for (const b of blocks) {
+        if (!Array.isArray(b) || !b.length) continue;
+        for (const idx of b) pushIdx(idx);
+      }
+
+      this.bag = out;
+      this.bagVersion = this.getQueueVersion();
+      return;
+    }
+
     const remaining = (queue || []).filter((idx) => idx !== currentIndex);
 
     // Fisher–Yates shuffle.
@@ -65,7 +110,11 @@ export class ShuffleQueue {
 
   notePlayed(idx) {
     if (!this.enabled) return;
-    if (this.bagVersion !== this.getQueueVersion()) return;
+    if (this.bagVersion !== this.getQueueVersion()) {
+      // Ensure the bag reflects the current queue before we try to remove items.
+      // This matters when callers advance sequentially without calling next().
+      this.resetBag();
+    }
     const pos = this.bag.indexOf(idx);
     if (pos >= 0) {
       this.bag.splice(pos, 1);
