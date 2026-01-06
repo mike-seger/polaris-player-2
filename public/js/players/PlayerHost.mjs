@@ -21,6 +21,24 @@ export class PlayerHost {
     this._activeTrack = null;
   }
 
+  _debugEnabled() {
+    try {
+      return typeof window !== 'undefined' && !!window.__POLARIS_DEBUG_PLAYER_COMMANDS__;
+    } catch {
+      return false;
+    }
+  }
+
+  _debugLog(method, detail = undefined) {
+    if (!this._debugEnabled()) return;
+    try {
+      const adapterName = this.active && this.active.name ? this.active.name : 'none';
+      console.debug(`[PlayerHost] ${method} (active=${adapterName})`, detail);
+    } catch {
+      /* ignore */
+    }
+  }
+
   /**
    * Mount UI container for adapters that render inside the browser (YT iframe, <video>).
    * Adapters that don't render can ignore this.
@@ -118,6 +136,14 @@ export class PlayerHost {
       throw new Error("Invalid track");
     }
 
+    this._debugLog('load', {
+      kind: track?.source?.kind,
+      id: track?.id,
+      startMs: track?.startMs,
+      endMs: track?.endMs,
+      opts,
+    });
+
     const next = this.adapters.find(a => a.supports(track.source.kind));
     if (!next) throw new Error(`No adapter supports source kind: ${track.source.kind}`);
 
@@ -132,30 +158,37 @@ export class PlayerHost {
 
   async play() {
     if (!this.active) return;
+    this._debugLog('play');
     await this.active.play();
   }
   async pause() {
     if (!this.active) return;
+    this._debugLog('pause');
     await this.active.pause();
   }
   async stop() {
     if (!this.active) return;
+    this._debugLog('stop');
     await this.active.stop();
   }
   async seekToMs(ms) {
     if (!this.active) return;
+    this._debugLog('seekToMs', { ms });
     await this.active.seekToMs(ms);
   }
   async setVolume(v01) {
     if (!this.active) return;
+    this._debugLog('setVolume', { v01 });
     await this.active.setVolume(v01);
   }
   async setMuted(m) {
     if (!this.active) return;
+    this._debugLog('setMuted', { m });
     await this.active.setMuted(m);
   }
   async setRate(rate) {
     if (!this.active) return;
+    this._debugLog('setRate', { rate });
     await this.active.setRate(rate);
   }
 
@@ -176,6 +209,7 @@ export class PlayerHost {
 
     // stop old adapter (best effort)
     if (this.active) {
+      this._debugLog('switch:stop-old', { from: this.active?.name, to: next?.name });
       try { await this.active.stop(); } catch { /* ignore */ }
       try {
         if (typeof this.active.deactivate === 'function') {
@@ -191,6 +225,8 @@ export class PlayerHost {
     this.active = next;
 
     if (!this.active) return;
+
+    this._debugLog('switch:active', { active: this.active?.name });
 
     // Ensure only the selected player is visible.
     for (const a of this.adapters) {

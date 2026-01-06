@@ -1830,14 +1830,95 @@
       };
     }
 
-    function getPlayerDurationSeconds() {
+    function getPlayerDurationSecondsAbsolute() {
       const ms = getPlayerInfo().time.durationMs;
       return typeof ms === 'number' && isFinite(ms) && ms > 0 ? ms / 1000 : 0;
     }
 
-    function getPlayerCurrentTimeSeconds() {
+    function getPlayerCurrentTimeSecondsAbsolute() {
       const ms = getPlayerInfo().time.positionMs;
       return typeof ms === 'number' && isFinite(ms) && ms > 0 ? ms / 1000 : 0;
+    }
+
+    function parseTimecodeToMs(value) {
+      if (value == null) return undefined;
+      if (typeof value === 'number' && isFinite(value)) {
+        return Math.max(0, Math.floor(value * 1000));
+      }
+
+      const raw = String(value || '').trim();
+      if (!raw) return undefined;
+
+      // Accept HH:MM:SS, MM:SS, or seconds.
+      if (raw.includes(':')) {
+        const parts = raw.split(':').map((p) => p.trim()).filter(Boolean);
+        if (parts.length < 2 || parts.length > 3) return undefined;
+        const nums = parts.map((p) => Number(p));
+        if (nums.some((n) => !isFinite(n) || n < 0)) return undefined;
+        const [a, b, c] = nums;
+        const seconds = (parts.length === 3)
+          ? (a * 3600 + b * 60 + c)
+          : (a * 60 + b);
+        return Math.max(0, Math.floor(seconds * 1000));
+      }
+
+      const seconds = Number(raw);
+      if (!isFinite(seconds) || seconds < 0) return undefined;
+      return Math.max(0, Math.floor(seconds * 1000));
+    }
+
+    function getClipWindowMsForItem(item) {
+      const startMs = parseTimecodeToMs(item?.start) ?? 0;
+      const endRaw = parseTimecodeToMs(item?.end);
+      const endMs = (typeof endRaw === 'number' && endRaw > startMs) ? endRaw : undefined;
+      const isClip = startMs > 0 || typeof endMs === 'number';
+      return { startMs, endMs, isClip };
+    }
+
+    function getClipWindowMsForIndex(idx) {
+      const item = (idx >= 0 && idx < playlistItems.length) ? playlistItems[idx] : null;
+      return getClipWindowMsForItem(item);
+    }
+
+    function getPlayerDurationSeconds() {
+      const info = getPlayerInfo();
+      const absDurMs = Number(info?.time?.durationMs);
+      const durMs = (isFinite(absDurMs) && absDurMs > 0) ? absDurMs : 0;
+
+      const clip = getClipWindowMsForIndex(currentIndex);
+      if (!clip.isClip) return durMs > 0 ? durMs / 1000 : 0;
+
+      const startMs = Math.max(0, Math.floor(Number(clip.startMs) || 0));
+      const endMs = (typeof clip.endMs === 'number')
+        ? clip.endMs
+        : (durMs > 0 ? durMs : undefined);
+      if (!(typeof endMs === 'number' && endMs > startMs)) return 0;
+      return (endMs - startMs) / 1000;
+    }
+
+    function getPlayerCurrentTimeSeconds() {
+      const info = getPlayerInfo();
+      const absPosMs = Number(info?.time?.positionMs);
+      const posMs = (isFinite(absPosMs) && absPosMs > 0) ? absPosMs : 0;
+      const absDurMs = Number(info?.time?.durationMs);
+      const durMs = (isFinite(absDurMs) && absDurMs > 0) ? absDurMs : 0;
+
+      const clip = getClipWindowMsForIndex(currentIndex);
+      if (!clip.isClip) return posMs > 0 ? posMs / 1000 : 0;
+
+      const startMs = Math.max(0, Math.floor(Number(clip.startMs) || 0));
+      const endMs = (typeof clip.endMs === 'number')
+        ? clip.endMs
+        : (durMs > 0 ? durMs : undefined);
+
+      let relMs = posMs - startMs;
+      if (!isFinite(relMs)) relMs = 0;
+      relMs = Math.max(0, relMs);
+      if (typeof endMs === 'number' && endMs > startMs) {
+        const clipDurMs = endMs - startMs;
+        relMs = Math.min(clipDurMs, relMs);
+      }
+      return relMs / 1000;
     }
 
     function getActiveTrackId() {
@@ -1892,7 +1973,31 @@
       if (!playerHost) return;
       const s = Number(seconds);
       if (!isFinite(s)) return;
-      void playerHost.seekToMs(Math.max(0, Math.floor(s * 1000)));
+
+      const clip = getClipWindowMsForIndex(currentIndex);
+      if (!clip.isClip) {
+        void playerHost.seekToMs(Math.max(0, Math.floor(s * 1000)));
+        return;
+      }
+
+      const info = getPlayerInfo();
+      const absDurMs = Number(info?.time?.durationMs);
+      const durMs = (isFinite(absDurMs) && absDurMs > 0) ? absDurMs : 0;
+
+      const startMs = Math.max(0, Math.floor(Number(clip.startMs) || 0));
+      const endMs = (typeof clip.endMs === 'number')
+        ? clip.endMs
+        : (durMs > 0 ? durMs : undefined);
+
+      const relMs = Math.max(0, Math.floor(s * 1000));
+      let targetMs = startMs + relMs;
+      if (typeof endMs === 'number' && endMs > startMs) {
+        const maxTarget = Math.max(startMs, endMs - 1);
+        targetMs = Math.min(maxTarget, Math.max(startMs, targetMs));
+      } else {
+        targetMs = Math.max(startMs, targetMs);
+      }
+      void playerHost.seekToMs(targetMs);
     }
 
     function supportsMediaSession() {
@@ -1905,6 +2010,25 @@
         return false;
       }
     }
+
+    // Optional debugging: log commands sent to adapters via PlayerHost.
+    // Enable via `?debugPlayerCommands=1` or localStorage `debugPlayerCommands=1`.
+    (function initPlayerCommandDebugFlag() {
+      try {
+        const params = new URLSearchParams(String(window?.location?.search || ''));
+        const q = (params.get('debugPlayerCommands') || '').trim();
+        const ls = (typeof localStorage !== 'undefined')
+          ? String(localStorage.getItem('debugPlayerCommands') || '').trim()
+          : '';
+        const enabled = (q === '1' || q.toLowerCase() === 'true') || (ls === '1' || ls.toLowerCase() === 'true');
+        window.__POLARIS_DEBUG_PLAYER_COMMANDS__ = !!enabled;
+        if (enabled) {
+          console.info('[polaris] debugPlayerCommands enabled');
+        }
+      } catch {
+        /* ignore */
+      }
+    })();
 
     function buildAbsoluteUrl(url) {
       const u = String(url || '').trim();
@@ -1970,15 +2094,37 @@
       lastMediaPositionUpdateAt = now;
 
       const info = getPlayerInfo();
-      const pos = Number(info?.time?.positionMs) || 0;
-      const dur = Number(info?.time?.durationMs) || 0;
+      const posAbs = Number(info?.time?.positionMs) || 0;
+      const durAbs = Number(info?.time?.durationMs) || 0;
       const rate = Number(info?.rate) || 1;
 
-      if (!(dur > 0)) return;
+      const clip = getClipWindowMsForIndex(currentIndex);
+      if (!clip.isClip) {
+        if (!(durAbs > 0)) return;
+        try {
+          navigator.mediaSession.setPositionState({
+            duration: durAbs / 1000,
+            position: Math.max(0, Math.min(durAbs, posAbs)) / 1000,
+            playbackRate: rate,
+          });
+        } catch {
+          // ignore
+        }
+        return;
+      }
+
+      const startMs = Math.max(0, Math.floor(Number(clip.startMs) || 0));
+      const endMs = (typeof clip.endMs === 'number')
+        ? clip.endMs
+        : ((durAbs > 0) ? durAbs : undefined);
+      if (!(typeof endMs === 'number' && endMs > startMs)) return;
+
+      const clipDurMs = endMs - startMs;
+      const clipPosMs = Math.max(0, Math.min(clipDurMs, (posAbs - startMs)));
       try {
         navigator.mediaSession.setPositionState({
-          duration: dur / 1000,
-          position: Math.max(0, Math.min(dur, pos)) / 1000,
+          duration: clipDurMs / 1000,
+          position: clipPosMs / 1000,
           playbackRate: rate,
         });
       } catch {
@@ -2029,6 +2175,7 @@
       const spotifyId = item && item.spotifyId ? String(item.spotifyId).trim() : '';
 
       const itemArtwork = (item && typeof item.artwork === 'string') ? String(item.artwork).trim() : '';
+      const clip = getClipWindowMsForItem(item);
       return {
         id: videoId,
         title: item?.userTitle || item?.title || '',
@@ -2037,6 +2184,7 @@
           : (mode === 'spotify')
             ? { kind: 'spotify', trackId: spotifyId || 'unmatched' }
             : { kind: 'youtube', videoId },
+        ...(clip.isClip ? { startMs: clip.startMs, endMs: clip.endMs } : {}),
         ...((mode === 'spotify' && itemArtwork) ? { artworkUrl: itemArtwork } : {}),
       };
     }
@@ -2130,7 +2278,8 @@
 
       // Spectrum expects a controller-like API with getCurrentTime() in seconds.
       spectrum.setController({
-        getCurrentTime: () => getPlayerCurrentTimeSeconds(),
+        // Spectrum data is aligned to the underlying media timeline, not the clip window.
+        getCurrentTime: () => getPlayerCurrentTimeSecondsAbsolute(),
       });
 
       let firedReady = false;
@@ -2465,6 +2614,114 @@
       const isSameVideo = sameIndex && targetVideoId && currentTrackId === targetVideoId;
       const isActivelyPlaying = playerState === 'playing' || playerState === 'buffering';
       const previousIndex = currentIndex;
+
+      const getUnderlyingMediaKeyForIndex = (index) => {
+        if (!(index >= 0 && index < playlistItems.length)) return '';
+        const it = playlistItems[index];
+        if (!it) return '';
+        const mode = getPlayerMode();
+        if (mode === 'youtube') {
+          const vid = it && it.videoId ? String(it.videoId).trim() : '';
+          return vid ? `youtube:${vid}` : '';
+        }
+        if (mode === 'local') {
+          try {
+            const url = buildLocalVideoUrlForItem(it);
+            const cleaned = String(url || '').trim();
+            return cleaned ? `file:${cleaned}` : '';
+          } catch {
+            return '';
+          }
+        }
+        if (mode === 'spotify') {
+          const sid = it && it.spotifyId ? String(it.spotifyId).trim() : '';
+          return sid ? `spotify:${sid}` : '';
+        }
+        return '';
+      };
+
+      const previousUnderlyingKey = getUnderlyingMediaKeyForIndex(previousIndex);
+      const targetUnderlyingKey = getUnderlyingMediaKeyForIndex(idx);
+      const isSameUnderlyingMedia = !!previousUnderlyingKey && previousUnderlyingKey === targetUnderlyingKey;
+
+      // Chapter playlists: advancing between entries that share the same backing media
+      // should *not* reload the player (which causes an audible break). Just seek.
+      if (!sameIndex && isSameUnderlyingMedia && (getPlayerMode() === 'youtube' || getPlayerMode() === 'local')) {
+        const dbg = (typeof window !== 'undefined' && !!window.__POLARIS_DEBUG_PLAYER_COMMANDS__);
+
+        // Capture current absolute media time before we change anything.
+        let absPosMsBefore = 0;
+        try {
+          const infoNow = getPlayerInfo();
+          absPosMsBefore = Number(infoNow?.time?.positionMs) || 0;
+        } catch { /* ignore */ }
+
+        currentIndex = idx;
+        shuffleQueue.notePlayed(idx);
+        shuffleQueue.recordHistory(idx, { suppress: suppressShuffleHistoryRecord });
+
+        if (!trackListView.hasRow(currentIndex)) {
+          renderTrackList();
+        } else {
+          updateActiveTrackRow(previousIndex, currentIndex);
+        }
+
+        // Update title/metadata immediately; keep playing state unchanged.
+        updateNowPlaying();
+        updatePlayPauseButton();
+        try { updateMediaSessionMetadata(); } catch { /* ignore */ }
+        try { updateMediaSessionPositionState(true); } catch { /* ignore */ }
+
+        // Seek to the new chapter start (absolute media time) ONLY when needed.
+        // For sequential chapters where next.start ~= current position, skipping the seek
+        // is what preserves truly gapless playback.
+        try {
+          const item = playlistItems[idx];
+          const clip = getClipWindowMsForItem(item);
+          const startMs = Math.max(0, Math.floor(Number(clip.startMs) || 0));
+          sidebar.suppressHide(5000);
+
+          const driftMs = Math.abs((Number(absPosMsBefore) || 0) - startMs);
+          const shouldSeek = !(isFinite(driftMs) && driftMs <= 450);
+          if (dbg) {
+            console.debug('[polaris] same-media chapter switch', {
+              previousIndex,
+              nextIndex: idx,
+              underlying: targetUnderlyingKey,
+              absPosMsBefore,
+              startMs,
+              driftMs,
+              shouldSeek,
+              state: getPlayerInfo()?.state,
+            });
+          }
+
+          if (shouldSeek) {
+            void playerHost.seekToMs(startMs);
+          }
+        } catch { /* ignore */ }
+
+        // If we were actively playing, keep it going.
+        if (isActivelyPlaying || keepPlayingUi) {
+          isPlaying = true;
+          updatePlayPauseButton();
+          // Avoid spurious play() calls if already playing.
+          try {
+            const s = getPlayerInfo()?.state;
+            if (s !== 'playing' && s !== 'buffering') {
+              void playerHost.play().catch(() => {});
+            }
+          } catch {
+            void playerHost.play().catch(() => {});
+          }
+        }
+
+        pendingPlayIndex = null;
+        const playlistId = settings.playlistId || '';
+        updateCurrentVideo(playlistId, targetVideoId);
+        focusActiveTrack();
+        return;
+      }
 
       if (isSameVideo) {
         focusActiveTrack();
@@ -3430,6 +3687,25 @@
         if (timeLabel) timeLabel.textContent = '00:00 / 00:00';
         if (centerTimeLabel) centerTimeLabel.textContent = '00:00 / 00:00';
         return;
+      }
+
+      // Clip-window enforcement (chapter playlists): auto-advance when reaching explicit end.
+      // We do this at the UI layer so it works uniformly across YouTube and <video>.
+      if (!isProgressScrubbing && !holdPlayingUiUntilMs) {
+        try {
+          const clip = getClipWindowMsForIndex(currentIndex);
+          const endMs = (typeof clip.endMs === 'number') ? clip.endMs : undefined;
+          if (typeof endMs === 'number' && endMs > 0) {
+            const info = getPlayerInfo();
+            const state = info?.state;
+            const posMs = Number(info?.time?.positionMs) || 0;
+            if ((state === 'playing' || state === 'buffering') && posMs >= (endMs - 200)) {
+              const shouldAutoScroll = currentIndex !== lastAutoScrollIndex;
+              _autoAdvanceFromEnded({ shouldAutoScroll });
+              return;
+            }
+          }
+        } catch { /* ignore */ }
       }
 
       // Keep play/pause UI synced in local mode even if adapter state is stale.
