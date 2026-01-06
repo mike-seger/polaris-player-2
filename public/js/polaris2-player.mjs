@@ -1423,7 +1423,6 @@
       const options = list
         .filter((e) => e && typeof e === 'object' && e.type === 'polaris')
         .map((e) => ({ id: e.id, title: e.title || e.id }));
-      options.sort((a, b) => a.title.localeCompare(b.title, undefined, { sensitivity: 'base' }));
       return options;
     }
 
@@ -2040,9 +2039,38 @@
       return { startMs, endMs, isClip };
     }
 
-    function getClipWindowMsForIndex(idx) {
+    function getClipWindowMsForIndex(idx, absDurationMs = undefined) {
       const item = (idx >= 0 && idx < playlistItems.length) ? playlistItems[idx] : null;
-      return getClipWindowMsForItem(item);
+      const base = getClipWindowMsForItem(item);
+      if (!base.isClip) return base;
+      if (typeof base.endMs === 'number') return base;
+
+      // Chapters: if `end` is missing, infer it as either:
+      // - the `start` of the next item with the same backing `videoId`, or
+      // - the end of the backing media (duration) when known.
+      const startMs = Math.max(0, Math.floor(Number(base.startMs) || 0));
+      const vid = item && item.videoId ? String(item.videoId).trim() : '';
+      if (vid && idx >= 0) {
+        for (let j = idx + 1; j < playlistItems.length; j += 1) {
+          const nextItem = playlistItems[j];
+          const nextVid = nextItem && nextItem.videoId ? String(nextItem.videoId).trim() : '';
+          if (!nextVid || nextVid !== vid) break;
+
+          const nextStartRaw = parseTimecodeToMs(nextItem?.start);
+          if (typeof nextStartRaw === 'number') {
+            const nextStartMs = Math.max(0, Math.floor(nextStartRaw));
+            if (nextStartMs > startMs) {
+              return { startMs, endMs: nextStartMs, isClip: true };
+            }
+          }
+        }
+      }
+
+      const durMs = Number(absDurationMs);
+      if (isFinite(durMs) && durMs > startMs) {
+        return { startMs, endMs: durMs, isClip: true };
+      }
+      return { startMs, endMs: undefined, isClip: true };
     }
 
     function getPlayerDurationSeconds() {
@@ -2050,7 +2078,7 @@
       const absDurMs = Number(info?.time?.durationMs);
       const durMs = (isFinite(absDurMs) && absDurMs > 0) ? absDurMs : 0;
 
-      const clip = getClipWindowMsForIndex(currentIndex);
+      const clip = getClipWindowMsForIndex(currentIndex, durMs);
       if (!clip.isClip) return durMs > 0 ? durMs / 1000 : 0;
 
       const startMs = Math.max(0, Math.floor(Number(clip.startMs) || 0));
@@ -2068,7 +2096,7 @@
       const absDurMs = Number(info?.time?.durationMs);
       const durMs = (isFinite(absDurMs) && absDurMs > 0) ? absDurMs : 0;
 
-      const clip = getClipWindowMsForIndex(currentIndex);
+      const clip = getClipWindowMsForIndex(currentIndex, durMs);
       if (!clip.isClip) return posMs > 0 ? posMs / 1000 : 0;
 
       const startMs = Math.max(0, Math.floor(Number(clip.startMs) || 0));
@@ -2139,15 +2167,15 @@
       const s = Number(seconds);
       if (!isFinite(s)) return;
 
-      const clip = getClipWindowMsForIndex(currentIndex);
+      const info = getPlayerInfo();
+      const absDurMs = Number(info?.time?.durationMs);
+      const durMs = (isFinite(absDurMs) && absDurMs > 0) ? absDurMs : 0;
+
+      const clip = getClipWindowMsForIndex(currentIndex, durMs);
       if (!clip.isClip) {
         void playerHost.seekToMs(Math.max(0, Math.floor(s * 1000)));
         return;
       }
-
-      const info = getPlayerInfo();
-      const absDurMs = Number(info?.time?.durationMs);
-      const durMs = (isFinite(absDurMs) && absDurMs > 0) ? absDurMs : 0;
 
       const startMs = Math.max(0, Math.floor(Number(clip.startMs) || 0));
       const endMs = (typeof clip.endMs === 'number')
@@ -2263,7 +2291,7 @@
       const durAbs = Number(info?.time?.durationMs) || 0;
       const rate = Number(info?.rate) || 1;
 
-      const clip = getClipWindowMsForIndex(currentIndex);
+      const clip = getClipWindowMsForIndex(currentIndex, durAbs);
       if (!clip.isClip) {
         if (!(durAbs > 0)) return;
         try {
@@ -3879,16 +3907,20 @@
         return;
       }
 
+      const holdingPlayingUi = !!(holdPlayingUiUntilMs && Date.now() < holdPlayingUiUntilMs);
+
       // Clip-window enforcement (chapter playlists): auto-advance when reaching explicit end.
       // We do this at the UI layer so it works uniformly across YouTube and <video>.
-      if (!isProgressScrubbing && !holdPlayingUiUntilMs) {
+      if (!isProgressScrubbing && !holdingPlayingUi) {
         try {
-          const clip = getClipWindowMsForIndex(currentIndex);
+          const info = getPlayerInfo();
+          const state = info?.state;
+          const posMs = Number(info?.time?.positionMs) || 0;
+          const durMs = Number(info?.time?.durationMs) || 0;
+
+          const clip = getClipWindowMsForIndex(currentIndex, durMs);
           const endMs = (typeof clip.endMs === 'number') ? clip.endMs : undefined;
           if (typeof endMs === 'number' && endMs > 0) {
-            const info = getPlayerInfo();
-            const state = info?.state;
-            const posMs = Number(info?.time?.positionMs) || 0;
             if ((state === 'playing' || state === 'buffering') && posMs >= (endMs - 200)) {
               const shouldAutoScroll = currentIndex !== lastAutoScrollIndex;
               _autoAdvanceFromEnded({ shouldAutoScroll });
@@ -3899,7 +3931,7 @@
       }
 
       // Keep play/pause UI synced in local mode even if adapter state is stale.
-      if (getPlayerMode() === 'local' && !isProgressScrubbing && !holdPlayingUiUntilMs) {
+      if (getPlayerMode() === 'local' && !isProgressScrubbing && !holdingPlayingUi) {
         try {
           const info = getPlayerInfo();
           const now = Date.now();
@@ -3931,7 +3963,7 @@
       // because we clamp clip-relative time. If the absolute playback position has clearly moved
       // past the current clip's end, sync the *UI index only* forward to the clip that contains
       // the current position. Do NOT seek/reload (keeps playback gapless).
-      if (!isProgressScrubbing && !holdPlayingUiUntilMs && (getPlayerMode() === 'youtube' || getPlayerMode() === 'local')) {
+      if (!isProgressScrubbing && !holdingPlayingUi && (getPlayerMode() === 'youtube' || getPlayerMode() === 'local')) {
         try {
           // Only do this when no filters are active; otherwise "next" semantics are ambiguous.
           const hasFilters = !!(String(filterText || '').trim().length)
@@ -3941,8 +3973,9 @@
           if (!hasFilters && currentIndex >= 0 && currentIndex < playlistItems.length) {
             const info = getPlayerInfo();
             const posMs = Number(info?.time?.positionMs) || 0;
+            const durMs = Number(info?.time?.durationMs) || 0;
             const curItem = playlistItems[currentIndex];
-            const curClip = getClipWindowMsForItem(curItem);
+            const curClip = getClipWindowMsForIndex(currentIndex, durMs);
             const curEndMs = (typeof curClip.endMs === 'number') ? curClip.endMs : undefined;
 
             if (typeof curEndMs === 'number' && curEndMs > 0 && posMs >= (curEndMs + 800)) {
