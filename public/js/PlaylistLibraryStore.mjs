@@ -67,9 +67,15 @@ export class PlaylistLibraryStore {
       }
     }
 
-    // Stable ordering: defaults first (sorted by title), then non-default sorted by title.
+    // Stable ordering:
+    // - defaults first, in the order provided by the defaults index (default-playlists.json)
+    // - then non-default entries sorted by title
     const byTitle = (a, b) => String(a.title || a.id).localeCompare(String(b.title || b.id));
-    const defaultsOut = next.filter((e) => e.default).sort(byTitle);
+    const defaultsOut = defaults.filter((e) => e && e.default).map((d) => ({
+      ...d,
+      id: d.id,
+      default: true,
+    }));
     const nonDefaultsOut = next.filter((e) => !e.default).sort(byTitle);
 
     const merged = [...defaultsOut, ...nonDefaultsOut];
