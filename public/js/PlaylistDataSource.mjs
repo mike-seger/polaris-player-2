@@ -338,6 +338,71 @@ export class PlaylistDataSource {
       }
     }
 
+    const inferIdFromUri = (uri) => {
+      const u = String(uri || '').trim().replace(/\\/g, '/');
+      const base = u.split('/').pop() || '';
+      return base.endsWith('.json') ? base.slice(0, -5) : base;
+    };
+
+    const inferEntryTypeFromUri = (uri) => {
+      const u = String(uri || '').trim();
+      if (/^spotify:/i.test(u)) return 'spotify';
+      return 'polaris';
+    };
+
+    const expandStringDefaults = async (uris) => {
+      /** @type {Array<any>} */
+      const out = [];
+      for (const uri of uris) {
+        const u = String(uri || '').trim();
+        if (!u) continue;
+
+        // Best effort: load playlist JSON to derive metadata.
+        let playlist = null;
+        try {
+          const url = new URL(u, window.location.href).toString();
+          const resp = await fetch(url, { cache: 'no-store' });
+          if (resp && resp.ok) {
+            playlist = await resp.json();
+          }
+        } catch {
+          // ignore fetch errors (e.g., file://)
+        }
+
+        const idFromContent = (playlist && typeof playlist === 'object' && typeof playlist.playlistId === 'string')
+          ? String(playlist.playlistId || '').trim()
+          : '';
+        const id = idFromContent || inferIdFromUri(u);
+        if (!id) continue;
+
+        const title = (playlist && typeof playlist === 'object' && typeof playlist.title === 'string' && playlist.title.trim().length)
+          ? playlist.title.trim()
+          : id;
+        const fetchedAt = (playlist && typeof playlist === 'object' && typeof playlist.fetchedAt === 'string')
+          ? playlist.fetchedAt
+          : '';
+
+        out.push({
+          id,
+          title,
+          uri: u,
+          fetchedAt,
+          default: true,
+          type: inferEntryTypeFromUri(u),
+        });
+      }
+      return out;
+    };
+
+    // If defaults is a list of URIs (strings), derive the missing attributes from each playlist file.
+    if (defaults && Array.isArray(defaults) && defaults.length && typeof defaults[0] === 'string') {
+      try {
+        defaults = await expandStringDefaults(defaults);
+      } catch {
+        // ignore
+      }
+    }
+
     // As a last resort, derive defaults from the embedded/legacy monolithic library map.
     if (!defaults) {
       try {

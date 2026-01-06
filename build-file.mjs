@@ -71,6 +71,12 @@ async function generateDefaultPlaylistLibrary() {
   }
   if (!Array.isArray(defaults)) return;
 
+  const inferIdFromUri = (uri) => {
+    const u = String(uri || '').trim().replace(/\\/g, '/');
+    const base = u.split('/').pop() || '';
+    return base.endsWith('.json') ? base.slice(0, -5) : base;
+  };
+
   /**
    * Convert a default playlist entry uri like './video/sub/abc.json'
    * into an absolute filesystem path rooted under public/.
@@ -85,24 +91,57 @@ async function generateDefaultPlaylistLibrary() {
     return path.join(publicDir, normalized);
   };
 
-  const out = {};
+  /** @type {Record<string, any>} */
+  const libraryById = {};
+  /** @type {Array<any>} */
+  const expandedDefaults = [];
+
   for (const entry of defaults) {
-    if (!entry || typeof entry !== 'object') continue;
-    const id = String(entry.id || '').trim();
-    const uri = String(entry.uri || '').trim();
-    if (!id || !uri) continue;
+    const uri = (typeof entry === 'string')
+      ? String(entry || '').trim()
+      : (entry && typeof entry === 'object' ? String(entry.uri || entry.url || '').trim() : '');
+    if (!uri) continue;
+
     const fsPath = uriToPublicPath(uri);
     if (!fsPath || !(await pathExists(fsPath))) continue;
 
+    let playlist = null;
     try {
-      out[id] = JSON.parse(await fs.readFile(fsPath, 'utf8'));
+      playlist = JSON.parse(await fs.readFile(fsPath, 'utf8'));
     } catch {
-      // ignore invalid playlist files
+      continue;
     }
+
+    const idFromContent = (playlist && typeof playlist === 'object' && typeof playlist.playlistId === 'string')
+      ? String(playlist.playlistId || '').trim()
+      : '';
+    const id = idFromContent || inferIdFromUri(uri);
+    if (!id) continue;
+
+    libraryById[id] = playlist;
+
+    const title = (playlist && typeof playlist === 'object' && typeof playlist.title === 'string' && playlist.title.trim().length)
+      ? playlist.title.trim()
+      : id;
+    const fetchedAt = (playlist && typeof playlist === 'object' && typeof playlist.fetchedAt === 'string')
+      ? playlist.fetchedAt
+      : '';
+
+    expandedDefaults.push({
+      id,
+      title,
+      uri,
+      fetchedAt,
+      default: true,
+      type: 'polaris',
+    });
   }
 
-  const outPath = path.join(publicDir, 'video', 'default-playlist-library.json');
-  await fs.writeFile(outPath, JSON.stringify(out, null, 2) + '\n', 'utf8');
+  const libOutPath = path.join(publicDir, 'video', 'default-playlist-library.json');
+  await fs.writeFile(libOutPath, JSON.stringify(libraryById, null, 2) + '\n', 'utf8');
+
+  const expandedOutPath = path.join(publicDir, 'video', 'default-playlists-expanded.json');
+  await fs.writeFile(expandedOutPath, JSON.stringify(expandedDefaults, null, 2) + '\n', 'utf8');
 }
 
 async function generateLocalPlayerEmbeddedConfig() {
