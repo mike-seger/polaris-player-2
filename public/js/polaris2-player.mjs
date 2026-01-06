@@ -450,6 +450,64 @@
       }
     }
 
+    const localThumbnailBaseCache = {
+      version: -1,
+      /** @type {string[]} */
+      basesByIndex: [],
+    };
+
+    function getLocalChosenIdForItem(item) {
+      const videoId = (item && (typeof item.videoId === 'string' || typeof item.videoId === 'number'))
+        ? String(item.videoId).trim()
+        : '';
+      const spotifyId = (item && (typeof item.spotifyId === 'string' || typeof item.spotifyId === 'number'))
+        ? String(item.spotifyId).trim()
+        : '';
+      const fallbackId = (item && (typeof item.id === 'string' || typeof item.id === 'number'))
+        ? String(item.id).trim()
+        : '';
+      return videoId || spotifyId || fallbackId || 'unmatched';
+    }
+
+    function ensureLocalThumbnailBasesCached() {
+      if (localThumbnailBaseCache.version === playlistVersion) return;
+      localThumbnailBaseCache.version = playlistVersion;
+
+      const counts = new Map();
+      for (const it of (playlistItems || [])) {
+        const chosenId = getLocalChosenIdForItem(it);
+        if (!chosenId) continue;
+        counts.set(chosenId, (counts.get(chosenId) || 0) + 1);
+      }
+
+      const seen = new Map();
+      localThumbnailBaseCache.basesByIndex = (playlistItems || []).map((it) => {
+        const chosenId = getLocalChosenIdForItem(it);
+        const base = `vid_${chosenId}`;
+        const total = counts.get(chosenId) || 0;
+        if (total <= 1) return base;
+
+        const n = (seen.get(chosenId) || 0) + 1;
+        seen.set(chosenId, n);
+        const suffix = String(n).padStart(3, '0');
+        return `${base}-${suffix}`;
+      });
+    }
+
+    function getLocalThumbnailBaseForIndex(idx, item) {
+      ensureLocalThumbnailBasesCached();
+      if (idx >= 0 && idx < localThumbnailBaseCache.basesByIndex.length) {
+        return localThumbnailBaseCache.basesByIndex[idx] || '';
+      }
+      // Best-effort fallback if caller didn't provide an index.
+      const i = (playlistItems || []).indexOf(item);
+      if (i >= 0 && i < localThumbnailBaseCache.basesByIndex.length) {
+        return localThumbnailBaseCache.basesByIndex[i] || '';
+      }
+      const chosenId = getLocalChosenIdForItem(item);
+      return chosenId ? `vid_${chosenId}` : '';
+    }
+
     filterStateStore = new FilterStateStore({
       getSettings: () => settings,
       saveSettings: (patch) => saveSettings(patch)
@@ -1088,7 +1146,7 @@
 
           // Skip if we already have a usable thumbnail (cached Spotify art or non-YouTube provided thumb).
           try {
-            const track = buildTrackFromPlaylistItem(item);
+            const track = buildTrackFromPlaylistItem(item, idx);
             const cached = (playerHost && typeof playerHost.getThumbnailUrl === 'function')
               ? playerHost.getThumbnailUrl(track)
               : undefined;
@@ -1125,7 +1183,7 @@
 
           let url = '';
           try {
-            const track = buildTrackFromPlaylistItem(item);
+            const track = buildTrackFromPlaylistItem(item, idx);
             url = (playerHost && typeof playerHost.getThumbnailUrl === 'function')
               ? (playerHost.getThumbnailUrl(track) || '')
               : '';
@@ -1167,12 +1225,12 @@
       void indices;
     }
 
-    function getThumbnailUrlForItem(item) {
+    function getThumbnailUrlForItem(item, itemIndex = -1) {
       const mode = getPlayerMode();
 
       if (mode === 'local') {
         const localThumb = (playerHost && typeof playerHost.getThumbnailUrl === 'function')
-          ? playerHost.getThumbnailUrl(buildTrackFromPlaylistItem(item))
+          ? playerHost.getThumbnailUrl(buildTrackFromPlaylistItem(item, itemIndex))
           : '';
         return localThumb || '';
       }
@@ -1184,7 +1242,7 @@
 
         // Otherwise prefer cached Spotify album art via adapter; never use YouTube thumbnails in Spotify mode.
         const cached = (playerHost && typeof playerHost.getThumbnailUrl === 'function')
-          ? playerHost.getThumbnailUrl(buildTrackFromPlaylistItem(item))
+          ? playerHost.getThumbnailUrl(buildTrackFromPlaylistItem(item, itemIndex))
           : undefined;
         if (cached) return cached;
 
@@ -1195,7 +1253,7 @@
       const existing = (item && typeof item.thumbnail === 'string') ? item.thumbnail : '';
       if (existing) return existing;
       if (playerHost && typeof playerHost.getThumbnailUrl === 'function') {
-        const fallback = playerHost.getThumbnailUrl(buildTrackFromPlaylistItem(item));
+        const fallback = playerHost.getThumbnailUrl(buildTrackFromPlaylistItem(item, itemIndex));
         return fallback || '';
       }
       const videoId = item && item.videoId ? String(item.videoId).trim() : '';
@@ -1208,8 +1266,8 @@
       if (trackListItemsCache.version === playlistVersion && trackListItemsCache.mode === mode) {
         return trackListItemsCache.items;
       }
-      const items = (playlistItems || []).map((it) => {
-        const thumb = getThumbnailUrlForItem(it);
+      const items = (playlistItems || []).map((it, idx) => {
+        const thumb = getThumbnailUrlForItem(it, idx);
         if (!thumb) return it;
         // Override only what TrackListView reads.
         return { ...it, thumbnail: thumb };
@@ -2276,14 +2334,14 @@
       });
     }
 
-    function buildTrackFromPlaylistItem(item) {
+    function buildTrackFromPlaylistItem(item, itemIndex = -1) {
       const videoId = item && item.videoId ? String(item.videoId).trim() : '';
       const mode = getPlayerMode();
       const spotifyId = item && item.spotifyId ? String(item.spotifyId).trim() : '';
 
       const itemArtwork = (item && typeof item.artwork === 'string') ? String(item.artwork).trim() : '';
       const clip = getClipWindowMsForItem(item);
-      return {
+      const track = {
         id: videoId,
         title: item?.userTitle || item?.title || '',
         source: (mode === 'local')
@@ -2294,6 +2352,13 @@
         ...(clip.isClip ? { startMs: clip.startMs, endMs: clip.endMs } : {}),
         ...((mode === 'spotify' && itemArtwork) ? { artworkUrl: itemArtwork } : {}),
       };
+
+      if (mode === 'local') {
+        const thumbBase = getLocalThumbnailBaseForIndex(itemIndex, item);
+        if (thumbBase) track.thumbnailBase = thumbBase;
+      }
+
+      return track;
     }
 
     function handlePlayerModeChanged(_prevMode, _nextMode) {
@@ -2307,7 +2372,7 @@
         isPlaying = false;
         updatePlayPauseButton();
         void playerHost.stop().catch(() => {});
-        void playerHost.load(buildTrackFromPlaylistItem(playlistItems[currentIndex]), { autoplay })
+        void playerHost.load(buildTrackFromPlaylistItem(playlistItems[currentIndex], currentIndex), { autoplay })
           .catch((err) => console.error('Player load error:', err));
 
         // Ensure UI reflects the new mode (e.g., hide thumbnails in local mode).
@@ -2689,7 +2754,7 @@
         return;
       }
 
-      const track = buildTrackFromPlaylistItem(item);
+      const track = buildTrackFromPlaylistItem(item, currentIndex);
 
       // If the playlist provides artwork, use it directly and do NOT touch the cache.
       const artwork = (item && typeof item.artwork === 'string') ? String(item.artwork).trim() : '';
@@ -2899,13 +2964,13 @@
             // Setting Spotify Connect volume shortly after autoplay can cause an audible hiccup
             // (observed on iOS). Load without autoplay, set volume, then play.
             return playerHost
-              .load(buildTrackFromPlaylistItem(playlistItems[idx]), { autoplay: false })
+              .load(buildTrackFromPlaylistItem(playlistItems[idx], idx), { autoplay: false })
               .then(() => applyConfiguredVolumeToHost())
               .then(() => playerHost.play());
           })
           .catch((err) => console.error('Player load error:', err));
       } else {
-        void playerHost.load(buildTrackFromPlaylistItem(playlistItems[idx]), { autoplay: true })
+        void playerHost.load(buildTrackFromPlaylistItem(playlistItems[idx], idx), { autoplay: true })
           .then(() => applyConfiguredVolumeToHost())
           .catch((err) => console.error('Player load error:', err));
       }

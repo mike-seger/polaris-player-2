@@ -111,8 +111,9 @@ export class HtmlVideoAdapter {
 
   getThumbnailUrl(track) {
     const videoId = track && typeof track.id === 'string' ? track.id.trim() : '';
-    if (!videoId) return undefined;
-    const base = `vid_${videoId}`;
+    const baseOverride = (track && typeof track.thumbnailBase === 'string') ? track.thumbnailBase.trim() : '';
+    if (!baseOverride && !videoId) return undefined;
+    const base = baseOverride || `vid_${videoId}`;
     try {
       const mediaUrl = track?.source?.url;
       if (typeof mediaUrl === 'string' && mediaUrl.trim().length) {
