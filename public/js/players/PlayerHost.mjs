@@ -162,14 +162,37 @@ export class PlayerHost {
   async reloadCurrentTrack() {
     if (!this._activeTrack) return;
     
-    const wasPlaying = this.active?.getState?.() === 'playing';
-    const currentTime = this.active?.getPositionMs?.() || 0;
+    // Save current state BEFORE any changes
+    const info = this.active?.getInfo?.();
+    const wasPlaying = info?.state === 'playing';
+    const currentPositionMs = info?.time?.positionMs || 0;
+    const oldAdapter = this.active?.name;
     
-    // Reload with current position
-    await this.load(this._activeTrack, { startMs: currentTime });
+    console.log('[PlayerHost] Reloading track:', {
+      track: this._activeTrack.id,
+      oldAdapter,
+      wasPlaying,
+      currentPositionMs,
+      trackStartMs: this._activeTrack.startMs,
+      trackEndMs: this._activeTrack.endMs
+    });
+    
+    // Load track (this will switch adapters if needed, and _switchTo handles cleanup)
+    await this.load(this._activeTrack);
+    
+    console.log('[PlayerHost] Loaded on new adapter:', this.active?.name);
+    
+    // Seek to saved position
+    if (currentPositionMs > 0) {
+      console.log('[PlayerHost] Seeking to:', currentPositionMs);
+      await this.seek(currentPositionMs);
+    }
     
     // Resume playback if it was playing
     if (wasPlaying) {
+      // Small delay to ensure seek completes
+      await new Promise(resolve => setTimeout(resolve, 50));
+      console.log('[PlayerHost] Resuming playback');
       await this.play();
     }
   }

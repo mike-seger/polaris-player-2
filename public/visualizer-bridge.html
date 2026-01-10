@@ -366,11 +366,6 @@
             frequencyData: Array.from(dataArray), // Convert Uint8Array to regular array for postMessage
             bufferLength: analyserNode.frequencyBinCount
           }, '*');
-          
-          // Log occasionally to verify streaming
-          if (Math.random() < 0.01) {
-            console.log('[Bridge] Streaming audio data, sample values:', dataArray.slice(0, 5));
-          }
         } catch (err) {
           // Ignore errors
           if (Math.random() < 0.01) {
