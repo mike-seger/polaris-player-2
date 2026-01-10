@@ -27,7 +27,15 @@ class NoCacheRequestHandler(SimpleHTTPRequestHandler):
         self.send_header("Expires", "0")
         # Identifies this server vs `python -m http.server`.
         self.send_header("X-Polaris-No-Cache-Server", "1")
+        # Allow all CORS requests
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, HEAD")
+        self.send_header("Access-Control-Allow-Headers", "*")
         super().end_headers()
+
+    def do_OPTIONS(self):
+        self.send_response(200)
+        self.end_headers()
 
     def handle(self):
         # Browsers commonly abort in-flight responses during seeks/source switches.
