@@ -1,6 +1,7 @@
   import { PlayerHost } from './players/PlayerHost.mjs';
   import { YouTubeAdapter } from './players/adapters/YouTubeAdapter.mjs';
   import { HtmlVideoAdapter } from './players/adapters/HtmlVideoAdapter.mjs';
+  import { VisualizerAdapter } from './players/adapters/VisualizerAdapter.mjs';
   import { SpotifyAdapter } from './players/adapters/SpotifyAdapter.mjs';
   import { LazySpotifyAdapter } from './players/adapters/LazySpotifyAdapter.mjs';
   import { SpotifyAuth } from './players/SpotifyAuth.mjs';
@@ -737,6 +738,7 @@
     const detailCheckTrackCheckbox = document.getElementById('detailCheckTrack');
     const detailShowExcludedCheckbox = document.getElementById('detailShowExcluded');
     const detailSortAZCheckbox = document.getElementById('detailSortAZ');
+    const detailVisualizerCheckbox = document.getElementById('detailVisualizer');
     const detailCheckboxMap = {
       trackNumber: detailTrackNumberCheckbox,
       thumbnail: detailThumbnailCheckbox,
@@ -2463,13 +2465,39 @@
       }
 
       ytAdapter = new YouTubeAdapter({ elementId: null, controls: 0, autoplay: false });
+      const visualizerEnabled = settings.visualizerEnabled === true;
+      const visualizerAdapter = new VisualizerAdapter({ enabled: visualizerEnabled });
+      
       playerHost = new PlayerHost([
         // Let the adapter create its own mount element inside #player.
         // This avoids the YouTube API replacing the #player node itself.
         ytAdapter,
+        visualizerAdapter,
         new HtmlVideoAdapter(),
         spotifyAdapter
       ]);
+
+      // Expose visualizer control globally for easy toggling
+      window.__polarisVisualizer = {
+        enable: () => {
+          visualizerAdapter.setEnabled(true);
+          settings = settingsStore.patch({ visualizerEnabled: true });
+          if (detailVisualizerCheckbox) detailVisualizerCheckbox.checked = true;
+          console.log('[Polaris] Visualizer enabled. Reload the current track to activate.');
+        },
+        disable: () => {
+          visualizerAdapter.setEnabled(false);
+          settings = settingsStore.patch({ visualizerEnabled: false });
+          if (detailVisualizerCheckbox) detailVisualizerCheckbox.checked = false;
+          console.log('[Polaris] Visualizer disabled. Reload the current track to use standard video player.');
+        },
+        isEnabled: () => visualizerAdapter.isEnabled(),
+        status: () => {
+          const enabled = visualizerAdapter.isEnabled();
+          console.log(`[Polaris] Visualizer is ${enabled ? 'ENABLED' : 'DISABLED'}`);
+          return enabled;
+        }
+      };
 
       // Mount into the existing video pane element.
       const container = document.getElementById('player');
@@ -3635,6 +3663,20 @@
         computeFilteredIndices();
         renderTrackList({ preserveScroll: true });
         syncFilterHeaderCheckboxes();
+      });
+    }
+
+    if (detailVisualizerCheckbox) {
+      // Initialize checkbox state from settings
+      detailVisualizerCheckbox.checked = settings.visualizerEnabled === true;
+      
+      detailVisualizerCheckbox.addEventListener('change', () => {
+        const enabled = detailVisualizerCheckbox.checked;
+        if (enabled) {
+          window.__polarisVisualizer.enable();
+        } else {
+          window.__polarisVisualizer.disable();
+        }
       });
     }
 

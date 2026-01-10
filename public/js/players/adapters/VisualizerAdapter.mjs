@@ -1,0 +1,329 @@
+import { Emitter } from "../core/Emitter.mjs";
+
+function clamp01(x) {
+  const n = Number(x);
+  if (!Number.isFinite(n)) return 0;
+  return Math.max(0, Math.min(1, n));
+}
+
+/**
+ * Adapter that plays TrackSource.kind === "file" using the Interactive Particles Visualizer in an iframe.
+ * The visualizer runs as an isolated app, communicating via postMessage.
+ * @implements {import("../core/types.mjs").IPlayerAdapter}
+ */
+export class VisualizerAdapter {
+  constructor(options = {}) {
+    this.name = "visualizer";
+    this._em = new Emitter();
+
+    this._track = null;
+    this._state = "idle";
+    this._volume = 1;
+    this._muted = false;
+    this._rate = 1;
+
+    this._positionMs = 0;
+    this._durationMs = undefined;
+
+    this._container = null;
+    this._iframe = null;
+    this._iframeReady = false;
+    this._messageHandler = null;
+
+    // Queue commands sent before iframe is ready
+    this._pendingCommands = [];
+
+    // Path to the visualizer bridge HTML (relative to public/)
+    this._visualizerPath = options.visualizerPath || "./visualizer-bridge.html";
+    
+    // Only enable if explicitly requested via options
+    this._enabled = options.enabled === true;
+  }
+
+  /** @param {HTMLElement} container */
+  mount(container) {
+    if (this._iframe) return;
+    this._container = container instanceof HTMLElement ? container : null;
+    if (!this._container) return;
+
+    // Create iframe element
+    this._iframe = document.createElement("iframe");
+    this._iframe.style.position = "absolute";
+    this._iframe.style.inset = "0";
+    this._iframe.style.width = "100%";
+    this._iframe.style.height = "100%";
+    this._iframe.style.border = "none";
+    this._iframe.style.background = "#000";
+    this._iframe.allow = "autoplay";
+    
+    // Set up message handler
+    this._messageHandler = (event) => this._handleMessage(event);
+    window.addEventListener("message", this._messageHandler);
+
+    // Load visualizer
+    this._iframe.src = this._visualizerPath;
+    this._container.appendChild(this._iframe);
+  }
+
+  unmount() {
+    if (this._messageHandler) {
+      window.removeEventListener("message", this._messageHandler);
+      this._messageHandler = null;
+    }
+    if (this._iframe && this._iframe.parentNode) {
+      this._iframe.parentNode.removeChild(this._iframe);
+    }
+    this._iframe = null;
+    this._iframeReady = false;
+    this._pendingCommands = [];
+  }
+
+  /**
+   * Handle messages from the visualizer iframe
+   */
+  _handleMessage(event) {
+    // Security: verify origin if needed
+    // if (event.origin !== expectedOrigin) return;
+
+    const msg = event.data;
+    if (!msg || typeof msg !== "object") return;
+
+    switch (msg.type) {
+      case "VISUALIZER_READY":
+        this._iframeReady = true;
+        this._flushPendingCommands();
+        break;
+
+      case "TIME_UPDATE":
+        if (typeof msg.currentTime === "number") {
+          this._positionMs = Math.floor(msg.currentTime * 1000);
+        }
+        if (typeof msg.duration === "number") {
+          this._durationMs = Math.floor(msg.duration * 1000);
+        }
+        this._em.emit("time", this.getInfo().time);
+        break;
+
+      case "PLAYING":
+        this._setState("playing");
+        break;
+
+      case "PAUSED":
+        this._setState("paused");
+        break;
+
+      case "ENDED":
+        this._setState("ended");
+        this._em.emit("ended");
+        break;
+
+      case "READY":
+        this._setState("ready");
+        break;
+
+      case "LOADING":
+        this._setState("loading");
+        break;
+
+      case "BUFFERING":
+        this._setState("buffering");
+        break;
+
+      case "ERROR":
+        this._setState("error");
+        this._em.emit("error", { message: msg.error || "Visualizer error" });
+        break;
+    }
+  }
+
+  /**
+   * Send a command to the visualizer iframe
+   */
+  _postCommand(command) {
+    if (!this._iframe || !this._iframe.contentWindow) return;
+
+    if (!this._iframeReady) {
+      // Queue command until iframe is ready
+      this._pendingCommands.push(command);
+      return;
+    }
+
+    try {
+      this._iframe.contentWindow.postMessage(command, "*");
+    } catch (err) {
+      console.error("[VisualizerAdapter] Failed to post message:", err);
+    }
+  }
+
+  /**
+   * Flush any commands that were queued before iframe was ready
+   */
+  _flushPendingCommands() {
+    while (this._pendingCommands.length > 0) {
+      const cmd = this._pendingCommands.shift();
+      this._postCommand(cmd);
+    }
+  }
+
+  /** @param {import("../core/types.mjs").MediaPane} */
+  getMediaPane() {
+    if (!this._iframe) return { kind: "none" };
+    return {
+      kind: "element",
+      element: this._iframe
+    };
+  }
+
+  /**
+   * Determines if this adapter should handle the given source kind.
+   * Only returns true for "file" kind when visualizer is enabled.
+   * @param {string} kind
+   * @returns {boolean}
+   */
+  supports(kind) {
+    return this._enabled && kind === "file";
+  }
+
+  /** @param {import("../core/types.mjs").Track} track */
+  async canPlay(track) {
+    // Only handle tracks if visualizer is explicitly enabled
+    if (!this._enabled) return false;
+    
+    // Only handle local file tracks with audio/video
+    if (!track || !track.source) return false;
+    const src = track.source;
+    if (src.kind !== "file") return false;
+    
+    // Support audio and video files
+    const url = src.url || "";
+    return /\.(mp3|mp4|m4a|wav|ogg|webm|flac)$/i.test(url);
+  }
+
+  /**
+   * Enable or disable the visualizer adapter
+   * @param {boolean} enabled
+   */
+  setEnabled(enabled) {
+    this._enabled = enabled === true;
+  }
+
+  /**
+   * Check if visualizer is enabled
+   * @returns {boolean}
+   */
+  isEnabled() {
+    return this._enabled;
+  }
+
+  /** @param {import("../core/types.mjs").Track} track */
+  async load(track) {
+    this._track = track;
+    this._setState("loading");
+    this._positionMs = 0;
+    this._durationMs = track?.durationMs;
+
+    if (!track || !track.source || track.source.kind !== "file") {
+      this._setState("idle");
+      return;
+    }
+
+    const url = track.source.url;
+    this._postCommand({
+      type: "LOAD_TRACK",
+      url: url,
+      trackId: track.id
+    });
+  }
+
+  async play() {
+    this._postCommand({ type: "PLAY" });
+  }
+
+  async pause() {
+    this._postCommand({ type: "PAUSE" });
+  }
+
+  async stop() {
+    this._postCommand({ type: "STOP" });
+    this._setState("idle");
+  }
+
+  async seekToMs(ms) {
+    const seconds = Math.max(0, ms / 1000);
+    this._postCommand({ type: "SEEK", time: seconds });
+  }
+
+  async setVolume(v01) {
+    this._volume = clamp01(v01);
+    this._postCommand({ type: "SET_VOLUME", volume: this._volume });
+  }
+
+  async setMuted(m) {
+    this._muted = !!m;
+    this._postCommand({ type: "SET_MUTED", muted: this._muted });
+  }
+
+  async setRate(r) {
+    this._rate = Number(r) || 1;
+    this._postCommand({ type: "SET_RATE", rate: this._rate });
+  }
+
+  /** @returns {import("../core/types.mjs").PlaybackInfo} */
+  getInfo() {
+    return {
+      state: this._state,
+      muted: this._muted,
+      volume: this._volume,
+      rate: this._rate,
+      time: {
+        positionMs: this._positionMs,
+        durationMs: this._durationMs ?? this._track?.durationMs,
+        bufferedMs: undefined
+      },
+      activeTrackId: this._track?.id
+    };
+  }
+
+  /** @returns {import("../core/types.mjs").PlayerCapabilities} */
+  getCapabilities() {
+    return {
+      canPlay: true,
+      canPause: true,
+      canStop: true,
+      canSeek: true,
+      canSetRate: true,
+      canSetVolume: true,
+      canMute: true,
+      hasAccurateTime: true,
+      hasAudioPipeline: false, // iframe is isolated
+      hasVideo: true // has visualization
+    };
+  }
+
+  /** @returns {import("../core/types.mjs").PlayerCapabilities} */
+  getCaps() {
+    return this.getCapabilities();
+  }
+
+  on(evt, fn) {
+    this._em.on(evt, fn);
+    return () => this._em.off(evt, fn);
+  }
+
+  off(evt, fn) {
+    this._em.off(evt, fn);
+  }
+
+  async dispose() {
+    this.unmount();
+    this._em.clear();
+    this._track = null;
+    this._pendingCommands = [];
+  }
+
+  _setState(s) {
+    if (this._state === s) return;
+    this._state = s;
+    this._em.emit("state", s);
+  }
+}

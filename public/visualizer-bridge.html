@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Polaris Visualizer Bridge</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html, body {
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: #000;
+      }
+      #visualizer-frame {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        border: none;
+      }
+      #loading {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        font-family: system-ui, -apple-system, sans-serif;
+        font-size: 14px;
+        pointer-events: none;
+        z-index: 1;
+      }
+      #loading.hidden {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="loading">Loading visualizer...</div>
+    <iframe id="visualizer-frame" allow="autoplay"></iframe>
+
+    <script type="module">
+      // This bridge loads the visualizer in a nested iframe and proxies messages between
+      // the Polaris player (parent) and the visualizer (child iframe).
+      
+      const visualizerFrame = document.getElementById('visualizer-frame');
+      const loading = document.getElementById('loading');
+      
+      // Path to the actual visualizer
+      // Option 1: Use Vite dev server (requires 'npm run dev' in visualizer directory)
+      // Add ?autostart=1 to signal auto-initialization
+      const VISUALIZER_PATH = 'http://localhost:5173?autostart=1&hideui=1';
+      // Option 2: Use built version (requires 'npm run build' in visualizer directory, then serve from dist/)
+      // const VISUALIZER_PATH = 'visualizer/dist/index.html?autostart=1&hideui=1';
+      // Option 3: Direct source (won't work - needs Vite to resolve bare imports)
+      // const VISUALIZER_PATH = 'visualizer/index.html?autostart=1&hideui=1';
+      
+      let visualizerReady = false;
+      let visualizerInitialized = false;
+      let audioElement = null;
+      let audioContext = null;
+      let analyserNode = null;
+      let sourceNode = null;
+
+      // Send initialization commands to visualizer via postMessage
+      function initializeVisualizer() {
+        if (visualizerInitialized) return;
+        
+        try {
+          // Use postMessage to communicate with visualizer (works cross-origin)
+          visualizerFrame.contentWindow.postMessage({
+            type: 'BRIDGE_INIT',
+            hideUI: true,
+            autoStart: true
+          }, '*');
+          
+          visualizerInitialized = true;
+          console.log('[Bridge] Sent initialization to visualizer');
+        } catch (err) {
+          console.warn('[Bridge] Could not send init message:', err);
+        }
+      }
+
+      // Create audio element for playback
+      function initAudio() {
+        if (audioElement) {
+          console.log('[Bridge] Audio element already initialized');
+          return;
+        }
+        
+        console.log('[Bridge] Creating audio element...');
+        audioElement = document.createElement('audio');
+        audioElement.crossOrigin = 'anonymous';
+        audioElement.loop = false;
+        audioElement.volume = 0.5;
+        console.log('[Bridge] Audio element created:', audioElement);
+        
+        // Set up Web Audio API for visualization
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        console.log('[Bridge] AudioContext created, state:', audioContext.state);
+        
+        sourceNode = audioContext.createMediaElementSource(audioElement);
+        analyserNode = audioContext.createAnalyser();
+        analyserNode.fftSize = 2048;
+        
+        // Connect: source -> analyser -> destination
+        sourceNode.connect(analyserNode);
+        analyserNode.connect(audioContext.destination);
+        console.log('[Bridge] Audio graph connected: source -> analyser -> destination');
+        
+        // Forward audio events to parent
+        audioElement.addEventListener('ended', () => {
+          notifyParent({ type: 'ENDED' });
+        });
+        
+        audioElement.addEventListener('error', (e) => {
+          notifyParent({ type: 'ERROR', error: 'Audio playback error' });
+        });
+        
+        audioElement.addEventListener('play', () => {
+          notifyParent({ type: 'PLAYING' });
+          
+          // Send playing state to visualizer
+          visualizerFrame.contentWindow.postMessage({
+            type: 'PLAYBACK_STATE',
+            playing: true
+          }, '*');
+          
+          startAudioDataStream(); // Start sending frequency data
+          detectAndSendBPM(); // Detect BPM
+        });
+        
+        audioElement.addEventListener('pause', () => {
+          if (!audioElement.ended) {
+            notifyParent({ type: 'PAUSED' });
+          }
+          
+          // Send paused state to visualizer
+          visualizerFrame.contentWindow.postMessage({
+            type: 'PLAYBACK_STATE',
+            playing: false
+          }, '*');
+        });
+        
+        audioElement.addEventListener('waiting', () => {
+          notifyParent({ type: 'BUFFERING' });
+        });
+        
+        audioElement.addEventListener('canplay', () => {
+          notifyParent({ type: 'READY' });
+        });
+        
+        audioElement.addEventListener('loadedmetadata', () => {
+          notifyParent({ type: 'READY' });
+        });
+      }
+
+      // Send messages to parent (Polaris Player)
+      function notifyParent(message) {
+        if (window.parent && window.parent !== window) {
+          window.parent.postMessage(message, '*');
+        }
+      }
+
+      // Handle commands from parent (Polaris Player)
+      window.addEventListener('message', async (event) => {
+        const msg = event.data;
+        if (!msg || typeof msg !== 'object') return;
+        
+        console.log('[Bridge] Received command:', msg.type, msg);
+
+        // Initialize audio on first command
+        if (!audioElement && msg.type !== 'PING') {
+          console.log('[Bridge] Initializing audio element');
+          initAudio();
+        }
+
+        switch (msg.type) {
+          case 'LOAD_TRACK':
+            if (msg.url && audioElement) {
+              console.log('[Bridge] Loading track:', msg.url);
+              // Stop current playback
+              audioElement.pause();
+              audioElement.currentTime = 0;
+              
+              notifyParent({ type: 'LOADING' });
+              
+              // Load new track
+              audioElement.src = msg.url;
+              audioElement.load();
+            }
+            break;
+
+          case 'PLAY':
+            if (audioElement) {
+              console.log('[Bridge] Playing audio...');
+              
+              // Resume AudioContext if suspended
+              if (audioContext && audioContext.state === 'suspended') {
+                console.log('[Bridge] Resuming suspended AudioContext...');
+                await audioContext.resume();
+                console.log('[Bridge] AudioContext state:', audioContext.state);
+              }
+              
+              try {
+                await audioElement.play();
+                console.log('[Bridge] Audio playing successfully');
+                notifyParent({ type: 'PLAYING' });
+              } catch (err) {
+                console.error('[Bridge] Audio play failed:', err);
+                notifyParent({ type: 'ERROR', error: err.message });
+              }
+            }
+            break;
+
+          case 'PAUSE':
+            if (audioElement) {
+              audioElement.pause();
+              notifyParent({ type: 'PAUSED' });
+            }
+            break;
+
+          case 'STOP':
+            if (audioElement) {
+              audioElement.pause();
+              audioElement.currentTime = 0;
+              notifyParent({ type: 'PAUSED' });
+            }
+            break;
+
+          case 'SEEK':
+            if (audioElement && typeof msg.time === 'number') {
+              audioElement.currentTime = msg.time;
+            }
+            break;
+
+          case 'SET_VOLUME':
+            if (audioElement && typeof msg.volume === 'number') {
+              audioElement.volume = Math.max(0, Math.min(1, msg.volume));
+            }
+            break;
+
+          case 'SET_MUTED':
+            if (audioElement) {
+              audioElement.muted = !!msg.muted;
+            }
+            break;
+
+          case 'SET_RATE':
+            if (audioElement && typeof msg.rate === 'number') {
+              audioElement.playbackRate = msg.rate;
+            }
+            break;
+
+          case 'PING':
+            notifyParent({ type: 'PONG', ready: visualizerReady });
+            break;
+        }
+      });
+
+      // Send periodic time updates to parent
+      setInterval(() => {
+        if (!audioElement) return;
+        
+        notifyParent({
+          type: 'TIME_UPDATE',
+          currentTime: audioElement.currentTime,
+          duration: audioElement.duration || 0
+        });
+      }, 250);
+
+      // Detect BPM from audio and send to visualizer
+      let bpmDetected = false;
+      
+      async function detectAndSendBPM() {
+        if (bpmDetected || !audioContext || !analyserNode) {
+          console.log('[Bridge] BPM detection skipped:', { bpmDetected, hasAudioContext: !!audioContext, hasAnalyser: !!analyserNode });
+          return;
+        }
+        bpmDetected = true;
+        
+        console.log('[Bridge] 🎵 Starting BPM detection from audio...');
+        
+        // Simple BPM detection using beat detection from frequency data
+        const sampleRate = audioContext.sampleRate;
+        const bufferSize = 2048;
+        const data = new Uint8Array(analyserNode.frequencyBinCount);
+        
+        // Collect peaks over 10 seconds
+        const peaks = [];
+        const startTime = Date.now();
+        const duration = 10000; // 10 seconds
+        
+        const detectPeaks = () => {
+          analyserNode.getByteFrequencyData(data);
+          
+          // Calculate energy
+          let sum = 0;
+          for (let i = 0; i < data.length; i++) {
+            sum += data[i];
+          }
+          const energy = sum / data.length;
+          
+          // Record timestamp if energy spike detected (lowered threshold)
+          if (energy > 80) {
+            peaks.push(Date.now());
+          }
+          
+          if (Date.now() - startTime < duration) {
+            setTimeout(detectPeaks, 50); // Sample every 50ms
+          } else {
+            // Calculate BPM from peaks
+            console.log('[Bridge] BPM detection complete. Peaks found:', peaks.length);
+            
+            if (peaks.length > 2) {
+              const intervals = [];
+              for (let i = 1; i < peaks.length; i++) {
+                intervals.push(peaks[i] - peaks[i-1]);
+              }
+              
+              // Calculate average interval
+              const avgInterval = intervals.reduce((a, b) => a + b) / intervals.length;
+              const bpm = Math.round(60000 / avgInterval);
+              
+              console.log('[Bridge] ✓ Detected BPM:', bpm, '(from', peaks.length, 'peaks, avg interval:', Math.round(avgInterval), 'ms)');
+              
+              // Send to visualizer
+              visualizerFrame.contentWindow.postMessage({
+                type: 'BPM_DATA',
+                bpm: bpm
+              }, '*');
+            } else {
+              console.log('[Bridge] ⚠️ Not enough peaks for BPM detection (found', peaks.length, '), using default 120 BPM');
+              visualizerFrame.contentWindow.postMessage({
+                type: 'BPM_DATA',
+                bpm: 120
+              }, '*');
+            }
+          }
+        };
+        
+        detectPeaks();
+      }
+      
+      // Send audio frequency data to visualizer for visualization
+      function streamAudioDataToVisualizer() {
+        if (!analyserNode || !visualizerReady) return;
+        
+        const dataArray = new Uint8Array(analyserNode.frequencyBinCount);
+        analyserNode.getByteFrequencyData(dataArray);
+        
+        // Send to visualizer iframe
+        try {
+          if (!visualizerFrame || !visualizerFrame.contentWindow) {
+            console.warn('[Bridge] Visualizer iframe not ready, skipping data');
+            return;
+          }
+          
+          visualizerFrame.contentWindow.postMessage({
+            type: 'AUDIO_DATA',
+            frequencyData: Array.from(dataArray), // Convert Uint8Array to regular array for postMessage
+            bufferLength: analyserNode.frequencyBinCount
+          }, '*');
+          
+          // Log occasionally to verify streaming
+          if (Math.random() < 0.01) {
+            console.log('[Bridge] Streaming audio data, sample values:', dataArray.slice(0, 5));
+          }
+        } catch (err) {
+          // Ignore errors
+          if (Math.random() < 0.01) {
+            console.error('[Bridge] Error sending audio data:', err);
+          }
+        }
+        
+        requestAnimationFrame(streamAudioDataToVisualizer);
+      }
+      
+      // Start streaming when audio plays
+      function startAudioDataStream() {
+        if (audioElement && !audioElement.paused) {
+          console.log('[Bridge] Starting audio data stream');
+          streamAudioDataToVisualizer();
+        }
+      }
+
+      // Load visualizer in iframe
+      function loadVisualizer() {
+        // Try to load the visualizer
+        visualizerFrame.src = VISUALIZER_PATH;
+        
+        visualizerFrame.addEventListener('load', () => {
+          loading.classList.add('hidden');
+          visualizerReady = true;
+          
+          // Initialize visualizer UI and trigger start
+          initializeVisualizer();
+          
+          notifyParent({ type: 'VISUALIZER_READY' });
+        });
+        
+        visualizerFrame.addEventListener('error', () => {
+          loading.textContent = 'Visualizer not available - check that it exists at: ' + VISUALIZER_PATH;
+          console.warn('[Bridge] Failed to load visualizer from:', VISUALIZER_PATH);
+          // Still notify ready so audio can play even without visuals
+          visualizerReady = true;
+          notifyParent({ type: 'VISUALIZER_READY' });
+        });
+        
+        // Timeout fallback
+        setTimeout(() => {
+          if (!visualizerReady) {
+            loading.textContent = 'Visualizer loading slowly or unavailable';
+            visualizerReady = true;
+            notifyParent({ type: 'VISUALIZER_READY' });
+          }
+        }, 5000);
+      }
+
+      // Auto-initialize
+      if (window.self !== window.top) {
+        // We're in an iframe (called from Polaris)
+        loadVisualizer();
+        
+        // Initialize audio after a short delay
+        setTimeout(() => {
+          initAudio();
+        }, 500);
+      } else {
+        // Standalone mode - just show the visualizer
+        loading.textContent = 'Standalone mode - load this in Polaris player';
+        loadVisualizer();
+      }
+    </script>
+  </body>
+</html>
