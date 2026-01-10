@@ -2479,17 +2479,19 @@
 
       // Expose visualizer control globally for easy toggling
       window.__polarisVisualizer = {
-        enable: () => {
+        enable: async () => {
           visualizerAdapter.setEnabled(true);
           settings = settingsStore.patch({ visualizerEnabled: true });
           if (detailVisualizerCheckbox) detailVisualizerCheckbox.checked = true;
-          console.log('[Polaris] Visualizer enabled. Reload the current track to activate.');
+          await playerHost.reloadCurrentTrack();
+          console.log('[Polaris] Visualizer enabled.');
         },
-        disable: () => {
+        disable: async () => {
           visualizerAdapter.setEnabled(false);
           settings = settingsStore.patch({ visualizerEnabled: false });
           if (detailVisualizerCheckbox) detailVisualizerCheckbox.checked = false;
-          console.log('[Polaris] Visualizer disabled. Reload the current track to use standard video player.');
+          await playerHost.reloadCurrentTrack();
+          console.log('[Polaris] Visualizer disabled.');
         },
         isEnabled: () => visualizerAdapter.isEnabled(),
         status: () => {

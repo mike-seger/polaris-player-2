@@ -55,6 +55,7 @@ export class VisualizerAdapter {
     this._iframe.style.border = "none";
     this._iframe.style.background = "#000";
     this._iframe.allow = "autoplay";
+    this._iframe.style.display = this._enabled ? "block" : "none";
     
     // Set up message handler
     this._messageHandler = (event) => this._handleMessage(event);
@@ -205,6 +206,17 @@ export class VisualizerAdapter {
    */
   setEnabled(enabled) {
     this._enabled = enabled === true;
+    
+    // Update iframe visibility immediately if mounted
+    if (this._iframe) {
+      this._iframe.style.display = this._enabled ? "block" : "none";
+      
+      // Toggle video element visibility (opposite of visualizer)
+      const videoEl = this._container?.querySelector('video');
+      if (videoEl) {
+        videoEl.style.display = this._enabled ? "none" : "block";
+      }
+    }
   }
 
   /**

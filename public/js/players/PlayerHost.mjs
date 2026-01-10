@@ -156,6 +156,24 @@ export class PlayerHost {
     this._em.emit("track", track);
   }
 
+  /**
+   * Reload the current track (used when switching adapters, e.g., toggling visualizer)
+   */
+  async reloadCurrentTrack() {
+    if (!this._activeTrack) return;
+    
+    const wasPlaying = this.active?.getState?.() === 'playing';
+    const currentTime = this.active?.getPositionMs?.() || 0;
+    
+    // Reload with current position
+    await this.load(this._activeTrack, { startMs: currentTime });
+    
+    // Resume playback if it was playing
+    if (wasPlaying) {
+      await this.play();
+    }
+  }
+
   async play() {
     if (!this.active) return;
     this._debugLog('play');
