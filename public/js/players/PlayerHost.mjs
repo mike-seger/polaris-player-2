@@ -185,7 +185,7 @@ export class PlayerHost {
     // Seek to saved position
     if (currentPositionMs > 0) {
       console.log('[PlayerHost] Seeking to:', currentPositionMs);
-      await this.seek(currentPositionMs);
+      await this.seekToMs(currentPositionMs);
     }
     
     // Resume playback if it was playing
