@@ -72,6 +72,12 @@ export class PlayerHost {
       const el = pane && pane.element;
       if (el && el.style) {
         el.style.display = visible ? '' : 'none';
+
+        // Ensure media panes fill the container when shown (fixes half-size YT after toggle)
+        if (visible) {
+          el.style.width = '100%';
+          el.style.height = '100%';
+        }
       }
     } catch {
       /* ignore */
@@ -177,8 +183,8 @@ export class PlayerHost {
       trackEndMs: this._activeTrack.endMs
     });
     
-    // Load track (this will switch adapters if needed, and _switchTo handles cleanup)
-    await this.load(this._activeTrack);
+    // Load track without auto-play; we'll restore play state manually
+    await this.load(this._activeTrack, { autoplay: false });
     
     console.log('[PlayerHost] Loaded on new adapter:', this.active?.name);
     

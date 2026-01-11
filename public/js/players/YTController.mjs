@@ -195,6 +195,17 @@ export class YTController {
       this._mountDiv = document.createElement("div");
       this._mountDiv.className = "yt-iframe-host";
       this._mountDiv.id = `yt-${Math.random().toString(16).slice(2)}`;
+
+      // Ensure the host fills the container so the iframe can be full size
+      const s = this._mountDiv.style;
+      s.position = "absolute";
+      s.inset = "0";
+      s.width = "100%";
+      s.height = "100%";
+      s.display = "flex";
+      s.alignItems = "stretch";
+      s.justifyContent = "stretch";
+
       container.appendChild(this._mountDiv);
       this.elementId = this._mountDiv.id;
     }
