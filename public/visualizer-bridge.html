@@ -140,7 +140,7 @@
           ...vizData,
           timerId: null,
           frameIndex: 0,
-          playing: true
+          playing: false
         };
 
         if (vizData.bpm) {
@@ -148,11 +148,9 @@
         }
 
         notifyParent({ type: 'READY' });
-        notifyParent({ type: 'PLAYING' });
-
         visualizerFrame.contentWindow.postMessage({
           type: 'PLAYBACK_STATE',
-          playing: true
+          playing: false
         }, '*');
 
         const intervalMs = 1000 / Math.max(1, vizData.fps || 30);
@@ -168,11 +166,25 @@
           const start = vizPlayback.frameIndex * vizPlayback.bins;
           const frameData = vizPlayback.data.subarray(start, start + vizPlayback.bins);
 
+          // Expand to 2048 bins so the visualizer sees the same shape as live audio analyser
+          const TARGET_LEN = 2048;
+          let frequencyData;
+          if (vizPlayback.bins === TARGET_LEN) {
+            frequencyData = frameData;
+          } else {
+            const expanded = new Uint8Array(TARGET_LEN);
+            for (let i = 0; i < TARGET_LEN; i++) {
+              const srcIdx = Math.min(vizPlayback.bins - 1, Math.floor(i * vizPlayback.bins / TARGET_LEN));
+              expanded[i] = frameData[srcIdx];
+            }
+            frequencyData = expanded;
+          }
+
           try {
             visualizerFrame.contentWindow.postMessage({
               type: 'AUDIO_DATA',
-              frequencyData: Array.from(frameData),
-              bufferLength: vizPlayback.bins
+              frequencyData: Array.from(frequencyData),
+              bufferLength: TARGET_LEN
             }, '*');
           } catch (err) {
             // Swallow occasional postMessage errors

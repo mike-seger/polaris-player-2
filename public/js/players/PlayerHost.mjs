@@ -95,6 +95,28 @@ export class PlayerHost {
     }
   }
 
+  _isVisualizerOverlayActive(track = this._activeTrack) {
+    if (!this._visualizerAdapter) return false;
+    const isYouTube = track?.source?.kind === 'youtube';
+    if (!isYouTube) return false;
+    const enabled = typeof this._visualizerAdapter.isEnabled === 'function'
+      ? this._visualizerAdapter.isEnabled()
+      : !!this._visualizerAdapter._enabled;
+    return enabled && this.active && this.active.name === 'youtube';
+  }
+
+  _mirrorVisualizer(command, payload = {}) {
+    if (!this._isVisualizerOverlayActive()) return;
+    const v = this._visualizerAdapter;
+    try {
+      switch (command) {
+        case 'play': return v?.play?.();
+        case 'pause': return v?.pause?.();
+        case 'seek': return v?.seekToMs?.(payload.ms ?? 0);
+      }
+    } catch { /* ignore */ }
+  }
+
   /** @returns {import("./core/types.mjs").MediaPane} */
   getMediaPane() {
     if (!this.active) return { kind: "none" };
@@ -265,11 +287,13 @@ export class PlayerHost {
     if (!this.active) return;
     this._debugLog('play');
     await this.active.play();
+    this._mirrorVisualizer('play');
   }
   async pause() {
     if (!this.active) return;
     this._debugLog('pause');
     await this.active.pause();
+    this._mirrorVisualizer('pause');
   }
   async stop() {
     if (!this.active) return;
@@ -280,6 +304,7 @@ export class PlayerHost {
     if (!this.active) return;
     this._debugLog('seekToMs', { ms });
     await this.active.seekToMs(ms);
+    this._mirrorVisualizer('seek', { ms });
   }
   async setVolume(v01) {
     if (!this.active) return;
