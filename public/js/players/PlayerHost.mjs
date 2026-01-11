@@ -15,6 +15,9 @@ export class PlayerHost {
     /** @type {HTMLElement|null} */
     this._container = null;
 
+    /** @type {import("./core/types.mjs").IPlayerAdapter|null} */
+    this._visualizerAdapter = null;
+
     this._em = new Emitter();
     this._unsubs = [];
 
@@ -48,6 +51,9 @@ export class PlayerHost {
     this._container = container instanceof HTMLElement ? container : null;
     if (!this._container) return;
 
+    // Cache visualizer adapter for overlay management
+    this._visualizerAdapter = this.adapters.find(a => a && a.name === 'visualizer');
+
     // Mount all adapters once so we can toggle visibility via display:none.
     for (const a of this.adapters) {
       if (typeof a.mount === 'function') {
@@ -62,6 +68,11 @@ export class PlayerHost {
 
     if (this.active) {
       this._setAdapterVisible(this.active, true);
+    }
+
+    // If a track is already active, sync overlay visibility
+    if (this._activeTrack) {
+      this._updateVisualizerOverlay(this._activeTrack);
     }
   }
 
@@ -160,6 +171,9 @@ export class PlayerHost {
     this._activeTrack = track;
     await this.active.load(track, opts);
     this._em.emit("track", track);
+
+    // Ensure correct overlay visibility after load
+    this._updateVisualizerOverlay(track);
   }
 
   /**
@@ -201,6 +215,30 @@ export class PlayerHost {
       await new Promise(resolve => setTimeout(resolve, 50));
       console.log('[PlayerHost] Resuming playback');
       await this.play();
+    }
+  }
+
+  /**
+   * Show/hide visualizer overlay for YouTube tracks when visualizer is enabled.
+   * Hides the YouTube iframe when overlay is shown.
+   * @private
+   */
+  _updateVisualizerOverlay(track) {
+    if (!this._visualizerAdapter) return;
+
+    const isYouTube = track?.source?.kind === 'youtube';
+    const visualizerEnabled = typeof this._visualizerAdapter.isEnabled === 'function'
+      ? this._visualizerAdapter.isEnabled()
+      : !!this._visualizerAdapter._enabled;
+
+    const showVisualizer = isYouTube && visualizerEnabled;
+
+    // Toggle visualizer pane
+    this._setAdapterVisible(this._visualizerAdapter, showVisualizer);
+
+    // If the active adapter is YouTube, hide it when showing visualizer
+    if (this.active && this.active.name === 'youtube') {
+      this._setAdapterVisible(this.active, !showVisualizer);
     }
   }
 
@@ -279,6 +317,11 @@ export class PlayerHost {
     // Ensure only the selected player is visible.
     for (const a of this.adapters) {
       this._setAdapterVisible(a, a === this.active);
+    }
+
+    // Sync overlay visibility when switching adapters
+    if (this._activeTrack) {
+      this._updateVisualizerOverlay(this._activeTrack);
     }
 
     try {
