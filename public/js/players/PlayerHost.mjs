@@ -183,14 +183,15 @@ export class PlayerHost {
       trackEndMs: this._activeTrack.endMs
     });
     
-    // Load track without auto-play; we'll restore play state manually
-    await this.load(this._activeTrack, { autoplay: false });
+    // Load track; keep autoplay aligned with prior state and start from saved position
+    await this.load(this._activeTrack, { autoplay: wasPlaying, startMs: currentPositionMs });
     
     console.log('[PlayerHost] Loaded on new adapter:', this.active?.name);
     
-    // Seek to saved position
+    // Seek to saved position (wait a moment so YouTube is ready to accept seeks)
     if (currentPositionMs > 0) {
       console.log('[PlayerHost] Seeking to:', currentPositionMs);
+      await new Promise(resolve => setTimeout(resolve, 150));
       await this.seekToMs(currentPositionMs);
     }
     
