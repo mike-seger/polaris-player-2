@@ -234,17 +234,38 @@ export class VisualizerAdapter {
     this._positionMs = 0;
     this._durationMs = track?.durationMs;
 
-    if (!track || !track.source || track.source.kind !== "file") {
-      this._setState("idle");
+    // Only handle local/file playback when we are the active adapter
+    if (track && track.source && track.source.kind === "file") {
+      const url = track.source.url;
+      this._postCommand({ type: "LOAD_TRACK", url, trackId: track.id });
       return;
     }
 
-    const url = track.source.url;
+    // If invoked for non-file tracks, keep idle state (used only for overlay support)
+    this._setState("idle");
+  }
+
+  /**
+   * Load visualization data for a YouTube track (overlay mode). No audio is loaded here.
+   * @param {import("../core/types.mjs").Track} track
+   */
+  loadVisualization(track) {
+    if (!this._enabled) return;
+    if (!track || track.source?.kind !== 'youtube') return;
+    const vizUrl = track.visualizer;
+    if (!vizUrl) return;
+
     this._postCommand({
-      type: "LOAD_TRACK",
-      url: url,
+      type: 'LOAD_TRACK',
+      vizUrl,
       trackId: track.id
     });
+  }
+
+  /** Stop any visualization when overlay is hidden */
+  stopVisualization() {
+    if (!this._enabled) return;
+    this._postCommand({ type: 'STOP' });
   }
 
   async play() {

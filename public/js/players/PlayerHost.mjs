@@ -248,6 +248,17 @@ export class PlayerHost {
     if (this.active && this.active.name === 'youtube') {
       this._setAdapterVisible(this.active, !showVisualizer);
     }
+
+    // When showing overlay for YouTube, request viz data load; stop when hiding
+    if (showVisualizer) {
+      if (typeof this._visualizerAdapter.loadVisualization === 'function') {
+        try { this._visualizerAdapter.loadVisualization(track); } catch { /* ignore */ }
+      }
+    } else {
+      if (typeof this._visualizerAdapter.stopVisualization === 'function') {
+        try { this._visualizerAdapter.stopVisualization(); } catch { /* ignore */ }
+      }
+    }
   }
 
   async play() {

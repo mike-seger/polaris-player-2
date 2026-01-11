@@ -2375,6 +2375,7 @@
       const track = {
         id: videoId,
         title: item?.userTitle || item?.title || '',
+        visualizer: item?.visualizer || undefined,
         source: (mode === 'local')
           ? { kind: 'file', url: buildLocalVideoUrlForItem(item) }
           : (mode === 'spotify')
