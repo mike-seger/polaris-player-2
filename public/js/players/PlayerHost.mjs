@@ -231,6 +231,14 @@ export class PlayerHost {
       ? this._visualizerAdapter.isEnabled()
       : !!this._visualizerAdapter._enabled;
 
+    // Only manage overlay for YouTube tracks; do not hide visualizer when it is the active adapter (HTML/local playback).
+    if (!isYouTube) {
+      if (this.active === this._visualizerAdapter) {
+        this._setAdapterVisible(this._visualizerAdapter, true);
+      }
+      return;
+    }
+
     const showVisualizer = isYouTube && visualizerEnabled;
 
     // Toggle visualizer pane
