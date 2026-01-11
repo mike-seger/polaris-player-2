@@ -66,6 +66,8 @@
       let audioContext = null;
       let analyserNode = null;
       let sourceNode = null;
+      let vizPlayback = null;
+      let vizLoadToken = 0;
 
       // Send initialization commands to visualizer via postMessage
       function initializeVisualizer() {
@@ -84,6 +86,129 @@
         } catch (err) {
           console.warn('[Bridge] Could not send init message:', err);
         }
+      }
+
+      // Parse .viz precomputed visualization files
+      function parseVizBuffer(buffer) {
+        const view = new DataView(buffer);
+        if (view.byteLength < 28) throw new Error('Visualization file too small');
+
+        const magic = String.fromCharCode(...new Uint8Array(buffer.slice(0, 4)));
+        if (magic !== 'VIZ1') throw new Error('Invalid visualization header');
+
+        const fps = view.getUint8(5) || 30;
+        const bins = view.getUint16(6, true);
+        const frames = view.getUint32(8, true);
+        const duration = view.getFloat32(12, true) || (frames / Math.max(1, fps));
+        const bpm = view.getUint16(16, true);
+
+        const dataOffset = 28;
+        const expectedLength = frames * bins;
+        if (view.byteLength < dataOffset + expectedLength) {
+          throw new Error('Visualization data incomplete');
+        }
+
+        const data = new Uint8Array(buffer, dataOffset, expectedLength);
+        return { fps, bins, frames, duration, bpm, data };
+      }
+
+      function stopVizPlayback({ ended = false, silent = false } = {}) {
+        if (vizPlayback?.timerId) {
+          clearInterval(vizPlayback.timerId);
+        }
+
+        if (visualizerFrame?.contentWindow) {
+          visualizerFrame.contentWindow.postMessage({
+            type: 'PLAYBACK_STATE',
+            playing: false
+          }, '*');
+        }
+
+        if (!silent) {
+          notifyParent({ type: ended ? 'ENDED' : 'PAUSED' });
+        }
+
+        vizPlayback = null;
+      }
+
+      function startVizPlayback(vizData) {
+        if (!vizData || !visualizerFrame?.contentWindow) return;
+
+        stopVizPlayback({ silent: true });
+
+        vizPlayback = {
+          ...vizData,
+          timerId: null,
+          frameIndex: 0,
+          playing: true
+        };
+
+        if (vizData.bpm) {
+          visualizerFrame.contentWindow.postMessage({ type: 'BPM_DATA', bpm: vizData.bpm }, '*');
+        }
+
+        notifyParent({ type: 'READY' });
+        notifyParent({ type: 'PLAYING' });
+
+        visualizerFrame.contentWindow.postMessage({
+          type: 'PLAYBACK_STATE',
+          playing: true
+        }, '*');
+
+        const intervalMs = 1000 / Math.max(1, vizData.fps || 30);
+
+        vizPlayback.timerId = setInterval(() => {
+          if (!vizPlayback || !vizPlayback.playing) return;
+
+          if (vizPlayback.frameIndex >= vizPlayback.frames) {
+            stopVizPlayback({ ended: true });
+            return;
+          }
+
+          const start = vizPlayback.frameIndex * vizPlayback.bins;
+          const frameData = vizPlayback.data.subarray(start, start + vizPlayback.bins);
+
+          try {
+            visualizerFrame.contentWindow.postMessage({
+              type: 'AUDIO_DATA',
+              frequencyData: Array.from(frameData),
+              bufferLength: vizPlayback.bins
+            }, '*');
+          } catch (err) {
+            // Swallow occasional postMessage errors
+          }
+
+          vizPlayback.frameIndex += 1;
+        }, intervalMs);
+      }
+
+      async function loadVizFromUrl(vizUrl) {
+        const token = ++vizLoadToken;
+        stopVizPlayback({ silent: true });
+
+        notifyParent({ type: 'LOADING' });
+
+        try {
+          const res = await fetch(vizUrl, { cache: 'force-cache' });
+          if (!res.ok) throw new Error(`Failed to fetch viz (${res.status})`);
+
+          const buffer = await res.arrayBuffer();
+          if (token !== vizLoadToken) return; // superseded
+
+          const vizData = parseVizBuffer(buffer);
+          startVizPlayback(vizData);
+        } catch (err) {
+          if (token !== vizLoadToken) return;
+          console.warn('[Bridge] Visualization load failed:', err);
+          notifyParent({ type: 'ERROR', error: err?.message || 'Visualization load failed' });
+        }
+      }
+
+      function messageNeedsAudio(msg) {
+        if (!msg || typeof msg !== 'object') return false;
+        if (msg.type === 'LOAD_TRACK') return !!msg.url;
+        const audioCommands = ['PLAY', 'PAUSE', 'STOP', 'SEEK', 'SET_VOLUME', 'SET_MUTED', 'SET_RATE'];
+        return audioCommands.includes(msg.type) && !!audioElement;
       }
 
       // Create audio element for playback
@@ -175,13 +300,19 @@
         console.log('[Bridge] Received command:', msg.type, msg);
 
         // Initialize audio on first command
-        if (!audioElement && msg.type !== 'PING') {
+        if (!audioElement && messageNeedsAudio(msg)) {
           console.log('[Bridge] Initializing audio element');
           initAudio();
         }
 
         switch (msg.type) {
           case 'LOAD_TRACK':
+            if (msg.vizUrl) {
+              loadVizFromUrl(msg.vizUrl);
+            } else if (vizPlayback) {
+              stopVizPlayback({ silent: true });
+            }
+
             if (msg.url && audioElement) {
               console.log('[Bridge] Loading track:', msg.url);
               // Stop current playback
@@ -197,6 +328,12 @@
             break;
 
           case 'PLAY':
+            if (vizPlayback) {
+              vizPlayback.playing = true;
+              visualizerFrame.contentWindow.postMessage({ type: 'PLAYBACK_STATE', playing: true }, '*');
+              notifyParent({ type: 'PLAYING' });
+            }
+
             if (audioElement) {
               console.log('[Bridge] Playing audio...');
               
@@ -219,6 +356,12 @@
             break;
 
           case 'PAUSE':
+            if (vizPlayback) {
+              vizPlayback.playing = false;
+              visualizerFrame.contentWindow.postMessage({ type: 'PLAYBACK_STATE', playing: false }, '*');
+              notifyParent({ type: 'PAUSED' });
+            }
+
             if (audioElement) {
               audioElement.pause();
               notifyParent({ type: 'PAUSED' });
@@ -226,6 +369,9 @@
             break;
 
           case 'STOP':
+            if (vizPlayback) {
+              stopVizPlayback();
+            }
             if (audioElement) {
               audioElement.pause();
               audioElement.currentTime = 0;
@@ -234,6 +380,17 @@
             break;
 
           case 'SEEK':
+            if (vizPlayback && typeof msg.time === 'number') {
+              const targetFrame = Math.max(0, Math.min(vizPlayback.frames - 1, Math.round(msg.time * Math.max(1, vizPlayback.fps || 30))));
+              vizPlayback.frameIndex = targetFrame;
+              notifyParent({
+                type: 'TIME_UPDATE',
+                currentTime: targetFrame / Math.max(1, vizPlayback.fps || 30),
+                duration: vizPlayback.duration || (vizPlayback.frames / Math.max(1, vizPlayback.fps || 30))
+              });
+              break;
+            }
+
             if (audioElement && typeof msg.time === 'number') {
               audioElement.currentTime = msg.time;
             }
@@ -265,6 +422,13 @@
 
       // Send periodic time updates to parent
       setInterval(() => {
+        if (vizPlayback) {
+          const duration = vizPlayback.duration || (vizPlayback.frames / Math.max(1, vizPlayback.fps || 30));
+          const currentTime = vizPlayback.frameIndex / Math.max(1, vizPlayback.fps || 30);
+          notifyParent({ type: 'TIME_UPDATE', currentTime, duration });
+          return;
+        }
+
         if (!audioElement) return;
         
         notifyParent({
