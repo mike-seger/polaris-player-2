@@ -49,6 +49,13 @@
       // the Polaris player (parent) and the visualizer (child iframe).
       
       const visualizerFrame = document.getElementById('visualizer-frame');
+      if (visualizerFrame) {
+        visualizerFrame.tabIndex = -1; // avoid stealing focus/keyboard
+        visualizerFrame.addEventListener('load', () => {
+          try { visualizerFrame.blur(); } catch { /* ignore */ }
+          try { window.focus(); } catch { /* ignore */ }
+        });
+      }
       const loading = document.getElementById('loading');
       
       // Path to the actual visualizer

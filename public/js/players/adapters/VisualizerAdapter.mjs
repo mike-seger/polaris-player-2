@@ -48,6 +48,11 @@ export class VisualizerAdapter {
     
     // Only enable if explicitly requested via options
     this._enabled = options.enabled === true;
+
+    // When true, this adapter will own playback for local/file tracks.
+    // Default true to preserve existing behavior (visualizer drives local playback); set
+    // primaryForLocal: false when constructing to force HTML video to remain primary.
+    this._primaryForLocal = options.primaryForLocal !== false;
   }
 
   /** @param {HTMLElement} container */
@@ -238,7 +243,7 @@ export class VisualizerAdapter {
    * @returns {boolean}
    */
   supports(kind) {
-    return this._enabled && kind === "file";
+    return this._enabled && this._primaryForLocal && kind === "file";
   }
 
   /** @param {import("../core/types.mjs").Track} track */
@@ -283,12 +288,14 @@ export class VisualizerAdapter {
     return this._enabled;
   }
 
-  /** @param {import("../core/types.mjs").Track} track */
-  async load(track) {
+  /** @param {import("../core/types.mjs").Track} track @param {import("../core/types.mjs").AdapterLoadOptions=} opts */
+  async load(track, opts = {}) {
     this._track = track;
     this._setState("loading");
     this._positionMs = 0;
     this._durationMs = track?.durationMs;
+
+    const autoplay = opts && opts.autoplay === true;
 
     this._resumeState = this._loadResumeState(track);
 
@@ -303,9 +310,11 @@ export class VisualizerAdapter {
       if (r && typeof r.positionMs === 'number' && r.positionMs > 500) {
         const seekSeconds = r.positionMs / 1000;
         this._postCommand({ type: "SEEK", time: seekSeconds });
-        if (r.playing) {
+        if (r.playing || autoplay) {
           this._postCommand({ type: "PLAY" });
         }
+      } else if (autoplay) {
+        this._postCommand({ type: "PLAY" });
       }
       return;
     }

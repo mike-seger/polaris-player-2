@@ -3166,6 +3166,9 @@
     }
 
     function playIndex(idx, options = {}) {
+      if (window && window.__POLARIS_DEBUG_PLAYER_COMMANDS__) {
+        console.debug('[polaris] playIndex', { idx, currentIndex, mode: getPlayerMode(), item: playlistItems[idx] });
+      }
       if (!playerHost || !playlistItems[idx]) return;
 
       clearPendingYtEmbedError150Skip();
@@ -3215,6 +3218,9 @@
       // should *not* reload the player (which causes an audible break). Just seek.
       if (!sameIndex && isSameUnderlyingMedia && (getPlayerMode() === 'youtube' || getPlayerMode() === 'local')) {
         const dbg = (typeof window !== 'undefined' && !!window.__POLARIS_DEBUG_PLAYER_COMMANDS__);
+        if (dbg) {
+          console.debug('[polaris] chapter switch (same media)', { previousIndex, nextIndex: idx, targetUnderlyingKey });
+        }
 
         // Capture current absolute media time before we change anything.
         let absPosMsBefore = 0;
@@ -3365,6 +3371,9 @@
           })
           .catch((err) => console.error('Player load error:', err));
       } else {
+        if (window && window.__POLARIS_DEBUG_PLAYER_COMMANDS__) {
+          console.debug('[polaris] host.load', { idx, autoplay: true, item: playlistItems[idx] });
+        }
         void playerHost.load(buildTrackFromPlaylistItem(playlistItems[idx], idx), { autoplay: true })
           .then(() => applyConfiguredVolumeToHost())
           .catch((err) => console.error('Player load error:', err));
