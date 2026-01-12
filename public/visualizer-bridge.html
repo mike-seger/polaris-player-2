@@ -590,8 +590,18 @@
       function streamAudioDataToVisualizer() {
         if (!analyserNode || !visualizerReady) return;
         
-        const dataArray = new Uint8Array(analyserNode.frequencyBinCount);
-        analyserNode.getByteFrequencyData(dataArray);
+        const freqArray = new Uint8Array(analyserNode.frequencyBinCount);
+        const timeArray = new Uint8Array(analyserNode.fftSize || analyserNode.frequencyBinCount);
+        analyserNode.getByteFrequencyData(freqArray);
+        analyserNode.getByteTimeDomainData(timeArray);
+
+        // Compute a lightweight RMS for consumers that want loudness.
+        let rms = 0;
+        for (let i = 0; i < timeArray.length; i++) {
+          const v = (timeArray[i] - 128) / 128; // -1..1
+          rms += v * v;
+        }
+        rms = timeArray.length ? Math.sqrt(rms / timeArray.length) : 0;
         
         // Send to visualizer iframe
         try {
@@ -602,8 +612,11 @@
           
           visualizerFrame.contentWindow.postMessage({
             type: 'AUDIO_DATA',
-            frequencyData: Array.from(dataArray), // Convert Uint8Array to regular array for postMessage
-            bufferLength: analyserNode.frequencyBinCount
+            frequencyData: Array.from(freqArray), // Convert Uint8Array to regular array for postMessage
+            timeData: Array.from(timeArray),
+            bufferLength: analyserNode.frequencyBinCount,
+            timeLength: timeArray.length,
+            rms
           }, '*');
         } catch (err) {
           // Ignore errors

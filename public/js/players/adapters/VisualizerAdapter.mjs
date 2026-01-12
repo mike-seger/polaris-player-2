@@ -295,7 +295,8 @@ export class VisualizerAdapter {
     // Only handle local/file playback when we are the active adapter
     if (track && track.source && track.source.kind === "file") {
       const url = track.source.url;
-      this._postCommand({ type: "LOAD_TRACK", url, trackId: track.id });
+      const vizUrl = track.visualizer;
+      this._postCommand({ type: "LOAD_TRACK", url, vizUrl, trackId: track.id });
 
       // Apply resume if available
       const r = this._resumeState;
