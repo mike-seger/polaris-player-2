@@ -71,6 +71,11 @@ export class PlaylistDataSource {
       getSpotifyLocalDeviceId,
       getOutputVolume01,
       setOutputVolume01,
+
+      listVisualizerModules,
+      setVisualizerModule,
+      subscribeVisualizerModules,
+      isVisualizerEnabled,
     } = options;
 
     this.statusEndpoint = statusEndpoint;
@@ -144,6 +149,12 @@ export class PlaylistDataSource {
     this.getSpotifyLocalDeviceId = typeof getSpotifyLocalDeviceId === 'function' ? getSpotifyLocalDeviceId : () => '';
     this.getOutputVolume01 = typeof getOutputVolume01 === 'function' ? getOutputVolume01 : () => 0.3;
     this.setOutputVolume01 = typeof setOutputVolume01 === 'function' ? setOutputVolume01 : () => {};
+
+    // Visualizer hooks
+    this.listVisualizerModules = typeof listVisualizerModules === 'function' ? listVisualizerModules : null;
+    this.setVisualizerModule = typeof setVisualizerModule === 'function' ? setVisualizerModule : null;
+    this.subscribeVisualizerModules = typeof subscribeVisualizerModules === 'function' ? subscribeVisualizerModules : null;
+    this.isVisualizerEnabled = typeof isVisualizerEnabled === 'function' ? isVisualizerEnabled : null;
   }
 
   setupPlaylistOverlay({ onLoadPlaylist } = {}) {
@@ -202,6 +213,11 @@ export class PlaylistDataSource {
       getSpotifyLocalDeviceId: () => this.getSpotifyLocalDeviceId(),
       getOutputVolume01: () => this.getOutputVolume01(),
       setOutputVolume01: (v01) => this.setOutputVolume01(v01),
+
+      listVisualizerModules: () => this.listVisualizerModules?.() ?? { modules: [], active: null },
+      setVisualizerModule: (name) => this.setVisualizerModule?.(name),
+      subscribeVisualizerModules: (fn) => this.subscribeVisualizerModules?.(fn) ?? (() => {}),
+      isVisualizerEnabled: () => this.isVisualizerEnabled?.() === true,
 
       resetUserSettings: () => this.resetUserSettings(),
       onLoad: async ({ playlistId, forceRefresh }) => {

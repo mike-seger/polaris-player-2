@@ -69,6 +69,22 @@
       let sourceNode = null;
       let vizPlayback = null;
       let vizLoadToken = 0;
+      let moduleListReceived = false;
+      let modulePollTimer = null;
+
+      function requestModuleList() {
+        try {
+          const child = visualizerFrame?.contentWindow;
+          if (!child) {
+            if (Math.random() < 0.1) console.warn('[Bridge] Module list request skipped; child window missing');
+            return;
+          }
+          child.postMessage({ type: 'LIST_MODULES' }, '*');
+          if (Math.random() < 0.2) console.log('[Bridge] → LIST_MODULES sent');
+        } catch (err) {
+          if (Math.random() < 0.1) console.warn('[Bridge] Module list request failed:', err);
+        }
+      }
 
       // Send initialization commands to visualizer via postMessage
       function initializeVisualizer() {
@@ -84,6 +100,8 @@
           
           visualizerInitialized = true;
           console.log('[Bridge] Sent initialization to visualizer');
+          // Also prime module list right away
+          requestModuleList();
         } catch (err) {
           console.warn('[Bridge] Could not send init message:', err);
         }
@@ -305,10 +323,41 @@
         }
       }
 
+      function handleVisualizerMessage(msg) {
+        if (!msg || typeof msg !== 'object') return;
+        switch (msg.type) {
+          case 'MODULE_LIST':
+            moduleListReceived = true;
+            console.log('[Bridge] ← MODULE_LIST', msg);
+            notifyParent({
+              type: 'VISUALIZER_MODULES',
+              modules: Array.isArray(msg.modules) ? msg.modules : [],
+              active: msg.active || null
+            });
+            break;
+          case 'MODULE_SET':
+            moduleListReceived = true;
+            console.log('[Bridge] ← MODULE_SET', msg);
+            notifyParent({
+              type: 'VISUALIZER_MODULE_SET',
+              ok: msg.ok === true,
+              active: msg.active || null,
+              modules: Array.isArray(msg.modules) ? msg.modules : []
+            });
+            break;
+        }
+      }
+
       // Handle commands from parent (Polaris Player)
       window.addEventListener('message', async (event) => {
         const msg = event.data;
         if (!msg || typeof msg !== 'object') return;
+
+        const fromVisualizer = event.source === visualizerFrame?.contentWindow;
+        if (fromVisualizer) {
+          handleVisualizerMessage(msg);
+          return;
+        }
         
         console.log('[Bridge] Received command:', msg.type, msg);
 
@@ -429,6 +478,19 @@
 
           case 'PING':
             notifyParent({ type: 'PONG', ready: visualizerReady });
+            break;
+
+          case 'LIST_VISUALIZER_MODULES':
+            console.log('[Bridge] Received LIST_VISUALIZER_MODULES from parent');
+            requestModuleList();
+            break;
+
+          case 'SET_VISUALIZER_MODULE':
+            try {
+              visualizerFrame?.contentWindow?.postMessage({ type: 'SET_MODULE', module: msg.module }, '*');
+            } catch (err) {
+              console.warn('[Bridge] Failed to switch module:', err);
+            }
             break;
         }
       });
@@ -572,6 +634,18 @@
           
           // Initialize visualizer UI and trigger start
           initializeVisualizer();
+          // Proactively fetch module list for robustness
+          requestModuleList();
+          if (modulePollTimer) clearInterval(modulePollTimer);
+          modulePollTimer = setInterval(() => {
+            if (moduleListReceived) {
+              clearInterval(modulePollTimer);
+              modulePollTimer = null;
+              return;
+            }
+            if (Math.random() < 0.2) console.log('[Bridge] polling module list...');
+            requestModuleList();
+          }, 1000);
           
           notifyParent({ type: 'VISUALIZER_READY' });
         });

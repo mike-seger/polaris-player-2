@@ -33,6 +33,12 @@ export class VisualizerAdapter {
     // Queue commands sent before iframe is ready
     this._pendingCommands = [];
 
+    // Visualizer module metadata
+    this._modules = [];
+    this._activeModule = null;
+    this._pendingModuleResolvers = [];
+    this._pendingModuleSetResolvers = [];
+
     // Path to the visualizer bridge HTML (relative to public/)
     this._visualizerPath = options.visualizerPath || "./visualizer-bridge.html";
     
@@ -93,6 +99,8 @@ export class VisualizerAdapter {
       case "VISUALIZER_READY":
         this._iframeReady = true;
         this._flushPendingCommands();
+        this._requestModuleList();
+        console.log('[VisualizerAdapter] VISUALIZER_READY');
         break;
 
       case "TIME_UPDATE":
@@ -134,6 +142,28 @@ export class VisualizerAdapter {
         this._setState("error");
         this._em.emit("error", { message: msg.error || "Visualizer error" });
         break;
+
+      case "VISUALIZER_MODULES": {
+        console.log('[VisualizerAdapter] VISUALIZER_MODULES', msg);
+        const modules = Array.isArray(msg.modules) ? msg.modules.map(String) : [];
+        const active = typeof msg.active === 'string' ? msg.active : (modules[0] || null);
+        this._modules = modules;
+        this._activeModule = active;
+        this._em.emit('modules', { modules, active });
+        this._resolvePendingModuleRequests({ modules, active });
+        break;
+      }
+
+      case "VISUALIZER_MODULE_SET": {
+        console.log('[VisualizerAdapter] VISUALIZER_MODULE_SET', msg);
+        const modules = Array.isArray(msg.modules) ? msg.modules.map(String) : this._modules;
+        const active = typeof msg.active === 'string' ? msg.active : this._activeModule;
+        this._modules = modules;
+        this._activeModule = active;
+        this._em.emit('modules', { modules, active });
+        this._resolvePendingModuleSetRequests(msg.ok !== false, { modules, active });
+        break;
+      }
     }
   }
 
@@ -163,6 +193,24 @@ export class VisualizerAdapter {
     while (this._pendingCommands.length > 0) {
       const cmd = this._pendingCommands.shift();
       this._postCommand(cmd);
+    }
+  }
+
+  _requestModuleList() {
+    this._postCommand({ type: 'LIST_VISUALIZER_MODULES' });
+  }
+
+  _resolvePendingModuleRequests(payload) {
+    const resolvers = this._pendingModuleResolvers.splice(0);
+    for (const resolve of resolvers) {
+      try { resolve(payload); } catch { /* ignore */ }
+    }
+  }
+
+  _resolvePendingModuleSetRequests(ok, payload) {
+    const resolvers = this._pendingModuleSetResolvers.splice(0);
+    for (const resolve of resolvers) {
+      try { resolve({ ok, ...(payload || {}) }); } catch { /* ignore */ }
     }
   }
 
@@ -299,6 +347,41 @@ export class VisualizerAdapter {
   async setRate(r) {
     this._rate = Number(r) || 1;
     this._postCommand({ type: "SET_RATE", rate: this._rate });
+  }
+
+  async listModules() {
+    return new Promise((resolve) => {
+      const timeout = setTimeout(() => {
+        resolve({ modules: [...this._modules], active: this._activeModule });
+      }, 1500);
+
+      this._pendingModuleResolvers.push((payload) => {
+        clearTimeout(timeout);
+        resolve(payload || { modules: [...this._modules], active: this._activeModule });
+      });
+
+      this._requestModuleList();
+    });
+  }
+
+  async setModule(name) {
+    const target = typeof name === 'string' ? name : '';
+    if (!target) return false;
+
+    return new Promise((resolve) => {
+      const timeout = setTimeout(() => resolve(false), 1500);
+
+      this._pendingModuleSetResolvers.push((payload) => {
+        clearTimeout(timeout);
+        resolve(payload?.ok !== false);
+      });
+
+      this._postCommand({ type: 'SET_VISUALIZER_MODULE', module: target });
+    });
+  }
+
+  getModules() {
+    return { modules: [...this._modules], active: this._activeModule };
   }
 
   /** @returns {import("../core/types.mjs").PlaybackInfo} */

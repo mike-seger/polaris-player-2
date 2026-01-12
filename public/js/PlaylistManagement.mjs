@@ -1,6 +1,7 @@
   import { getYtEmbedError150Map, downloadTextAsFile } from './ErrorLists.mjs';
 
   function initPlaylistIO(options = {}) {
+    console.log('[PlaylistIO] init loaded');
     const {
       triggerElement,
       getPlaylistId = () => '',
@@ -21,9 +22,12 @@
       getSpotifyLocalDeviceId = () => '',
       getOutputVolume01 = () => 0.3,
       setOutputVolume01 = () => {},
-      getPlaylistItems = () => []
+      getPlaylistItems = () => [],
+      listVisualizerModules = async () => ({ modules: [], active: null }),
+      setVisualizerModule = async () => false,
+      subscribeVisualizerModules = () => () => {},
+      isVisualizerEnabled = () => false
     } = options;
-
     const LAST_OPEN_SECTION_KEY = 'polaris.playlistio.lastOpenSectionId.v1';
     const SPOTIFY_ARTWORK_CACHE_KEY = 'polaris.spotify.artwork.v1';
     const SPOTIFY_ARTWORK_CACHE_TTL_MS = 1000 * 60 * 60 * 24 * 30; // keep in sync with SpotifyAdapter
@@ -65,7 +69,16 @@
       errorListsCopyBtn: null,
       errorListsSaveBtn: null,
       errorListsTableBody: null,
-      errorListsOrderedRows: []
+      errorListsOrderedRows: [],
+
+      visualizerList: null,
+      visualizerStatus: null,
+      visualizerRefreshBtn: null,
+      visualizerModules: [],
+      visualizerActive: null,
+      visualizerSelectedIndex: -1,
+      visualizerUnsub: null,
+      visualizerLoading: false
     };
 
     function refreshErrorListsView() {
@@ -364,6 +377,261 @@
       }
     }
 
+    function setVisualizerLoading(isLoading) {
+      state.visualizerLoading = Boolean(isLoading);
+      if (state.visualizerRefreshBtn) {
+        state.visualizerRefreshBtn.disabled = state.visualizerLoading;
+        state.visualizerRefreshBtn.style.opacity = state.visualizerLoading ? '0.6' : '1';
+        state.visualizerRefreshBtn.style.cursor = state.visualizerLoading ? 'not-allowed' : 'pointer';
+      }
+      if (state.visualizerList) {
+        state.visualizerList.setAttribute('aria-busy', String(state.visualizerLoading));
+        state.visualizerList.style.opacity = state.visualizerLoading ? '0.6' : '1';
+        state.visualizerList.style.pointerEvents = state.visualizerLoading ? 'none' : 'auto';
+      }
+    }
+
+    function setVisualizerStatus(message, tone = 'neutral') {
+      if (!state.visualizerStatus) return;
+      const text = String(message || '');
+      state.visualizerStatus.textContent = text;
+      if (tone === 'error') {
+        state.visualizerStatus.style.color = '#ff8080';
+      } else if (tone === 'success') {
+        state.visualizerStatus.style.color = '#7ddc8c';
+      } else {
+        state.visualizerStatus.style.color = '#a8b3c7';
+      }
+    }
+
+    function getVisualizerEnabled() {
+      try { return isVisualizerEnabled() === true; } catch { return false; }
+    }
+
+    function syncVisualizerState(payload = {}) {
+      const modules = Array.isArray(payload.modules) ? payload.modules.map(String) : [];
+      const active = typeof payload.active === 'string' ? payload.active : (modules[0] || null);
+
+      console.log('[PlaylistIO] syncVisualizerState', { modulesCount: modules.length, active });
+
+      state.visualizerModules = modules;
+      state.visualizerActive = active;
+
+      let nextSelected = state.visualizerSelectedIndex;
+      if (nextSelected < 0 || nextSelected >= modules.length) {
+        nextSelected = modules.findIndex((m) => m === active);
+        if (nextSelected < 0 && modules.length) nextSelected = 0;
+      }
+      state.visualizerSelectedIndex = nextSelected;
+      renderVisualizerList();
+    }
+
+    function renderVisualizerList() {
+      const listEl = state.visualizerList;
+      if (!listEl) return;
+
+      listEl.textContent = '';
+      const modules = Array.isArray(state.visualizerModules) ? state.visualizerModules : [];
+      const active = typeof state.visualizerActive === 'string' ? state.visualizerActive : null;
+      const selectedIndex = state.visualizerSelectedIndex;
+
+      console.log('[PlaylistIO] renderVisualizerList', { count: modules.length, active, selectedIndex });
+
+      if (!modules.length) {
+        const empty = document.createElement('div');
+        empty.textContent = 'No modules reported yet.';
+        empty.style.color = '#6c7488';
+        empty.style.fontSize = '0.82rem';
+        empty.style.padding = '0.35rem 0.45rem';
+        listEl.appendChild(empty);
+        return;
+      }
+
+      modules.forEach((name, idx) => {
+        const row = document.createElement('div');
+        row.dataset.visualizerIndex = String(idx);
+        row.setAttribute('role', 'option');
+        row.setAttribute('aria-selected', String(idx === selectedIndex));
+        row.style.display = 'flex';
+        row.style.alignItems = 'center';
+        row.style.gap = '0.5rem';
+        row.style.padding = '0.45rem 0.55rem';
+        row.style.borderRadius = '6px';
+        row.style.cursor = 'pointer';
+        row.style.transition = 'background-color 120ms ease, border-color 120ms ease';
+        row.style.border = '1px solid transparent';
+        row.style.background = idx === selectedIndex ? '#242b3a' : '#161b25';
+        row.style.color = '#f5f7fa';
+
+        row.addEventListener('click', () => handleVisualizerRowClick(idx));
+
+        const label = document.createElement('div');
+        label.textContent = name || '(unnamed)';
+        label.style.flex = '1 1 auto';
+        label.style.minWidth = '0';
+        label.style.fontSize = '0.9rem';
+        label.style.fontWeight = '600';
+        label.style.letterSpacing = '0.02em';
+        label.style.color = '#f5f7fa';
+
+        const badge = document.createElement('span');
+        badge.style.flex = '0 0 auto';
+        badge.style.fontSize = '0.75rem';
+        badge.style.padding = '0.1rem 0.45rem';
+        badge.style.borderRadius = '999px';
+        badge.style.border = '1px solid #394150';
+        badge.style.background = '#1f2532';
+        badge.style.color = '#a8b3c7';
+        badge.textContent = idx === selectedIndex ? 'selected' : '';
+        badge.style.visibility = idx === selectedIndex ? 'visible' : 'hidden';
+
+        const activeBadge = document.createElement('span');
+        activeBadge.style.flex = '0 0 auto';
+        activeBadge.style.fontSize = '0.75rem';
+        activeBadge.style.padding = '0.1rem 0.45rem';
+        activeBadge.style.borderRadius = '999px';
+        activeBadge.style.border = '1px solid #556384';
+        activeBadge.style.background = '#2d374b';
+        activeBadge.style.color = '#d7e3ff';
+        activeBadge.textContent = name === active ? 'active' : '';
+        activeBadge.style.visibility = name === active ? 'visible' : 'hidden';
+
+        row.appendChild(label);
+        row.appendChild(badge);
+        row.appendChild(activeBadge);
+        listEl.appendChild(row);
+      });
+
+      const focusable = listEl.querySelector('[data-visualizer-index="' + selectedIndex + '"]');
+      if (focusable instanceof HTMLElement) {
+        focusable.scrollIntoView({ block: 'nearest' });
+      }
+    }
+
+    async function refreshVisualizerModules(options = {}) {
+      if (!state.visualizerList) return;
+      const enabled = getVisualizerEnabled();
+      if (!enabled) {
+        setVisualizerLoading(false);
+        syncVisualizerState({ modules: [], active: null });
+        setVisualizerStatus('Visualizer disabled. Enable it, then refresh.', 'neutral');
+        return;
+      }
+
+      const silent = options.silent === true;
+      if (!silent) {
+        const prefix = enabled ? '' : 'Visualizer disabled. ';
+        setVisualizerStatus(`${prefix}Loading visualizer modules…`, 'neutral');
+      }
+      setVisualizerLoading(true);
+      try {
+        const { modules, active } = await Promise.resolve().then(() => listVisualizerModules());
+        console.log('[PlaylistIO] listVisualizerModules →', { count: Array.isArray(modules) ? modules.length : null, active });
+        syncVisualizerState({ modules, active });
+        const count = Array.isArray(modules) ? modules.length : 0;
+        if (count === 0) {
+          const prefix = enabled ? '' : 'Visualizer disabled. ';
+          setVisualizerStatus(`${prefix}No modules reported by the visualizer.`, 'neutral');
+        } else {
+          const prefix = enabled ? '' : 'Visualizer disabled. ';
+          setVisualizerStatus(prefix + (active ? `Active: ${active}` : 'Select a module to activate.'), 'success');
+        }
+      } catch (err) {
+        const msg = err && err.message ? err.message : 'Failed to load modules.';
+        setVisualizerStatus(msg, 'error');
+      } finally {
+        setVisualizerLoading(false);
+      }
+    }
+
+    function ensureVisualizerSubscription() {
+      if (state.visualizerUnsub || typeof subscribeVisualizerModules !== 'function') return;
+      try {
+        state.visualizerUnsub = subscribeVisualizerModules((payload) => {
+          console.log('[PlaylistIO] subscribeVisualizerModules payload', payload);
+          syncVisualizerState(payload || {});
+          if (payload && payload.active) {
+            setVisualizerStatus(`Active: ${payload.active}`, 'success');
+          }
+        });
+      } catch {
+        state.visualizerUnsub = null;
+      }
+    }
+
+    function teardownVisualizerSubscription() {
+      if (state.visualizerUnsub) {
+        try { state.visualizerUnsub(); } catch { /* ignore */ }
+        state.visualizerUnsub = null;
+      }
+    }
+
+    function setVisualizerSelectionByIndex(index) {
+      const modules = Array.isArray(state.visualizerModules) ? state.visualizerModules : [];
+      const next = Math.max(0, Math.min(modules.length - 1, index));
+      if (!modules.length) return;
+      if (state.visualizerSelectedIndex === next) return;
+      state.visualizerSelectedIndex = next;
+      renderVisualizerList();
+    }
+
+    async function switchToSelectedVisualizerModule() {
+      const modules = Array.isArray(state.visualizerModules) ? state.visualizerModules : [];
+      if (!modules.length) return;
+      const idx = state.visualizerSelectedIndex;
+      if (idx < 0 || idx >= modules.length) return;
+      const target = String(modules[idx] || '');
+      if (!target) return;
+
+      setVisualizerLoading(true);
+      setVisualizerStatus(`Switching to ${target}…`, 'neutral');
+      try {
+        const ok = await Promise.resolve().then(() => setVisualizerModule(target));
+        if (ok === false) {
+          setVisualizerStatus('Visualizer did not accept the module.', 'error');
+        } else {
+          state.visualizerActive = target;
+          renderVisualizerList();
+          setVisualizerStatus(`Active: ${target}`, 'success');
+        }
+      } catch (err) {
+        const msg = err && err.message ? err.message : 'Failed to switch module.';
+        setVisualizerStatus(msg, 'error');
+      } finally {
+        setVisualizerLoading(false);
+      }
+    }
+
+    function handleVisualizerListKeydown(event) {
+      if (!state.visualizerList) return;
+      const modules = Array.isArray(state.visualizerModules) ? state.visualizerModules : [];
+      if (!modules.length) return;
+      if (state.visualizerLoading) return;
+
+      if (event.key === 'ArrowDown') {
+        event.preventDefault();
+        const next = Math.min(modules.length - 1, (state.visualizerSelectedIndex ?? 0) + 1);
+        state.visualizerSelectedIndex = next;
+        renderVisualizerList();
+        switchToSelectedVisualizerModule();
+      } else if (event.key === 'ArrowUp') {
+        event.preventDefault();
+        const next = Math.max(0, (state.visualizerSelectedIndex ?? 0) - 1);
+        state.visualizerSelectedIndex = next;
+        renderVisualizerList();
+        switchToSelectedVisualizerModule();
+      } else if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        switchToSelectedVisualizerModule();
+      }
+    }
+
+    function handleVisualizerRowClick(index) {
+      if (state.visualizerLoading) return;
+      setVisualizerSelectionByIndex(index);
+      switchToSelectedVisualizerModule();
+    }
+
     function setSectionOpen(sectionId, options = {}) {
       const force = Boolean(options.force);
       if (!state.sections || state.sections.size === 0) return;
@@ -429,6 +697,10 @@
       }
       if (sectionId === 'settings') {
         refreshSettingsView();
+      }
+      if (sectionId === 'visualizer') {
+        ensureVisualizerSubscription();
+        refreshVisualizerModules();
       }
       if (sectionId === 'cache') {
         refreshCacheStatsView();
@@ -1316,6 +1588,73 @@
       videoPlayerSection.content.appendChild(spotifyRow);
       videoPlayerSection.content.appendChild(spotifyDeviceRow);
 
+      const visualizerSection = createAccordionSection({ id: 'visualizer', title: 'Visualizer' });
+      const visualizerContent = visualizerSection.content;
+      visualizerContent.style.padding = '0.75rem 0.8rem 0.9rem';
+      visualizerContent.style.gap = '0.6rem';
+
+      const visualizerIntro = document.createElement('p');
+      visualizerIntro.textContent = 'Browse visualizer modules and switch the active one.';
+      visualizerIntro.style.margin = '0';
+      visualizerIntro.style.fontSize = '0.8rem';
+      visualizerIntro.style.color = '#a8b3c7';
+      visualizerIntro.style.lineHeight = '1.5';
+
+      const visualizerStatus = document.createElement('div');
+      visualizerStatus.style.minHeight = '1.1rem';
+      visualizerStatus.style.fontSize = '0.78rem';
+      visualizerStatus.style.color = '#a8b3c7';
+
+      const visualizerActions = document.createElement('div');
+      visualizerActions.style.display = 'flex';
+      visualizerActions.style.alignItems = 'center';
+      visualizerActions.style.gap = '0.5rem';
+
+      const visualizerRefreshBtn = document.createElement('button');
+      visualizerRefreshBtn.type = 'button';
+      visualizerRefreshBtn.textContent = 'Refresh modules';
+      styleSecondaryButton(visualizerRefreshBtn);
+      visualizerRefreshBtn.addEventListener('click', () => {
+        console.log('[PlaylistIO] Refresh button clicked');
+        ensureVisualizerSubscription();
+        refreshVisualizerModules();
+      });
+
+      const visualizerHint = document.createElement('p');
+      visualizerHint.textContent = 'Use Arrow Up/Down to select, Enter to switch.';
+      visualizerHint.style.margin = '0';
+      visualizerHint.style.fontSize = '0.75rem';
+      visualizerHint.style.color = '#6c7488';
+
+      visualizerActions.appendChild(visualizerRefreshBtn);
+      visualizerActions.appendChild(visualizerHint);
+
+      const visualizerList = document.createElement('div');
+      visualizerList.setAttribute('role', 'listbox');
+      visualizerList.setAttribute('aria-label', 'Visualizer modules');
+      visualizerList.tabIndex = 0;
+      visualizerList.style.display = 'flex';
+      visualizerList.style.flexDirection = 'column';
+      visualizerList.style.gap = '0.35rem';
+      visualizerList.style.maxHeight = 'calc(5 * 2.6rem)';
+      visualizerList.style.overflowY = 'auto';
+      visualizerList.style.padding = '0.2rem';
+      visualizerList.style.borderRadius = '6px';
+      visualizerList.style.border = '1px solid #2b2f3a';
+      visualizerList.style.background = '#11141c';
+      visualizerList.addEventListener('keydown', handleVisualizerListKeydown);
+      visualizerList.addEventListener('focus', () => {
+        ensureVisualizerSubscription();
+        if (!state.visualizerModules.length && !state.visualizerLoading) {
+          refreshVisualizerModules({ silent: true });
+        }
+      });
+
+      visualizerContent.appendChild(visualizerIntro);
+      visualizerContent.appendChild(visualizerStatus);
+      visualizerContent.appendChild(visualizerActions);
+      visualizerContent.appendChild(visualizerList);
+
       const settingsSection = createAccordionSection({ id: 'settings', title: 'Stored Settings' });
       //settingsSection.content.style.gap = '0.6rem';
       settingsSection.content.style.flex = '1 1 auto';
@@ -1709,6 +2048,7 @@
 
       accordion.appendChild(playlistSection.wrapper);
       accordion.appendChild(videoPlayerSection.wrapper);
+      accordion.appendChild(visualizerSection.wrapper);
       accordion.appendChild(settingsSection.wrapper);
       accordion.appendChild(errorListsSection.wrapper);
       accordion.appendChild(cacheSection.wrapper);
@@ -1753,6 +2093,9 @@
       state.statusEl = statusEl;
       state.staticNotice = staticNotice;
       state.historyList = historyList;
+      state.visualizerList = visualizerList;
+      state.visualizerStatus = visualizerStatus;
+      state.visualizerRefreshBtn = visualizerRefreshBtn;
       state.settingsStatus = settingsStatus;
       state.settingsPre = settingsPre;
       state.settingsResetBtn = resetBtn;
@@ -1761,6 +2104,8 @@
       state.settingsConfirmCancelBtn = settingsConfirmCancelBtn;
       state.cacheStatus = cacheStatus;
       state.cachePre = cachePre;
+      renderVisualizerList();
+      setVisualizerStatus('Refresh to load visualizer modules.', 'neutral');
       updateSettingsResetButtonState(true);
 
       setSectionOpen(state.openSectionId || state.lastOpenedSectionId || 'playlist', { force: true });
@@ -1878,6 +2223,7 @@
 
     function closeOverlay() {
       if (!state.overlay) return;
+      teardownVisualizerSubscription();
       state.overlay.style.display = 'none';
       state.overlay.setAttribute('aria-hidden', 'true');
       if (state.overlayHost === document.body) {

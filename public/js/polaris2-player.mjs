@@ -29,7 +29,9 @@
 
   let playerHost;
   let ytAdapter = null;
+  let visualizerAdapter = null;
   let spotifyAdapter = null;
+  const visualizerModuleListeners = new Set();
   let ytEmbedError150SkipTimer = null;
   let ytEmbedError150SkipKey = '';
   let ytEmbedError150CheckingVideoId = '';
@@ -178,6 +180,37 @@
       }
 
       return id;
+    }
+
+    async function listVisualizerModules() {
+      if (!visualizerAdapter) return { modules: [], active: null };
+      try {
+        const res = await visualizerAdapter.listModules();
+        console.log('[Polaris] listVisualizerModules →', res);
+        return res;
+      } catch {
+        return visualizerAdapter.getModules();
+      }
+    }
+
+    async function setVisualizerModule(name) {
+      if (!visualizerAdapter) return false;
+      try {
+        return await visualizerAdapter.setModule(name);
+      } catch {
+        return false;
+      }
+    }
+
+    function subscribeVisualizerModules(listener) {
+      if (typeof listener !== 'function') return () => {};
+      console.log('[Polaris] subscribeVisualizerModules add');
+      visualizerModuleListeners.add(listener);
+      return () => visualizerModuleListeners.delete(listener);
+    }
+
+    function isVisualizerEnabled() {
+      try { return visualizerAdapter?.isEnabled?.() === true; } catch { return false; }
     }
 
     function _detectOsTag() {
@@ -2467,7 +2500,13 @@
 
       ytAdapter = new YouTubeAdapter({ elementId: null, controls: 0, autoplay: false });
       const visualizerEnabled = settings.visualizerEnabled === true;
-      const visualizerAdapter = new VisualizerAdapter({ enabled: visualizerEnabled });
+      visualizerAdapter = new VisualizerAdapter({ enabled: visualizerEnabled });
+      visualizerAdapter.on('modules', (payload) => {
+        console.log('[Polaris] visualizerAdapter modules event', payload);
+        for (const fn of visualizerModuleListeners) {
+          try { fn(payload); } catch { /* ignore */ }
+        }
+      });
       
       playerHost = new PlayerHost([
         // Let the adapter create its own mount element inside #player.
@@ -3487,6 +3526,17 @@
         saveSettings({ spotifyVolume01: next, volume01: next });
         try { applyConfiguredVolumeToHost(); } catch { /* ignore */ }
       },
+
+      // Visualizer wiring for settings overlay
+      listVisualizerModules: () => listVisualizerModules(),
+      setVisualizerModule: (name) => setVisualizerModule(name),
+      subscribeVisualizerModules: (fn) => subscribeVisualizerModules(fn),
+      isVisualizerEnabled: () => isVisualizerEnabled(),
+
+      listVisualizerModules: () => listVisualizerModules(),
+      setVisualizerModule: (name) => setVisualizerModule(name),
+      subscribeVisualizerModules: (fn) => subscribeVisualizerModules(fn),
+      isVisualizerEnabled: () => isVisualizerEnabled(),
     });
 
     // Allow the Settings overlay to request clearing the Spotify artwork cache.
