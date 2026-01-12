@@ -200,6 +200,30 @@ export class VisualizerAdapter {
   }
 
   /**
+   * Push externally captured audio data into the visualizer iframe (overlay mode).
+   * @param {{frequencyData?: Uint8Array, timeData?: Uint8Array, rms?: number}} payload
+   */
+  pushAudioData(payload = {}) {
+    if (!this._iframe || !this._iframe.contentWindow) return;
+    try {
+      const frequencyData = payload.frequencyData ? Array.from(payload.frequencyData) : undefined;
+      const timeData = payload.timeData ? Array.from(payload.timeData) : undefined;
+      const bufferLength = payload.frequencyData?.length || payload.timeData?.length || 0;
+
+      this._iframe.contentWindow.postMessage({
+        type: 'AUDIO_DATA',
+        frequencyData,
+        timeData,
+        bufferLength,
+        timeLength: timeData ? timeData.length : undefined,
+        rms: payload.rms
+      }, '*');
+    } catch {
+      /* ignore */
+    }
+  }
+
+  /**
    * Flush any commands that were queued before iframe was ready
    */
   _flushPendingCommands() {
@@ -303,7 +327,7 @@ export class VisualizerAdapter {
     if (track && track.source && track.source.kind === "file") {
       const url = track.source.url;
       const vizUrl = track.visualizer;
-      this._postCommand({ type: "LOAD_TRACK", url, vizUrl, trackId: track.id });
+      this._postCommand({ type: "LOAD_TRACK", url, vizUrl, trackId: track.id, autoplay });
 
       // Apply resume if available
       const r = this._resumeState;
@@ -329,7 +353,7 @@ export class VisualizerAdapter {
    */
   loadVisualization(track) {
     if (!this._enabled) return;
-    if (!track || track.source?.kind !== 'youtube') return;
+    if (!track || (track.source?.kind !== 'youtube' && track.source?.kind !== 'file')) return;
     const vizUrl = track.visualizer;
     if (!vizUrl) return;
 

@@ -2768,7 +2768,8 @@
 
       ytAdapter = new YouTubeAdapter({ elementId: null, controls: 0, autoplay: false });
       const visualizerEnabled = settings.visualizerEnabled === true;
-      visualizerAdapter = new VisualizerAdapter({ enabled: visualizerEnabled });
+      // Keep HTML video adapter primary for local files; visualizer remains overlay for YT.
+      visualizerAdapter = new VisualizerAdapter({ enabled: visualizerEnabled, primaryForLocal: false });
       visualizerAdapter.on('modules', (payload) => {
         console.log('[Polaris] visualizerAdapter modules event', payload);
         for (const fn of visualizerModuleListeners) {

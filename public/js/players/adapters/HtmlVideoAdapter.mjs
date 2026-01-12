@@ -105,6 +105,12 @@ export class HtmlVideoAdapter {
       this._setState("error");
       this._em.emit("error", { code: "MEDIA_ERROR", message: "HTML media element error", detail: this._el.error });
     });
+
+    // Web Audio plumbing for visualization mirroring
+    this._audioContext = null;
+    this._analyser = null;
+    this._timeArray = null;
+    this._freqArray = null;
   }
 
   supports(kind) { return kind === "file"; }
@@ -160,6 +166,40 @@ export class HtmlVideoAdapter {
   getMediaPane() { return { kind: "video", element: this._el }; }
   on(event, fn) { return this._em.on(event, fn); }
 
+    /**
+     * Lazily create/return current audio analysis snapshot for this media element.
+     * @returns {{frequencyData: Uint8Array, timeData: Uint8Array, rms: number}|null}
+     */
+  getAudioAnalysis() {
+    try {
+      if (!this._audioContext) {
+        this._audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const source = this._audioContext.createMediaElementSource(this._el);
+        this._analyser = this._audioContext.createAnalyser();
+        this._analyser.fftSize = 2048;
+        source.connect(this._analyser);
+        this._analyser.connect(this._audioContext.destination);
+        this._timeArray = new Uint8Array(this._analyser.fftSize);
+        this._freqArray = new Uint8Array(this._analyser.frequencyBinCount);
+      }
+      if (this._audioContext.state === 'suspended') {
+        // Don’t throw; just skip this frame until user interaction resumes audio context.
+        return null;
+      }
+      this._analyser.getByteFrequencyData(this._freqArray);
+      this._analyser.getByteTimeDomainData(this._timeArray);
+      let sum = 0;
+      for (let i = 0; i < this._timeArray.length; i++) {
+        const v = (this._timeArray[i] - 128) / 128;
+        sum += v * v;
+      }
+      const rms = Math.sqrt(sum / this._timeArray.length);
+      return { frequencyData: this._freqArray.slice(), timeData: this._timeArray.slice(), rms };
+    } catch {
+      return null;
+    }
+  }
+
   async load(track, opts = {}) {
     this._track = track;
     this._setState("loading");
@@ -199,6 +239,15 @@ export class HtmlVideoAdapter {
   }
 
   async play() {
+    // If we've created an analyser/AudioContext, make sure it's running so audio isn't muted.
+    try {
+      if (this._audioContext && this._audioContext.state === 'suspended') {
+        await this._audioContext.resume();
+      }
+    } catch {
+      /* ignore */
+    }
+
     try {
       await this._el.play();
     } catch {

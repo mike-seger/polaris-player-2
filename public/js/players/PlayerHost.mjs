@@ -22,6 +22,9 @@ export class PlayerHost {
     this._unsubs = [];
 
     this._activeTrack = null;
+
+    // Mirror audio to visualizer when overlay is active (html-video / youtube owners)
+    this._vizAudioTimer = null;
   }
 
   _debugEnabled() {
@@ -76,13 +79,24 @@ export class PlayerHost {
     }
   }
 
-  _setAdapterVisible(adapter, visible) {
+  _setAdapterVisible(adapter, visible, { soft = false } = {}) {
     if (!adapter) return;
     try {
       const pane = adapter.getMediaPane?.();
       const el = pane && pane.element;
       if (el && el.style) {
-        el.style.display = visible ? '' : 'none';
+        if (soft) {
+          // Keep element in flow so playback isn't throttled; just make it non-interactive and transparent.
+          el.style.display = '';
+          el.style.opacity = visible ? '' : '0';
+          el.style.pointerEvents = visible ? '' : 'none';
+          el.style.visibility = '';
+        } else {
+          el.style.display = visible ? '' : 'none';
+          el.style.opacity = '';
+          el.style.pointerEvents = '';
+          el.style.visibility = '';
+        }
 
         // Ensure media panes fill the container when shown (fixes half-size YT after toggle)
         if (visible) {
@@ -97,12 +111,15 @@ export class PlayerHost {
 
   _isVisualizerOverlayActive(track = this._activeTrack) {
     if (!this._visualizerAdapter) return false;
-    const isYouTube = track?.source?.kind === 'youtube';
-    if (!isYouTube) return false;
+    const kind = track?.source?.kind;
+    const supported = kind === 'youtube' || kind === 'file';
+    if (!supported) return false;
     const enabled = typeof this._visualizerAdapter.isEnabled === 'function'
       ? this._visualizerAdapter.isEnabled()
       : !!this._visualizerAdapter._enabled;
-    return enabled && this.active && this.active.name === 'youtube';
+    const activeName = this.active?.name;
+    // Overlay is active when visualizer is enabled and current adapter is the underlying media owner (yt or html-video)
+    return enabled && (activeName === 'youtube' || activeName === 'html-video');
   }
 
   _mirrorVisualizer(command, payload = {}) {
@@ -248,38 +265,65 @@ export class PlayerHost {
   _updateVisualizerOverlay(track) {
     if (!this._visualizerAdapter) return;
 
-    const isYouTube = track?.source?.kind === 'youtube';
+    const kind = track?.source?.kind;
     const visualizerEnabled = typeof this._visualizerAdapter.isEnabled === 'function'
       ? this._visualizerAdapter.isEnabled()
       : !!this._visualizerAdapter._enabled;
 
-    // Only manage overlay for YouTube tracks; do not hide visualizer when it is the active adapter (HTML/local playback).
-    if (!isYouTube) {
+    const supportsOverlay = kind === 'youtube' || kind === 'file';
+    if (!supportsOverlay) {
       if (this.active === this._visualizerAdapter) {
         this._setAdapterVisible(this._visualizerAdapter, true);
       }
       return;
     }
 
-    const showVisualizer = isYouTube && visualizerEnabled;
+    const showVisualizer = supportsOverlay && visualizerEnabled;
 
     // Toggle visualizer pane
     this._setAdapterVisible(this._visualizerAdapter, showVisualizer);
 
-    // If the active adapter is YouTube, hide it when showing visualizer
-    if (this.active && this.active.name === 'youtube') {
-      this._setAdapterVisible(this.active, !showVisualizer);
+    // If the active adapter is YouTube or html-video, softly hide it when showing visualizer to keep playback alive
+    if (this.active && (this.active.name === 'youtube' || this.active.name === 'html-video')) {
+      this._setAdapterVisible(this.active, !showVisualizer, { soft: true });
     }
 
-    // When showing overlay for YouTube, request viz data load; stop when hiding
+    // When showing overlay for supported kinds, request viz data load; stop when hiding
     if (showVisualizer) {
       if (typeof this._visualizerAdapter.loadVisualization === 'function') {
         try { this._visualizerAdapter.loadVisualization(track); } catch { /* ignore */ }
       }
+      this._startVisualizerAudioMirror();
     } else {
       if (typeof this._visualizerAdapter.stopVisualization === 'function') {
         try { this._visualizerAdapter.stopVisualization(); } catch { /* ignore */ }
       }
+      this._stopVisualizerAudioMirror();
+    }
+  }
+
+  _startVisualizerAudioMirror() {
+    this._stopVisualizerAudioMirror();
+    const send = () => {
+      try {
+        if (!this._isVisualizerOverlayActive()) return;
+        const active = this.active;
+        const viz = this._visualizerAdapter;
+        if (!active || !viz || typeof viz.pushAudioData !== 'function') return;
+        if (typeof active.getAudioAnalysis !== 'function') return;
+        const snapshot = active.getAudioAnalysis();
+        if (snapshot) {
+          viz.pushAudioData(snapshot);
+        }
+      } catch { /* ignore */ }
+    };
+    this._vizAudioTimer = setInterval(send, 50); // ~20fps
+  }
+
+  _stopVisualizerAudioMirror() {
+    if (this._vizAudioTimer) {
+      clearInterval(this._vizAudioTimer);
+      this._vizAudioTimer = null;
     }
   }
 
