@@ -533,11 +533,21 @@ export class PlaylistDataSource {
     const savedMap = this.getCurrentVideoMap();
     const storedVideoId = savedMap[targetId];
     let idxFromStorage = -1;
-    if (storedVideoId) {
-      const items = this.getPlaylistItems();
+
+    const resume = (typeof window !== 'undefined' ? window.__POLARIS_PENDING_RESUME__ : null);
+    const resumeVideoId = (resume && resume.playlistId === targetId) ? resume.videoId : '';
+    const resumeIndex = (resume && resume.playlistId === targetId && Number.isInteger(resume.trackIndex)) ? resume.trackIndex : -1;
+
+    const items = this.getPlaylistItems();
+
+    if (resumeIndex >= 0 && resumeIndex < items.length) {
+      idxFromStorage = resumeIndex;
+    } else if (resumeVideoId) {
+      idxFromStorage = items.findIndex((it) => it.videoId === resumeVideoId);
+    } else if (storedVideoId) {
       idxFromStorage = items.findIndex((it) => it.videoId === storedVideoId);
     }
-    const items = this.getPlaylistItems();
+
     this.setCurrentIndex(idxFromStorage >= 0 ? idxFromStorage : (items.length ? 0 : -1));
 
     this.setFilterTextFromValue(this.getFilterInputValue());
@@ -634,12 +644,20 @@ export class PlaylistDataSource {
     const savedMap = this.getCurrentVideoMap();
     const storedVideoId = savedMap[resolvedPlaylistId];
     let idxFromStorage = -1;
-    if (storedVideoId) {
-      const items = this.getPlaylistItems();
-      idxFromStorage = items.findIndex((it) => it.videoId === storedVideoId);
-    }
+
+    const resume = (typeof window !== 'undefined' ? window.__POLARIS_PENDING_RESUME__ : null);
+    const resumeVideoId = (resume && resume.playlistId === resolvedPlaylistId) ? resume.videoId : '';
+    const resumeIndex = (resume && resume.playlistId === resolvedPlaylistId && Number.isInteger(resume.trackIndex)) ? resume.trackIndex : -1;
 
     const items = this.getPlaylistItems();
+
+    if (resumeIndex >= 0 && resumeIndex < items.length) {
+      idxFromStorage = resumeIndex;
+    } else if (resumeVideoId) {
+      idxFromStorage = items.findIndex((it) => it.videoId === resumeVideoId);
+    } else if (storedVideoId) {
+      idxFromStorage = items.findIndex((it) => it.videoId === storedVideoId);
+    }
     this.setCurrentIndex(idxFromStorage >= 0 ? idxFromStorage : (items.length ? 0 : -1));
 
     this.setFilterTextFromValue(this.getFilterInputValue());

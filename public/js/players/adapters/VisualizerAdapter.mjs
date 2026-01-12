@@ -39,6 +39,10 @@ export class VisualizerAdapter {
     this._pendingModuleResolvers = [];
     this._pendingModuleSetResolvers = [];
 
+    // Resume state
+    this._resumeKey = 'polaris.visualizer.resume.v1';
+    this._resumeState = null;
+
     // Path to the visualizer bridge HTML (relative to public/)
     this._visualizerPath = options.visualizerPath || "./visualizer-bridge.html";
     
@@ -111,19 +115,23 @@ export class VisualizerAdapter {
           this._durationMs = Math.floor(msg.duration * 1000);
         }
         this._em.emit("time", this.getInfo().time);
+        this._persistResumeState();
         break;
 
       case "PLAYING":
         this._setState("playing");
+        this._persistResumeState(true);
         break;
 
       case "PAUSED":
         this._setState("paused");
+        this._persistResumeState(false);
         break;
 
       case "ENDED":
         this._setState("ended");
         this._em.emit("ended");
+        this._persistResumeState(false, { resetPosition: true });
         break;
 
       case "READY":
@@ -282,10 +290,22 @@ export class VisualizerAdapter {
     this._positionMs = 0;
     this._durationMs = track?.durationMs;
 
+    this._resumeState = this._loadResumeState(track);
+
     // Only handle local/file playback when we are the active adapter
     if (track && track.source && track.source.kind === "file") {
       const url = track.source.url;
       this._postCommand({ type: "LOAD_TRACK", url, trackId: track.id });
+
+      // Apply resume if available
+      const r = this._resumeState;
+      if (r && typeof r.positionMs === 'number' && r.positionMs > 500) {
+        const seekSeconds = r.positionMs / 1000;
+        this._postCommand({ type: "SEEK", time: seekSeconds });
+        if (r.playing) {
+          this._postCommand({ type: "PLAY" });
+        }
+      }
       return;
     }
 
@@ -441,5 +461,47 @@ export class VisualizerAdapter {
     if (this._state === s) return;
     this._state = s;
     this._em.emit("state", s);
+  }
+
+  _persistResumeState(playingOverride = null, options = {}) {
+    try {
+      const store = (typeof sessionStorage !== 'undefined') ? sessionStorage : null;
+      if (!store) return;
+
+      const track = this._track;
+      const url = track?.source?.url || '';
+      const trackId = track?.id || '';
+      if (!url && !trackId) return;
+
+      const payload = {
+        trackId,
+        url,
+        positionMs: options.resetPosition ? 0 : this._positionMs || 0,
+        playing: playingOverride !== null ? !!playingOverride : (this._state === 'playing'),
+        updatedAt: Date.now()
+      };
+      store.setItem(this._resumeKey, JSON.stringify(payload));
+    } catch {
+      // ignore
+    }
+  }
+
+  _loadResumeState(track) {
+    try {
+      const store = (typeof sessionStorage !== 'undefined') ? sessionStorage : null;
+      if (!store) return null;
+      const raw = store.getItem(this._resumeKey);
+      if (!raw) return null;
+      const data = JSON.parse(raw);
+      if (!data || typeof data !== 'object') return null;
+      const url = track?.source?.url || '';
+      const trackId = track?.id || '';
+      const matchId = data.trackId && trackId && data.trackId === trackId;
+      const matchUrl = data.url && url && data.url === url;
+      if (!matchId && !matchUrl) return null;
+      return data;
+    } catch {
+      return null;
+    }
   }
 }

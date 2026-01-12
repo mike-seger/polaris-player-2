@@ -711,6 +711,272 @@
       return getTrackStateForPlaylist(playlistId, videoId) === TRACK_STATE_CHECKED;
     }
 
+    const RESUME_STORAGE_KEY = 'polaris.playback.resume.v1';
+    let pendingResumeState = _readStoredResumeState();
+    let appliedResumeKey = '';
+    let lastResumeWriteAt = 0;
+    let resumeApplyTimer = null;
+    let resumeAlertShownOnBlur = false;
+    let resumeAlertShownOnApply = false;
+    let lastKnownPlaying = false;
+    let resumeAlertsEnabled = (() => {
+      try {
+        return localStorage.getItem('POLARIS_RESUME_ALERTS') === '1';
+      } catch {
+        return false;
+      }
+    })();
+    const RESUME_CAPTURE_MIN_INTERVAL_MS = 30_000;
+    let firstResumeCaptureOnPlayDone = false;
+
+    function _setResumeAlertsEnabled(enabled) {
+      resumeAlertsEnabled = !!enabled;
+      try { localStorage.setItem('POLARIS_RESUME_ALERTS', enabled ? '1' : '0'); } catch { /* ignore */ }
+    }
+
+    function _debugAlert(msg) {
+      if (!resumeAlertsEnabled) return;
+      const fn = (typeof window !== 'undefined' && typeof window.alert === 'function')
+        ? window.alert
+        : (typeof alert === 'function' ? alert : null);
+      if (fn) {
+        try { fn(msg); return; } catch { /* fall through */ }
+      }
+      try { console.warn(msg); } catch { /* ignore */ }
+    }
+
+    function _publishResumeState() {
+      try { window.__POLARIS_PENDING_RESUME__ = pendingResumeState; } catch { /* ignore */ }
+    }
+
+    _publishResumeState();
+
+    try {
+      window.__polarisResumeAlerts = {
+        enable: () => _setResumeAlertsEnabled(true),
+        disable: () => _setResumeAlertsEnabled(false),
+        status: () => resumeAlertsEnabled,
+      };
+    } catch { /* ignore */ }
+
+    function _readStoredResumeState() {
+      try {
+        const raw = localStorage.getItem(RESUME_STORAGE_KEY);
+        const parsed = raw ? JSON.parse(raw) : null;
+        if (!parsed || typeof parsed !== 'object') return null;
+
+        const playlistId = typeof parsed.playlistId === 'string' ? parsed.playlistId.trim() : '';
+        const videoId = typeof parsed.videoId === 'string' ? parsed.videoId.trim() : '';
+        if (!playlistId || !videoId) return null;
+
+        const updatedAt = typeof parsed.updatedAt === 'number' ? parsed.updatedAt : 0;
+        const ageMs = Date.now() - updatedAt;
+        if (!updatedAt || ageMs > 1000 * 60 * 60 * 48) return null;
+
+        const posRaw = Number(parsed.positionMs);
+        const positionMs = Number.isFinite(posRaw) && posRaw > 0 ? Math.floor(posRaw) : 0;
+        const isPlaying = parsed.isPlaying === true;
+
+        return { playlistId, videoId, positionMs, isPlaying, updatedAt };
+      } catch {
+        return null;
+      }
+    }
+
+    function _writeStoredResumeState(state) {
+      try {
+        localStorage.setItem(RESUME_STORAGE_KEY, JSON.stringify(state));
+      } catch {
+        // ignore
+      }
+    }
+
+    function _clearStoredResumeState() {
+      pendingResumeState = null;
+      appliedResumeKey = '';
+      try { localStorage.removeItem(RESUME_STORAGE_KEY); } catch { /* ignore */ }
+      _publishResumeState();
+    }
+
+    // Expose the pending resume snapshot so PlaylistDataSource can prefer it when choosing startup index.
+    try {
+      window.__POLARIS_PENDING_RESUME__ = pendingResumeState;
+    } catch { /* ignore */ }
+
+    function _captureResumeSnapshot({ force = false, allowFirstPlay = false } = {}) {
+      const playlistId = getActivePlaylistId();
+      const videoId = getActiveTrackId();
+      if (!playlistId || !videoId) return;
+
+      const key = `${playlistId}:${videoId}`;
+      if (!force && pendingResumeState && pendingResumeState.playlistId === playlistId && pendingResumeState.videoId === videoId && appliedResumeKey !== key) {
+        return;
+      }
+
+      const now = Date.now();
+      const bypassForFirstPlay = allowFirstPlay && !firstResumeCaptureOnPlayDone;
+      if (!force && !bypassForFirstPlay && now - lastResumeWriteAt < RESUME_CAPTURE_MIN_INTERVAL_MS) return;
+
+      const info = getPlayerInfo();
+      const durMs = Number(info?.time?.durationMs);
+      const clip = getClipWindowMsForIndex(currentIndex, durMs);
+      let posMs = Number(info?.time?.positionMs);
+      if (!Number.isFinite(posMs) || posMs < 0) posMs = 0;
+      if (Number.isFinite(durMs) && durMs > 0) {
+        posMs = Math.min(posMs, Math.max(0, durMs - 750));
+      }
+
+      const infoState = (info && typeof info.state === 'string') ? info.state : '';
+      const playingNow = (infoState === 'playing' || infoState === 'buffering') || isPlaying === true;
+      const playingEffective = playingNow || ((pendingResumeState && pendingResumeState.isPlaying === true) && infoState === 'paused');
+
+      const snapshot = {
+        playlistId,
+        videoId,
+        positionMs: Math.floor(posMs),
+        isPlaying: playingEffective,
+        clipStartMs: Number.isFinite(clip?.startMs) ? Math.max(0, Math.floor(clip.startMs)) : 0,
+        clipEndMs: Number.isFinite(clip?.endMs) ? Math.max(0, Math.floor(clip.endMs)) : undefined,
+        trackIndex: Number.isInteger(currentIndex) ? currentIndex : -1,
+        updatedAt: now,
+      };
+
+      try {
+        console.info('[resume] captured', { snapshot, info });
+      } catch { /* ignore */ }
+
+      pendingResumeState = snapshot;
+      lastResumeWriteAt = now;
+      if (allowFirstPlay) firstResumeCaptureOnPlayDone = true;
+      _writeStoredResumeState(snapshot);
+      _publishResumeState();
+    }
+
+    function _formatResumeForAlert(state) {
+      if (!state) return 'none';
+      const posSec = Math.round((Number(state.positionMs) || 0) / 1000);
+      return [
+        `playlist: ${state.playlistId || '(none)'}`,
+        `video: ${state.videoId || '(none)'}`,
+        `position: ${posSec}s` + (state.positionMs ? ` (${state.positionMs}ms)` : ''),
+        `playing: ${state.isPlaying === true}`,
+        state.updatedAt ? `updated: ${new Date(state.updatedAt).toISOString()}` : null,
+      ].filter(Boolean).join('\n');
+    }
+
+    try {
+      window.addEventListener('blur', () => {
+        if (resumeAlertShownOnBlur) return;
+        const state = pendingResumeState || _readStoredResumeState();
+        if (!state) return;
+        resumeAlertShownOnBlur = true;
+        _debugAlert(`[Polaris resume] stored before reload\n${_formatResumeForAlert(state)}`);
+      });
+    } catch { /* ignore */ }
+
+    function _scheduleApplyResume(delayMs = 150) {
+      if (!pendingResumeState) return;
+      if (resumeApplyTimer) return;
+      resumeApplyTimer = setTimeout(() => {
+        resumeApplyTimer = null;
+        _maybeApplyResume();
+      }, delayMs);
+    }
+
+    function _maybeApplyResume() {
+      if (!pendingResumeState || !playerHost) return false;
+
+      const playlistId = getActivePlaylistId();
+      const videoId = getActiveTrackId() || (playlistItems[currentIndex]?.videoId ? String(playlistItems[currentIndex].videoId) : '');
+      if (!playlistId || !videoId) return false;
+
+      const key = `${playlistId}:${videoId}`;
+      if (appliedResumeKey === key) return false;
+      if (pendingResumeState.playlistId !== playlistId || pendingResumeState.videoId !== videoId) return false;
+
+      const storedTrackIndex = Number.isInteger(pendingResumeState.trackIndex) ? pendingResumeState.trackIndex : -1;
+      if (storedTrackIndex >= 0 && storedTrackIndex !== currentIndex) {
+        try {
+          console.info('[resume] skip apply: index mismatch', { storedTrackIndex, currentIndex, key });
+        } catch { /* ignore */ }
+        return false;
+      }
+
+      const info = getPlayerInfo();
+      const durMs = Number(info?.time?.durationMs);
+      const clip = getClipWindowMsForIndex(currentIndex, durMs);
+      const startMs = Math.max(0, Math.floor(Number(clip.startMs) || 0));
+      const endMs = (typeof clip.endMs === 'number' && clip.endMs > startMs) ? clip.endMs : undefined;
+
+      const storedPos = Math.floor(Number(pendingResumeState.positionMs) || 0);
+      const storedClipStart = Math.max(0, Math.floor(Number(pendingResumeState.clipStartMs) || 0));
+      const storedClipEnd = Number.isFinite(pendingResumeState.clipEndMs)
+        ? Math.max(0, Math.floor(Number(pendingResumeState.clipEndMs)))
+        : undefined;
+
+      let seekMs = storedPos;
+
+      // If we recorded a clip start and the stored position looks clip-relative, shift it.
+      const clipStartDelta = Math.abs(startMs - storedClipStart);
+      const looksClipRelative = (storedClipStart > 0)
+        && (clipStartDelta <= 1500)
+        && (storedPos < startMs - 500);
+
+      if (looksClipRelative) {
+        seekMs = startMs + storedPos;
+      }
+
+      // Otherwise, if the stored position is clearly before the clip window, snap to start.
+      if (!looksClipRelative && storedPos < startMs - 500) {
+        seekMs = startMs;
+      }
+
+      // Honor clip end boundaries when known.
+      const effectiveEnd = typeof endMs === 'number' ? endMs : storedClipEnd;
+      if (typeof effectiveEnd === 'number') {
+        const guardEnd = Math.max(startMs, effectiveEnd - 1000);
+        seekMs = Math.min(seekMs, guardEnd);
+      }
+
+      if (!resumeAlertShownOnApply) {
+        resumeAlertShownOnApply = true;
+        _debugAlert([`[Polaris resume] applying stored state`, _formatResumeForAlert(pendingResumeState), `current playlist: ${playlistId}`, `current video: ${videoId}`].join('\n'));
+      }
+
+      try {
+        console.info('[resume] applying', {
+          playlistId,
+          videoId,
+          currentIndex,
+          startMs,
+          endMs,
+          storedPos,
+          storedClipStart,
+          storedClipEnd,
+          storedTrackIndex,
+          looksClipRelative,
+          seekMs,
+          appliedResumeKey,
+          info: getPlayerInfo(),
+          clip,
+        });
+      } catch { /* ignore */ }
+
+      appliedResumeKey = key;
+      void playerHost.seekToMs(seekMs).catch(() => {});
+      if (pendingResumeState.isPlaying) {
+        isPlaying = true;
+        updatePlayPauseButton();
+        void playerHost.play().catch(() => {});
+      } else {
+        isPlaying = false;
+        updatePlayPauseButton();
+        try { playerHost.pause(); } catch { /* ignore */ }
+      }
+
+      return true;
+    }
+
     function updateCurrentVideo(playlistId, videoId) {
       if (!playlistId || !videoId) {
         return;
@@ -1590,6 +1856,8 @@
         console.warn('Failed to clear stored settings:', error);
         throw error;
       }
+
+      _clearStoredResumeState();
 
       settings = settingsStore.get();
       playlistLibraryStore.replace([], { persist: false });
@@ -2561,11 +2829,29 @@
           void onPlayerReady();
           applyConfiguredVolumeToHost();
         }
+        if (state === 'playing') {
+          _captureResumeSnapshot({ allowFirstPlay: true });
+        } else if (state === 'paused') {
+          _captureResumeSnapshot({ force: true });
+        }
+        _scheduleApplyResume();
       });
       playerHost.on('track', () => {
+        firstResumeCaptureOnPlayDone = false;
         setupMediaSessionHandlers();
         updateMediaSessionMetadata();
         updateMediaSessionPositionState(true);
+
+        const keyNow = (() => {
+          const pid = getActivePlaylistId();
+          const vid = getActiveTrackId() || (playlistItems[currentIndex]?.videoId ? String(playlistItems[currentIndex].videoId) : '');
+          return (pid && vid) ? `${pid}:${vid}` : '';
+        })();
+
+        if (!appliedResumeKey || appliedResumeKey !== keyNow) {
+          appliedResumeKey = '';
+          _scheduleApplyResume();
+        }
 
         // Ensure "No audio" remains enforced across adapter switches.
         void _enforceNoAudioIfEnabled();
@@ -2573,10 +2859,18 @@
         // Track changes can switch adapters; refresh cover optimization.
         try { applyCoveredYouTubeOptimization(); } catch { /* ignore */ }
       });
-      playerHost.on('time', () => updateMediaSessionPositionState(false));
+      playerHost.on('time', () => {
+        updateMediaSessionPositionState(false);
+        const state = getPlayerInfo()?.state;
+        if (state === 'playing' || state === 'buffering') {
+          _captureResumeSnapshot();
+        }
+        _scheduleApplyResume();
+      });
       playerHost.on('ended', () => {
         const shouldAutoScroll = currentIndex !== lastAutoScrollIndex;
         _autoAdvanceFromEnded({ shouldAutoScroll });
+        _clearStoredResumeState();
       });
       playerHost.on('error', (err) => {
         console.error('Player error:', err);
@@ -2689,6 +2983,7 @@
       } else if (state === 'playing' || state === 'buffering') {
         holdPlayingUiUntilMs = 0;
         isPlaying = true;
+        lastKnownPlaying = true;
         updatePlayPauseButton();
 
         // If we were re-checking a previously blocked embed, a successful play means it's recovered.
@@ -2725,6 +3020,7 @@
 
         holdPlayingUiUntilMs = 0;
         isPlaying = false;
+        lastKnownPlaying = false;
         updatePlayPauseButton();
         if (shouldAutoScroll) {
           scrollActiveIntoView({ guardUserScroll: true });
@@ -3077,6 +3373,7 @@
       const playlistId = settings.playlistId || '';
       updateCurrentVideo(playlistId, videoId);
       focusActiveTrack();
+      _scheduleApplyResume(75);
     }
 
     // Default volume: applied when players become ready / tracks load.
@@ -3838,6 +4135,23 @@
       return e && (e.key === 'Enter' || e.key === 'Return' || e.code === 'NumpadEnter');
     }
 
+    function cycleVisualizerModule(step) {
+      const adapter = visualizerAdapter;
+      if (!adapter || !adapter.isEnabled || !adapter.isEnabled()) return false;
+      try {
+        const { modules, active } = adapter.getModules ? adapter.getModules() : { modules: [], active: null };
+        if (!Array.isArray(modules) || !modules.length) return false;
+        const currentIdx = Math.max(0, modules.indexOf(active || modules[0]));
+        const nextIdx = (currentIdx + step + modules.length) % modules.length;
+        const target = modules[nextIdx];
+        if (!target) return false;
+        setVisualizerModule(target);
+        return true;
+      } catch {
+        return false;
+      }
+    }
+
     document.addEventListener('keydown', (e) => {
       // X hides the center controls immediately (even if focus is in the sidebar
       // or on invisible edge buttons). Mimics middle-click behavior.
@@ -3870,6 +4184,17 @@
       }
 
       if (isTextInputFocused()) return;
+
+      // Global visualizer module cycling via numpad + / - (only when visualizer enabled)
+      if ((e.code === 'NumpadAdd' || e.code === 'NumpadSubtract') && !e.metaKey && !e.ctrlKey && !e.altKey) {
+        const step = e.code === 'NumpadAdd' ? 1 : -1;
+        const changed = cycleVisualizerModule(step);
+        if (changed) {
+          e.preventDefault();
+          e.stopPropagation();
+          return;
+        }
+      }
 
       // PageUp/PageDown should scroll the playlist by pages from anywhere in the sidebar,
       // unless a focused control (e.g., select/input) handles it.

@@ -585,6 +585,9 @@ export class CenterControlsOverlay {
     if (event.metaKey || event.ctrlKey || event.altKey) return;
     if (isTextInputActive()) return;
 
+    // Ignore visualizer cycling keys so they don't surface the overlay.
+    if (event.code === 'NumpadAdd' || event.code === 'NumpadSubtract') return;
+
     // Don't show overlay for pure modifier presses.
     const key = String(event.key || '');
     if (!key) return;
