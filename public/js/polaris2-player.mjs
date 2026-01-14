@@ -4195,9 +4195,18 @@
 
       if (isTextInputFocused()) return;
 
-      // Global visualizer module cycling via numpad + / - (only when visualizer enabled)
-      if ((e.code === 'NumpadAdd' || e.code === 'NumpadSubtract') && !e.metaKey && !e.ctrlKey && !e.altKey) {
-        const step = e.code === 'NumpadAdd' ? 1 : -1;
+      // Global visualizer module cycling (only when visualizer enabled)
+      // - Numpad +/- (desktop keyboards)
+      // - 1 / 2 (laptops without a numpad): 1 = previous, 2 = next
+      const isVisualizerCycleKey = (
+        e.code === 'NumpadAdd'
+        || e.code === 'NumpadSubtract'
+        || (!e.shiftKey && (e.code === 'Digit1' || e.code === 'Digit2'))
+        || (!e.shiftKey && (e.key === '1' || e.key === '2'))
+      );
+
+      if (isVisualizerCycleKey && !e.metaKey && !e.ctrlKey && !e.altKey) {
+        const step = (e.code === 'NumpadAdd' || e.code === 'Digit2' || e.key === '2') ? 1 : -1;
         const changed = cycleVisualizerModule(step);
         if (changed) {
           e.preventDefault();
