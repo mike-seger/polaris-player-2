@@ -78,6 +78,7 @@
       let audioContext = null;
       let analyserNode = null;
       let sourceNode = null;
+      let audioDataRafId = null;
       let vizPlayback = null;
       let vizLoadToken = 0;
       let moduleListReceived = false;
@@ -289,6 +290,8 @@
         sourceNode = audioContext.createMediaElementSource(audioElement);
         analyserNode = audioContext.createAnalyser();
         analyserNode.fftSize = 2048;
+        // A bit of smoothing helps avoid rapid frame-to-frame jitter.
+        analyserNode.smoothingTimeConstant = 0.8;
         
         // Connect: source -> analyser -> destination
         sourceNode.connect(analyserNode);
@@ -297,6 +300,7 @@
         
         // Forward audio events to parent
         audioElement.addEventListener('ended', () => {
+          stopAudioDataStream();
           notifyParent({ type: 'ENDED' });
         });
         
@@ -321,6 +325,8 @@
           if (!audioElement.ended) {
             notifyParent({ type: 'PAUSED' });
           }
+
+          stopAudioDataStream();
           
           // Send paused state to visualizer
           visualizerFrame.contentWindow.postMessage({
@@ -396,6 +402,10 @@
         switch (msg.type) {
           case 'LOAD_TRACK':
             pendingAutoplay = !!msg.autoplay;
+            // Direct URL loads imply the bridge will handle playback/analyser.
+            if (msg.url) {
+              externalAudioFeed = false;
+            }
             if (msg.vizUrl) {
               loadVizFromUrl(msg.vizUrl);
             } else if (vizPlayback) {
@@ -407,6 +417,7 @@
               // Stop current playback
               audioElement.pause();
               audioElement.currentTime = 0;
+              stopAudioDataStream();
               
               notifyParent({ type: 'LOADING' });
               
@@ -427,6 +438,8 @@
             }
 
             if (audioElement) {
+              // When the bridge is actively playing audio, treat it as the source of truth.
+              externalAudioFeed = false;
               log('[Bridge] Playing audio...');
               
               // Resume AudioContext if suspended
@@ -467,6 +480,7 @@
             if (audioElement) {
               audioElement.pause();
               audioElement.currentTime = 0;
+              stopAudioDataStream();
               notifyParent({ type: 'PAUSED' });
             }
             break;
@@ -509,6 +523,11 @@
           case 'AUDIO_DATA':
             // Live external feed wins over any internal playback/analyser.
             externalAudioFeed = true;
+            // Stop any internal analyser loop and playback to avoid alternating frames.
+            stopAudioDataStream();
+            if (audioElement && !audioElement.paused) {
+              try { audioElement.pause(); } catch { /* ignore */ }
+            }
             if (vizPlayback) {
               stopVizPlayback({ silent: true });
             }
@@ -631,7 +650,24 @@
       
       // Send audio frequency data to visualizer for visualization
       function streamAudioDataToVisualizer() {
-        if (!analyserNode || !visualizerReady) return;
+        if (!analyserNode || !visualizerReady) {
+          audioDataRafId = null;
+          return;
+        }
+
+        // If we have a live external audio feed (from the player), don't also stream
+        // analyser frames from the bridge, otherwise visualizers may flicker between
+        // real audio and silence.
+        if (externalAudioFeed) {
+          audioDataRafId = null;
+          return;
+        }
+
+        // Only stream when the bridge's audio element is actively playing.
+        if (!audioElement || audioElement.paused) {
+          audioDataRafId = null;
+          return;
+        }
         
         const freqArray = new Uint8Array(analyserNode.frequencyBinCount);
         const timeArray = new Uint8Array(analyserNode.fftSize || analyserNode.frequencyBinCount);
@@ -667,17 +703,25 @@
             console.error('[Bridge] Error sending audio data:', err);
           }
         }
-        
-        requestAnimationFrame(streamAudioDataToVisualizer);
+
+        audioDataRafId = requestAnimationFrame(streamAudioDataToVisualizer);
+      }
+
+      function stopAudioDataStream() {
+        if (audioDataRafId != null) {
+          cancelAnimationFrame(audioDataRafId);
+          audioDataRafId = null;
+        }
       }
       
       // Start streaming when audio plays
       function startAudioDataStream() {
         // If external audio feed is active, don't run internal analyser stream to avoid mixing zero frames.
         if (externalAudioFeed) return;
+        if (audioDataRafId != null) return;
         if (audioElement && !audioElement.paused) {
           log('[Bridge] Starting audio data stream');
-          streamAudioDataToVisualizer();
+          audioDataRafId = requestAnimationFrame(streamAudioDataToVisualizer);
         }
       }
 
