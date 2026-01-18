@@ -109,8 +109,11 @@ export class HtmlVideoAdapter {
     // Web Audio plumbing for visualization mirroring
     this._audioContext = null;
     this._analyser = null;
+    this._gainNode = null;
     this._timeArray = null;
     this._freqArray = null;
+
+    this._muted = false;
   }
 
   supports(kind) { return kind === "file"; }
@@ -179,8 +182,15 @@ export class HtmlVideoAdapter {
         this._analyser.fftSize = 2048;
         // Disable analyser smoothing so visualizer receives transient-friendly data.
         this._analyser.smoothingTimeConstant = 0.0;
+
+        // Insert a gain node after the analyser so we can hard-mute output without
+        // stopping the analyser (keeps visualizer fed even in "No audio" mode).
+        this._gainNode = this._audioContext.createGain();
+        this._gainNode.gain.value = this._muted ? 0 : 1;
+
         source.connect(this._analyser);
-        this._analyser.connect(this._audioContext.destination);
+        this._analyser.connect(this._gainNode);
+        this._gainNode.connect(this._audioContext.destination);
         this._timeArray = new Uint8Array(this._analyser.fftSize);
         this._freqArray = new Uint8Array(this._analyser.frequencyBinCount);
       }
@@ -284,7 +294,13 @@ export class HtmlVideoAdapter {
   }
 
   async setVolume(v01) { this._el.volume = clamp01(v01); }
-  async setMuted(m) { this._el.muted = !!m; }
+  async setMuted(m) {
+    this._muted = !!m;
+    // Keep the media element unmuted so the analyser still receives the audio signal.
+    // Silence output via gain instead.
+    this._el.muted = false;
+    if (this._gainNode) this._gainNode.gain.value = this._muted ? 0 : 1;
+  }
   async setRate(r) { this._el.playbackRate = Number(r) || 1; }
 
   getInfo() {

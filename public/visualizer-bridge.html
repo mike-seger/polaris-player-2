@@ -77,6 +77,7 @@
       let audioElement = null;
       let audioContext = null;
       let analyserNode = null;
+      let gainNode = null;
       let sourceNode = null;
       let audioDataRafId = null;
       let vizPlayback = null;
@@ -292,10 +293,15 @@
         analyserNode.fftSize = 2048;
         // Disable analyser smoothing so peaks decay immediately (visualizer handles its own smoothing).
         analyserNode.smoothingTimeConstant = 0.0;
-        
-        // Connect: source -> analyser -> destination
+
+        // Mute via gain so analyser still receives live data when "No audio" is enabled.
+        gainNode = audioContext.createGain();
+        gainNode.gain.value = 1;
+
+        // Connect: source -> analyser -> gain -> destination
         sourceNode.connect(analyserNode);
-        analyserNode.connect(audioContext.destination);
+        analyserNode.connect(gainNode);
+        gainNode.connect(audioContext.destination);
         log('[Bridge] Audio graph connected: source -> analyser -> destination');
         
         // Forward audio events to parent
@@ -510,7 +516,10 @@
 
           case 'SET_MUTED':
             if (audioElement) {
-              audioElement.muted = !!msg.muted;
+              const muted = !!msg.muted;
+              // Keep element unmuted so analyser still sees signal; silence via gain.
+              audioElement.muted = false;
+              if (gainNode) gainNode.gain.value = muted ? 0 : 1;
             }
             break;
 
