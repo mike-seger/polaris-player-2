@@ -177,6 +177,8 @@ export class HtmlVideoAdapter {
         const source = this._audioContext.createMediaElementSource(this._el);
         this._analyser = this._audioContext.createAnalyser();
         this._analyser.fftSize = 2048;
+        // Disable analyser smoothing so visualizer receives transient-friendly data.
+        this._analyser.smoothingTimeConstant = 0.0;
         source.connect(this._analyser);
         this._analyser.connect(this._audioContext.destination);
         this._timeArray = new Uint8Array(this._analyser.fftSize);

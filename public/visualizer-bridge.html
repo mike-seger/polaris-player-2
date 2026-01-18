@@ -290,8 +290,8 @@
         sourceNode = audioContext.createMediaElementSource(audioElement);
         analyserNode = audioContext.createAnalyser();
         analyserNode.fftSize = 2048;
-        // A bit of smoothing helps avoid rapid frame-to-frame jitter.
-        analyserNode.smoothingTimeConstant = 0.8;
+        // Disable analyser smoothing so peaks decay immediately (visualizer handles its own smoothing).
+        analyserNode.smoothingTimeConstant = 0.0;
         
         // Connect: source -> analyser -> destination
         sourceNode.connect(analyserNode);
