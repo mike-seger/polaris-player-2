@@ -240,8 +240,8 @@ function broadcast(data, sender = null) {
         }
     });
     
-    // Also send to sender if it's a play command (so sender syncs too)
-    if (sender && sender.readyState === sender.OPEN && data.type === 'play') {
+    // Also send to sender if it's a play or pause command (so sender syncs too)
+    if (sender && sender.readyState === sender.OPEN && (data.type === 'play' || data.type === 'pause')) {
         sender.send(message);
         count++;
     }

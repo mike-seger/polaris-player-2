@@ -215,19 +215,24 @@ class VideoSyncClient {
         });
         
         this.video.addEventListener('pause', () => {
+            console.log(`[PAUSE EVENT] paused=${this.video.paused}, ignoreFlag=${this.ignoreNextPlayPause}, synced=${this.isSynchronized}`);
             if (this.socket && this.socket.readyState === WebSocket.OPEN && this.isSynchronized) {
                 if (!this.ignoreNextPlayPause) {
                     const commandId = 'pause_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-                    console.log('Broadcasting manual pause');
+                    console.log('📤 Broadcasting manual pause to server');
                     
                     this.socket.send(JSON.stringify({
                         type: 'client_pause',
                         commandId: commandId,
+                        currentTime: this.video.currentTime,
                         clientTime: performance.now()
                     }));
                 } else {
+                    console.log('⏭️  Ignoring pause event (triggered by server command)');
                     this.ignoreNextPlayPause = false;
                 }
+            } else {
+                console.log(`⚠️  Pause not broadcast: socket=${!!this.socket}, open=${this.socket?.readyState === WebSocket.OPEN}, synced=${this.isSynchronized}`);
             }
         });
         
@@ -376,6 +381,10 @@ class VideoSyncClient {
                 this.handleSeek(data);
                 break;
                 
+            case 'heartbeat_ack':
+                // Heartbeat acknowledgment - no action needed
+                break;
+                
             case 'all_clients_ready':
                 console.log(`All ${data.clientCount} clients are ready`);
                 this.updateStatus(`All ${data.clientCount} clients ready`);
@@ -494,12 +503,18 @@ class VideoSyncClient {
                     this.video.startTime = targetPosition;
                     console.log(`Started playback`);
                     
+                    // Reset ignore flag after event fires
+                    setTimeout(() => {
+                        this.ignoreNextPlayPause = false;
+                    }, 100);
+                    
                     // Send status update (but not for initial sync)
                     if (playData.commandId && !playData.isInitialSync) {
                         this.sendStatusUpdate(playData.commandId);
                     }
                 }).catch(error => {
                     console.error('Play failed:', error);
+                    this.ignoreNextPlayPause = false;
                 });
             }
         }
@@ -539,12 +554,18 @@ class VideoSyncClient {
                     this.video.play().then(() => {
                         console.log(`Play started`);
                         
+                        // Reset ignore flag
+                        setTimeout(() => {
+                            this.ignoreNextPlayPause = false;
+                        }, 100);
+                        
                         // Send status update (but not for initial sync)
                         if (commandId) {
                             this.sendStatusUpdate(commandId);
                         }
                     }).catch(error => {
                         console.error('Precise play failed:', error);
+                        this.ignoreNextPlayPause = false;
                         // Fallback to immediate play
                         this.video.play();
                     });
@@ -562,17 +583,28 @@ class VideoSyncClient {
             console.log(`Within buffer window, playing immediately`);
             this.video.play().then(() => {
                 console.log(`Immediate play started`);
+                
+                // Reset ignore flag
+                setTimeout(() => {
+                    this.ignoreNextPlayPause = false;
+                }, 100);
+                
                 if (commandId) {
                     this.sendStatusUpdate(commandId);
                 }
+            }).catch(error => {
+                console.error('Immediate play failed:', error);
+                this.ignoreNextPlayPause = false;
             });
         }
     }
     
     handlePause(pauseData) {
+        console.log(`📥 Received PAUSE command from ${pauseData.initiatedBy}, cmdId=${pauseData.commandId}`);
+        
         // Skip if duplicate
         if (pauseData.commandId && pauseData.commandId === this.lastPauseCommandId) {
-            console.log(`Skipping duplicate pause command`);
+            console.log(`⏭️  Skipping duplicate pause command: ${pauseData.commandId}`);
             return;
         }
         
@@ -587,15 +619,27 @@ class VideoSyncClient {
         
         // Set flag to ignore the next pause event we generate
         this.ignoreNextPlayPause = true;
+        console.log(`🚫 Set ignoreNextPlayPause=true before pausing`);
         
         const serverPauseTime = pauseData.timestamp;
         const localPauseTime = serverPauseTime - this.masterTimeOffset;
         const delay = localPauseTime - performance.now();
         
         const pauseAt = () => {
-            this.video.pause();
+            console.log(`⏸️  Executing pause (was paused: ${this.video.paused})`);
+            
+            // Only pause if not already paused
+            if (!this.video.paused) {
+                this.video.pause();
+            }
+            
             // Clear scheduled play time
             this.scheduledPlayTime = null;
+            
+            // Reset the ignore flag after a short delay to allow the event to fire
+            setTimeout(() => {
+                this.ignoreNextPlayPause = false;
+            }, 100);
             
             // Send status update
             if (pauseData.commandId && !pauseData.isInitialSync) {
@@ -604,6 +648,7 @@ class VideoSyncClient {
         };
         
         if (delay > 0) {
+            console.log(`⏱️  Scheduling pause in ${delay.toFixed(0)}ms`);
             setTimeout(pauseAt, delay);
         } else {
             pauseAt();
