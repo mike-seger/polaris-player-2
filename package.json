@@ -14,7 +14,8 @@
   "dependencies": {
     "dotenv": "^16.4.0",
     "express": "^4.21.0",
-    "node-fetch": "^3.3.2"
+    "node-fetch": "^3.3.2",
+    "ws": "^8.19.0"
   },
   "devDependencies": {
     "esbuild-wasm": "^0.27.2",
