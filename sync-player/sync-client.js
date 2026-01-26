@@ -879,6 +879,8 @@ class VideoSyncClient {
 // Initialize when page loads
 document.addEventListener('DOMContentLoaded', () => {
     const video = document.getElementById('player');
+    const playOverlay = document.getElementById('playOverlay');
+    const playButton = document.getElementById('playButton');
     
     if (!video) {
         console.error('No video element with id "player" found!');
@@ -888,10 +890,41 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log('Video element found, initializing sync client...');
     const syncClient = new VideoSyncClient(video);
     
+    // Handle play button click for Safari/autoplay restrictions
+    if (playButton && playOverlay) {
+        const startPlayback = async () => {
+            console.log('User interaction detected - resuming AudioContext and starting playback');
+            
+            // Resume AudioContext (required by Safari)
+            if (syncClient.audioContext && syncClient.audioContext.state === 'suspended') {
+                await syncClient.audioContext.resume();
+                console.log('AudioContext resumed');
+            }
+            
+            // Hide overlay
+            playOverlay.classList.add('hidden');
+            
+            // Load and prepare video
+            try {
+                await video.load();
+                console.log('Video loaded');
+                
+                // Trigger initial play through sync system
+                syncClient.playMedia();
+            } catch (error) {
+                console.error('Error loading video:', error);
+            }
+        };
+        
+        // Trigger on click anywhere on the overlay
+        playOverlay.addEventListener('click', startPlayback);
+        playButton.addEventListener('click', startPlayback);
+    }
+    
     // Expose to console for testing
     window.syncClient = syncClient;
     
-    console.log('Sync client initialized. Use syncClient.playMedia() to start synchronized playback.');
+    console.log('Sync client initialized. Click the play button to start synchronized playback.');
     
     // Test: Add a manual sync button to HTML
     const statusEl = document.getElementById('syncStatus');
