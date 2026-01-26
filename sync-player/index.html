@@ -17,41 +17,14 @@
             border-radius: 3px;
             z-index: 1000;
         }
-        
-        #playOverlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: transparent;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 2000;
-            cursor: pointer;
-        }
-        
-        #playButton {
-            display: none;
-        }
-        
-        .hidden {
-            display: none;
-        }
     </style>
 </head>
 <body style="background-color: black;">
     <!-- Sync status display -->
     <div class="sync-status" id="syncStatus">Connecting...</div>
     
-    <!-- Play overlay for Safari/browser autoplay restrictions -->
-    <div id="playOverlay">
-        <button id="playButton">▶️ Click to Start Sync Player</button>
-    </div>
-    
     <!-- Your existing video element -->
-    <video id="player" controls style="width: 100%; height: 100vh;">
+    <video id="player" controls autoplay style="width: 100%; height: 100vh;">
         <source src="../player/video/support-media/time-sync-300s.mp4">
     </video>
 
