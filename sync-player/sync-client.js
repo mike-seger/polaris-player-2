@@ -4,8 +4,9 @@ const SERVER_HOST = 'localhost';
 
 // Enhanced sync client with proper media synchronization
 class VideoSyncClient {
-    constructor(videoElement) {
-        this.video = videoElement;
+    constructor(mediaElement, statusUpdateHandler = null) {
+        this.video = mediaElement;
+        this.statusUpdateHandler = statusUpdateHandler;
         this.socket = null;
         this.audioContext = null;
         this.masterTimeOffset = 0;
@@ -96,6 +97,13 @@ class VideoSyncClient {
     startMediaReadyDetection() {
         console.log('Starting media ready detection...');
         
+        // Pause immediately to prevent autoplay from interfering with sync
+        if (!this.video.paused) {
+            console.log('Pausing video to wait for sync');
+            this.video.pause();
+            this.video.currentTime = 0;
+        }
+        
         // Method 1: Event listeners
         const markReady = () => {
             if (!this.mediaReady) {
@@ -118,18 +126,6 @@ class VideoSyncClient {
                 this.reportReady();
                 clearInterval(this.mediaReadyCheckInterval);
             }
-            
-            // Also check after 5 seconds - force ready if still not detected
-            setTimeout(() => {
-                if (!this.mediaReady && this.video.src) {
-                    console.log('Forcing media ready after timeout');
-                    this.mediaReady = true;
-                    this.reportReady();
-                    if (this.mediaReadyCheckInterval) {
-                        clearInterval(this.mediaReadyCheckInterval);
-                    }
-                }
-            }, 5000);
         }, 500);
         
         // Method 3: If video already has data when we check
@@ -357,7 +353,10 @@ class VideoSyncClient {
     }
     
     handleMessage(data) {
-        console.log(`Received message type: ${data.type}`);
+        // Skip logging for heartbeat_ack to reduce noise
+        if (data.type !== 'heartbeat_ack') {
+            console.log(`Received message type: ${data.type}`);
+        }
         
         switch (data.type) {
             case 'welcome':
@@ -818,9 +817,9 @@ class VideoSyncClient {
     }
     
     updateStatus(text) {
-        const statusEl = document.getElementById('syncStatus');
-        if (statusEl) {
-            statusEl.textContent = text;
+        console.log(`[Status] ${text}`);
+        if (this.statusUpdateHandler) {
+            this.statusUpdateHandler(text);
         }
     }
     
@@ -876,30 +875,94 @@ class VideoSyncClient {
     }
 }
 
-// Initialize when page loads
-document.addEventListener('DOMContentLoaded', () => {
-    const video = document.getElementById('player');
+// Helper function to create a text content updater
+function textContentHandler(elementId) {
+    return (text) => {
+        const el = document.getElementById(elementId);
+        if (el) el.textContent = text;
+    };
+}
+
+// Simple initialization function that handles DOMContentLoaded automatically
+function createSyncClient(mediaElementId, statusElementIdOrHandler = null) {
+    addEventListener('DOMContentLoaded', () => {
+        window.syncClient = initSyncClient(mediaElementId, statusElementIdOrHandler);
+    });
+}
+
+// Helper function to initialize sync client
+// Helper function to initialize sync client
+function initSyncClient(mediaElementId, statusElementIdOrHandler = null) {
+    const mediaElement = document.getElementById(mediaElementId);
     
-    if (!video) {
-        console.error('No video element with id "player" found!');
-        return;
+    if (!mediaElement) {
+        console.error(`No media element with id "${mediaElementId}" found!`);
+        return null;
     }
     
-    console.log('Video element found, initializing sync client...');
-    const syncClient = new VideoSyncClient(video);
+    if (mediaElement.tagName !== 'VIDEO' && mediaElement.tagName !== 'AUDIO') {
+        console.error(`Element "${mediaElementId}" is not a video or audio element!`);
+        return null;
+    }
     
-    // Expose to console for testing
-    window.syncClient = syncClient;
+    // Handle status updates - accept either a function or an element ID
+    let statusHandler = null;
+    if (typeof statusElementIdOrHandler === 'string') {
+        const statusEl = document.getElementById(statusElementIdOrHandler);
+        if (statusEl) {
+            statusHandler = (text) => { statusEl.textContent = text; };
+            // Add click handler for manual sync
+            statusEl.style.cursor = 'pointer';
+            statusEl.title = 'Click to manually sync';
+        }
+    } else if (typeof statusElementIdOrHandler === 'function') {
+        statusHandler = statusElementIdOrHandler;
+    }
     
-    console.log('Sync client initialized. Use syncClient.playMedia() to start synchronized playback.');
+    console.log(`${mediaElement.tagName} element found, initializing sync client...`);
+    const syncClient = new VideoSyncClient(mediaElement, statusHandler);
     
-    // Test: Add a manual sync button to HTML
-    const statusEl = document.getElementById('syncStatus');
-    if (statusEl) {
-        statusEl.style.cursor = 'pointer';
-        statusEl.title = 'Click to manually sync';
-        statusEl.addEventListener('click', () => {
-            syncClient.requestSync();
+    // Add click handler for manual sync on status element
+    if (typeof statusElementIdOrHandler === 'string') {
+        const statusEl = document.getElementById(statusElementIdOrHandler);
+        if (statusEl) {
+            statusEl.addEventListener('click', () => syncClient.requestSync());
+        }
+    }
+    
+    console.log('Sync client initialized.');
+    
+    return syncClient;
+}
+
+// Auto-initialize on page load if data-sync-media attribute is present
+document.addEventListener('DOMContentLoaded', () => {
+    // Look for elements with data-sync-media attribute
+    const mediaElements = document.querySelectorAll('[data-sync-media]');
+    
+    if (mediaElements.length === 0) {
+        // Fallback: try common IDs
+        const commonIds = ['player', 'video', 'audio', 'media'];
+        const commonStatusIds = ['syncStatus', 'status', 'sync-status'];
+        
+        for (const id of commonIds) {
+            const el = document.getElementById(id);
+            if (el && (el.tagName === 'VIDEO' || el.tagName === 'AUDIO')) {
+                // Find status element
+                const statusId = commonStatusIds.find(sid => document.getElementById(sid));
+                window.syncClient = initSyncClient(id, statusId || null);
+                if (window.syncClient) {
+                    console.log('Auto-initialized sync client');
+                }
+                return;
+            }
+        }
+    } else {
+        // Initialize each media element with data-sync-media
+        mediaElements.forEach(el => {
+            const statusId = el.getAttribute('data-sync-status');
+            const clientId = el.id || 'syncClient';
+            window[clientId] = initSyncClient(el.id, statusId || null);
         });
     }
 });

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Connection Toggle</title>
+
+<style>
+  body {
+    margin: 0;
+    height: 100vh;
+    display: grid;
+    place-items: center;
+    background: #121212;
+  }
+
+  button {
+    width: 64px;
+    height: 64px;
+    border-radius: 12px;
+    border: none;
+    background: #1e1e1e;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+  }
+
+  button:hover {
+    background: #2a2a2a;
+  }
+
+  svg {
+    width: 32px;
+    height: 32px;
+    fill: #e8eaed;
+    transition: opacity 120ms ease, transform 120ms ease;
+  }
+
+  button[data-state="off"] svg {
+    opacity: 0.45;
+    transform: scale(0.92);
+  }
+</style>
+</head>
+
+<body>
+
+<button id="btn" data-state="on" aria-label="Connection toggle">
+<svg viewBox="0 -960 960 960">
+  <!-- original icon without the long diagonal connector -->
+  <path id="base" d="
+    M318-120q-82 0-140-58t-58-140q0-40 15-76t43-64
+    l134-133 56 56-134 134q-17 17-25.5 38.5T200-318
+    q0 49 34.5 83.5T318-200q23 0 45-8.5t39-25.5
+    l133-134 57 57-134 133q-28 28-64 43t-76 15Zm251-28
+    -56-57 134-133q17-17 25-38t8-44q0-50-34-85t-84-35
+    q-23 0-44.5 8.5T558-726L425-592l-57-56 134-134
+    q28-28 64-43t76-15q82 0 139.5 58T839-641
+    q0 39-14.5 75T782-502L648-368Z" />
+
+  <!-- CONNECTED: long diagonal -->
+  <path id="link-on" d="M397-340 340-397 563-620 620-563Z" />
+
+  <!-- DISCONNECTED: split into two short segments -->
+  <path id="link-off-1" d="M397-340 360-377 430-447 467-410Z" />
+  <path id="link-off-2" d="M493-444 456-481 526-551 563-514Z" />
+</svg>
+</button>
+
+<script>
+  const btn = document.getElementById("btn")
+  const on = document.getElementById("link-on")
+  const off1 = document.getElementById("link-off-1")
+  const off2 = document.getElementById("link-off-2")
+
+  function update(state) {
+    const connected = state === "on"
+    on.style.display = connected ? "block" : "none"
+    off1.style.display = connected ? "none" : "block"
+    off2.style.display = connected ? "none" : "block"
+  }
+
+  btn.addEventListener("click", () => {
+    btn.dataset.state = btn.dataset.state === "on" ? "off" : "on"
+    update(btn.dataset.state)
+  })
+
+  update("on")
+</script>
+
+</body>
+</html>
