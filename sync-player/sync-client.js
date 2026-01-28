@@ -883,6 +883,23 @@ function textContentHandler(elementId) {
     };
 }
 
+// Helper function to create a simple connected/disconnected status handler
+function connectionStatusHandler(elementId) {
+    return (text) => {
+        const el = document.getElementById(elementId);
+        if (!el) return;
+        
+        // Map various status messages to simple connected/disconnected
+        if (text.includes('Disconnected') || text.includes('Connection error')) {
+            el.textContent = 'Disconnected';
+        } else if (text.includes('Connecting')) {
+            el.textContent = 'Connecting...';
+        } else {
+            el.textContent = 'Connected';
+        }
+    };
+}
+
 // Simple initialization function that handles DOMContentLoaded automatically
 function createSyncClient(mediaElementId, statusElementIdOrHandler = null) {
     addEventListener('DOMContentLoaded', () => {

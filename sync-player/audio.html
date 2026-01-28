@@ -46,7 +46,6 @@
     </style>
 </head>
 <body>
-    <!-- Sync status display -->
     <div class="sync-status" id="syncStatus">Connecting...</div>
     
     <div class="audio-container">
@@ -58,7 +57,7 @@
 
     <script src="sync-client.js"></script>
     <script>
-        createSyncClient('player', textContentHandler('syncStatus'));
+        createSyncClient('player', connectionStatusHandler('syncStatus'));
     </script>
 </body>
 </html>
