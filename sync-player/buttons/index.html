@@ -39,10 +39,10 @@ const linkButton = new ToggleButton(buttonOptions).mount('#buttonContainer');
 // Create second blinking button
 const blinkingButton = new ToggleButton(buttonOptions).mount('#buttonContainer');
 
-// Blink at 1 Hz (500ms on, 500ms off)
+// Blink at 1 Hz (1000ms on, 1000ms off)
 setInterval(() => {
     blinkingButton.toggle();
-}, 500);
+}, 1000);
 
 // Expose for console testing
 window.linkButton = linkButton;
