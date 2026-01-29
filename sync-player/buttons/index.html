@@ -4,209 +4,160 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>2-State Button Widget</title>
-
-<!-- Google Material Symbols Font - Local -->
-<style>
-@font-face {
-  font-family: 'Material Symbols Outlined';
-  font-style: normal;
-  font-weight: 100 700;
-  src: url(material-symbols-outlined.woff2) format('woff2');
-}
-
-.material-symbols-outlined {
-  font-family: 'Material Symbols Outlined';
-  font-weight: normal;
-  font-style: normal;
-  font-size: 24px;
-  line-height: 1;
-  letter-spacing: normal;
-  text-transform: none;
-  display: inline-block;
-  white-space: nowrap;
-  word-wrap: normal;
-  direction: ltr;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-rendering: optimizeLegibility;
-  font-feature-settings: 'liga';
-}
-</style>
-
 <style>
 body {
     background-color: #1a1a1a;
     display: flex;
-    flex-direction: column;
     justify-content: center;
     align-items: center;
-    gap: 30px;
     min-height: 100vh;
     margin: 0;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    padding: 20px;
-}
-
-h1 {
-    color: white;
-    font-size: 24px;
-    margin-bottom: 10px;
-}
-
-.examples {
-    display: flex;
-    gap: 20px;
-    flex-wrap: wrap;
-    justify-content: center;
-}
-
-/* 2-State Toggle Button Widget */
-.toggle-button {
-    position: relative;
-    display: inline-block;
-    cursor: pointer;
-}
-
-.toggle-button input[type="checkbox"] {
-    position: absolute;
-    opacity: 0;
-    width: 0;
-    height: 0;
-}
-
-.toggle-button-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: var(--button-size, 50px);
-    height: var(--button-size, 50px);
-    background-color: transparent;
-    border: none;
-    transition: all 0.2s ease;
-    user-select: none;
-}
-
-.toggle-button-icon .material-symbols-outlined {
-    font-size: var(--icon-size, 28px);
-    color: var(--color-unchecked, #888);
-    transition: color 0.2s ease;
-    font-variation-settings: 
-        'FILL' var(--icon-fill-unchecked, 1),
-        'wght' var(--icon-weight, 400),
-        'GRAD' 0,
-        'opsz' 48;
-}
-
-/* Checked state */
-.toggle-button input:checked + .toggle-button-icon .material-symbols-outlined {
-    color: var(--color-checked, #4CAF50);
-    font-variation-settings: 
-        'FILL' var(--icon-fill-checked, 1),
-        'wght' var(--icon-weight, 400),
-        'GRAD' 0,
-        'opsz' 48;
-}
-
-/* Hover effects */
-.toggle-button:hover .toggle-button-icon {
-    background-color: rgba(255,255,255,0.05);
-}
-
-/* Active/pressed effect */
-.toggle-button:active .toggle-button-icon {
-    transform: scale(0.95);
-}
-
-/* Example configurations */
-.link-btn {
-    --button-size: 50px;
-    --icon-size: 28px;
-    --color-unchecked: #888;
-    --color-checked: #4CAF50;
-    --icon-fill-unchecked: 1;
-    --icon-fill-checked: 1;
-}
-
-/* Demo section styling */
-.demo-section {
-    background: rgba(255,255,255,0.05);
-    padding: 30px;
-    border-radius: 12px;
-    text-align: center;
-}
-
-.demo-section h2 {
-    color: #aaa;
-    font-size: 14px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-bottom: 20px;
-}
-
-pre {
-    color: #aaa;
-    text-align: left;
-    overflow-x: auto;
-    background: rgba(0,0,0,0.3);
-    padding: 15px;
-    border-radius: 8px;
 }
 </style>
 </head>
 <body>
-<div class="demo-section">
-    <div id="buttonContainer" class="examples"></div>
-</div>
+<div id="buttonContainer"></div>
 
 <script>
 class ToggleButton {
     constructor(options = {}) {
         this.size = options.size || 50;
-        this.iconSize = options.iconSize || 28;
-        this.icon = options.icon || 'link';
+        this.svgUrl = options.svgUrl || 'link.svg';
         this.colorOff = options.colorOff || '#888';
         this.colorOn = options.colorOn || '#4CAF50';
-        this.fillOff = options.fillOff !== undefined ? options.fillOff : 1;
-        this.fillOn = options.fillOn !== undefined ? options.fillOn : 1;
         this.checked = options.checked || false;
         this.onChange = options.onChange || null;
         
-        this.element = this.create();
-        this.input = this.element.querySelector('input');
+        this.element = null;
+        this.input = null;
+        this.svgContainer = null;
+        this.svgElement = null;
         
-        if (this.onChange) {
-            this.input.addEventListener('change', (e) => {
-                this.onChange(e.target.checked);
-            });
+        // Load SVG asynchronously
+        this.loadSVG();
+    }
+    
+    async loadSVG() {
+        try {
+            const response = await fetch(this.svgUrl);
+            const svgText = await response.text();
+            
+            // Parse SVG
+            const parser = new DOMParser();
+            const svgDoc = parser.parseFromString(svgText, 'image/svg+xml');
+            this.svgElement = svgDoc.documentElement;
+            
+            // Create the button structure
+            this.element = this.create();
+            this.input = this.element.querySelector('input');
+            this.svgContainer = this.element.querySelector('.svg-container');
+            
+            // Insert SVG into container
+            this.svgContainer.appendChild(this.svgElement);
+            
+            // Set SVG size
+            this.svgElement.setAttribute('width', this.size);
+            this.svgElement.setAttribute('height', this.size);
+            
+            // Set initial color
+            this.updateColor();
+            
+            if (this.onChange) {
+                this.input.addEventListener('change', (e) => {
+                    this.updateColor();
+                    this.onChange(e.target.checked);
+                });
+            }
+            
+            // If we have a pending mount, execute it now
+            if (this._pendingMount) {
+                this._pendingMount.appendChild(this.element);
+                this._pendingMount = null;
+            }
+        } catch (error) {
+            console.error('Failed to load SVG:', error);
         }
     }
     
+    updateColor() {
+        if (!this.svgElement) return;
+        
+        const color = this.input.checked ? this.colorOn : this.colorOff;
+        
+        // Update all fill attributes in the SVG
+        const elementsWithFill = this.svgElement.querySelectorAll('[fill]');
+        elementsWithFill.forEach(el => {
+            el.setAttribute('fill', color);
+        });
+        
+        // If no elements have fill, set it on the root
+        if (elementsWithFill.length === 0) {
+            this.svgElement.setAttribute('fill', color);
+        }
+        
+        // Also handle paths without explicit fill
+        const paths = this.svgElement.querySelectorAll('path:not([fill])');
+        paths.forEach(path => {
+            path.setAttribute('fill', color);
+        });
+    }
+    
     create() {
+        // Create label container
         const label = document.createElement('label');
-        label.className = 'toggle-button';
         label.style.cssText = `
-            --button-size: ${this.size}px;
-            --icon-size: ${this.iconSize}px;
-            --color-unchecked: ${this.colorOff};
-            --color-checked: ${this.colorOn};
-            --icon-fill-unchecked: ${this.fillOff};
-            --icon-fill-checked: ${this.fillOn};
+            position: relative;
+            display: inline-block;
+            cursor: pointer;
+            width: ${this.size}px;
+            height: ${this.size}px;
         `;
         
+        // Create hidden checkbox
         const input = document.createElement('input');
         input.type = 'checkbox';
         input.checked = this.checked;
+        input.style.cssText = `
+            position: absolute;
+            opacity: 0;
+            width: 0;
+            height: 0;
+        `;
         
-        const iconContainer = document.createElement('span');
-        iconContainer.className = 'toggle-button-icon';
+        // Create SVG container
+        const svgContainer = document.createElement('div');
+        svgContainer.className = 'svg-container';
+        svgContainer.style.cssText = `
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.2s ease, transform 0.1s ease;
+            user-select: none;
+        `;
         
-        const iconSpan = document.createElement('span');
-        iconSpan.className = 'material-symbols-outlined';
-        iconSpan.textContent = this.icon;
+        // Add hover effect
+        label.addEventListener('mouseenter', () => {
+            svgContainer.style.opacity = '0.8';
+        });
+        label.addEventListener('mouseleave', () => {
+            svgContainer.style.opacity = '1';
+        });
         
-        iconContainer.appendChild(iconSpan);
+        // Add active effect
+        label.addEventListener('mousedown', () => {
+            svgContainer.style.transform = 'scale(0.95)';
+        });
+        label.addEventListener('mouseup', () => {
+            svgContainer.style.transform = 'scale(1)';
+        });
+        label.addEventListener('mouseleave', () => {
+            svgContainer.style.transform = 'scale(1)';
+        });
+        
         label.appendChild(input);
-        label.appendChild(iconContainer);
+        label.appendChild(svgContainer);
         
         return label;
     }
@@ -216,34 +167,40 @@ class ToggleButton {
             container = document.querySelector(container);
         }
         if (container) {
-            container.appendChild(this.element);
+            if (this.element) {
+                container.appendChild(this.element);
+            } else {
+                // SVG not loaded yet, store container for later
+                this._pendingMount = container;
+            }
         }
         return this;
     }
     
     toggle() {
+        if (!this.input) return;
         this.input.checked = !this.input.checked;
+        this.updateColor();
         this.input.dispatchEvent(new Event('change'));
     }
     
     setChecked(checked) {
+        if (!this.input) return;
         this.input.checked = checked;
+        this.updateColor();
     }
     
     isChecked() {
-        return this.input.checked;
+        return this.input ? this.input.checked : false;
     }
 }
 
 // Create example button
 const linkButton = new ToggleButton({
     size: 50,
-    iconSize: 28,
-    icon: 'link',
+    svgUrl: 'link.svg',
     colorOff: '#888',
     colorOn: '#4CAF50',
-    fillOff: 1,
-    fillOn: 1,
     checked: false,
     onChange: (checked) => {
         console.log(`Link button: ${checked ? 'ON' : 'OFF'}`);
