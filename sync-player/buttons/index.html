@@ -5,8 +5,33 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>2-State Button Widget</title>
 
-<!-- Google Material Symbols Font -->
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+<!-- Google Material Symbols Font - Local -->
+<style>
+@font-face {
+  font-family: 'Material Symbols Outlined';
+  font-style: normal;
+  font-weight: 100 700;
+  src: url(material-symbols-outlined.woff2) format('woff2');
+}
+
+.material-symbols-outlined {
+  font-family: 'Material Symbols Outlined';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: 'liga';
+}
+</style>
 
 <style>
 body {
@@ -53,21 +78,20 @@ h1 {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: var(--button-size, 60px);
-    height: var(--button-size, 60px);
-    border-radius: var(--button-radius, 50%);
-    background-color: var(--button-bg, transparent);
-    border: var(--button-border, 2px solid #666);
+    width: var(--button-size, 50px);
+    height: var(--button-size, 50px);
+    background-color: transparent;
+    border: none;
     transition: all 0.2s ease;
     user-select: none;
 }
 
 .toggle-button-icon .material-symbols-outlined {
-    font-size: var(--icon-size, 32px);
+    font-size: var(--icon-size, 28px);
     color: var(--color-unchecked, #888);
     transition: color 0.2s ease;
     font-variation-settings: 
-        'FILL' var(--icon-fill-unchecked, 0),
+        'FILL' var(--icon-fill-unchecked, 1),
         'wght' var(--icon-weight, 400),
         'GRAD' 0,
         'opsz' 48;
@@ -85,8 +109,7 @@ h1 {
 
 /* Hover effects */
 .toggle-button:hover .toggle-button-icon {
-    background-color: var(--button-bg-hover, rgba(255,255,255,0.05));
-    border-color: var(--button-border-hover, #999);
+    background-color: rgba(255,255,255,0.05);
 }
 
 /* Active/pressed effect */
@@ -95,48 +118,49 @@ h1 {
 }
 
 /* Example configurations */
-.play-pause-btn {
-    --button-size: 80px;
-    --icon-size: 48px;
+.link-btn {
+    --button-size: 50px;
+    --icon-size: 28px;
+    --color-unchecked: #888;
+    --color-checked: #4CAF50;
+    --icon-fill-unchecked: 1;
+    --icon-fill-checked: 1;
+}
+
+.link-off-btn {
+    --button-size: 50px;
+    --icon-size: 28px;
+    --color-unchecked: #888;
+    --color-checked: #f44336;
+    --icon-fill-unchecked: 1;
+    --icon-fill-checked: 1;
+}
+
+.link2-btn {
+    --button-size: 50px;
+    --icon-size: 28px;
     --color-unchecked: #888;
     --color-checked: #2196F3;
     --icon-fill-unchecked: 1;
     --icon-fill-checked: 1;
-    --button-border: 2px solid #444;
-    --button-radius: 50%;
 }
 
-.favorite-btn {
-    --button-size: 60px;
-    --icon-size: 36px;
-    --color-unchecked: #666;
-    --color-checked: #e91e63;
-    --icon-fill-unchecked: 0;
-    --icon-fill-checked: 1;
-    --button-border: none;
-    --button-bg: rgba(255,255,255,0.05);
-}
-
-.volume-btn {
+.sync-btn {
     --button-size: 50px;
     --icon-size: 28px;
     --color-unchecked: #888;
     --color-checked: #FF9800;
     --icon-fill-unchecked: 1;
     --icon-fill-checked: 1;
-    --button-radius: 12px;
-    --button-border: 1px solid #555;
 }
 
-.check-btn {
-    --button-size: 70px;
-    --icon-size: 40px;
-    --color-unchecked: #666;
-    --color-checked: #4CAF50;
-    --icon-fill-unchecked: 0;
+.sync-disabled-btn {
+    --button-size: 50px;
+    --icon-size: 28px;
+    --color-unchecked: #888;
+    --color-checked: #9E9E9E;
+    --icon-fill-unchecked: 1;
     --icon-fill-checked: 1;
-    --button-border: 3px solid #444;
-    --button-radius: 8px;
 }
 
 /* Demo section styling */
@@ -172,35 +196,43 @@ pre {
 <div class="demo-section">
     <h2>Examples</h2>
     <div class="examples">
-        <!-- Play/Pause Button -->
-        <label class="toggle-button play-pause-btn">
+        <!-- Link Button -->
+        <label class="toggle-button link-btn">
             <input type="checkbox">
             <span class="toggle-button-icon">
-                <span class="material-symbols-outlined">play_arrow</span>
+                <span class="material-symbols-outlined">link</span>
             </span>
         </label>
         
-        <!-- Favorite/Heart Button -->
-        <label class="toggle-button favorite-btn">
+        <!-- Link Off Button -->
+        <label class="toggle-button link-off-btn">
             <input type="checkbox">
             <span class="toggle-button-icon">
-                <span class="material-symbols-outlined">favorite</span>
+                <span class="material-symbols-outlined">link_off</span>
             </span>
         </label>
         
-        <!-- Volume On/Off Button -->
-        <label class="toggle-button volume-btn">
-            <input type="checkbox" checked>
+        <!-- Link 2 Button -->
+        <label class="toggle-button link2-btn">
+            <input type="checkbox">
             <span class="toggle-button-icon">
-                <span class="material-symbols-outlined">volume_up</span>
+                <span class="material-symbols-outlined">link</span>
             </span>
         </label>
         
-        <!-- Check/Done Button -->
-        <label class="toggle-button check-btn">
+        <!-- Sync Button -->
+        <label class="toggle-button sync-btn">
             <input type="checkbox">
             <span class="toggle-button-icon">
-                <span class="material-symbols-outlined">check_circle</span>
+                <span class="material-symbols-outlined">sync</span>
+            </span>
+        </label>
+        
+        <!-- Sync Disabled Button -->
+        <label class="toggle-button sync-disabled-btn">
+            <input type="checkbox">
+            <span class="toggle-button-icon">
+                <span class="material-symbols-outlined">sync_disabled</span>
             </span>
         </label>
     </div>
@@ -209,18 +241,16 @@ pre {
 <div class="demo-section" style="max-width: 600px;">
     <h2>Usage</h2>
     <pre><code>&lt;label class="toggle-button" style="
-    --button-size: 60px;
-    --icon-size: 32px;
+    --button-size: 50px;
+    --icon-size: 28px;
     --color-unchecked: #888;
     --color-checked: #4CAF50;
-    --icon-fill-unchecked: 0;
+    --icon-fill-unchecked: 1;
     --icon-fill-checked: 1;
-    --button-radius: 50%;
-    --button-border: 2px solid #666;
 "&gt;
     &lt;input type="checkbox"&gt;
     &lt;span class="toggle-button-icon"&gt;
-        &lt;span class="material-symbols-outlined"&gt;favorite&lt;/span&gt;
+        &lt;span class="material-symbols-outlined"&gt;link&lt;/span&gt;
     &lt;/span&gt;
 &lt;/label&gt;</code></pre>
 </div>
