@@ -127,42 +127,6 @@ h1 {
     --icon-fill-checked: 1;
 }
 
-.link-off-btn {
-    --button-size: 50px;
-    --icon-size: 28px;
-    --color-unchecked: #888;
-    --color-checked: #f44336;
-    --icon-fill-unchecked: 1;
-    --icon-fill-checked: 1;
-}
-
-.link2-btn {
-    --button-size: 50px;
-    --icon-size: 28px;
-    --color-unchecked: #888;
-    --color-checked: #2196F3;
-    --icon-fill-unchecked: 1;
-    --icon-fill-checked: 1;
-}
-
-.sync-btn {
-    --button-size: 50px;
-    --icon-size: 28px;
-    --color-unchecked: #888;
-    --color-checked: #FF9800;
-    --icon-fill-unchecked: 1;
-    --icon-fill-checked: 1;
-}
-
-.sync-disabled-btn {
-    --button-size: 50px;
-    --icon-size: 28px;
-    --color-unchecked: #888;
-    --color-checked: #9E9E9E;
-    --icon-fill-unchecked: 1;
-    --icon-fill-checked: 1;
-}
-
 /* Demo section styling */
 .demo-section {
     background: rgba(255,255,255,0.05);
@@ -189,80 +153,106 @@ pre {
 }
 </style>
 </head>
-
 <body>
-<h1>2-State Toggle Button Widget</h1>
-
 <div class="demo-section">
-    <h2>Examples</h2>
-    <div class="examples">
-        <!-- Link Button -->
-        <label class="toggle-button link-btn">
-            <input type="checkbox">
-            <span class="toggle-button-icon">
-                <span class="material-symbols-outlined">link</span>
-            </span>
-        </label>
-        
-        <!-- Link Off Button -->
-        <label class="toggle-button link-off-btn">
-            <input type="checkbox">
-            <span class="toggle-button-icon">
-                <span class="material-symbols-outlined">link_off</span>
-            </span>
-        </label>
-        
-        <!-- Link 2 Button -->
-        <label class="toggle-button link2-btn">
-            <input type="checkbox">
-            <span class="toggle-button-icon">
-                <span class="material-symbols-outlined">link</span>
-            </span>
-        </label>
-        
-        <!-- Sync Button -->
-        <label class="toggle-button sync-btn">
-            <input type="checkbox">
-            <span class="toggle-button-icon">
-                <span class="material-symbols-outlined">sync</span>
-            </span>
-        </label>
-        
-        <!-- Sync Disabled Button -->
-        <label class="toggle-button sync-disabled-btn">
-            <input type="checkbox">
-            <span class="toggle-button-icon">
-                <span class="material-symbols-outlined">sync_disabled</span>
-            </span>
-        </label>
-    </div>
-</div>
-
-<div class="demo-section" style="max-width: 600px;">
-    <h2>Usage</h2>
-    <pre><code>&lt;label class="toggle-button" style="
-    --button-size: 50px;
-    --icon-size: 28px;
-    --color-unchecked: #888;
-    --color-checked: #4CAF50;
-    --icon-fill-unchecked: 1;
-    --icon-fill-checked: 1;
-"&gt;
-    &lt;input type="checkbox"&gt;
-    &lt;span class="toggle-button-icon"&gt;
-        &lt;span class="material-symbols-outlined"&gt;link&lt;/span&gt;
-    &lt;/span&gt;
-&lt;/label&gt;</code></pre>
+    <div id="buttonContainer" class="examples"></div>
 </div>
 
 <script>
-// Optional: Add event listeners to log state changes
-document.querySelectorAll('.toggle-button input').forEach(input => {
-    input.addEventListener('change', (e) => {
-        const icon = e.target.nextElementSibling.querySelector('.material-symbols-outlined');
-        console.log(`Button toggled: ${icon.textContent} - ${e.target.checked ? 'ON' : 'OFF'}`);
-    });
-});
+class ToggleButton {
+    constructor(options = {}) {
+        this.size = options.size || 50;
+        this.iconSize = options.iconSize || 28;
+        this.icon = options.icon || 'link';
+        this.colorOff = options.colorOff || '#888';
+        this.colorOn = options.colorOn || '#4CAF50';
+        this.fillOff = options.fillOff !== undefined ? options.fillOff : 1;
+        this.fillOn = options.fillOn !== undefined ? options.fillOn : 1;
+        this.checked = options.checked || false;
+        this.onChange = options.onChange || null;
+        
+        this.element = this.create();
+        this.input = this.element.querySelector('input');
+        
+        if (this.onChange) {
+            this.input.addEventListener('change', (e) => {
+                this.onChange(e.target.checked);
+            });
+        }
+    }
+    
+    create() {
+        const label = document.createElement('label');
+        label.className = 'toggle-button';
+        label.style.cssText = `
+            --button-size: ${this.size}px;
+            --icon-size: ${this.iconSize}px;
+            --color-unchecked: ${this.colorOff};
+            --color-checked: ${this.colorOn};
+            --icon-fill-unchecked: ${this.fillOff};
+            --icon-fill-checked: ${this.fillOn};
+        `;
+        
+        const input = document.createElement('input');
+        input.type = 'checkbox';
+        input.checked = this.checked;
+        
+        const iconContainer = document.createElement('span');
+        iconContainer.className = 'toggle-button-icon';
+        
+        const iconSpan = document.createElement('span');
+        iconSpan.className = 'material-symbols-outlined';
+        iconSpan.textContent = this.icon;
+        
+        iconContainer.appendChild(iconSpan);
+        label.appendChild(input);
+        label.appendChild(iconContainer);
+        
+        return label;
+    }
+    
+    mount(container) {
+        if (typeof container === 'string') {
+            container = document.querySelector(container);
+        }
+        if (container) {
+            container.appendChild(this.element);
+        }
+        return this;
+    }
+    
+    toggle() {
+        this.input.checked = !this.input.checked;
+        this.input.dispatchEvent(new Event('change'));
+    }
+    
+    setChecked(checked) {
+        this.input.checked = checked;
+    }
+    
+    isChecked() {
+        return this.input.checked;
+    }
+}
+
+// Create example button
+const linkButton = new ToggleButton({
+    size: 50,
+    iconSize: 28,
+    icon: 'link',
+    colorOff: '#888',
+    colorOn: '#4CAF50',
+    fillOff: 1,
+    fillOn: 1,
+    checked: false,
+    onChange: (checked) => {
+        console.log(`Link button: ${checked ? 'ON' : 'OFF'}`);
+    }
+}).mount('#buttonContainer');
+
+// Expose for console testing
+window.linkButton = linkButton;
+console.log('Example: linkButton.toggle() or linkButton.setChecked(true)');
 </script>
 
 </body>
