@@ -1214,8 +1214,8 @@ body.spectrum-hidden #spectrumCanvas {
     font-size: 0.85rem;
     color: var(--color-text);
     cursor: pointer;
-    padding: 0.2rem 0.3rem;
-    min-height: 1.4rem;
+    padding: 0.2rem 0.2rem;
+    min-height: 0.8rem;
     border-radius: 6px;
 }
 
