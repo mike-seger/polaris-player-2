@@ -534,6 +534,15 @@ input[type="checkbox"] {
     flex: 1;
 }
 
+#sync-play {
+    /* background-color: red; */
+    border: 0;
+    margin-top: 7px;
+    height: 34px;
+    width: 34px;
+    padding-bottom: 6px;
+}
+
 #combinedFilterBtn {
     flex: 0 0 auto;
     display: inline-flex;

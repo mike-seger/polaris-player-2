@@ -1316,6 +1316,88 @@
       spotifyRow.appendChild(spotifyClientIdRow);
       spotifyRow.appendChild(spotifyHint);
 
+      // Sync Server setting for Local video player
+      const syncServerRow = document.createElement('div');
+      syncServerRow.style.display = 'flex';
+      syncServerRow.style.flexDirection = 'column';
+      syncServerRow.style.gap = '0.35rem';
+
+      const syncServerLabel = document.createElement('label');
+      syncServerLabel.textContent = 'Sync Server';
+      syncServerLabel.style.fontSize = '0.75rem';
+      syncServerLabel.style.fontWeight = '600';
+      syncServerLabel.style.letterSpacing = '0.05em';
+      syncServerLabel.style.textTransform = 'uppercase';
+      syncServerLabel.style.color = '#a8b3c7';
+
+      const syncServerInput = document.createElement('input');
+      syncServerInput.type = 'text';
+      syncServerInput.autocomplete = 'off';
+      syncServerInput.spellcheck = false;
+      syncServerInput.placeholder = 'localhost:5001';
+      syncServerInput.style.padding = '0.55rem 0.6rem';
+      syncServerInput.style.borderRadius = '6px';
+      syncServerInput.style.border = '1px solid #2b2f3a';
+      syncServerInput.style.background = '#11141c';
+      syncServerInput.style.color = '#f5f7fa';
+      syncServerInput.style.fontSize = '0.9rem';
+      syncServerInput.style.outline = 'none';
+      syncServerInput.style.flex = '1 1 auto';
+      syncServerInput.style.minWidth = '0';
+
+      const syncServerHint = document.createElement('p');
+      syncServerHint.textContent = 'Multi-client playback sync (format: hostname:port)';
+      syncServerHint.style.margin = '0';
+      syncServerHint.style.fontSize = '0.75rem';
+      syncServerHint.style.color = '#6c7488';
+      syncServerHint.style.lineHeight = '1.4';
+
+      try {
+        const syncServer = getUserSettings().syncServer || 'localhost:5001';
+        syncServerInput.value = syncServer;
+      } catch { 
+        syncServerInput.value = 'localhost:5001';
+      }
+
+      let syncServerValue = syncServerInput.value;
+
+      function commitSyncServer() {
+        const v = String(syncServerInput.value || '').trim();
+        const changed = v !== syncServerValue;
+        syncServerValue = v;
+        
+        try {
+          const patch = { syncServer: v || 'localhost:5001' };
+          if (typeof resetUserSettings === 'function') {
+            const current = getUserSettings();
+            resetUserSettings(Object.assign({}, current, patch));
+          }
+          
+          // Reconnect sync client if server changed and we're on Local player
+          if (changed && getPlayerMode() === 'local') {
+            try {
+              if (typeof window.syncClient?.reconnect === 'function') {
+                window.syncClient.reconnect(v || 'localhost:5001');
+              }
+            } catch(e) {
+              console.warn('Failed to reconnect sync client:', e);
+            }
+          }
+        } catch { /* ignore */ }
+      }
+
+      syncServerInput.addEventListener('blur', () => commitSyncServer());
+      syncServerInput.addEventListener('keydown', (e) => {
+        if (e && e.key === 'Enter') {
+          e.preventDefault();
+          commitSyncServer();
+        }
+      });
+
+      syncServerRow.appendChild(syncServerLabel);
+      syncServerRow.appendChild(syncServerInput);
+      syncServerRow.appendChild(syncServerHint);
+
       const spotifyDeviceRow = document.createElement('div');
       spotifyDeviceRow.style.display = 'flex';
       spotifyDeviceRow.style.flexDirection = 'column';
@@ -1558,8 +1640,10 @@
 
       function updateSpotifyVisibility() {
         const isSpotify = playerSelect.value === 'spotify';
+        const isLocal = playerSelect.value === 'local';
         spotifyRow.style.display = isSpotify ? 'flex' : 'none';
         spotifyDeviceRow.style.display = isSpotify ? 'flex' : 'none';
+        syncServerRow.style.display = isLocal ? 'flex' : 'none';
 
         if (isSpotify && !spotifyDevicesLoadedOnce) {
           spotifyDevicesLoadedOnce = true;
@@ -1573,6 +1657,7 @@
         if (section) {
           section.playerModeSelect = playerSelect;
           section.spotifyClientIdInput = spotifyClientIdInput;
+          section.syncServerInput = syncServerInput;
           section.updateSpotifyVisibility = updateSpotifyVisibility;
         }
       } catch { /* ignore */ }
@@ -1585,6 +1670,7 @@
 
       videoPlayerSection.content.appendChild(playerIntro);
       videoPlayerSection.content.appendChild(playerRow);
+      videoPlayerSection.content.appendChild(syncServerRow);
       videoPlayerSection.content.appendChild(spotifyRow);
       videoPlayerSection.content.appendChild(spotifyDeviceRow);
 
