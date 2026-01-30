@@ -120,3 +120,21 @@ node sync-server.js
   - **Unavailable**: `#a8b3c7`
 
 If you want the button to be disabled/unavailable in certain app modes, do that in the caller (e.g., pass a custom `onChange`).
+
+### Optional: block toggling in some states
+
+If your app has “modes” (e.g., sync only allowed for local playback), you can veto toggles:
+
+```js
+const client = initSyncClient('LocalPlayer', null, syncServer, {
+  container: '#syncButton',
+  onBeforeToggle: (checked, syncClient) => {
+    const allowed = /* your condition */ true;
+    if (!allowed) {
+      syncClient.updateButtonState('unavailable');
+      return false; // revert the click
+    }
+    return true;
+  }
+});
+```

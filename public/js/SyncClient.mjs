@@ -107,6 +107,22 @@ class VideoSyncClient {
                 colorOn: colorConnected,
                 checked: false,
                 onChange: (checked) => {
+                    if (typeof config?.onBeforeToggle === 'function') {
+                        let allowed = true;
+                        try {
+                            allowed = config.onBeforeToggle(checked, this) !== false;
+                        } catch (e) {
+                            console.warn('onBeforeToggle failed:', e);
+                            allowed = false;
+                        }
+                        if (!allowed) {
+                            // Revert the toggle state.
+                            try { this.toggleButton.setChecked(!checked); } catch { /* ignore */ }
+                            try { this.toggleButton.updateColor(); } catch { /* ignore */ }
+                            return;
+                        }
+                    }
+
                     if (checked) {
                         this.reconnect();
                     } else {

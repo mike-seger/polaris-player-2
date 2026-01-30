@@ -2701,33 +2701,17 @@
 
       try { centerControlsOverlayController?.updateForMode?.(_nextMode); } catch { /* ignore */ }
 
-      // Handle sync client state changes
-      if (_prevMode === 'local' && _nextMode !== 'local') {
-        // Disconnecting from local mode - disconnect sync client
-        try {
-          if (window.syncClient && typeof window.syncClient.disconnect === 'function') {
-            window.syncClient.disconnect();
-            window.syncClient.updateButtonState('unavailable');
-            console.log('Sync client disconnected (switched from Local player)');
-          }
-        } catch (e) {
-          console.warn('Failed to disconnect sync client:', e);
-        }
-      } else if (_prevMode !== 'local' && _nextMode === 'local') {
-        // Switching to local mode - reconnect sync client
-        try {
+      // Sync client availability follows the player mode.
+      try {
+        const sc = window.syncClient;
+        if (sc && _nextMode === 'local' && typeof sc.reconnect === 'function') {
           const syncServer = (settings && typeof settings.syncServer === 'string') ? settings.syncServer : 'localhost:5001';
-          if (window.syncClient && typeof window.syncClient.reconnect === 'function') {
-            window.syncClient.reconnect(syncServer);
-            console.log('Sync client reconnected (switched to Local player)');
-          }
-        } catch (e) {
-          console.warn('Failed to reconnect sync client:', e);
-          if (window.syncClient) {
-            window.syncClient.updateButtonState('unavailable');
-          }
+          sc.reconnect(syncServer);
+        } else if (sc && _nextMode !== 'local' && typeof sc.disconnect === 'function') {
+          sc.disconnect();
+          if (typeof sc.updateButtonState === 'function') sc.updateButtonState('unavailable');
         }
-      }
+      } catch { /* ignore */ }
 
       const doSwitchLoad = () => {
         const autoplay = !!isPlaying;
@@ -4672,53 +4656,25 @@
     try {
       const syncServer = (settings && typeof settings.syncServer === 'string') ? settings.syncServer : 'localhost:5001';
       const playerMode = getPlayerMode();
-      
-      // Only initialize and connect if we're in Local player mode
-      if (playerMode === 'local') {
-        window.syncClient = initSyncClient('LocalPlayer', null, syncServer, {
-          container: '#sync-play',
-          svgUrl: './img/link.svg',
-          size: 40,
-          colorConnected: '#cc0000',
-          colorDisconnected: '#ffffff',
-          colorUnavailable: '#a8b3c7',
-          onChange: (checked, syncClient) => {
-            const currentMode = getPlayerMode();
-            if (currentMode !== 'local') {
-              console.log('Sync only available in Local player mode');
-              syncClient.disconnect();
-              syncClient.updateButtonState('unavailable');
-            }
-          }
-        });
-        
-        if (window.syncClient) {
-          console.log('Sync client initialized for multi-client playback');
+
+      window.syncClient = initSyncClient('LocalPlayer', null, syncServer, {
+        container: '#sync-play',
+        svgUrl: './img/link.svg',
+        size: 40,
+        colorConnected: '#cc0000',
+        colorDisconnected: '#ffffff',
+        colorUnavailable: '#a8b3c7',
+        onBeforeToggle: (_checked, syncClient) => {
+          if (getPlayerMode() === 'local') return true;
+          syncClient.disconnect();
+          syncClient.updateButtonState('unavailable');
+          return false;
         }
-      } else {
-        // Create client but keep it disconnected for other modes
-        window.syncClient = initSyncClient('LocalPlayer', null, syncServer, {
-          container: '#sync-play',
-          svgUrl: './img/link.svg',
-          size: 40,
-          colorConnected: '#cc0000',
-          colorDisconnected: '#ffffff',
-          colorUnavailable: '#a8b3c7',
-          onChange: (checked, syncClient) => {
-            const currentMode = getPlayerMode();
-            if (currentMode !== 'local') {
-              console.log('Sync only available in Local player mode');
-              syncClient.disconnect();
-              syncClient.updateButtonState('unavailable');
-            }
-          }
-        });
-        
-        if (window.syncClient) {
-          window.syncClient.disconnect();
-          window.syncClient.updateButtonState('unavailable');
-          console.log('Sync client created but unavailable (not in Local player mode)');
-        }
+      });
+
+      if (window.syncClient && playerMode !== 'local') {
+        window.syncClient.disconnect();
+        window.syncClient.updateButtonState('unavailable');
       }
     } catch (error) {
       console.warn('Failed to initialize sync client:', error);
