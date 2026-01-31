@@ -1,6 +1,11 @@
 export default class ToggleButton {
     constructor(options = {}) {
         this.size = options.size || 50;
+        // Scale the SVG icon relative to the button size.
+        // Default is intentionally < 1 so the glyph has comfortable padding.
+        this.iconScale = (typeof options.iconScale === 'number' && isFinite(options.iconScale))
+            ? Math.max(0.1, Math.min(1, options.iconScale))
+            : 0.62;
         this.svgUrl = options.svgUrl || 'link.svg';
         this.colorOff = options.colorOff || '#888';
         this.colorOn = options.colorOn || '#4CAF50';
@@ -35,8 +40,15 @@ export default class ToggleButton {
             this.svgContainer.appendChild(this.svgElement);
             
             // Set SVG size
-            this.svgElement.setAttribute('width', this.size);
-            this.svgElement.setAttribute('height', this.size);
+            const iconPx = Math.max(1, Math.round(this.size * this.iconScale));
+            this.svgElement.setAttribute('width', iconPx);
+            this.svgElement.setAttribute('height', iconPx);
+            // Ensure it centers nicely even if the SVG has its own internal sizing.
+            try {
+                this.svgElement.style.display = 'block';
+            } catch {
+                /* ignore */
+            }
             
             // Set initial color
             this.updateColor();
