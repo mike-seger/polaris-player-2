@@ -16,6 +16,15 @@ class VideoSyncClient {
         // Used to persist a user's manual "unsync" choice across reloads.
         this.autoConnect = true;
 
+        // Optional behavior flags (kept on toggleButtonConfig for backwards compatibility)
+        // IMPORTANT defaults for the host player:
+        // - do NOT pause media on init (would stop analyser streaming)
+        // - do NOT create a MediaElementSource by default (can break other analysers)
+        const config = toggleButtonConfig || null;
+        this.pauseOnInit = config?.pauseOnInit !== undefined ? !!config.pauseOnInit : false;
+        this.enableWebAudio = config?.enableWebAudio !== undefined ? !!config.enableWebAudio : false;
+        this.heartbeatInterval = null;
+
         this.socket = null;
         this.audioContext = null;
         this.masterTimeOffset = 0;
@@ -65,17 +74,19 @@ class VideoSyncClient {
             this.updateButtonState('disconnected');
         }
         
-        // Create Web Audio context for precise timing
-        try {
-            this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            console.log('Audio context created');
-        } catch (error) {
-            console.warn('AudioContext creation failed:', error);
-            this.audioContext = null;
+        if (this.enableWebAudio) {
+            // Create Web Audio context for precise timing
+            try {
+                this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                console.log('Audio context created');
+            } catch (error) {
+                console.warn('AudioContext creation failed:', error);
+                this.audioContext = null;
+            }
+
+            // Connect audio through Web Audio API
+            this.connectWebAudio();
         }
-        
-        // Connect audio through Web Audio API
-        this.connectWebAudio();
         
         // Start media ready detection immediately
         this.startMediaReadyDetection();
@@ -210,13 +221,17 @@ class VideoSyncClient {
     
     startMediaReadyDetection() {
         console.log('Starting media ready detection...');
-        
-        // Pause immediately to prevent autoplay from interfering with sync,
-        // but only when sync is enabled.
-        if (this.autoConnect && !this.video.paused) {
-            console.log('Pausing video to wait for sync');
-            this.video.pause();
-            this.video.currentTime = 0;
+
+        // Optional: pause/reset only when explicitly requested.
+        // In the host player this must NOT happen by default, otherwise the
+        // visualizer bridge stops streaming AUDIO_DATA due to audioElement.paused.
+        if (this.pauseOnInit) {
+            try {
+                if (!this.video.paused) this.video.pause();
+            } catch { /* ignore */ }
+            try {
+                this.video.currentTime = 0;
+            } catch { /* ignore */ }
         }
         
         // Method 1: Event listeners
@@ -440,8 +455,11 @@ class VideoSyncClient {
             this.updateButtonState('disconnected');
             this.requestSync();
             
-            // Start heartbeat
-            setInterval(() => {
+            // Start heartbeat (clear previous interval on reconnect)
+            if (this.heartbeatInterval) {
+                clearInterval(this.heartbeatInterval);
+            }
+            this.heartbeatInterval = setInterval(() => {
                 if (this.socket && this.socket.readyState === WebSocket.OPEN) {
                     this.socket.send(JSON.stringify({
                         type: 'heartbeat',
@@ -954,6 +972,10 @@ class VideoSyncClient {
         }
         if (this.mediaReadyCheckInterval) {
             clearInterval(this.mediaReadyCheckInterval);
+        }
+        if (this.heartbeatInterval) {
+            clearInterval(this.heartbeatInterval);
+            this.heartbeatInterval = null;
         }
         if (this.socket && this.socket.readyState === WebSocket.OPEN) {
             this.socket.close();
