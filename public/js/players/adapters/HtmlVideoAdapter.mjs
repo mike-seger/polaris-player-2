@@ -297,10 +297,16 @@ export class HtmlVideoAdapter {
   async setVolume(v01) { this._el.volume = clamp01(v01); }
   async setMuted(m) {
     this._muted = !!m;
-    // Keep the media element unmuted so the analyser still receives the audio signal.
-    // Silence output via gain instead.
-    this._el.muted = false;
-    if (this._gainNode) this._gainNode.gain.value = this._muted ? 0 : 1;
+    // Two cases:
+    // 1) Before WebAudio is initialized: the element outputs audio directly -> must use el.muted.
+    // 2) After createMediaElementSource(): audio routes through AudioContext -> use gain node.
+    if (this._gainNode) {
+      this._el.muted = false;
+      this._gainNode.gain.value = this._muted ? 0 : 1;
+      return;
+    }
+
+    this._el.muted = this._muted;
   }
   async setRate(r) { this._el.playbackRate = Number(r) || 1; }
 
