@@ -398,6 +398,10 @@
       return (mode === 'local' || mode === 'spotify') ? mode : 'youtube';
     }
 
+    function isTotalPlaytimeMode() {
+      return !!(settings && settings.totalPlaytimeMode === true);
+    }
+
     function buildLocalVideoUrlForItem(item) {
       const activePlaylistId = (settings && typeof settings.playlistId === 'string') ? settings.playlistId.trim() : '';
 
@@ -2383,6 +2387,9 @@
       const absDurMs = Number(info?.time?.durationMs);
       const durMs = (isFinite(absDurMs) && absDurMs > 0) ? absDurMs : 0;
 
+      // Total-playtime mode: show the full underlying media duration.
+      if (isTotalPlaytimeMode() && durMs > 0) return durMs / 1000;
+
       const clip = getClipWindowMsForIndex(currentIndex, durMs);
       if (!clip.isClip) return durMs > 0 ? durMs / 1000 : 0;
 
@@ -2400,6 +2407,9 @@
       const posMs = (isFinite(absPosMs) && absPosMs > 0) ? absPosMs : 0;
       const absDurMs = Number(info?.time?.durationMs);
       const durMs = (isFinite(absDurMs) && absDurMs > 0) ? absDurMs : 0;
+
+      // Total-playtime mode: show the full underlying media time position.
+      if (isTotalPlaytimeMode()) return posMs / 1000;
 
       const clip = getClipWindowMsForIndex(currentIndex, durMs);
       if (!clip.isClip) return posMs > 0 ? posMs / 1000 : 0;
@@ -2475,6 +2485,17 @@
       const info = getPlayerInfo();
       const absDurMs = Number(info?.time?.durationMs);
       const durMs = (isFinite(absDurMs) && absDurMs > 0) ? absDurMs : 0;
+
+      // Total-playtime mode: interpret seek targets as absolute media time.
+      if (isTotalPlaytimeMode()) {
+        let targetMs = Math.max(0, Math.floor(s * 1000));
+        if (durMs > 0) {
+          const maxTarget = Math.max(0, Math.floor(durMs) - 1);
+          targetMs = Math.min(maxTarget, targetMs);
+        }
+        void playerHost.seekToMs(targetMs);
+        return;
+      }
 
       const clip = getClipWindowMsForIndex(currentIndex, durMs);
       if (!clip.isClip) {
@@ -2595,6 +2616,21 @@
       const posAbs = Number(info?.time?.positionMs) || 0;
       const durAbs = Number(info?.time?.durationMs) || 0;
       const rate = Number(info?.rate) || 1;
+
+      // In total-playtime mode, always report absolute timeline to Media Session.
+      if (isTotalPlaytimeMode()) {
+        if (!(durAbs > 0)) return;
+        try {
+          navigator.mediaSession.setPositionState({
+            duration: durAbs / 1000,
+            position: Math.max(0, Math.min(durAbs, posAbs)) / 1000,
+            playbackRate: rate,
+          });
+        } catch {
+          // ignore
+        }
+        return;
+      }
 
       const clip = getClipWindowMsForIndex(currentIndex, durAbs);
       if (!clip.isClip) {
@@ -3591,16 +3627,59 @@
     if (timeLabel) {
       timeLabel.addEventListener('click', (event) => {
         event.preventDefault();
-        focusActiveTrack({ scroll: true });
+        // Modifiers preserve old behavior (jump to active track in list).
+        if (event.metaKey || event.ctrlKey || event.altKey || event.shiftKey) {
+          focusActiveTrack({ scroll: true });
+          return;
+        }
+        const next = !isTotalPlaytimeMode();
+        try { saveSettings({ totalPlaytimeMode: next }); } catch { /* ignore */ }
+        try {
+          const title = next
+            ? 'Total-playtime mode (absolute timeline). Click to switch to clip mode.'
+            : 'Clip mode (chapter timeline). Click to switch to total-playtime mode.';
+          timeLabel.title = title;
+          if (centerTimeLabel) centerTimeLabel.title = title;
+        } catch { /* ignore */ }
+        try { document.body.classList.toggle('total-playtime-mode', next); } catch { /* ignore */ }
+        try { updateProgressBar(); } catch { /* ignore */ }
+        try { updateMediaSessionPositionState(true); } catch { /* ignore */ }
       });
     }
 
     if (centerTimeLabel) {
       centerTimeLabel.addEventListener('click', (event) => {
         event.preventDefault();
-        focusActiveTrack({ scroll: true });
+        // Modifiers preserve old behavior (jump to active track in list).
+        if (event.metaKey || event.ctrlKey || event.altKey || event.shiftKey) {
+          focusActiveTrack({ scroll: true });
+          return;
+        }
+        const next = !isTotalPlaytimeMode();
+        try { saveSettings({ totalPlaytimeMode: next }); } catch { /* ignore */ }
+        try {
+          const title = next
+            ? 'Total-playtime mode (absolute timeline). Click to switch to clip mode.'
+            : 'Clip mode (chapter timeline). Click to switch to total-playtime mode.';
+          centerTimeLabel.title = title;
+          if (timeLabel) timeLabel.title = title;
+        } catch { /* ignore */ }
+        try { document.body.classList.toggle('total-playtime-mode', next); } catch { /* ignore */ }
+        try { updateProgressBar(); } catch { /* ignore */ }
+        try { updateMediaSessionPositionState(true); } catch { /* ignore */ }
       });
     }
+
+    // Tooltips + body class for the initial state.
+    try {
+      const enabled = isTotalPlaytimeMode();
+      const title = enabled
+        ? 'Total-playtime mode (absolute timeline). Click to switch to clip mode.'
+        : 'Clip mode (chapter timeline). Click to switch to total-playtime mode.';
+      if (timeLabel) timeLabel.title = title;
+      if (centerTimeLabel) centerTimeLabel.title = title;
+      document.body.classList.toggle('total-playtime-mode', enabled);
+    } catch { /* ignore */ }
 
     if (fullscreenBtn) {
       fullscreenBtn.addEventListener('click', async () => {
@@ -4364,7 +4443,10 @@
 
       // Clip-window enforcement (chapter playlists): auto-advance when reaching explicit end.
       // We do this at the UI layer so it works uniformly across YouTube and <video>.
-      if (!isProgressScrubbing && !holdingPlayingUi) {
+      // In total-playtime mode, seeking can legitimately jump across chapter boundaries.
+      // Do not auto-advance based on the current clip window, otherwise the UI may
+      // immediately jump away from the user's intended absolute seek.
+      if (!isTotalPlaytimeMode() && !isProgressScrubbing && !holdingPlayingUi) {
         try {
           const info = getPlayerInfo();
           const state = info?.state;

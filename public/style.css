@@ -179,6 +179,26 @@ input:focus-visible {
     outline-offset: 2px;
 }
 
+/* Play/pause buttons should not show a focus outline. */
+#playPauseBtn:focus,
+#playPauseBtn:focus-visible,
+#centerPlayPauseBtn:focus,
+#centerPlayPauseBtn:focus-visible {
+    outline: none;
+    box-shadow: none;
+}
+
+/* Firefox uses a separate pseudo-class/inner border for keyboard focus. */
+#playPauseBtn:-moz-focusring,
+#centerPlayPauseBtn:-moz-focusring {
+    outline: none;
+}
+
+#playPauseBtn::-moz-focus-inner,
+#centerPlayPauseBtn::-moz-focus-inner {
+    border: 0;
+}
+
 input[type="text"]:focus,
 input[type="text"]:focus-visible {
     outline: none;
