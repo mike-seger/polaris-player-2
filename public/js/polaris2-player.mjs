@@ -4655,7 +4655,7 @@
     // Initialize sync client for synchronized playback across multiple clients
     try {
       const syncServer = (settings && typeof settings.syncServer === 'string') ? settings.syncServer : 'localhost:5001';
-      const syncEnabled = (settings && typeof settings.syncEnabled === 'boolean') ? settings.syncEnabled : true;
+      const syncEnabled = (settings && typeof settings.syncEnabled === 'boolean') ? settings.syncEnabled : false;
       const playerMode = getPlayerMode();
 
       window.syncClient = initSyncClient('LocalPlayer', null, syncServer, {
