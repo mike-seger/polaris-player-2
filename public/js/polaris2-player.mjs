@@ -4666,6 +4666,12 @@
         colorDisconnected: '#ffffff',
         colorUnavailable: '#a8b3c7',
         autoConnect: syncEnabled,
+        // IMPORTANT: keep visualizer bridge audio streaming intact.
+        // - don't pause the media element on init
+        // - don't attach an extra MediaElementSource/WebAudio graph here (the host already
+        //   maintains its own analyser pipeline for AUDIO_DATA)
+        pauseOnInit: false,
+        enableWebAudio: false,
         onBeforeToggle: (_checked, syncClient) => {
           if (getPlayerMode() === 'local') return true;
           syncClient.disconnect();
