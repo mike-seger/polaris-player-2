@@ -4655,6 +4655,7 @@
     // Initialize sync client for synchronized playback across multiple clients
     try {
       const syncServer = (settings && typeof settings.syncServer === 'string') ? settings.syncServer : 'localhost:5001';
+      const syncEnabled = (settings && typeof settings.syncEnabled === 'boolean') ? settings.syncEnabled : true;
       const playerMode = getPlayerMode();
 
       window.syncClient = initSyncClient('LocalPlayer', null, syncServer, {
@@ -4664,12 +4665,17 @@
         colorConnected: '#cc0000',
         colorDisconnected: '#ffffff',
         colorUnavailable: '#a8b3c7',
+        autoConnect: syncEnabled,
         onBeforeToggle: (_checked, syncClient) => {
           if (getPlayerMode() === 'local') return true;
           syncClient.disconnect();
           syncClient.updateButtonState('unavailable');
           return false;
-        }
+        },
+        onChange: (checked) => {
+          // Persist the user's choice so it survives reloads.
+          try { saveSettings({ syncEnabled: !!checked }); } catch { /* ignore */ }
+        },
       });
 
       if (window.syncClient && playerMode !== 'local') {

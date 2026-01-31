@@ -11,6 +11,11 @@ class VideoSyncClient {
         this.serverAddress = serverAddress || DEFAULT_SERVER;
         this.toggleButton = null;
         this.toggleButtonConfig = toggleButtonConfig;
+
+        // When false, the client will NOT auto-connect on page load.
+        // Used to persist a user's manual "unsync" choice across reloads.
+        this.autoConnect = true;
+
         this.socket = null;
         this.audioContext = null;
         this.masterTimeOffset = 0;
@@ -43,6 +48,17 @@ class VideoSyncClient {
     init() {
         console.log('Initializing sync client...');
 
+        // Read initial auto-connect preference from config.
+        // Default to true to preserve existing behavior.
+        try {
+            const cfg = this.toggleButtonConfig;
+            if (cfg && typeof cfg.autoConnect === 'boolean') {
+                this.autoConnect = cfg.autoConnect;
+            }
+        } catch {
+            /* ignore */
+        }
+
         // Initialize toggle button if configured
         if (this.toggleButtonConfig) {
             this.initToggleButton();
@@ -64,8 +80,13 @@ class VideoSyncClient {
         // Start media ready detection immediately
         this.startMediaReadyDetection();
         
-        // Connect to sync server
-        this.connectWebSocket();
+        // Connect to sync server (unless disabled)
+        if (this.autoConnect) {
+            this.connectWebSocket();
+        } else {
+            this.updateStatus('Disconnected');
+            this.updateButtonState('disconnected');
+        }
         
         // Setup media event listeners (including seek capture)
         this.setupMediaEvents();
@@ -122,6 +143,8 @@ class VideoSyncClient {
                             return;
                         }
                     }
+
+                    this.autoConnect = !!checked;
 
                     if (checked) {
                         this.reconnect();
@@ -188,8 +211,9 @@ class VideoSyncClient {
     startMediaReadyDetection() {
         console.log('Starting media ready detection...');
         
-        // Pause immediately to prevent autoplay from interfering with sync
-        if (!this.video.paused) {
+        // Pause immediately to prevent autoplay from interfering with sync,
+        // but only when sync is enabled.
+        if (this.autoConnect && !this.video.paused) {
             console.log('Pausing video to wait for sync');
             this.video.pause();
             this.video.currentTime = 0;
