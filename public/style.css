@@ -1605,6 +1605,14 @@ body.hide-track-check .track-state-btn {
     transition: opacity 300ms ease;
 }
 
+/* When the sidebar is visible, keep the visible center overlay controls hidden.
+   (The invisible hit/edge targets remain active as before.) */
+body:not(.sidebar-hidden) #centerControlsPanel {
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+}
+
 .center-controls-panel[data-visible="true"] {
     opacity: 1;
 }
