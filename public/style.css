@@ -560,7 +560,12 @@ input[type="checkbox"] {
     margin-top: 7px;
     height: 34px;
     width: 34px;
+    padding-right: 3px;
     padding-bottom: 6px;
+}
+    
+#sync-play .svg-container svg {
+  margin-left: -6px;
 }
 
 #combinedFilterBtn {

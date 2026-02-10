@@ -4364,16 +4364,8 @@
       }
 
       if (e.code === 'Space' || e.key === ' ' || e.key === 'Spacebar') {
-        const activeEl = document.activeElement;
-        if (activeEl) {
-          const tagName = activeEl.tagName;
-          if (tagName === 'BUTTON' || tagName === 'A') {
-            return;
-          }
-          if (activeEl.isContentEditable) {
-            return;
-          }
-        }
+        // Truly global: toggle play/pause regardless of focused buttons/links.
+        // We already avoid stealing Space from typing contexts via isTextInputFocused() above.
         togglePlayback();
         e.preventDefault();
         return;
