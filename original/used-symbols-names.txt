@@ -26,6 +26,8 @@ left_panel_open
 list
 list_alt
 list_alt_check
+lock
+lock_open_right
 markunread_mailbox
 menu
 more_horiz
