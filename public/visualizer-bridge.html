@@ -16,12 +16,26 @@
         overflow: hidden;
         background: #000;
       }
-      #visualizer-frame {
+      /* Canvas iframe - background visualization, no interaction */
+      #visualizer-canvas-frame {
         position: absolute;
         inset: 0;
         width: 100%;
         height: 100%;
         border: none;
+        z-index: 1;
+        pointer-events: none;
+      }
+      /* GUI iframe - controls overlay, high z-index for interaction */
+      #visualizer-gui-frame {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        border: none;
+        z-index: 1001;
+        background: transparent;
+        pointer-events: auto;
       }
       #loading {
         position: absolute;
@@ -33,7 +47,7 @@
         font-family: system-ui, -apple-system, sans-serif;
         font-size: 14px;
         pointer-events: none;
-        z-index: 1;
+        z-index: 2000;
       }
       #loading.hidden {
         display: none;
@@ -42,31 +56,38 @@
   </head>
   <body>
     <div id="loading">Loading visualizer...</div>
-    <iframe id="visualizer-frame" allow="autoplay"></iframe>
+    <!-- Canvas iframe: renders visualization only -->
+    <iframe id="visualizer-canvas-frame" allow="autoplay"></iframe>
+    <!-- GUI iframe: shows controls only, transparent background -->
+    <iframe id="visualizer-gui-frame" allow="autoplay"></iframe>
 
     <script type="module">
-      // This bridge loads the visualizer in a nested iframe and proxies messages between
-      // the Polaris player (parent) and the visualizer (child iframe).
+      // This bridge loads the visualizer in TWO nested iframes (dual-iframe architecture)
+      // and proxies messages between the Polaris player (parent) and both visualizer iframes.
+      // Canvas iframe: renders visualization only (?mode=canvas)
+      // GUI iframe: shows controls only (?mode=gui)
       
-      const visualizerFrame = document.getElementById('visualizer-frame');
-      if (visualizerFrame) {
-        visualizerFrame.tabIndex = -1; // avoid stealing focus/keyboard
-        visualizerFrame.addEventListener('load', () => {
-          try { visualizerFrame.blur(); } catch { /* ignore */ }
-          try { window.focus(); } catch { /* ignore */ }
-        });
-      }
+      const canvasFrame = document.getElementById('visualizer-canvas-frame');
+      const guiFrame = document.getElementById('visualizer-gui-frame');
       const loading = document.getElementById('loading');
       
+      // Prevent iframes from stealing focus
+      [canvasFrame, guiFrame].forEach(frame => {
+        if (frame) {
+          frame.tabIndex = -1;
+          frame.addEventListener('load', () => {
+            try { frame.blur(); } catch { /* ignore */ }
+            try { window.focus(); } catch { /* ignore */ }
+          });
+        }
+      });
+      
       // Path to the actual visualizer
-      // Option 1: Use Vite dev server (requires 'npm run dev' in visualizer directory)
-      // Add ?autostart=1 to signal auto-initialization
-      //const VISUALIZER_PATH = 'http://localhost:5173?autostart=1&hideui=1';
-      const VISUALIZER_PATH = '../visualizer/index.html?autostart=1&hideui=1';
-      // Option 2: Use built version (requires 'npm run build' in visualizer directory, then serve from dist/)
-      // const VISUALIZER_PATH = 'visualizer/dist/index.html?autostart=1&hideui=1';
-      // Option 3: Direct source (won't work - needs Vite to resolve bare imports)
-      // const VISUALIZER_PATH = 'visualizer/index.html?autostart=1&hideui=1';
+      // Canvas mode: visualization only, no GUI controls
+      // GUI mode: controls only, transparent background
+      const VISUALIZER_BASE_PATH = '../visualizer/index.html';
+      const CANVAS_PATH = `${VISUALIZER_BASE_PATH}?mode=canvas&autostart=1`;
+      const GUI_PATH = `${VISUALIZER_BASE_PATH}?mode=gui&autostart=1`;
       
       const LOG_VERBOSE = false;
       const log = (...args) => LOG_VERBOSE && console.log(...args);
@@ -86,34 +107,43 @@
       let modulePollTimer = null;
       let pendingAutoplay = false;
 
+      // Send message to both iframes
+      function postToVisualizers(message) {
+        try {
+          if (canvasFrame?.contentWindow) {
+            canvasFrame.contentWindow.postMessage(message, '*');
+          }
+          if (guiFrame?.contentWindow) {
+            guiFrame.contentWindow.postMessage(message, '*');
+          }
+        } catch (err) {
+          if (LOG_VERBOSE) console.warn('[Bridge] Failed to post to visualizers:', err);
+        }
+      }
+
       function requestModuleList() {
         try {
-          const child = visualizerFrame?.contentWindow;
-          if (!child) {
-            if (Math.random() < 0.1) console.warn('[Bridge] Module list request skipped; child window missing');
-            return;
-          }
-          child.postMessage({ type: 'LIST_MODULES' }, '*');
-          if (Math.random() < 0.2) log('[Bridge] → LIST_MODULES sent');
+          postToVisualizers({ type: 'LIST_MODULES' });
+          if (Math.random() < 0.2) log('[Bridge] → LIST_MODULES sent to both iframes');
         } catch (err) {
           if (Math.random() < 0.1) console.warn('[Bridge] Module list request failed:', err);
         }
       }
 
-      // Send initialization commands to visualizer via postMessage
+      // Send initialization commands to both visualizer iframes via postMessage
       function initializeVisualizer() {
         if (visualizerInitialized) return;
         
         try {
-          // Use postMessage to communicate with visualizer (works cross-origin)
-          visualizerFrame.contentWindow.postMessage({
+          // Send to both canvas and GUI iframes
+          postToVisualizers({
             type: 'BRIDGE_INIT',
             hideUI: true,
             autoStart: true
-          }, '*');
+          });
           
           visualizerInitialized = true;
-          log('[Bridge] Sent initialization to visualizer');
+          log('[Bridge] Sent initialization to both visualizer iframes');
           // Also prime module list right away
           requestModuleList();
         } catch (err) {
@@ -150,12 +180,10 @@
           clearInterval(vizPlayback.timerId);
         }
 
-        if (visualizerFrame?.contentWindow) {
-          visualizerFrame.contentWindow.postMessage({
-            type: 'PLAYBACK_STATE',
-            playing: false
-          }, '*');
-        }
+        postToVisualizers({
+          type: 'PLAYBACK_STATE',
+          playing: false
+        });
 
         if (!silent) {
           notifyParent({ type: ended ? 'ENDED' : 'PAUSED' });
@@ -165,7 +193,7 @@
       }
 
       function startVizPlayback(vizData) {
-        if (!vizData || !visualizerFrame?.contentWindow) return;
+        if (!vizData) return;
 
         stopVizPlayback({ silent: true });
 
@@ -177,14 +205,14 @@
         };
 
         if (vizData.bpm) {
-          visualizerFrame.contentWindow.postMessage({ type: 'BPM_DATA', bpm: vizData.bpm }, '*');
+          postToVisualizers({ type: 'BPM_DATA', bpm: vizData.bpm });
         }
 
         notifyParent({ type: 'READY' });
-        visualizerFrame.contentWindow.postMessage({
+        postToVisualizers({
           type: 'PLAYBACK_STATE',
           playing: false
-        }, '*');
+        });
 
         const intervalMs = 1000 / Math.max(1, vizData.fps || 30);
 
@@ -214,11 +242,11 @@
           }
 
           try {
-            visualizerFrame.contentWindow.postMessage({
+            postToVisualizers({
               type: 'AUDIO_DATA',
               frequencyData: Array.from(frequencyData),
               bufferLength: TARGET_LEN
-            }, '*');
+            });
           } catch (err) {
             // Swallow occasional postMessage errors
           }
@@ -317,11 +345,11 @@
         audioElement.addEventListener('play', () => {
           notifyParent({ type: 'PLAYING' });
           
-          // Send playing state to visualizer
-          visualizerFrame.contentWindow.postMessage({
+          // Send playing state to both visualizer iframes
+          postToVisualizers({
             type: 'PLAYBACK_STATE',
             playing: true
-          }, '*');
+          });
           
           startAudioDataStream(); // Start sending frequency data
           detectAndSendBPM(); // Detect BPM
@@ -334,11 +362,11 @@
 
           stopAudioDataStream();
           
-          // Send paused state to visualizer
-          visualizerFrame.contentWindow.postMessage({
+          // Send paused state to both visualizer iframes
+          postToVisualizers({
             type: 'PLAYBACK_STATE',
             playing: false
-          }, '*');
+          });
         });
         
         audioElement.addEventListener('waiting', () => {
@@ -391,7 +419,11 @@
         const msg = event.data;
         if (!msg || typeof msg !== 'object') return;
 
-        const fromVisualizer = event.source === visualizerFrame?.contentWindow;
+        // Check if message is from either visualizer iframe
+        const fromCanvasFrame = event.source === canvasFrame?.contentWindow;
+        const fromGuiFrame = event.source === guiFrame?.contentWindow;
+        const fromVisualizer = fromCanvasFrame || fromGuiFrame;
+        
         if (fromVisualizer) {
           handleVisualizerMessage(msg);
           return;
@@ -439,7 +471,7 @@
             pendingAutoplay = false; // explicit play overrides
             if (vizPlayback) {
               vizPlayback.playing = true;
-              visualizerFrame.contentWindow.postMessage({ type: 'PLAYBACK_STATE', playing: true }, '*');
+              postToVisualizers({ type: 'PLAYBACK_STATE', playing: true });
               notifyParent({ type: 'PLAYING' });
             }
 
@@ -469,7 +501,7 @@
           case 'PAUSE':
             if (vizPlayback) {
               vizPlayback.playing = false;
-              visualizerFrame.contentWindow.postMessage({ type: 'PLAYBACK_STATE', playing: false }, '*');
+              postToVisualizers({ type: 'PLAYBACK_STATE', playing: false });
               notifyParent({ type: 'PAUSED' });
             }
 
@@ -541,7 +573,8 @@
               stopVizPlayback({ silent: true });
             }
             try {
-              visualizerFrame?.contentWindow?.postMessage(msg, '*');
+              // Forward audio data to both visualizer iframes
+              postToVisualizers(msg);
             } catch (err) {
               if (LOG_VERBOSE) console.warn('[Bridge] Failed to forward AUDIO_DATA:', err);
             }
@@ -558,7 +591,8 @@
 
           case 'SET_VISUALIZER_MODULE':
             try {
-              visualizerFrame?.contentWindow?.postMessage({ type: 'SET_MODULE', module: msg.module }, '*');
+              // Send module change to both iframes (they will sync via BroadcastChannel)
+              postToVisualizers({ type: 'SET_MODULE', module: msg.module });
             } catch (err) {
               console.warn('[Bridge] Failed to switch module:', err);
             }
@@ -639,17 +673,17 @@
               
               log('[Bridge] ✓ Detected BPM:', bpm, '(from', peaks.length, 'peaks, avg interval:', Math.round(avgInterval), 'ms)');
               
-              // Send to visualizer
-              visualizerFrame.contentWindow.postMessage({
+              // Send to both visualizer iframes
+              postToVisualizers({
                 type: 'BPM_DATA',
                 bpm: bpm
-              }, '*');
+              });
             } else {
               log('[Bridge] ⚠️ Not enough peaks for BPM detection (found', peaks.length, '), using default 120 BPM');
-              visualizerFrame.contentWindow.postMessage({
+              postToVisualizers({
                 type: 'BPM_DATA',
                 bpm: 120
-              }, '*');
+              });
             }
           }
         };
@@ -691,21 +725,16 @@
         }
         rms = timeArray.length ? Math.sqrt(rms / timeArray.length) : 0;
         
-        // Send to visualizer iframe
+        // Send to both visualizer iframes
         try {
-          if (!visualizerFrame || !visualizerFrame.contentWindow) {
-            log('[Bridge] Visualizer iframe not ready, skipping data');
-            return;
-          }
-          
-          visualizerFrame.contentWindow.postMessage({
+          postToVisualizers({
             type: 'AUDIO_DATA',
             frequencyData: Array.from(freqArray), // Convert Uint8Array to regular array for postMessage
             timeData: Array.from(timeArray),
             bufferLength: analyserNode.frequencyBinCount,
             timeLength: timeArray.length,
             rms
-          }, '*');
+          });
         } catch (err) {
           // Ignore errors
           if (LOG_VERBOSE && Math.random() < 0.01) {
@@ -734,39 +763,59 @@
         }
       }
 
-      // Load visualizer in iframe
+      // Load both visualizer iframes (dual-iframe architecture)
       function loadVisualizer() {
-        // Try to load the visualizer
-        visualizerFrame.src = VISUALIZER_PATH;
+        let canvasReady = false;
+        let guiReady = false;
         
-        visualizerFrame.addEventListener('load', () => {
-          loading.classList.add('hidden');
-          visualizerReady = true;
-          
-          // Initialize visualizer UI and trigger start
-          initializeVisualizer();
-          // Proactively fetch module list for robustness
-          requestModuleList();
-          if (modulePollTimer) clearInterval(modulePollTimer);
-          modulePollTimer = setInterval(() => {
-            if (moduleListReceived) {
-              clearInterval(modulePollTimer);
-              modulePollTimer = null;
-              return;
-            }
-            if (Math.random() < 0.2) log('[Bridge] polling module list...');
+        function checkBothReady() {
+          if (canvasReady && guiReady) {
+            loading.classList.add('hidden');
+            visualizerReady = true;
+            
+            // Initialize both visualizer iframes
+            initializeVisualizer();
+            // Proactively fetch module list for robustness
             requestModuleList();
-          }, 1000);
-          
-          notifyParent({ type: 'VISUALIZER_READY' });
+            if (modulePollTimer) clearInterval(modulePollTimer);
+            modulePollTimer = setInterval(() => {
+              if (moduleListReceived) {
+                clearInterval(modulePollTimer);
+                modulePollTimer = null;
+                return;
+              }
+              if (Math.random() < 0.2) log('[Bridge] polling module list...');
+              requestModuleList();
+            }, 1000);
+            
+            notifyParent({ type: 'VISUALIZER_READY' });
+          }
+        }
+        
+        // Load canvas iframe (visualization only)
+        canvasFrame.src = CANVAS_PATH;
+        canvasFrame.addEventListener('load', () => {
+          log('[Bridge] Canvas iframe loaded');
+          canvasReady = true;
+          checkBothReady();
+        });
+        canvasFrame.addEventListener('error', () => {
+          console.warn('[Bridge] Failed to load canvas iframe from:', CANVAS_PATH);
+          canvasReady = true; // Mark ready anyway to continue
+          checkBothReady();
         });
         
-        visualizerFrame.addEventListener('error', () => {
-          loading.textContent = 'Visualizer not available - check that it exists at: ' + VISUALIZER_PATH;
-          console.warn('[Bridge] Failed to load visualizer from:', VISUALIZER_PATH);
-          // Still notify ready so audio can play even without visuals
-          visualizerReady = true;
-          notifyParent({ type: 'VISUALIZER_READY' });
+        // Load GUI iframe (controls only)
+        guiFrame.src = GUI_PATH;
+        guiFrame.addEventListener('load', () => {
+          log('[Bridge] GUI iframe loaded');
+          guiReady = true;
+          checkBothReady();
+        });
+        guiFrame.addEventListener('error', () => {
+          console.warn('[Bridge] Failed to load GUI iframe from:', GUI_PATH);
+          guiReady = true; // Mark ready anyway to continue
+          checkBothReady();
         });
         
         // Timeout fallback

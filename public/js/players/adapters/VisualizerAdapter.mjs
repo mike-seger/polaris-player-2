@@ -26,7 +26,9 @@ export class VisualizerAdapter {
     this._durationMs = undefined;
 
     this._container = null;
-    this._iframe = null;
+    this._iframe = null;  // Kept for compatibility, will be same as _canvasIframe
+    this._canvasIframe = null;
+    this._guiIframe = null;
     this._iframeReady = false;
     this._messageHandler = null;
 
@@ -43,8 +45,9 @@ export class VisualizerAdapter {
     this._resumeKey = 'polaris.visualizer.resume.v1';
     this._resumeState = null;
 
-    // Path to the visualizer bridge HTML (relative to public/)
-    this._visualizerPath = options.visualizerPath || "./visualizer-bridge.html";
+    // Path to the visualizer (dual-iframe: loads with ?mode=canvas and ?mode=gui)
+    // Default: ../visualizer/index.html (relative to public/)
+    this._visualizerPath = options.visualizerPath || "../visualizer/index.html";
     
     // Only enable if explicitly requested via options
     this._enabled = options.enabled === true;
@@ -57,28 +60,75 @@ export class VisualizerAdapter {
 
   /** @param {HTMLElement} container */
   mount(container) {
-    if (this._iframe) return;
+    if (this._canvasIframe) return; // Already mounted
     this._container = container instanceof HTMLElement ? container : null;
     if (!this._container) return;
 
-    // Create iframe element
-    this._iframe = document.createElement("iframe");
-    this._iframe.style.position = "absolute";
-    this._iframe.style.inset = "0";
-    this._iframe.style.width = "100%";
-    this._iframe.style.height = "100%";
-    this._iframe.style.border = "none";
-    this._iframe.style.background = "#000";
-    this._iframe.allow = "autoplay";
-    this._iframe.style.display = this._enabled ? "block" : "none";
+    // Create a wrapper div to hold both iframes
+    // This allows PlayerHost to control visibility of both iframes together
+    this._wrapperDiv = document.createElement("div");
+    this._wrapperDiv.id = "visualizer-dual-iframe-wrapper";
+    this._wrapperDiv.style.position = "absolute";
+    this._wrapperDiv.style.inset = "0";
+    this._wrapperDiv.style.width = "100%";
+    this._wrapperDiv.style.height = "100%";
+    this._wrapperDiv.style.pointerEvents = "none"; // Wrapper doesn't intercept events
+    this._wrapperDiv.style.background = "transparent";
+    this._wrapperDiv.style.display = this._enabled ? "block" : "none";
+
+    // Create canvas iframe (visualization only, z-index: 1, pointer-events: none)
+    this._canvasIframe = document.createElement("iframe");
+    this._canvasIframe.id = "visualizer-canvas-iframe";
+    this._canvasIframe.style.position = "absolute";
+    this._canvasIframe.style.inset = "0";
+    this._canvasIframe.style.width = "100%";
+    this._canvasIframe.style.height = "100%";
+    this._canvasIframe.style.border = "none";
+    this._canvasIframe.style.background = "#000";
+    this._canvasIframe.style.zIndex = "1";
+    this._canvasIframe.style.pointerEvents = "none";  // Don't block player controls
+    this._canvasIframe.allow = "autoplay";
+    
+    // Create GUI iframe (controls only, z-index: 1001, transparent background)
+    // Initially positioned top-right where controls usually appear, but allows resizing via messages
+    this._guiIframe = document.createElement("iframe");
+    this._guiIframe.id = "visualizer-gui-iframe";
+    this._guiIframe.style.position = "absolute";
+    this._guiIframe.style.top = "0";
+    this._guiIframe.style.right = "0";
+    // interactive sizing needs !important to override global #player iframe styles
+    this._guiIframe.style.setProperty("width", "400px", "important");
+    this._guiIframe.style.setProperty("height", "600px", "important");
+    this._guiIframe.style.setProperty("max-height", "100%", "important");
+    this._guiIframe.style.setProperty("max-width", "100%", "important");
+    this._guiIframe.style.border = "none";
+    this._guiIframe.style.background = "transparent";
+    this._guiIframe.style.zIndex = "1001";  // Above player controls (z: 1-1000)
+    this._guiIframe.style.pointerEvents = "auto";  // GUI controls are interactive
+    this._guiIframe.allow = "autoplay";
     
     // Set up message handler
     this._messageHandler = (event) => this._handleMessage(event);
     window.addEventListener("message", this._messageHandler);
 
-    // Load visualizer
-    this._iframe.src = this._visualizerPath;
-    this._container.appendChild(this._iframe);
+    // Load both iframes using the specific entry points (canvas.html and gui.html)
+    // Assumes these files exist in the same directory as the configured visualizer path
+    const pathParts = this._visualizerPath.split('?')[0].split('/');
+    pathParts.pop(); // Remove filename (e.g., index.html)
+    const baseUrl = pathParts.join('/') + '/';
+    
+    this._canvasIframe.src = `${baseUrl}canvas.html`;
+    this._guiIframe.src = `${baseUrl}gui.html`;
+    
+    // Append both iframes to wrapper
+    this._wrapperDiv.appendChild(this._canvasIframe);
+    this._wrapperDiv.appendChild(this._guiIframe);
+    
+    // Append wrapper to container
+    this._container.appendChild(this._wrapperDiv);
+    
+    // Keep reference to iframe for compatibility (getMediaPane returns wrapper)
+    this._iframe = this._wrapperDiv;
   }
 
   unmount() {
@@ -86,10 +136,14 @@ export class VisualizerAdapter {
       window.removeEventListener("message", this._messageHandler);
       this._messageHandler = null;
     }
-    if (this._iframe && this._iframe.parentNode) {
-      this._iframe.parentNode.removeChild(this._iframe);
+    // Remove wrapper div (which contains both iframes)
+    if (this._wrapperDiv && this._wrapperDiv.parentNode) {
+      this._wrapperDiv.parentNode.removeChild(this._wrapperDiv);
     }
     this._iframe = null;
+    this._wrapperDiv = null;
+    this._canvasIframe = null;
+    this._guiIframe = null;
     this._iframeReady = false;
     this._pendingCommands = [];
   }
@@ -103,6 +157,20 @@ export class VisualizerAdapter {
 
     const msg = event.data;
     if (!msg || typeof msg !== "object") return;
+    
+    // Handle GUI resize requests from visualizer
+    if (msg.type === "GUI_RESIZE") {
+      if (this._guiIframe) {
+        // Only update if value is present and valid number
+        if (msg.width && typeof msg.width === 'number') {
+          this._guiIframe.style.setProperty("width", msg.width + 'px', "important");
+        }
+        if (msg.height && typeof msg.height === 'number') {
+          this._guiIframe.style.setProperty("height", msg.height + 'px', "important");
+        }
+      }
+      return; 
+    }
 
     switch (msg.type) {
       case "VISUALIZER_READY":
@@ -181,43 +249,57 @@ export class VisualizerAdapter {
   }
 
   /**
-   * Send a command to the visualizer iframe
+   * Send a command to both visualizer iframes
    */
   _postCommand(command) {
-    if (!this._iframe || !this._iframe.contentWindow) return;
+    if (!this._canvasIframe || !this._guiIframe) return;
 
     if (!this._iframeReady) {
-      // Queue command until iframe is ready
+      // Queue command until iframes are ready
       this._pendingCommands.push(command);
       return;
     }
 
     try {
-      this._iframe.contentWindow.postMessage(command, "*");
+      // Send to both canvas and GUI iframes
+      if (this._canvasIframe.contentWindow) {
+        this._canvasIframe.contentWindow.postMessage(command, "*");
+      }
+      if (this._guiIframe.contentWindow) {
+        this._guiIframe.contentWindow.postMessage(command, "*");
+      }
     } catch (err) {
       console.error("[VisualizerAdapter] Failed to post message:", err);
     }
   }
 
   /**
-   * Push externally captured audio data into the visualizer iframe (overlay mode).
+   * Push externally captured audio data into both visualizer iframes (overlay mode).
    * @param {{frequencyData?: Uint8Array, timeData?: Uint8Array, rms?: number}} payload
    */
   pushAudioData(payload = {}) {
-    if (!this._iframe || !this._iframe.contentWindow) return;
+    if (!this._canvasIframe && !this._guiIframe) return;
     try {
       const frequencyData = payload.frequencyData ? Array.from(payload.frequencyData) : undefined;
       const timeData = payload.timeData ? Array.from(payload.timeData) : undefined;
       const bufferLength = payload.frequencyData?.length || payload.timeData?.length || 0;
 
-      this._iframe.contentWindow.postMessage({
+      const message = {
         type: 'AUDIO_DATA',
         frequencyData,
         timeData,
         bufferLength,
         timeLength: timeData ? timeData.length : undefined,
         rms: payload.rms
-      }, '*');
+      };
+      
+      // Send to both iframes
+      if (this._canvasIframe?.contentWindow) {
+        this._canvasIframe.contentWindow.postMessage(message, '*');
+      }
+      if (this._guiIframe?.contentWindow) {
+        this._guiIframe.contentWindow.postMessage(message, '*');
+      }
     } catch {
       /* ignore */
     }
@@ -292,15 +374,15 @@ export class VisualizerAdapter {
   setEnabled(enabled) {
     this._enabled = enabled === true;
     
-    // Update iframe visibility immediately if mounted
-    if (this._iframe) {
-      this._iframe.style.display = this._enabled ? "block" : "none";
-      
-      // Toggle video element visibility (opposite of visualizer)
-      const videoEl = this._container?.querySelector('video');
-      if (videoEl) {
-        videoEl.style.display = this._enabled ? "none" : "block";
-      }
+    // Update wrapper div visibility (controls both iframes together)
+    if (this._wrapperDiv) {
+      this._wrapperDiv.style.display = this._enabled ? "block" : "none";
+    }
+    
+    // Toggle video element visibility (opposite of visualizer)
+    const videoEl = this._container?.querySelector('video');
+    if (videoEl) {
+      videoEl.style.display = this._enabled ? "none" : "block";
     }
   }
 

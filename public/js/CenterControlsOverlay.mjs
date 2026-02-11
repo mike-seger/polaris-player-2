@@ -438,6 +438,11 @@ export class CenterControlsOverlay {
       this._noteActivity({ showOverlay: false });
       return;
     }
+    // Ignore interactions inside visualizer GUI iframe
+    if (t.closest('#visualizer-gui-iframe')) {
+      this._noteActivity({ showOverlay: false });
+      return;
+    }
 
     // Only show when interacting with the player surface.
     if (t.closest('#player-container') || t.closest('#player') || t.closest('#cursorWakeOverlay')) {
@@ -539,6 +544,11 @@ export class CenterControlsOverlay {
       return;
     }
     if (t.closest('.track-details-overlay')) {
+      this._noteActivity({ showOverlay: false });
+      return;
+    }
+    // Ignore hover inside visualizer GUI iframe
+    if (t.closest('#visualizer-gui-iframe')) {
       this._noteActivity({ showOverlay: false });
       return;
     }
