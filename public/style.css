@@ -2109,3 +2109,7 @@ body:not(.sidebar-hidden) #centerControlsPanel {
         border: none;
     }
 }
+
+#centerEdgeNextBtn, #centerEdgePrevBtn {
+  display: none;
+}
