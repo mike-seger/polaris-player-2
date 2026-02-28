@@ -189,6 +189,11 @@ export class HtmlVideoAdapter {
         this._gainNode = this._audioContext.createGain();
         this._gainNode.gain.value = this._muted ? 0 : 1;
 
+        // Important: keep element-level mute off once routed through WebAudio.
+        // Muting the element itself can produce silent analyser frames on some browsers
+        // (notably Android WebView/Chrome). We silence via gain node instead.
+        this._el.muted = false;
+
         source.connect(this._analyser);
         this._analyser.connect(this._gainNode);
         this._gainNode.connect(this._audioContext.destination);
@@ -199,6 +204,12 @@ export class HtmlVideoAdapter {
         // Don’t throw; just skip this frame until user interaction resumes audio context.
         return null;
       }
+
+      // Defensive: if another code path muted the element, keep analyser input alive.
+      if (this._gainNode && this._el.muted) {
+        this._el.muted = false;
+      }
+
       this._analyser.getByteFrequencyData(this._freqArray);
       this._analyser.getByteTimeDomainData(this._timeArray);
       let sum = 0;

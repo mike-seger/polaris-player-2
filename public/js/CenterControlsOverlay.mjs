@@ -368,6 +368,7 @@ export class CenterControlsOverlay {
     try { if (event) event.stopPropagation(); } catch { /* ignore */ }
     this.noteActivity();
     try { fn(); } catch { /* ignore */ }
+    try { if (event?.currentTarget) event.currentTarget.blur(); } catch { /* ignore */ }
   }
 
   _wrapEdgeClick(event, fn) {
@@ -390,6 +391,35 @@ export class CenterControlsOverlay {
     if (this._hideTimer) {
       clearTimeout(this._hideTimer);
       this._hideTimer = null;
+    }
+  }
+
+  _hideImmediately() {
+    this._clearHideTimer();
+    this.setVisible(false);
+    try { this.onIdleHide(); } catch { /* ignore */ }
+  }
+
+  _isPointInPanel(event) {
+    if (!(this.panelEl instanceof HTMLElement)) return false;
+    if (!event || typeof event.clientX !== 'number' || typeof event.clientY !== 'number') return false;
+    try {
+      const rect = this.panelEl.getBoundingClientRect();
+      return event.clientX >= rect.left
+        && event.clientX <= rect.right
+        && event.clientY >= rect.top
+        && event.clientY <= rect.bottom;
+    } catch {
+      return false;
+    }
+  }
+
+  _isVisualizerNavTarget(target) {
+    if (!(target instanceof Element)) return false;
+    try {
+      return !!target.closest('.viz-nav-btns, .viz-nav-btn, [data-viz-nav], #vizNavBtns');
+    } catch {
+      return false;
     }
   }
 
@@ -421,26 +451,34 @@ export class CenterControlsOverlay {
       return;
     }
 
+    // Never reveal from visualizer navigation controls.
+    if (this._isVisualizerNavTarget(t)) {
+      this._hideImmediately();
+      return;
+    }
+
     // Ignore interactions inside the sidebar drawer and overlays.
     if (this.sidebarDrawerEl && this.sidebarDrawerEl.contains(t)) {
-      this._noteActivity({ showOverlay: false });
+      this._hideImmediately();
       return;
     }
     if (t.closest('#alertOverlay')) {
-      this._noteActivity({ showOverlay: false });
+      this._hideImmediately();
       return;
     }
     if (t.closest('#playlistIOOverlay') || t.closest('.playlist-overlay-content')) {
-      this._noteActivity({ showOverlay: false });
+      this._hideImmediately();
       return;
     }
     if (t.closest('.track-details-overlay')) {
-      this._noteActivity({ showOverlay: false });
+      this._hideImmediately();
       return;
     }
 
     // Only show when interacting with the player surface.
     if (t.closest('#player-container') || t.closest('#player') || t.closest('#cursorWakeOverlay')) {
+      const inPanelRegion = this._isPointInPanel(event);
+
       // If the click falls inside the middle third zone, toggle play/pause.
       // This is active at all times (even when the visible overlay UI is hidden).
       // Avoid interfering with clicks on the visible overlay UI itself.
@@ -487,6 +525,13 @@ export class CenterControlsOverlay {
             }
           }
         } catch { /* ignore */ }
+      }
+
+      // Only reveal the visible controls when clicking in the panel region.
+      // Clicks outside should immediately hide the controls.
+      if (!inPanelRegion) {
+        this._hideImmediately();
+        return;
       }
 
       if (!this._visible) {
@@ -545,17 +590,24 @@ export class CenterControlsOverlay {
 
     if (!(t.closest('#player-container') || t.closest('#player') || t.closest('#cursorWakeOverlay'))) return;
 
-    // If already visible, treat movement as activity to keep it visible.
+    // Never reveal/keep alive from visualizer navigation controls.
+    if (this._isVisualizerNavTarget(t)) {
+      this._hideImmediately();
+      return;
+    }
+
+    // If already visible, only keep alive while moving inside the panel region.
     if (this._visible) {
+      if (!this._isPointInPanel(event)) {
+        this._hideImmediately();
+        return;
+      }
       this._noteActivity({ showOverlay: false });
       return;
     }
 
-    // Throttle hover-triggered reveals.
-    const now = Date.now();
-    if (this._lastHoverShowAt && (now - this._lastHoverShowAt) < 200) return;
-    this._lastHoverShowAt = now;
-    this.noteActivity();
+    // Hidden state: movement should never reveal the controls.
+    this._noteActivity({ showOverlay: false });
   }
 
   _onSidebarToggleChange(_event) {
@@ -571,6 +623,7 @@ export class CenterControlsOverlay {
   }
 
   _onFocusIn(event) {
+    if (!this._visible) return;
     const t = (event && event.target instanceof Element) ? event.target : null;
     if (!t) return;
     if (t instanceof HTMLElement && t.tagName === 'IFRAME') {
@@ -612,6 +665,7 @@ export class CenterControlsOverlay {
       return;
     }
 
+    if (!this._visible) return;
     this.noteActivity();
   }
 }

@@ -2835,6 +2835,37 @@
         spotifyAdapter
       ]);
 
+      playerHost.setVisualizerAudioAnalysisProvider(() => {
+        try {
+          if (!spectrum || typeof spectrum.getCurrentFrame !== 'function') return null;
+          const frame = spectrum.getCurrentFrame();
+          if (!(frame instanceof Uint8Array) || frame.length === 0) return null;
+
+          const targetFreqBins = 1024;
+          const freq = new Uint8Array(targetFreqBins);
+          for (let i = 0; i < targetFreqBins; i++) {
+            const src = Math.floor((i * frame.length) / targetFreqBins);
+            freq[i] = frame[Math.max(0, Math.min(frame.length - 1, src))] || 0;
+          }
+
+          let sum = 0;
+          for (let i = 0; i < freq.length; i++) sum += freq[i];
+          const level01 = freq.length ? (sum / (freq.length * 255)) : 0;
+
+          const timeLength = 2048;
+          const time = new Uint8Array(timeLength);
+          const amp = Math.max(1, Math.round(level01 * 48));
+          for (let i = 0; i < timeLength; i++) {
+            const v = 128 + Math.round(Math.sin(i * 0.11) * amp);
+            time[i] = Math.max(0, Math.min(255, v));
+          }
+
+          return { frequencyData: freq, timeData: time, rms: level01 };
+        } catch {
+          return null;
+        }
+      });
+
       // Expose visualizer control globally for easy toggling
       window.__polarisVisualizer = {
         enable: async () => {
@@ -3561,11 +3592,12 @@
       focusActiveTrack();
     }
 
-    document.getElementById('playPauseBtn').addEventListener('click', () => {
+    document.getElementById('playPauseBtn').addEventListener('click', (e) => {
       togglePlayback();
+      e.currentTarget.blur();
     });
-    document.getElementById('nextBtn').addEventListener('click', playNext);
-    document.getElementById('prevBtn').addEventListener('click', playPrev);
+    document.getElementById('nextBtn').addEventListener('click', (e) => { playNext(); e.currentTarget.blur(); });
+    document.getElementById('prevBtn').addEventListener('click', (e) => { playPrev(); e.currentTarget.blur(); });
 
     // Center overlay controls: show on interaction and auto-hide.
     if (centerControlsHitEl && centerControlsPanelEl && playerContainerEl && !centerControlsOverlayController) {

@@ -181,6 +181,19 @@ export class Spectrum {
     this.state.rafId = requestAnimationFrame(tick);
   }
 
+  getCurrentFrame() {
+    if (!this.enabled) return null;
+    if (!this.state.frames || !this.controller) return null;
+    const t = Number(this.controller.getCurrentTime?.());
+    if (!Number.isFinite(t) || t < 0) return null;
+    const frameIndex = Math.max(
+      0,
+      Math.min(this.state.frameCount - 1, Math.floor(t * this.state.fps))
+    );
+    const offset = frameIndex * this.state.bins;
+    return this.state.frames.subarray(offset, offset + this.state.bins);
+  }
+
   async loadForVideoId(videoId) {
     if (!this.enabled) return false;
     if (!videoId) return false;

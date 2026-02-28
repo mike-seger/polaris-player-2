@@ -25,6 +25,7 @@ export class PlayerHost {
 
     // Mirror audio to visualizer when overlay is active (html-video / youtube owners)
     this._vizAudioTimer = null;
+    this._externalAudioAnalysisProvider = null;
   }
 
   _debugEnabled() {
@@ -310,14 +311,27 @@ export class PlayerHost {
         const active = this.active;
         const viz = this._visualizerAdapter;
         if (!active || !viz || typeof viz.pushAudioData !== 'function') return;
-        if (typeof active.getAudioAnalysis !== 'function') return;
-        const snapshot = active.getAudioAnalysis();
+        let snapshot = null;
+        if (typeof active.getAudioAnalysis === 'function') {
+          snapshot = active.getAudioAnalysis();
+        }
+        if (!snapshot && typeof this._externalAudioAnalysisProvider === 'function') {
+          try {
+            snapshot = this._externalAudioAnalysisProvider({ activeAdapter: active, track: this._activeTrack }) || null;
+          } catch {
+            snapshot = null;
+          }
+        }
         if (snapshot) {
           viz.pushAudioData(snapshot);
         }
       } catch { /* ignore */ }
     };
     this._vizAudioTimer = setInterval(send, 50); // ~20fps
+  }
+
+  setVisualizerAudioAnalysisProvider(provider) {
+    this._externalAudioAnalysisProvider = (typeof provider === 'function') ? provider : null;
   }
 
   _stopVisualizerAudioMirror() {
