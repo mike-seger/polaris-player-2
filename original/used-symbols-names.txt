@@ -1,4 +1,8 @@
+add
+add_2
 arrow_left
+arrow_menu_close
+arrow_menu_open
 arrow_outward
 arrow_right
 artist
@@ -30,9 +34,11 @@ lock
 lock_open_right
 markunread_mailbox
 menu
+menu_open
 more_horiz
 more_vert
 open_in_browser
+open_in_new
 pause
 play_arrow
 recommend

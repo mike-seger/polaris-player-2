@@ -1,5 +1,5 @@
 # fonts + utils
-https://fonts.google.com/icons?icon.category=av
+https://fonts.google.com/icons
 https://github.com/google/material-design-icons/
 https://onlinefontconverter.com/
 https://transfonter.org/
