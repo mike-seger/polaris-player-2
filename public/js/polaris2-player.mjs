@@ -3837,6 +3837,7 @@
       playlistEndpoint: PLAYLIST_ENDPOINT,
 
       getHasLocalMedia: () => hasLocalMedia,
+      defaultPlaylistIndexPath: `${VIDEO_BASE_PATH}/default-playlists.json`,
 
       syncDefaultPlaylists: async (defaults) => {
         playlistLibrary = playlistLibraryStore.syncDefaults(defaults);

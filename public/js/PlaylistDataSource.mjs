@@ -84,6 +84,7 @@ export class PlaylistDataSource {
     this.getHasLocalMedia = typeof getHasLocalMedia === 'function' ? getHasLocalMedia : () => false;
 
     this.defaultPlaylistIndexPath = defaultPlaylistIndexPath || './video/default-playlists.json';
+    this.videoBasePath = this.defaultPlaylistIndexPath.replace(/\/[^\/]*$/, '');
     this.syncDefaultPlaylists = typeof syncDefaultPlaylists === 'function' ? syncDefaultPlaylists : async (_defaults) => {};
 
     this.spectrum = spectrum;
@@ -434,7 +435,7 @@ export class PlaylistDataSource {
             return {
               id,
               title,
-              uri: `./video/${id}.json`,
+              uri: `${this.videoBasePath}/${id}.json`,
               fetchedAt,
               default: true,
               type: 'polaris',
@@ -482,7 +483,7 @@ export class PlaylistDataSource {
     const meta = localEntries.find((e) => e.id === targetId) || null;
     const uri = (meta && typeof meta.uri === 'string' && meta.uri.trim().length)
       ? meta.uri.trim()
-      : `./video/${targetId}.json`;
+      : `${this.videoBasePath}/${targetId}.json`;
 
     let entry = null;
 
