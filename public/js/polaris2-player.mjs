@@ -325,6 +325,7 @@
       }
     });
     const API_BASE_PATH = window.location.hostname.endsWith('polaris.net128.com') ? '/u2b' : '.';
+    const VIDEO_BASE_PATH = window.location.hostname.includes('.github.io') ? './video-hosted' : './video';
     const STATUS_ENDPOINT = `${API_BASE_PATH}/api/status`;
     const PLAYLIST_ENDPOINT = `${API_BASE_PATH}/api/playlist`;
     const playlistLibraryStore = new PlaylistLibraryStore({
@@ -356,7 +357,7 @@
       }
 
       try {
-        const url = new URL('./video/local-player.json', window.location.href).toString();
+        const url = new URL(`${VIDEO_BASE_PATH}/local-player.json`, window.location.href).toString();
         const resp = await fetch(url, { cache: 'no-store' });
         if (!resp || !resp.ok) {
           hasLocalMedia = false;
@@ -440,7 +441,7 @@
       try {
         const playlistDirUrl = (() => {
           const effectivePlaylistUri = preferredLocalPlaylistUri || playlistUri;
-          if (!effectivePlaylistUri) return new URL('./video/', window.location.href);
+          if (!effectivePlaylistUri) return new URL(`${VIDEO_BASE_PATH}/`, window.location.href);
           const playlistUrl = new URL(effectivePlaylistUri, window.location.href);
           return new URL('./', playlistUrl);
         })();
@@ -485,7 +486,7 @@
 
         return outUrl;
       } catch {
-        return `./video/${encodeURIComponent(base)}.mp4`;
+        return `${VIDEO_BASE_PATH}/${encodeURIComponent(base)}.mp4`;
       }
     }
 
@@ -1810,7 +1811,7 @@
 
       const uri = (typeof meta.uri === 'string' && meta.uri.trim().length)
         ? meta.uri.trim()
-        : (inferredType === 'polaris' ? `./video/${cleanedId}.json` : cleanedId);
+        : (inferredType === 'polaris' ? `${VIDEO_BASE_PATH}/${cleanedId}.json` : cleanedId);
 
       const fetchedAt = (typeof meta.fetchedAt === 'string' && meta.fetchedAt.trim().length)
         ? meta.fetchedAt.trim()
